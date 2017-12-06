@@ -116,8 +116,16 @@ vr::ETrackedControllerRole CVRSystem::GetControllerRoleForTrackedDeviceIndex(vr:
 	throw "stub";
 }
 
-ETrackedDeviceClass CVRSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t unDeviceIndex) {
-	throw "stub";
+ETrackedDeviceClass CVRSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex) {
+	if (deviceIndex == k_unTrackedDeviceIndex_Hmd) {
+		return TrackedDeviceClass_HMD;
+	}
+
+	if (deviceIndex == LEFT_HAND_DEVICE_INDEX || deviceIndex == RIGHT_HAND_DEVICE_INDEX) {
+		return TrackedDeviceClass_Controller;
+	}
+
+	return TrackedDeviceClass_Invalid;
 }
 
 bool CVRSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) {
@@ -128,7 +136,8 @@ bool CVRSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) {
 	if (deviceIndex == LEFT_HAND_DEVICE_INDEX) {
 		unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 		return connected && ovrControllerType_LTouch != 0;
-	} else if (deviceIndex == RIGHT_HAND_DEVICE_INDEX) {
+	}
+	else if (deviceIndex == RIGHT_HAND_DEVICE_INDEX) {
 		unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 		return connected && ovrControllerType_RTouch != 0;
 	}
@@ -180,7 +189,7 @@ const char * CVRSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
 }
 
 bool CVRSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
-	throw "stub";
+	return false; // TODO
 }
 
 bool CVRSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
@@ -195,8 +204,46 @@ HiddenAreaMesh_t CVRSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType t
 	throw "stub";
 }
 
-bool CVRSystem::GetControllerState(vr::TrackedDeviceIndex_t unControllerDeviceIndex, vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize) {
-	throw "stub";
+bool CVRSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
+	if (sizeof(VRControllerState_t) != controllerStateSize)
+		throw string("Bad controller state size - was the host compiled with an older version of OpenVR?");
+
+	ovrHandType id = ovrHand_Count;
+
+	if (controllerDeviceIndex == LEFT_HAND_DEVICE_INDEX) {
+		id = ovrHand_Left;
+	}
+	else if (controllerDeviceIndex == RIGHT_HAND_DEVICE_INDEX) {
+		id = ovrHand_Right;
+	}
+
+	if (id == ovrHand_Count) return false;
+
+	uint64_t Buttons = 0;
+	uint64_t Touches = 0;
+
+	// TODO cache this
+	ovrInputState inputState;
+	if (!OVR_SUCCESS(ovr_GetInputState(*ovr::session, ovrControllerType_Touch, &inputState))) return false;
+
+#define CHECK(var, type, left, right, out) \
+if(inputState.var && (ovr ## type ## _ ## left || ovr ## type ## _ ## right)) \
+	var |= k_EButton_ ## out
+
+#define BUTTON(left, right, out) CHECK(Buttons, Button, left, right, out); CHECK(Touches, Touch, left, right, out)
+
+	BUTTON(A, X, A); // k_EButton_A is the SteamVR name for the lower buttons on the Touch controllers
+	BUTTON(B, Y, ApplicationMenu);
+	// TODO
+
+#undef BUTTON
+#undef CHECK
+
+	controllerState->ulButtonPressed = Buttons;
+	controllerState->ulButtonTouched = Touches;
+	// TODO
+
+	return true;
 }
 
 bool CVRSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
@@ -225,7 +272,7 @@ void CVRSystem::ReleaseInputFocus() {
 }
 
 bool CVRSystem::IsInputFocusCapturedByAnotherProcess() {
-	throw "stub";
+	return false; // TODO
 }
 
 uint32_t CVRSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {

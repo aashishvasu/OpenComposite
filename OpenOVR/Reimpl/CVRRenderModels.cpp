@@ -1,20 +1,28 @@
 #include "stdafx.h"
 #include "CVRRenderModels.h"
 
-EVRRenderModelError CVRRenderModels::LoadRenderModel_Async(const char * pchRenderModelName, RenderModel_t ** ppRenderModel) {
-	throw "stub";
+EVRRenderModelError CVRRenderModels::LoadRenderModel_Async(const char * pchRenderModelName, RenderModel_t ** renderModel) {
+	*renderModel = new RenderModel_t();
+	// TODO use Oculus Avatars SDK
+
+	return VRRenderModelError_None;
 }
 
-void CVRRenderModels::FreeRenderModel(RenderModel_t * pRenderModel) {
-	throw "stub";
+void CVRRenderModels::FreeRenderModel(RenderModel_t * renderModel) {
+	// TODO
+	delete renderModel;
 }
 
-EVRRenderModelError CVRRenderModels::LoadTexture_Async(TextureID_t textureId, RenderModel_TextureMap_t ** ppTexture) {
-	throw "stub";
+EVRRenderModelError CVRRenderModels::LoadTexture_Async(TextureID_t textureId, RenderModel_TextureMap_t ** texture) {
+	*texture = new RenderModel_TextureMap_t();
+	// TODO use Oculus Avatars SDK
+
+	return VRRenderModelError_None;
 }
 
-void CVRRenderModels::FreeTexture(RenderModel_TextureMap_t * pTexture) {
-	throw "stub";
+void CVRRenderModels::FreeTexture(RenderModel_TextureMap_t * texture) {
+	// TODO
+	delete texture;
 }
 
 EVRRenderModelError CVRRenderModels::LoadTextureD3D11_Async(TextureID_t textureId, void * pD3D11Device, void ** ppD3D11Texture2D) {
