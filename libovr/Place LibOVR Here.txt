@@ -1,0 +1,6 @@
+Download https://developer.oculus.com/downloads/package/oculus-sdk-for-windows/ and extract it into this directory.
+This directory should contain a single directory named 'OculusSDK'.
+
+You should probably be fine with the latest version, but for reference the version used during development was 1.20.0
+
+After that, open it in Visual Studio and build LibOVR and LibOVRKernel

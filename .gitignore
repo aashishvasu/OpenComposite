@@ -1,0 +1,14 @@
+# Binaries
+/Debug
+/Release
+
+# Object files
+/OpenOVR/Debug
+/OpenOVR/Release
+
+# Visual Studio
+/.vs
+
+# LibOVR
+/libovr/OculusSDK
+
