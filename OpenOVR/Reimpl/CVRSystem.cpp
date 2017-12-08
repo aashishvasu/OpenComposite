@@ -10,6 +10,11 @@
 #define LEFT_HAND_DEVICE_INDEX 1
 #define RIGHT_HAND_DEVICE_INDEX 2
 
+#ifdef SUPPORT_DX
+#include <dxgi.h> // for GetDefaultAdapterLuid
+#pragma comment(lib, "dxgi.lib")
+#endif
+
 using namespace std;
 
 void CVRSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
@@ -46,7 +51,9 @@ HmdMatrix34_t CVRSystem::GetEyeToHeadTransform(EVREye ovr_eye) {
 	ovrPosef &pose = ovr::hmdToEyeViewPose[eye];
 
 	OVR::Matrix4f transform(pose);
-	transform.Invert(); // Swap head->eye to eye->head
+	// For some bizzare reason, inverting the matrix (to go from hmd->eye
+	// to eye->hmd) breaks the view, and it's fine without it. That or I'm misunderstanding
+	// what exactly this method is supposed to return.
 
 	HmdMatrix34_t result;
 	O2S_om34(transform, result);
@@ -61,8 +68,44 @@ int32_t CVRSystem::GetD3D9AdapterIndex() {
 	throw "stub";
 }
 
-void CVRSystem::GetDXGIOutputInfo(int32_t * pnAdapterIndex) {
-	throw "stub";
+void CVRSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
+#ifdef SUPPORT_DX
+#define VALIDATE(x, msg) if (!(x)) { MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); exit(-1); }
+
+	LUID* luid = reinterpret_cast<LUID*>(ovr::luid);
+
+	//IDXGIFactory * DXGIFactory = nullptr;
+	//HRESULT hr = CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)(&DXGIFactory));
+	IDXGIFactory* DXGIFactory = nullptr;
+	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&DXGIFactory));
+	VALIDATE((hr == ERROR_SUCCESS), "CreateDXGIFactory1 failed");
+
+	bool match = false;
+	IDXGIAdapter * Adapter = nullptr;
+	for (UINT i = 0; DXGIFactory->EnumAdapters(i, &Adapter) != DXGI_ERROR_NOT_FOUND; ++i) {
+		DXGI_ADAPTER_DESC adapterDesc;
+		Adapter->GetDesc(&adapterDesc);
+
+		match = luid == nullptr || memcmp(&adapterDesc.AdapterLuid, luid, sizeof(LUID)) == 0;
+
+		Adapter->Release();
+
+		if (match) {
+			*adapterIndex = i;
+			ovr::dxDeviceId = i;
+			break;
+		}
+	}
+
+	DXGIFactory->Release();
+
+	if (!match)
+		throw string("Cannot find graphics card!");
+
+#undef VALIDATE
+#elif
+	throw "DX not supported - build with SUPPORT_DX defined";
+#endif
 }
 
 void CVRSystem::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, VkInstance_T * pInstance) {

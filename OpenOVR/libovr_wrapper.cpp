@@ -10,6 +10,8 @@ namespace ovr {
 
 	ovrHmdDesc hmdDesc;
 
+	int dxDeviceId = -1;
+
 	// Eye poses
 	// TODO should these be updated every frame, incase the user adjusts their IPD?
 	ovrEyeRenderDesc eyeRenderDesc[2];

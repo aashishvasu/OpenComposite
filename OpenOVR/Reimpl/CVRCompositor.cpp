@@ -19,9 +19,7 @@ using namespace std;
 #ifdef SUPPORT_GL
 #include "OVR_CAPI_GL.h"
 #endif
-#ifdef SUPPORT_DX
-#include "OVR_CAPI_D3D.h"
-#endif
+// DirectX included in the header
 #ifdef SUPPORT_VK
 #include "OVR_CAPI_Vk.h"
 #endif
@@ -161,31 +159,52 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 	if (chains[0] == NULL) {
 		size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
 
-		// Make eye render buffers
+		switch (texture->eType) {
+#ifdef SUPPORT_GL
+		case TextureType_OpenGL: {
+
+			// TODO does this interfere with the host application?
+			// TODO move somewhere more permenent
+			OVR::GLEContext::SetCurrentContext(&CustomGLEContext);
+			CustomGLEContext.Init();
+
+			// Create the framebuffer we use when copying across textures
+			glGenFramebuffers(1, &fboId);
+
+			// Make eye render buffers
+			for (int ieye = 0; ieye < 2; ++ieye) {
+				ovrTextureSwapChainDesc desc = {};
+				desc.Type = ovrTexture_2D;
+				desc.ArraySize = 1;
+				desc.Width = size.w;
+				desc.Height = size.h;
+				desc.MipLevels = 1;
+				desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+				desc.SampleCount = 1;
+				desc.StaticImage = ovrFalse;
+
+				ovrResult result = ovr_CreateTextureSwapChainGL(SESS, &desc, &chains[ieye]);
+				if (!OVR_SUCCESS(result))
+					throw string("Cannot create GL texture swap chain");
+			}
+			break;
+		}
+#endif
+#ifdef SUPPORT_DX
+		case TextureType_DirectX12: {
+			compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, size, chains);
+			break;
+		}
+#endif
+		default:
+			throw string("[CVRCompositor::Submit] Unsupported texture type: ") + to_string(texture->eType);
+		}
+
 		for (int ieye = 0; ieye < 2; ++ieye) {
-			ovrTextureSwapChainDesc desc = {};
-			desc.Type = ovrTexture_2D;
-			desc.ArraySize = 1;
-			desc.Width = size.w;
-			desc.Height = size.h;
-			desc.MipLevels = 1;
-			desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-			desc.SampleCount = 1;
-			desc.StaticImage = ovrFalse;
-
-			ovrResult result = ovr_CreateTextureSwapChainGL(SESS, &desc, &chains[ieye]);
-
 			if (!chains[ieye]) {
 				VALIDATE(false, "Failed to create texture.");
 			}
 		}
-
-		// TODO does this interfere with the host application?
-		// TODO move somewhere more permenent
-		OVR::GLEContext::SetCurrentContext(&CustomGLEContext);
-		CustomGLEContext.Init();
-
-		glGenFramebuffers(1, &fboId);
 	}
 
 	if (!leftEyeSubmitted && !rightEyeSubmitted) {
@@ -203,6 +222,7 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 
 	// TODO other graphics APIs
 	switch (texture->eType) {
+#ifdef SUPPORT_GL
 	case TextureType_OpenGL: {
 
 		// Why TF does OpenVR pass GLuints as pointers?!? That's really unsafe, although it's
@@ -239,6 +259,13 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 
 		break;
 	}
+#endif
+#ifdef SUPPORT_DX
+	case TextureType_DirectX12: {
+		compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags);
+		break;
+	}
+#endif
 	default:
 		throw string("[CVRCompositor::Submit] Unsupported texture type: ") + to_string(texture->eType);
 	}

@@ -91,7 +91,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;OPENOVR_EXPORTS;_WINDOWS;_USRDLL;SUPPORT_GL;SUPPORT_DX;SUPPORT_VK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\libovr\OculusSDK\LibOVR\Include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\BundledLibs;..\libovr\OculusSDK\LibOVR\Include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -127,7 +127,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;OPENOVR_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\libovr\OculusSDK\LibOVR\Include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\BundledLibs;..\libovr\OculusSDK\LibOVR\Include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -161,6 +161,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
     <ClInclude Include="ImplAccess.h" />
     <ClInclude Include="libovr_wrapper.h" />
@@ -181,6 +182,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Compositor\dx12compositor.cpp" />
     <ClCompile Include="convert.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="libovr_wrapper.cpp" />

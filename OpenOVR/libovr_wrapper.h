@@ -10,6 +10,8 @@ namespace ovr {
 	extern ovrEyeRenderDesc eyeRenderDesc[2];
 	extern ovrPosef      hmdToEyeViewPose[2];
 
+	extern int dxDeviceId;
+
 	void Setup();
 	bool IsAvailable();
 };

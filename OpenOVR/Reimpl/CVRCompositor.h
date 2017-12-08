@@ -5,6 +5,19 @@
 
 #include "Extras/OVR_Math.h"
 
+#include "Compositor/compositor.h"
+
+#include <vector>
+
+#ifdef SUPPORT_DX
+#include "OVR_CAPI_D3D.h"
+// Let's really hope noone tries to use DX10
+#include "d3d11.h"
+#include "d3d12.h"
+#include "d3dx12.h"
+#endif
+
+// FIXME in a header?
 using namespace vr;
 
 typedef unsigned int GLuint;
@@ -18,6 +31,8 @@ private:
 
 	ovrTextureSwapChain chains[2];
 	OVR::Sizei size;
+
+	Compositor * compositor = NULL;
 
 public:
 	CVRCompositor();
