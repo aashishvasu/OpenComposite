@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenVR/vrtypes.h"
+#include "OpenVR/openvr.h"
 #include "OVR_CAPI.h"
 #include "Extras/OVR_Math.h"
 

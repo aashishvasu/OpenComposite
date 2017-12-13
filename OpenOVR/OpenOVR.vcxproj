@@ -91,13 +91,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;OPENOVR_EXPORTS;_WINDOWS;_USRDLL;SUPPORT_GL;SUPPORT_DX;SUPPORT_VK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\BundledLibs;..\libovr\OculusSDK\LibOVR\Include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\BundledLibs;..\libovr\OculusSDK\LibOVRKernel\Src;..\libovr\OculusSDK\LibOVR\Include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>../libovr/OculusSDK/LibOVR/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVR.lib;../libovr/OculusSDK/LibOVRKernel/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVRKernel.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../libovr/OculusSDK/LibOVR/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVR.lib;../libovr/OculusSDK/LibOVRKernel/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVRKernel.lib;opengl32.lib;d3dcompiler.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -165,15 +165,7 @@
     <ClInclude Include="convert.h" />
     <ClInclude Include="ImplAccess.h" />
     <ClInclude Include="libovr_wrapper.h" />
-    <ClInclude Include="OpenVR\ivrapplications.h" />
-    <ClInclude Include="OpenVR\ivrchaperone.h" />
-    <ClInclude Include="OpenVR\ivrcompositor.h" />
-    <ClInclude Include="OpenVR\ivrrendermodels.h" />
-    <ClInclude Include="OpenVR\ivrsettings.h" />
-    <ClInclude Include="OpenVR\ivrsystem.h" />
     <ClInclude Include="OpenVR\openvr.h" />
-    <ClInclude Include="OpenVR\vrannotation.h" />
-    <ClInclude Include="OpenVR\vrtypes.h" />
     <ClInclude Include="Reimpl\CVRCompositor.h" />
     <ClInclude Include="Reimpl\CVRRenderModels.h" />
     <ClInclude Include="Reimpl\CVRSystem.h" />
@@ -182,7 +174,9 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Compositor\dx11compositor.cpp" />
     <ClCompile Include="Compositor\dx12compositor.cpp" />
+    <ClCompile Include="Compositor\glcompositor.cpp" />
     <ClCompile Include="convert.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="libovr_wrapper.cpp" />

@@ -1,6 +1,5 @@
 #pragma once
-#include "OpenVR/vrtypes.h"
-#include "OpenVR/ivrrendermodels.h"
+#include "OpenVR/openvr.h"
 
 using namespace vr;
 

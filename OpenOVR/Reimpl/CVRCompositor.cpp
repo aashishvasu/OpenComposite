@@ -13,7 +13,9 @@ using namespace std;
 #define SESS (*ovr::session)
 #define DESC (ovr::hmdDesc)
 
-#include "../libovr/OculusSDK/Samples/OculusRoomTiny_Advanced/Common/Win32_GLAppUtil.h"
+#include "GL/CAPI_GLE.h"
+#include "Extras/OVR_Math.h"
+#include "OVR_CAPI_GL.h"
 
 // API-specific includes
 #ifdef SUPPORT_GL
@@ -23,8 +25,6 @@ using namespace std;
 #ifdef SUPPORT_VK
 #include "OVR_CAPI_Vk.h"
 #endif
-
-OVR::GLEContext CustomGLEContext;
 
 void CVRCompositor::SubmitFrames() {
 	ovrSession &session = *ovr::session;
@@ -162,31 +162,7 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 		switch (texture->eType) {
 #ifdef SUPPORT_GL
 		case TextureType_OpenGL: {
-
-			// TODO does this interfere with the host application?
-			// TODO move somewhere more permenent
-			OVR::GLEContext::SetCurrentContext(&CustomGLEContext);
-			CustomGLEContext.Init();
-
-			// Create the framebuffer we use when copying across textures
-			glGenFramebuffers(1, &fboId);
-
-			// Make eye render buffers
-			for (int ieye = 0; ieye < 2; ++ieye) {
-				ovrTextureSwapChainDesc desc = {};
-				desc.Type = ovrTexture_2D;
-				desc.ArraySize = 1;
-				desc.Width = size.w;
-				desc.Height = size.h;
-				desc.MipLevels = 1;
-				desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-				desc.SampleCount = 1;
-				desc.StaticImage = ovrFalse;
-
-				ovrResult result = ovr_CreateTextureSwapChainGL(SESS, &desc, &chains[ieye]);
-				if (!OVR_SUCCESS(result))
-					throw string("Cannot create GL texture swap chain");
-			}
+			compositor = new GLCompositor(chains, size);
 			break;
 		}
 #endif
@@ -202,7 +178,7 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 
 		for (int ieye = 0; ieye < 2; ++ieye) {
 			if (!chains[ieye]) {
-				VALIDATE(false, "Failed to create texture.");
+				throw string("Failed to create texture.");
 			}
 		}
 	}
@@ -217,58 +193,8 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 	//if (sessionStatus.IsVisible) return;
 
 	ovrTextureSwapChain tex = chains[S2O_eye(eye)];
-	int currentIndex = 0;
-	ovr_GetTextureSwapChainCurrentIndex(SESS, tex, &currentIndex);
 
-	// TODO other graphics APIs
-	switch (texture->eType) {
-#ifdef SUPPORT_GL
-	case TextureType_OpenGL: {
-
-		// Why TF does OpenVR pass GLuints as pointers?!? That's really unsafe, although it's
-		// very unlikely GLuint is suddenly going to grow.
-		GLuint src = (GLuint)texture->handle;
-
-		GLuint texId;
-		ovr_GetTextureSwapChainBufferGL(SESS, tex, currentIndex, &texId);
-
-		//glClearColor(1, 0, 0, 1);
-		//glClear(GL_COLOR_BUFFER_BIT);
-
-		// Bind the source texture as a framebuffer, then copy out into our destination texture
-		// https://stackoverflow.com/questions/23981016/best-method-to-copy-texture-to-texture#23994979
-		// Since I cannot be convinved to bother with a passthrough shader and this is almost as
-		// fast, we'll us it until supersampling becomes an issue.
-
-		glBindFramebuffer(GL_FRAMEBUFFER, fboId);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, src, 0);
-
-		glBindTexture(GL_TEXTURE_2D, texId);
-
-		GLsizei width, height;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-
-		glCopyTexSubImage2D(
-			GL_TEXTURE_2D, 0, // 0 == no mipmapping
-			0, 0, // Position in the source framebuffer
-			0, 0, width, height // Region of the output texture to copy into (in this case, everything)
-		);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		break;
-	}
-#endif
-#ifdef SUPPORT_DX
-	case TextureType_DirectX12: {
-		compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags);
-		break;
-	}
-#endif
-	default:
-		throw string("[CVRCompositor::Submit] Unsupported texture type: ") + to_string(texture->eType);
-	}
+	compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags);
 
 	ovr_CommitTextureSwapChain(SESS, tex);
 
@@ -448,7 +374,7 @@ uint32_t CVRCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T * p
 	throw "stub";
 }
 
-void CVRCompositor::SetExplicitTimingMode(bool bExplicitTimingMode) {
+void CVRCompositor::SetExplicitTimingMode(EVRCompositorTimingMode eTimingMode) {
 	throw "stub";
 }
 

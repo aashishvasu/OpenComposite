@@ -1,17 +1,25 @@
 #pragma once
 
-#include "OpenVR/vrtypes.h"
+#include "OpenVR/openvr.h"
 #include "d3dx12.h"
+#include <wrl/client.h>
 
 #include <Extras/OVR_Math.h>
 
 #include <vector>
+#include <memory>
+
+using Microsoft::WRL::ComPtr;
+
+typedef unsigned int GLuint;
 
 class Compositor {
 public:
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds, vr::EVRSubmitFlags submitFlags) = 0;
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags) = 0;
 protected:
 	ovrTextureSwapChain *chains;
+	OVR::Sizei singleScreenSize;
 };
 
 class DX12Compositor : public Compositor {
@@ -19,17 +27,38 @@ public:
 	DX12Compositor(vr::D3D12TextureData_t *td, OVR::Sizei &bufferSize, ovrTextureSwapChain *chains);
 
 	// Override
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds, vr::EVRSubmitFlags submitFlags);
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags);
 
 private:
-	ID3D12Device *device = NULL;
-	ID3D12CommandQueue *queue = NULL;
-	ID3D12GraphicsCommandList *commandList = NULL;
+	ComPtr<ID3D12Device> device;
+	ComPtr<ID3D12CommandQueue> queue;
+	ComPtr<ID3D12GraphicsCommandList> commandList;
 
 	int chainLength = -1;
 
-	ID3D12CommandAllocator *allocator = NULL;
-	ID3D12DescriptorHeap *rtvVRHeap = NULL;  // Resource Target View Heap
+	ComPtr<ID3D12CommandAllocator> allocator = NULL;
+	ComPtr<ID3D12DescriptorHeap> rtvVRHeap = NULL;  // Resource Target View Heap
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> texRtv;
 	std::vector<ID3D12Resource*> texResource;
+
+	ComPtr<ID3D12Resource> m_vertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+	ComPtr<ID3D12PipelineState> pipelineState;
+	ComPtr<ID3D12RootSignature> rootSignature;
+
+	ComPtr<ID3D12DescriptorHeap> srvHeap = NULL;
+	UINT m_rtvDescriptorSize;
+};
+
+class GLCompositor : public Compositor {
+public:
+	GLCompositor(ovrTextureSwapChain *chains, OVR::Sizei size);
+
+	// Override
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags);
+
+private:
+	GLuint fboId;
 };
