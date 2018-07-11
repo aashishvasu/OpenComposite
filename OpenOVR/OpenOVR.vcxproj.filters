@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Compositor">
       <UniqueIdentifier>{3c18fef8-7a03-4327-a030-771e0ffa4219}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\OpenVR">
+      <UniqueIdentifier>{12eb05f6-fbdd-4b99-b1ce-d61859037ef7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -50,6 +53,63 @@
     </ClInclude>
     <ClInclude Include="Reimpl\CVRSystem015.h">
       <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRChaperone_003.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRChaperoneSetup_005.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_020.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_022.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRExtendedDisplay_001.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRNotifications_002.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVROverlay_016.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVROverlay_017.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRRenderModels_005.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRResources_001.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRScreenshots_001.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRSettings_002.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRSystem_015.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRSystem_017.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRTrackedCamera_003.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\openvr.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\vrannotation.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\vrtypes.h">
+      <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
     <ClInclude Include="Reimpl\CVRCompositor020.h">
       <Filter>Header Files\Reimpl</Filter>
