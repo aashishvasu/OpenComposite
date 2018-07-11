@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenVR/openvr.h"
+#include "OpenVR/interfaces/vrtypes.h"
 #include "d3dx12.h"
 #include <wrl/client.h>
 

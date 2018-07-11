@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenVR/openvr.h"
+#include "OpenVR/interfaces/IVRCompositor_022.h"
 
 #include "Extras/OVR_Math.h"
 
@@ -17,10 +17,11 @@
 
 // FIXME in a header?
 using namespace vr;
+using namespace IVRCompositor_022;
 
 typedef unsigned int GLuint;
 
-class CVRCompositor : IVRCompositor {
+class CVRCompositor : IVRCompositor_022::IVRCompositor {
 private:
 	bool leftEyeSubmitted = false, rightEyeSubmitted = false;
 	void SubmitFrames();
@@ -180,14 +181,14 @@ public:
 
 	/** Opens a shared D3D11 texture with the undistorted composited image for each eye.  Use ReleaseMirrorTextureD3D11 when finished
 	* instead of calling Release on the resource itself. */
-	virtual vr::EVRCompositorError GetMirrorTextureD3D11(vr::EVREye eEye, void *pD3D11DeviceOrResource, void **ppD3D11ShaderResourceView);
+	virtual EVRCompositorError GetMirrorTextureD3D11(EVREye eEye, void *pD3D11DeviceOrResource, void **ppD3D11ShaderResourceView);
 	virtual void ReleaseMirrorTextureD3D11(void *pD3D11ShaderResourceView);
 
 	/** Access to mirror textures from OpenGL. */
-	virtual vr::EVRCompositorError GetMirrorTextureGL(vr::EVREye eEye, vr::glUInt_t *pglTextureId, vr::glSharedTextureHandle_t *pglSharedTextureHandle);
-	virtual bool ReleaseSharedGLTexture(vr::glUInt_t glTextureId, vr::glSharedTextureHandle_t glSharedTextureHandle);
-	virtual void LockGLSharedTextureForAccess(vr::glSharedTextureHandle_t glSharedTextureHandle);
-	virtual void UnlockGLSharedTextureForAccess(vr::glSharedTextureHandle_t glSharedTextureHandle);
+	virtual EVRCompositorError GetMirrorTextureGL(EVREye eEye, glUInt_t *pglTextureId, glSharedTextureHandle_t *pglSharedTextureHandle);
+	virtual bool ReleaseSharedGLTexture(glUInt_t glTextureId, glSharedTextureHandle_t glSharedTextureHandle);
+	virtual void LockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle);
+	virtual void UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle);
 
 	/** [Vulkan Only]
 	* return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing

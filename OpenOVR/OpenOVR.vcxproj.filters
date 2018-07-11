@@ -25,9 +25,6 @@
     <Filter Include="Source Files\Compositor">
       <UniqueIdentifier>{3c18fef8-7a03-4327-a030-771e0ffa4219}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\OpenVR">
-      <UniqueIdentifier>{080c2ce3-b908-4137-97ce-bde346253191}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -54,14 +51,8 @@
     <ClInclude Include="Reimpl\CVRCompositor.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="ImplAccess.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Compositor\compositor.h">
       <Filter>Header Files\Compositor</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenVR\openvr.h">
-      <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

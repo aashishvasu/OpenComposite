@@ -69,14 +69,14 @@ bool CVRRenderModels::RenderModelHasComponent(const char * pchRenderModelName, c
 	throw "stub";
 }
 
-uint32_t CVRRenderModels::GetRenderModelThumbnailURL(const char * pchRenderModelName, VR_OUT_STRING() char * pchThumbnailURL, uint32_t unThumbnailURLLen, vr::EVRRenderModelError * peError) {
+uint32_t CVRRenderModels::GetRenderModelThumbnailURL(const char * pchRenderModelName, VR_OUT_STRING() char * pchThumbnailURL, uint32_t unThumbnailURLLen, EVRRenderModelError * peError) {
 	throw "stub";
 }
 
-uint32_t CVRRenderModels::GetRenderModelOriginalPath(const char * pchRenderModelName, VR_OUT_STRING() char * pchOriginalPath, uint32_t unOriginalPathLen, vr::EVRRenderModelError * peError) {
+uint32_t CVRRenderModels::GetRenderModelOriginalPath(const char * pchRenderModelName, VR_OUT_STRING() char * pchOriginalPath, uint32_t unOriginalPathLen, EVRRenderModelError * peError) {
 	throw "stub";
 }
 
-const char * CVRRenderModels::GetRenderModelErrorNameFromEnum(vr::EVRRenderModelError error) {
+const char * CVRRenderModels::GetRenderModelErrorNameFromEnum(EVRRenderModelError error) {
 	throw "stub";
 }

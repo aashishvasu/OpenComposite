@@ -171,9 +171,7 @@
   <ItemGroup>
     <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
-    <ClInclude Include="ImplAccess.h" />
     <ClInclude Include="libovr_wrapper.h" />
-    <ClInclude Include="OpenVR\openvr.h" />
     <ClInclude Include="Reimpl\CVRCompositor.h" />
     <ClInclude Include="Reimpl\CVRRenderModels.h" />
     <ClInclude Include="Reimpl\CVRSystem.h" />

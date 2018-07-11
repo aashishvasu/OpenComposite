@@ -1,9 +1,9 @@
 #pragma once
-#include "OpenVR/openvr.h"
+#include "OpenVR/interfaces/IVRSystem_017.h"
 
 using namespace vr;
 
-class CVRSystem : public IVRSystem {
+class CVRSystem : public IVRSystem_017::IVRSystem {
 	// Copied from IVRSystem, because MSVC made me.
 
 public:

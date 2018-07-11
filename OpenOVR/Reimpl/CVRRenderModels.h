@@ -1,9 +1,10 @@
 #pragma once
-#include "OpenVR/openvr.h"
+#include "OpenVR/interfaces/IVRRenderModels_005.h"
 
 using namespace vr;
+using namespace IVRRenderModels_005; // TODO remove this
 
-class CVRRenderModels : public IVRRenderModels {
+class CVRRenderModels : public IVRRenderModels_005::IVRRenderModels {
 public:
 
 	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name
@@ -85,13 +86,13 @@ public:
 	virtual bool RenderModelHasComponent(const char *pchRenderModelName, const char *pchComponentName);
 
 	/** Returns the URL of the thumbnail image for this rendermodel */
-	virtual uint32_t GetRenderModelThumbnailURL(const char *pchRenderModelName, VR_OUT_STRING() char *pchThumbnailURL, uint32_t unThumbnailURLLen, vr::EVRRenderModelError *peError);
+	virtual uint32_t GetRenderModelThumbnailURL(const char *pchRenderModelName, VR_OUT_STRING() char *pchThumbnailURL, uint32_t unThumbnailURLLen, vr::IVRRenderModels_005::EVRRenderModelError *peError);
 
 	/** Provides a render model path that will load the unskinned model if the model name provided has been replace by the user. If the model
 	* hasn't been replaced the path value will still be a valid path to load the model. Pass this to LoadRenderModel_Async, etc. to load the
 	* model. */
-	virtual uint32_t GetRenderModelOriginalPath(const char *pchRenderModelName, VR_OUT_STRING() char *pchOriginalPath, uint32_t unOriginalPathLen, vr::EVRRenderModelError *peError);
+	virtual uint32_t GetRenderModelOriginalPath(const char *pchRenderModelName, VR_OUT_STRING() char *pchOriginalPath, uint32_t unOriginalPathLen, vr::IVRRenderModels_005::EVRRenderModelError *peError);
 
 	/** Returns a string for a render model error */
-	virtual const char *GetRenderModelErrorNameFromEnum(vr::EVRRenderModelError error);
+	virtual const char *GetRenderModelErrorNameFromEnum(vr::IVRRenderModels_005::EVRRenderModelError error);
 };

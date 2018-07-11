@@ -342,7 +342,7 @@ void CVRCompositor::SuspendRendering(bool bSuspend) {
 	throw "stub";
 }
 
-vr::EVRCompositorError CVRCompositor::GetMirrorTextureD3D11(vr::EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
+EVRCompositorError CVRCompositor::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
 	throw "stub";
 }
 
@@ -350,19 +350,19 @@ void CVRCompositor::ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) {
 	throw "stub";
 }
 
-vr::EVRCompositorError CVRCompositor::GetMirrorTextureGL(vr::EVREye eEye, vr::glUInt_t * pglTextureId, vr::glSharedTextureHandle_t * pglSharedTextureHandle) {
+EVRCompositorError CVRCompositor::GetMirrorTextureGL(EVREye eEye, glUInt_t * pglTextureId, glSharedTextureHandle_t * pglSharedTextureHandle) {
 	throw "stub";
 }
 
-bool CVRCompositor::ReleaseSharedGLTexture(vr::glUInt_t glTextureId, vr::glSharedTextureHandle_t glSharedTextureHandle) {
+bool CVRCompositor::ReleaseSharedGLTexture(glUInt_t glTextureId, glSharedTextureHandle_t glSharedTextureHandle) {
 	throw "stub";
 }
 
-void CVRCompositor::LockGLSharedTextureForAccess(vr::glSharedTextureHandle_t glSharedTextureHandle) {
+void CVRCompositor::LockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
 	throw "stub";
 }
 
-void CVRCompositor::UnlockGLSharedTextureForAccess(vr::glSharedTextureHandle_t glSharedTextureHandle) {
+void CVRCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
 	throw "stub";
 }
 

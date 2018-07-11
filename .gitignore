@@ -12,3 +12,5 @@
 # LibOVR
 /libovr/OculusSDK
 
+# Split headers
+/OpenOVR/OpenVR/interfaces

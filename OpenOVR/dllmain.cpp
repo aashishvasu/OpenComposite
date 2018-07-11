@@ -2,7 +2,10 @@
 #include "stdafx.h"
 #include "steamvr_abi.h"
 #include "libovr_wrapper.h"
-#include "ImplAccess.h"
+
+#include "Reimpl/CVRSystem.h"
+#include "Reimpl/CVRRenderModels.h"
+#include "Reimpl/CVRCompositor.h"
 
 using namespace std;
 
@@ -26,8 +29,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 static bool running;
 static uint32_t current_init_token = 1;
 
-CVRImplAccess_ CVRImplAccess;
-
 #define ERR(msg) throw string(msg)
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
@@ -38,17 +39,18 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	//   target interface name is IVRSystem_Version
 	//   Instance of object CVRSystem
 	//   cached in CVRImplAccess.vr_System
-#define INTERFACE(name) \
+#define INTERFACE(version, name) \
 	/* Just a reminder 0==false and strcmp returns 0 if the strings match */ \
-	if (!strcmp(IVR ## name ## _Version, interfaceVersion)) { \
-		if (!CVRImplAccess.vr_ ## name) \
-			CVRImplAccess.vr_ ## name = new CVR ## name(); \
-		return CVRImplAccess.vr_ ## name; \
+	if (!strcmp(vr::IVR ## name ## _ ## version :: IVR ## name ## _Version, interfaceVersion)) { \
+		static CVR ## name *val = nullptr; \
+		if (!val) \
+			val = new CVR ## name(); \
+		return val; \
 	}
 
-	INTERFACE(System);
-	INTERFACE(RenderModels);
-	INTERFACE(Compositor);
+	INTERFACE(017, System);
+	INTERFACE(005, RenderModels);
+	INTERFACE(022, Compositor);
 
 	ERR("unknown/unsupported interface " + string(interfaceVersion));
 #undef INTERFACE

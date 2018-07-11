@@ -1,6 +1,5 @@
 #pragma once
 #include "OVR_CAPI.h"
-#include "ImplAccess.h"
 
 namespace ovr {
 	extern ovrSession *session;

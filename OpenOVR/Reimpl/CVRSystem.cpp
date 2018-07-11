@@ -2,7 +2,6 @@
 #include "CVRSystem.h"
 #include "OVR_CAPI.h"
 #include "libovr_wrapper.h"
-#include "ImplAccess.h"
 #include "convert.h"
 
 #include <string>
@@ -103,7 +102,7 @@ void CVRSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 		throw string("Cannot find graphics card!");
 
 #undef VALIDATE
-#elif
+#else
 	throw "DX not supported - build with SUPPORT_DX defined";
 #endif
 }

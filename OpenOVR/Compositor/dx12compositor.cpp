@@ -11,6 +11,8 @@
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
 
+#include <d3d11.h>
+
 using namespace vr;
 
 std::string SHADER_STRING = R"HLSL(
