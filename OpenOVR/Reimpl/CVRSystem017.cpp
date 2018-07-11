@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "CVRSystem.h"
+#include "CVRSystem017.h"
 #include "OVR_CAPI.h"
 #include "libovr_wrapper.h"
 #include "convert.h"
@@ -16,7 +16,7 @@
 
 using namespace std;
 
-void CVRSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
+void CVRSystem_017::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
 	ovrSizei size = ovr_GetFovTextureSize(
 		*ovr::session,
 		ovrEye_Left, // Resolutions are done per-eye in LibOVR, no particular reason for left eye
@@ -28,7 +28,7 @@ void CVRSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * heig
 	*height = size.h;
 }
 
-HmdMatrix44_t CVRSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar) {
+HmdMatrix44_t CVRSystem_017::GetProjectionMatrix(EVREye eye, float znear, float zfar) {
 	ovrMatrix4f matrix = ovrMatrix4f_Projection(
 		ovr::hmdDesc.DefaultEyeFov[S2O_eye(eye)],
 		znear, zfar,
@@ -38,14 +38,14 @@ HmdMatrix44_t CVRSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar
 	return O2S_m4(matrix);
 }
 
-void CVRSystem::GetProjectionRaw(EVREye eEye, float * pfLeft, float * pfRight, float * pfTop, float * pfBottom) {
+void CVRSystem_017::GetProjectionRaw(EVREye eEye, float * pfLeft, float * pfRight, float * pfTop, float * pfBottom) {
 }
 
-bool CVRSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * pDistortionCoordinates) {
+bool CVRSystem_017::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * pDistortionCoordinates) {
 	return false;
 }
 
-HmdMatrix34_t CVRSystem::GetEyeToHeadTransform(EVREye ovr_eye) {
+HmdMatrix34_t CVRSystem_017::GetEyeToHeadTransform(EVREye ovr_eye) {
 	ovrEyeType eye = S2O_eye(ovr_eye);
 	ovrPosef &pose = ovr::hmdToEyeViewPose[eye];
 
@@ -59,15 +59,15 @@ HmdMatrix34_t CVRSystem::GetEyeToHeadTransform(EVREye ovr_eye) {
 	return result;
 }
 
-bool CVRSystem::GetTimeSinceLastVsync(float * pfSecondsSinceLastVsync, uint64_t * pulFrameCounter) {
+bool CVRSystem_017::GetTimeSinceLastVsync(float * pfSecondsSinceLastVsync, uint64_t * pulFrameCounter) {
 	throw "stub";
 }
 
-int32_t CVRSystem::GetD3D9AdapterIndex() {
+int32_t CVRSystem_017::GetD3D9AdapterIndex() {
 	throw "stub";
 }
 
-void CVRSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
+void CVRSystem_017::GetDXGIOutputInfo(int32_t * adapterIndex) {
 #ifdef SUPPORT_DX
 #define VALIDATE(x, msg) if (!(x)) { MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); exit(-1); }
 
@@ -107,58 +107,58 @@ void CVRSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 #endif
 }
 
-void CVRSystem::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, VkInstance_T * pInstance) {
+void CVRSystem_017::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, VkInstance_T * pInstance) {
 	throw "stub";
 }
 
-bool CVRSystem::IsDisplayOnDesktop() {
+bool CVRSystem_017::IsDisplayOnDesktop() {
 	return false; // Always in direct mode
 }
 
-bool CVRSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop) {
+bool CVRSystem_017::SetDisplayVisibility(bool bIsVisibleOnDesktop) {
 	return false; // Always render in direct mode
 }
 
-void CVRSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin eOrigin, float fPredictedSecondsToPhotonsFromNow,
+void CVRSystem_017::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin eOrigin, float fPredictedSecondsToPhotonsFromNow,
 	VR_ARRAY_COUNT(unTrackedDevicePoseArrayCount)TrackedDevicePose_t * pTrackedDevicePoseArray, uint32_t unTrackedDevicePoseArrayCount) {
 	throw "stub";
 }
 
-void CVRSystem::ResetSeatedZeroPose() {
+void CVRSystem_017::ResetSeatedZeroPose() {
 	throw "stub";
 }
 
-HmdMatrix34_t CVRSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
+HmdMatrix34_t CVRSystem_017::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
 	throw "stub";
 }
 
-HmdMatrix34_t CVRSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
+HmdMatrix34_t CVRSystem_017::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
 	throw "stub";
 }
 
-uint32_t CVRSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass,
+uint32_t CVRSystem_017::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass,
 	VR_ARRAY_COUNT(unTrackedDeviceIndexArrayCount)vr::TrackedDeviceIndex_t * punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount,
 	vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex) {
 	throw "stub";
 }
 
-EDeviceActivityLevel CVRSystem::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId) {
+EDeviceActivityLevel CVRSystem_017::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId) {
 	throw "stub";
 }
 
-void CVRSystem::ApplyTransform(TrackedDevicePose_t * pOutputPose, const TrackedDevicePose_t * pTrackedDevicePose, const HmdMatrix34_t * pTransform) {
+void CVRSystem_017::ApplyTransform(TrackedDevicePose_t * pOutputPose, const TrackedDevicePose_t * pTrackedDevicePose, const HmdMatrix34_t * pTransform) {
 	throw "stub";
 }
 
-vr::TrackedDeviceIndex_t CVRSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType) {
+vr::TrackedDeviceIndex_t CVRSystem_017::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType) {
 	throw "stub";
 }
 
-vr::ETrackedControllerRole CVRSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex) {
+vr::ETrackedControllerRole CVRSystem_017::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex) {
 	throw "stub";
 }
 
-ETrackedDeviceClass CVRSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex) {
+ETrackedDeviceClass CVRSystem_017::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex) {
 	if (deviceIndex == k_unTrackedDeviceIndex_Hmd) {
 		return TrackedDeviceClass_HMD;
 	}
@@ -170,7 +170,7 @@ ETrackedDeviceClass CVRSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t de
 	return TrackedDeviceClass_Invalid;
 }
 
-bool CVRSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) {
+bool CVRSystem_017::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) {
 	if (deviceIndex == k_unTrackedDeviceIndex_Hmd) {
 		return true; // TODO
 	}
@@ -187,27 +187,27 @@ bool CVRSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) {
 	return false;
 }
 
-bool CVRSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+bool CVRSystem_017::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
 	throw "stub";
 }
 
-float CVRSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+float CVRSystem_017::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
 	throw "stub";
 }
 
-int32_t CVRSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+int32_t CVRSystem_017::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
 	throw "stub";
 }
 
-uint64_t CVRSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+uint64_t CVRSystem_017::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
 	throw "stub";
 }
 
-HmdMatrix34_t CVRSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+HmdMatrix34_t CVRSystem_017::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
 	throw "stub";
 }
 
-uint32_t CVRSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
+uint32_t CVRSystem_017::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
 	VR_OUT_STRING() char * value, uint32_t bufferSize, ETrackedPropertyError * pErrorL) {
 
 #define PROP(in, out) \
@@ -226,27 +226,27 @@ if(prop == in) { \
 	return 0; // There are tonnes, and we're not implementing all of them.
 }
 
-const char * CVRSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
+const char * CVRSystem_017::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
 	throw "stub";
 }
 
-bool CVRSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
+bool CVRSystem_017::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
 	return false; // TODO
 }
 
-bool CVRSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
+bool CVRSystem_017::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
 	throw "stub";
 }
 
-const char * CVRSystem::GetEventTypeNameFromEnum(EVREventType eType) {
+const char * CVRSystem_017::GetEventTypeNameFromEnum(EVREventType eType) {
 	throw "stub";
 }
 
-HiddenAreaMesh_t CVRSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type) {
+HiddenAreaMesh_t CVRSystem_017::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type) {
 	throw "stub";
 }
 
-bool CVRSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
+bool CVRSystem_017::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
 	if (sizeof(VRControllerState_t) != controllerStateSize)
 		throw string("Bad controller state size - was the host compiled with an older version of OpenVR?");
 
@@ -288,47 +288,47 @@ if(inputState.var && (ovr ## type ## _ ## left || ovr ## type ## _ ## right)) \
 	return true;
 }
 
-bool CVRSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
+bool CVRSystem_017::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
 	vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t * pTrackedDevicePose) {
 	throw "stub";
 }
 
-void CVRSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
+void CVRSystem_017::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
 	throw "stub";
 }
 
-const char * CVRSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId) {
+const char * CVRSystem_017::GetButtonIdNameFromEnum(EVRButtonId eButtonId) {
 	throw "stub";
 }
 
-const char * CVRSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType) {
+const char * CVRSystem_017::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType) {
 	throw "stub";
 }
 
-bool CVRSystem::CaptureInputFocus() {
+bool CVRSystem_017::CaptureInputFocus() {
 	throw "stub";
 }
 
-void CVRSystem::ReleaseInputFocus() {
+void CVRSystem_017::ReleaseInputFocus() {
 	throw "stub";
 }
 
-bool CVRSystem::IsInputFocusCapturedByAnotherProcess() {
+bool CVRSystem_017::IsInputFocusCapturedByAnotherProcess() {
 	return false; // TODO
 }
 
-uint32_t CVRSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {
+uint32_t CVRSystem_017::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {
 	throw "stub";
 }
 
-vr::EVRFirmwareError CVRSystem::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t unDeviceIndex) {
+vr::EVRFirmwareError CVRSystem_017::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t unDeviceIndex) {
 	throw "stub";
 }
 
-void CVRSystem::AcknowledgeQuit_Exiting() {
+void CVRSystem_017::AcknowledgeQuit_Exiting() {
 	throw "stub";
 }
 
-void CVRSystem::AcknowledgeQuit_UserPrompt() {
+void CVRSystem_017::AcknowledgeQuit_UserPrompt() {
 	throw "stub";
 }

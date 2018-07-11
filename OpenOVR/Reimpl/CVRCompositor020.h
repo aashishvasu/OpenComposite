@@ -21,7 +21,7 @@ using namespace IVRCompositor_022;
 
 typedef unsigned int GLuint;
 
-class CVRCompositor : IVRCompositor_022::IVRCompositor {
+class CVRCompositor_022 : IVRCompositor_022::IVRCompositor {
 private:
 	bool leftEyeSubmitted = false, rightEyeSubmitted = false;
 	void SubmitFrames();
@@ -33,8 +33,8 @@ private:
 	Compositor * compositor = NULL;
 
 public:
-	CVRCompositor();
-	~CVRCompositor();
+	CVRCompositor_022();
+	~CVRCompositor_022();
 
 	// Used in CVRSystem
 	ovrTrackingState trackingState;

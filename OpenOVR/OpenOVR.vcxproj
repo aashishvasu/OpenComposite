@@ -172,9 +172,9 @@
     <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
     <ClInclude Include="libovr_wrapper.h" />
-    <ClInclude Include="Reimpl\CVRCompositor.h" />
-    <ClInclude Include="Reimpl\CVRRenderModels.h" />
-    <ClInclude Include="Reimpl\CVRSystem.h" />
+    <ClInclude Include="Reimpl\CVRCompositor020.h" />
+    <ClInclude Include="Reimpl\CVRRenderModels005.h" />
+    <ClInclude Include="Reimpl\CVRSystem017.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="steamvr_abi.h" />
     <ClInclude Include="targetver.h" />
@@ -187,9 +187,9 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="libovr_wrapper.cpp" />
     <ClCompile Include="OpenOVR.cpp" />
-    <ClCompile Include="Reimpl\CVRCompositor.cpp" />
-    <ClCompile Include="Reimpl\CVRRenderModels.cpp" />
-    <ClCompile Include="Reimpl\CVRSystem.cpp" />
+    <ClCompile Include="Reimpl\CVRCompositor020.cpp" />
+    <ClCompile Include="Reimpl\CVRRenderModels005.cpp" />
+    <ClCompile Include="Reimpl\CVRSystem017.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

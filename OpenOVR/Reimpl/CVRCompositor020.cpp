@@ -8,7 +8,7 @@ using namespace OVR;
 
 using namespace std;
 
-#include "CVRCompositor.h"
+#include "CVRCompositor020.h"
 
 #define SESS (*ovr::session)
 #define DESC (ovr::hmdDesc)
@@ -26,7 +26,7 @@ using namespace std;
 #include "OVR_CAPI_Vk.h"
 #endif
 
-void CVRCompositor::SubmitFrames() {
+void CVRCompositor_022::SubmitFrames() {
 	ovrSession &session = *ovr::session;
 	ovrGraphicsLuid &luid = *ovr::luid;
 	ovrHmdDesc &hmdDesc = ovr::hmdDesc;
@@ -79,25 +79,25 @@ void CVRCompositor::SubmitFrames() {
 	frameIndex++;
 }
 
-CVRCompositor::CVRCompositor() {
+CVRCompositor_022::CVRCompositor_022() {
 	memset(&trackingState, 0, sizeof(ovrTrackingState));
 	chains[0] = NULL;
 	chains[1] = NULL;
 }
 
-CVRCompositor::~CVRCompositor() {
+CVRCompositor_022::~CVRCompositor_022() {
 	// TODO
 }
 
-void CVRCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
+void CVRCompositor_022::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
 	throw "stub";
 }
 
-ETrackingUniverseOrigin CVRCompositor::GetTrackingSpace() {
+ETrackingUniverseOrigin CVRCompositor_022::GetTrackingSpace() {
 	throw "stub";
 }
 
-EVRCompositorError CVRCompositor::WaitGetPoses(VR_ARRAY_COUNT(renderPoseArrayCount)TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
+EVRCompositorError CVRCompositor_022::WaitGetPoses(VR_ARRAY_COUNT(renderPoseArrayCount)TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
 	VR_ARRAY_COUNT(gamePoseArrayCount)TrackedDevicePose_t * gamePoseArray, uint32_t gamePoseArrayCount) {
 	//ovr_WaitToBeginFrame(SESS, frameIndex);
 
@@ -111,7 +111,7 @@ EVRCompositorError CVRCompositor::WaitGetPoses(VR_ARRAY_COUNT(renderPoseArrayCou
 	return GetLastPoses(renderPoseArray, renderPoseArrayCount, gamePoseArray, gamePoseArrayCount);
 }
 
-EVRCompositorError CVRCompositor::GetLastPoses(VR_ARRAY_COUNT(renderPoseArrayCount)TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
+EVRCompositorError CVRCompositor_022::GetLastPoses(VR_ARRAY_COUNT(renderPoseArrayCount)TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
 	VR_ARRAY_COUNT(gamePoseArrayCount)TrackedDevicePose_t * gamePoseArray, uint32_t gamePoseArrayCount) {
 
 	if (gamePoseArrayCount != 0)
@@ -150,12 +150,12 @@ EVRCompositorError CVRCompositor::GetLastPoses(VR_ARRAY_COUNT(renderPoseArrayCou
 	return VRCompositorError_None;
 }
 
-EVRCompositorError CVRCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose,
+EVRCompositorError CVRCompositor_022::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose,
 	TrackedDevicePose_t * pOutputGamePose) {
 	throw "stub";
 }
 
-EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
+EVRCompositorError CVRCompositor_022::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
 	if (chains[0] == NULL) {
 		size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
 
@@ -173,7 +173,7 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 		}
 #endif
 		default:
-			throw string("[CVRCompositor::Submit] Unsupported texture type: ") + to_string(texture->eType);
+			throw string("[CVRCompositor_022::Submit] Unsupported texture type: ") + to_string(texture->eType);
 		}
 
 		for (int ieye = 0; ieye < 2; ++ieye) {
@@ -234,150 +234,150 @@ EVRCompositorError CVRCompositor::Submit(EVREye eye, const Texture_t * texture, 
 	return VRCompositorError_None;
 }
 
-void CVRCompositor::ClearLastSubmittedFrame() {
+void CVRCompositor_022::ClearLastSubmittedFrame() {
 	throw "stub";
 }
 
-void CVRCompositor::PostPresentHandoff() {
+void CVRCompositor_022::PostPresentHandoff() {
 	throw "stub";
 }
 
-bool CVRCompositor::GetFrameTiming(Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
+bool CVRCompositor_022::GetFrameTiming(Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
 	throw "stub";
 }
 
-uint32_t CVRCompositor::GetFrameTimings(Compositor_FrameTiming * pTiming, uint32_t nFrames) {
+uint32_t CVRCompositor_022::GetFrameTimings(Compositor_FrameTiming * pTiming, uint32_t nFrames) {
 	throw "stub";
 }
 
-float CVRCompositor::GetFrameTimeRemaining() {
+float CVRCompositor_022::GetFrameTimeRemaining() {
 	throw "stub";
 }
 
-void CVRCompositor::GetCumulativeStats(Compositor_CumulativeStats * pStats, uint32_t nStatsSizeInBytes) {
+void CVRCompositor_022::GetCumulativeStats(Compositor_CumulativeStats * pStats, uint32_t nStatsSizeInBytes) {
 	throw "stub";
 }
 
-void CVRCompositor::FadeToColor(float fSeconds, float fRed, float fGreen, float fBlue, float fAlpha, bool bBackground) {
+void CVRCompositor_022::FadeToColor(float fSeconds, float fRed, float fGreen, float fBlue, float fAlpha, bool bBackground) {
 	throw "stub";
 }
 
-HmdColor_t CVRCompositor::GetCurrentFadeColor(bool bBackground) {
+HmdColor_t CVRCompositor_022::GetCurrentFadeColor(bool bBackground) {
 	throw "stub";
 }
 
-void CVRCompositor::FadeGrid(float fSeconds, bool bFadeIn) {
+void CVRCompositor_022::FadeGrid(float fSeconds, bool bFadeIn) {
 	throw "stub";
 }
 
-float CVRCompositor::GetCurrentGridAlpha() {
+float CVRCompositor_022::GetCurrentGridAlpha() {
 	throw "stub";
 }
 
-EVRCompositorError CVRCompositor::SetSkyboxOverride(VR_ARRAY_COUNT(unTextureCount) const Texture_t * pTextures, uint32_t unTextureCount) {
+EVRCompositorError CVRCompositor_022::SetSkyboxOverride(VR_ARRAY_COUNT(unTextureCount) const Texture_t * pTextures, uint32_t unTextureCount) {
 	throw "stub";
 }
 
-void CVRCompositor::ClearSkyboxOverride() {
+void CVRCompositor_022::ClearSkyboxOverride() {
 	throw "stub";
 }
 
-void CVRCompositor::CompositorBringToFront() {
+void CVRCompositor_022::CompositorBringToFront() {
 	throw "stub";
 }
 
-void CVRCompositor::CompositorGoToBack() {
+void CVRCompositor_022::CompositorGoToBack() {
 	throw "stub";
 }
 
-void CVRCompositor::CompositorQuit() {
+void CVRCompositor_022::CompositorQuit() {
 	throw "stub";
 }
 
-bool CVRCompositor::IsFullscreen() {
+bool CVRCompositor_022::IsFullscreen() {
 	throw "stub";
 }
 
-uint32_t CVRCompositor::GetCurrentSceneFocusProcess() {
+uint32_t CVRCompositor_022::GetCurrentSceneFocusProcess() {
 	throw "stub";
 }
 
-uint32_t CVRCompositor::GetLastFrameRenderer() {
+uint32_t CVRCompositor_022::GetLastFrameRenderer() {
 	throw "stub";
 }
 
-bool CVRCompositor::CanRenderScene() {
+bool CVRCompositor_022::CanRenderScene() {
 	throw "stub";
 }
 
-void CVRCompositor::ShowMirrorWindow() {
+void CVRCompositor_022::ShowMirrorWindow() {
 	throw "stub";
 }
 
-void CVRCompositor::HideMirrorWindow() {
+void CVRCompositor_022::HideMirrorWindow() {
 	throw "stub";
 }
 
-bool CVRCompositor::IsMirrorWindowVisible() {
+bool CVRCompositor_022::IsMirrorWindowVisible() {
 	throw "stub";
 }
 
-void CVRCompositor::CompositorDumpImages() {
+void CVRCompositor_022::CompositorDumpImages() {
 	throw "stub";
 }
 
-bool CVRCompositor::ShouldAppRenderWithLowResources() {
+bool CVRCompositor_022::ShouldAppRenderWithLowResources() {
 	throw "stub";
 }
 
-void CVRCompositor::ForceInterleavedReprojectionOn(bool bOverride) {
+void CVRCompositor_022::ForceInterleavedReprojectionOn(bool bOverride) {
 	throw "stub";
 }
 
-void CVRCompositor::ForceReconnectProcess() {
+void CVRCompositor_022::ForceReconnectProcess() {
 	throw "stub";
 }
 
-void CVRCompositor::SuspendRendering(bool bSuspend) {
+void CVRCompositor_022::SuspendRendering(bool bSuspend) {
 	throw "stub";
 }
 
-EVRCompositorError CVRCompositor::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
+EVRCompositorError CVRCompositor_022::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
 	throw "stub";
 }
 
-void CVRCompositor::ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) {
+void CVRCompositor_022::ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) {
 	throw "stub";
 }
 
-EVRCompositorError CVRCompositor::GetMirrorTextureGL(EVREye eEye, glUInt_t * pglTextureId, glSharedTextureHandle_t * pglSharedTextureHandle) {
+EVRCompositorError CVRCompositor_022::GetMirrorTextureGL(EVREye eEye, glUInt_t * pglTextureId, glSharedTextureHandle_t * pglSharedTextureHandle) {
 	throw "stub";
 }
 
-bool CVRCompositor::ReleaseSharedGLTexture(glUInt_t glTextureId, glSharedTextureHandle_t glSharedTextureHandle) {
+bool CVRCompositor_022::ReleaseSharedGLTexture(glUInt_t glTextureId, glSharedTextureHandle_t glSharedTextureHandle) {
 	throw "stub";
 }
 
-void CVRCompositor::LockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
+void CVRCompositor_022::LockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
 	throw "stub";
 }
 
-void CVRCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
+void CVRCompositor_022::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
 	throw "stub";
 }
 
-uint32_t CVRCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char * pchValue, uint32_t unBufferSize) {
+uint32_t CVRCompositor_022::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char * pchValue, uint32_t unBufferSize) {
 	throw "stub";
 }
 
-uint32_t CVRCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T * pPhysicalDevice, VR_OUT_STRING() char * pchValue, uint32_t unBufferSize) {
+uint32_t CVRCompositor_022::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T * pPhysicalDevice, VR_OUT_STRING() char * pchValue, uint32_t unBufferSize) {
 	throw "stub";
 }
 
-void CVRCompositor::SetExplicitTimingMode(EVRCompositorTimingMode eTimingMode) {
+void CVRCompositor_022::SetExplicitTimingMode(EVRCompositorTimingMode eTimingMode) {
 	throw "stub";
 }
 
-EVRCompositorError CVRCompositor::SubmitExplicitTimingData() {
+EVRCompositorError CVRCompositor_022::SubmitExplicitTimingData() {
 	throw "stub";
 }

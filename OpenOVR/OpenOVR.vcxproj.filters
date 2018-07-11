@@ -39,20 +39,23 @@
     <ClInclude Include="steamvr_abi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRSystem.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="convert.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRRenderModels.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
-    <ClInclude Include="Reimpl\CVRCompositor.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="Compositor\compositor.h">
       <Filter>Header Files\Compositor</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVRSystem017.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVRSystem015.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVRCompositor020.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVRRenderModels005.h">
+      <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -68,17 +71,8 @@
     <ClCompile Include="libovr_wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRSystem.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="convert.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Reimpl\CVRRenderModels.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
-    <ClCompile Include="Reimpl\CVRCompositor.cpp">
-      <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Compositor\dx12compositor.cpp">
       <Filter>Source Files\Compositor</Filter>
@@ -88,6 +82,15 @@
     </ClCompile>
     <ClCompile Include="Compositor\glcompositor.cpp">
       <Filter>Source Files\Compositor</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRSystem017.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRCompositor020.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRRenderModels005.cpp">
+      <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

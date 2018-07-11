@@ -3,9 +3,9 @@
 #include "steamvr_abi.h"
 #include "libovr_wrapper.h"
 
-#include "Reimpl/CVRSystem.h"
-#include "Reimpl/CVRRenderModels.h"
-#include "Reimpl/CVRCompositor.h"
+#include "Reimpl/CVRSystem017.h"
+#include "Reimpl/CVRRenderModels005.h"
+#include "Reimpl/CVRCompositor020.h"
 
 using namespace std;
 
@@ -29,7 +29,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 static bool running;
 static uint32_t current_init_token = 1;
 
-#define ERR(msg) throw string(msg)
+#define ERR(msg) { \
+	string str = msg; \
+	printf("OpenOVR DLLMain ERROR: %s\n", str.c_str()); \
+	throw str; \
+}
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
 	// Notes on the interface macro:
@@ -42,9 +46,9 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 #define INTERFACE(version, name) \
 	/* Just a reminder 0==false and strcmp returns 0 if the strings match */ \
 	if (!strcmp(vr::IVR ## name ## _ ## version :: IVR ## name ## _Version, interfaceVersion)) { \
-		static CVR ## name *val = nullptr; \
+		static CVR ## name ## _ ## version *val = nullptr; \
 		if (!val) \
-			val = new CVR ## name(); \
+			val = new CVR ## name ## _ ## version(); \
 		return val; \
 	}
 

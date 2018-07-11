@@ -3,7 +3,7 @@
 
 using namespace vr;
 
-class CVRSystem : public IVRSystem_017::IVRSystem {
+class CVRSystem_017 : public IVRSystem_017::IVRSystem {
 	// Copied from IVRSystem, because MSVC made me.
 
 public:
