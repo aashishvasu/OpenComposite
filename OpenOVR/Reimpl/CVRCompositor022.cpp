@@ -8,7 +8,7 @@ using namespace OVR;
 
 using namespace std;
 
-#include "CVRCompositor020.h"
+#include "CVRCompositor022.h"
 
 #define SESS (*ovr::session)
 #define DESC (ovr::hmdDesc)

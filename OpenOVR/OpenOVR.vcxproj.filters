@@ -111,10 +111,10 @@
     <ClInclude Include="OpenVR\interfaces\vrtypes.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRCompositor020.h">
+    <ClInclude Include="Reimpl\CVRRenderModels005.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRRenderModels005.h">
+    <ClInclude Include="Reimpl\CVRCompositor022.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
   </ItemGroup>
@@ -146,7 +146,7 @@
     <ClCompile Include="Reimpl\CVRSystem017.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRCompositor020.cpp">
+    <ClCompile Include="Reimpl\CVRCompositor022.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp">
