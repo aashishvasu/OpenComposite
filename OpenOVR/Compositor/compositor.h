@@ -2,6 +2,7 @@
 
 #include "OpenVR/interfaces/vrtypes.h"
 #include "d3dx12.h"
+#include <d3d11.h>
 #include <wrl/client.h>
 
 #include <Extras/OVR_Math.h>
@@ -49,6 +50,28 @@ private:
 
 	ComPtr<ID3D12DescriptorHeap> srvHeap = NULL;
 	UINT m_rtvDescriptorSize;
+};
+
+class DX11Compositor : public Compositor {
+public:
+	DX11Compositor(ID3D11Texture2D* td, OVR::Sizei bufferSize, ovrTextureSwapChain *chains);
+
+	// Override
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags);
+
+private:
+	void ThrowIfFailed(HRESULT test);
+
+	ID3D11Device *device;
+	ID3D11DeviceContext *context;
+
+	ID3D11InputLayout *pLayout;
+	ID3D11VertexShader *pVS;
+	ID3D11PixelShader *pPS;
+	ID3D11Buffer *pVBuffer;
+
+	std::vector<ID3D11RenderTargetView*> renderTargets[2];
 };
 
 class GLCompositor : public Compositor {
