@@ -120,6 +120,9 @@
     <ClInclude Include="Reimpl\BaseCompositor.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="Reimpl\CVRCompositor020.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -156,6 +159,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRCompositor020.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>

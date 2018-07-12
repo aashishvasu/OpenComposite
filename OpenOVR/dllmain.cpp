@@ -5,6 +5,7 @@
 
 #include "Reimpl/CVRSystem017.h"
 #include "Reimpl/CVRRenderModels005.h"
+#include "Reimpl/CVRCompositor020.h"
 #include "Reimpl/CVRCompositor022.h"
 
 using namespace std;
@@ -54,6 +55,7 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 
 	INTERFACE(017, System);
 	INTERFACE(005, RenderModels);
+	INTERFACE(020, Compositor);
 	INTERFACE(022, Compositor);
 
 	ERR("unknown/unsupported interface " + string(interfaceVersion));
