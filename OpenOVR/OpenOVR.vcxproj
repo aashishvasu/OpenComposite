@@ -192,6 +192,7 @@
     <ClInclude Include="OpenVR\interfaces\vrannotation.h" />
     <ClInclude Include="OpenVR\interfaces\vrtypes.h" />
     <ClInclude Include="Reimpl\BaseCompositor.h" />
+    <ClInclude Include="Reimpl\BaseSystem.h" />
     <ClInclude Include="Reimpl\CVRCompositor020.h" />
     <ClInclude Include="Reimpl\CVRCompositor022.h" />
     <ClInclude Include="Reimpl\CVRRenderModels005.h" />
@@ -209,6 +210,7 @@
     <ClCompile Include="libovr_wrapper.cpp" />
     <ClCompile Include="OpenOVR.cpp" />
     <ClCompile Include="Reimpl\BaseCompositor.cpp" />
+    <ClCompile Include="Reimpl\BaseSystem.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor020.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor022.cpp" />
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp" />
