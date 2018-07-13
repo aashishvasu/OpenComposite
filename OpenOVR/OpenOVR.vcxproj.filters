@@ -126,6 +126,12 @@
     <ClInclude Include="Reimpl\BaseSystem.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="Reimpl\BaseOverlay.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVROverlay017.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -171,6 +177,12 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseSystem.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\BaseOverlay.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVROverlay017.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
