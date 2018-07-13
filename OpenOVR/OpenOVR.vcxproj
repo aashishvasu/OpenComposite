@@ -193,11 +193,13 @@
     <ClInclude Include="OpenVR\interfaces\vrtypes.h" />
     <ClInclude Include="Reimpl\BaseCompositor.h" />
     <ClInclude Include="Reimpl\BaseOverlay.h" />
+    <ClInclude Include="Reimpl\BaseSettings.h" />
     <ClInclude Include="Reimpl\BaseSystem.h" />
     <ClInclude Include="Reimpl\CVRCompositor020.h" />
     <ClInclude Include="Reimpl\CVRCompositor022.h" />
     <ClInclude Include="Reimpl\CVROverlay017.h" />
     <ClInclude Include="Reimpl\CVRRenderModels005.h" />
+    <ClInclude Include="Reimpl\CVRSettings002.h" />
     <ClInclude Include="Reimpl\CVRSystem015.h" />
     <ClInclude Include="Reimpl\CVRSystem017.h" />
     <ClInclude Include="stdafx.h" />
@@ -214,11 +216,13 @@
     <ClCompile Include="OpenOVR.cpp" />
     <ClCompile Include="Reimpl\BaseCompositor.cpp" />
     <ClCompile Include="Reimpl\BaseOverlay.cpp" />
+    <ClCompile Include="Reimpl\BaseSettings.cpp" />
     <ClCompile Include="Reimpl\BaseSystem.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor020.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor022.cpp" />
     <ClCompile Include="Reimpl\CVROverlay017.cpp" />
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp" />
+    <ClCompile Include="Reimpl\CVRSettings002.cpp" />
     <ClCompile Include="Reimpl\CVRSystem015.cpp" />
     <ClCompile Include="Reimpl\CVRSystem017.cpp" />
     <ClCompile Include="stdafx.cpp">
