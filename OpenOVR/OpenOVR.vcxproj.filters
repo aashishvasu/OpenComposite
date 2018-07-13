@@ -161,6 +161,9 @@
     <ClCompile Include="Reimpl\CVRCompositor022.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
+    <ClCompile Include="Reimpl\CVRSystem015.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>

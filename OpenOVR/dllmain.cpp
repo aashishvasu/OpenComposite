@@ -3,6 +3,7 @@
 #include "steamvr_abi.h"
 #include "libovr_wrapper.h"
 
+#include "Reimpl/CVRSystem015.h"
 #include "Reimpl/CVRSystem017.h"
 #include "Reimpl/CVRRenderModels005.h"
 #include "Reimpl/CVRCompositor020.h"
@@ -54,6 +55,7 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	}
 
 	INTERFACE(017, System);
+	INTERFACE(015, System);
 	INTERFACE(005, RenderModels);
 	INTERFACE(020, Compositor);
 	INTERFACE(022, Compositor);
