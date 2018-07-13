@@ -30,6 +30,12 @@ typedef int ovr_enum_t;
 #include "OVR_CAPI_Vk.h"
 #endif
 
+#define STUBBED() { \
+	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
+	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
+	throw "stub"; \
+}
+
 void BaseCompositor::SubmitFrames() {
 	ovrSession &session = *ovr::session;
 	ovrGraphicsLuid &luid = *ovr::luid;
@@ -94,11 +100,11 @@ BaseCompositor::~BaseCompositor() {
 }
 
 void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
-	throw "stub";
+	STUBBED();
 }
 
 ETrackingUniverseOrigin BaseCompositor::GetTrackingSpace() {
-	throw "stub";
+	STUBBED();
 }
 
 ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
@@ -156,7 +162,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 
 ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose,
 	TrackedDevicePose_t * pOutputGamePose) {
-	throw "stub";
+	STUBBED();
 }
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
@@ -243,149 +249,149 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 }
 
 void BaseCompositor::ClearLastSubmittedFrame() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::PostPresentHandoff() {
-	throw "stub";
+	STUBBED();
 }
 
 //bool BaseCompositor::GetFrameTiming(Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
-//	throw "stub";
+//	STUBBED();
 //}
 
 //uint32_t BaseCompositor::GetFrameTimings(Compositor_FrameTiming * pTiming, uint32_t nFrames) {
-//	throw "stub";
+//	STUBBED();
 //}
 
 float BaseCompositor::GetFrameTimeRemaining() {
-	throw "stub";
+	STUBBED();
 }
 
 //void BaseCompositor::GetCumulativeStats(Compositor_CumulativeStats * pStats, uint32_t nStatsSizeInBytes) {
-//	throw "stub";
+//	STUBBED();
 //}
 
 void BaseCompositor::FadeToColor(float fSeconds, float fRed, float fGreen, float fBlue, float fAlpha, bool bBackground) {
-	throw "stub";
+	STUBBED();
 }
 
 HmdColor_t BaseCompositor::GetCurrentFadeColor(bool bBackground) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::FadeGrid(float fSeconds, bool bFadeIn) {
-	throw "stub";
+	STUBBED();
 }
 
 float BaseCompositor::GetCurrentGridAlpha() {
-	throw "stub";
+	STUBBED();
 }
 
 ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t * pTextures, uint32_t unTextureCount) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::ClearSkyboxOverride() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::CompositorBringToFront() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::CompositorGoToBack() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::CompositorQuit() {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseCompositor::IsFullscreen() {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseCompositor::GetCurrentSceneFocusProcess() {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseCompositor::GetLastFrameRenderer() {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseCompositor::CanRenderScene() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::ShowMirrorWindow() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::HideMirrorWindow() {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseCompositor::IsMirrorWindowVisible() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::CompositorDumpImages() {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseCompositor::ShouldAppRenderWithLowResources() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::ForceInterleavedReprojectionOn(bool bOverride) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::ForceReconnectProcess() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::SuspendRendering(bool bSuspend) {
-	throw "stub";
+	STUBBED();
 }
 
 ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) {
-	throw "stub";
+	STUBBED();
 }
 
 ovr_enum_t BaseCompositor::GetMirrorTextureGL(EVREye eEye, glUInt_t * pglTextureId, glSharedTextureHandle_t * pglSharedTextureHandle) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseCompositor::ReleaseSharedGLTexture(glUInt_t glTextureId, glSharedTextureHandle_t glSharedTextureHandle) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::LockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSharedTextureHandle) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char * pchValue, uint32_t unBufferSize) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T * pPhysicalDevice, char * pchValue, uint32_t unBufferSize) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseCompositor::SetExplicitTimingMode(ovr_enum_t eTimingMode) {
-	throw "stub";
+	STUBBED();
 }
 
 ovr_enum_t BaseCompositor::SubmitExplicitTimingData() {
-	throw "stub";
+	STUBBED();
 }

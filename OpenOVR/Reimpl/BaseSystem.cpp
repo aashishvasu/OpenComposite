@@ -14,6 +14,12 @@
 #pragma comment(lib, "dxgi.lib")
 #endif
 
+#define STUBBED() { \
+	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
+	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
+	throw "stub"; \
+}
+
 using namespace std;
 
 void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
@@ -39,7 +45,7 @@ HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfa
 }
 
 void BaseSystem::GetProjectionRaw(EVREye eEye, float * pfLeft, float * pfRight, float * pfTop, float * pfBottom) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * pDistortionCoordinates) {
@@ -61,11 +67,11 @@ HmdMatrix34_t BaseSystem::GetEyeToHeadTransform(EVREye ovr_eye) {
 }
 
 bool BaseSystem::GetTimeSinceLastVsync(float * pfSecondsSinceLastVsync, uint64_t * pulFrameCounter) {
-	throw "stub";
+	STUBBED();
 }
 
 int32_t BaseSystem::GetD3D9AdapterIndex() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
@@ -109,7 +115,7 @@ void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 }
 
 void BaseSystem::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, VkInstance_T * pInstance) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseSystem::IsDisplayOnDesktop() {
@@ -122,41 +128,41 @@ bool BaseSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop) {
 
 void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin eOrigin, float fPredictedSecondsToPhotonsFromNow,
 	TrackedDevicePose_t * pTrackedDevicePoseArray, uint32_t unTrackedDevicePoseArrayCount) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseSystem::ResetSeatedZeroPose() {
-	throw "stub";
+	STUBBED();
 }
 
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
-	throw "stub";
+	STUBBED();
 }
 
 HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass,
 	vr::TrackedDeviceIndex_t * punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount,
 	vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex) {
-	throw "stub";
+	STUBBED();
 }
 
 EDeviceActivityLevel BaseSystem::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseSystem::ApplyTransform(TrackedDevicePose_t * pOutputPose, const TrackedDevicePose_t * pTrackedDevicePose, const HmdMatrix34_t * pTransform) {
-	throw "stub";
+	STUBBED();
 }
 
 vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType) {
-	throw "stub";
+	STUBBED();
 }
 
 vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex) {
-	throw "stub";
+	STUBBED();
 }
 
 ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex) {
@@ -189,23 +195,23 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) 
 }
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	throw "stub";
+	STUBBED();
 }
 
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	throw "stub";
+	STUBBED();
 }
 
 int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	throw "stub";
+	STUBBED();
 }
 
 uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	throw "stub";
+	STUBBED();
 }
 
 HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
@@ -228,7 +234,7 @@ if(prop == in) { \
 }
 
 const char * BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
@@ -236,15 +242,15 @@ bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
 }
 
 bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
-	throw "stub";
+	STUBBED();
 }
 
 const char * BaseSystem::GetEventTypeNameFromEnum(EVREventType eType) {
-	throw "stub";
+	STUBBED();
 }
 
 HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
@@ -291,27 +297,27 @@ if(inputState.var && (ovr ## type ## _ ## left || ovr ## type ## _ ## right)) \
 
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
 	vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t * pTrackedDevicePose) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
-	throw "stub";
+	STUBBED();
 }
 
 const char * BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId) {
-	throw "stub";
+	STUBBED();
 }
 
 const char * BaseSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseSystem::CaptureInputFocus() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseSystem::ReleaseInputFocus() {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseSystem::IsInputFocusCapturedByAnotherProcess() {
@@ -319,17 +325,17 @@ bool BaseSystem::IsInputFocusCapturedByAnotherProcess() {
 }
 
 uint32_t BaseSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {
-	throw "stub";
+	STUBBED();
 }
 
 vr::EVRFirmwareError BaseSystem::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t unDeviceIndex) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseSystem::AcknowledgeQuit_Exiting() {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseSystem::AcknowledgeQuit_UserPrompt() {
-	throw "stub";
+	STUBBED();
 }

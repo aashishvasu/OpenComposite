@@ -31,10 +31,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 static bool running;
 static uint32_t current_init_token = 1;
 
-#define ERR(msg) { \
-	string str = msg; \
-	printf("OpenOVR DLLMain ERROR: %s\n", str.c_str()); \
-	throw str; \
+void ERR(string msg) {
+	char buff[4096];
+	snprintf(buff, sizeof(buff), "OpenOVR DLLMain ERROR: %s", msg.c_str());
+	MessageBoxA(NULL, buff, "OpenOVR Error", MB_OK);
+	throw msg;
 }
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
