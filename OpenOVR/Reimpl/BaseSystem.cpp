@@ -44,8 +44,28 @@ HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfa
 	return O2S_m4(matrix);
 }
 
-void BaseSystem::GetProjectionRaw(EVREye eEye, float * pfLeft, float * pfRight, float * pfTop, float * pfBottom) {
-	STUBBED();
+void BaseSystem::GetProjectionRaw(EVREye eye, float * pfLeft, float * pfRight, float * pfTop, float * pfBottom) {
+	/**
+	* With a straight passthrough:
+	*
+	* SteamVR Left:  -1.110925, 0.889498, -0.964926, 0.715264
+	* SteamVR Right: -1.110925, 0.889498, -0.715264, 0.964926
+	* OpenOVR Left:  0.889498, 1.110925, 0.964926, 0.715264
+	* OpenOVR Right: 0.889498, 1.110925, 0.715264, 0.964926
+	*
+	* Via:
+	*   char buff[1024];
+	*   snprintf(buff, sizeof(buff), "eye=%d %f, %f, %f, %f", eye, *pfTop, *pfBottom, *pfLeft, *pfRight);
+	*   OOVR_LOG(buff);
+	*
+	* This suggests that SteamVR negates the top and left values. We should do that too, for obvious reasons.
+	*/
+
+	ovrFovPort fov = ovr::hmdDesc.DefaultEyeFov[S2O_eye(eye)];
+	*pfTop = -fov.UpTan; // negate
+	*pfBottom = fov.DownTan;
+	*pfLeft = -fov.LeftTan; // negate
+	*pfRight = fov.RightTan;
 }
 
 bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * pDistortionCoordinates) {
@@ -207,6 +227,13 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 }
 
 uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	if (prop == Prop_CurrentUniverseId_Uint64) {
+		return 1; // Oculus Rift's universe
+	}
+
+	char msg[1024];
+	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
+	MessageBoxA(NULL, msg, "GetUint64TrackedDeviceProperty", MB_OK);
 	STUBBED();
 }
 
@@ -225,10 +252,18 @@ if(prop == in) { \
 	return strlen(out) + 1; \
 }
 
+	char str[1024];
+	snprintf(str, sizeof(str), "(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
+	OOVR_LOG(str);
+
 	PROP(Prop_TrackingSystemName_String, "Constellation");
 	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
 
+	PROP(Prop_ManufacturerName_String, "Oculus");
+
 #undef PROP
+
+	OOVR_LOG("WARN: This property (previous) was not found");
 
 	return 0; // There are tonnes, and we're not implementing all of them.
 }
