@@ -100,7 +100,12 @@ BaseCompositor::~BaseCompositor() {
 }
 
 void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
-	STUBBED();
+	ovrTrackingOrigin origin = ovrTrackingOrigin_FloorLevel;
+	if (eOrigin == TrackingUniverseSeated) {
+		origin = ovrTrackingOrigin_EyeLevel;
+	}
+
+	ovr_SetTrackingOriginType(SESS, origin);
 }
 
 ETrackingUniverseOrigin BaseCompositor::GetTrackingSpace() {
