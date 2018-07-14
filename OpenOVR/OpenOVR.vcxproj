@@ -172,6 +172,7 @@
     <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
     <ClInclude Include="libovr_wrapper.h" />
+    <ClInclude Include="logging.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h" />
     <ClInclude Include="OpenVR\interfaces\IVRChaperoneSetup_005.h" />
     <ClInclude Include="OpenVR\interfaces\IVRChaperone_003.h" />
@@ -213,6 +214,7 @@
     <ClCompile Include="convert.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="libovr_wrapper.cpp" />
+    <ClCompile Include="logging.cpp" />
     <ClCompile Include="OpenOVR.cpp" />
     <ClCompile Include="Reimpl\BaseCompositor.cpp" />
     <ClCompile Include="Reimpl\BaseOverlay.cpp" />
