@@ -6,6 +6,10 @@ using namespace vr;
 class BaseSystem {
 	// Copied from IVRSystem, because MSVC made me.
 
+private:
+	static const TrackedDeviceIndex_t leftHandIndex = 1;
+	static const TrackedDeviceIndex_t rightHandIndex = 2;
+
 public:
 
 	// ------------------------------------

@@ -6,9 +6,6 @@
 
 #include <string>
 
-#define LEFT_HAND_DEVICE_INDEX 1
-#define RIGHT_HAND_DEVICE_INDEX 2
-
 #ifdef SUPPORT_DX
 #include <dxgi.h> // for GetDefaultAdapterLuid
 #pragma comment(lib, "dxgi.lib")
@@ -178,6 +175,12 @@ void BaseSystem::ApplyTransform(TrackedDevicePose_t * pOutputPose, const Tracked
 }
 
 vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType) {
+	if (unDeviceType == TrackedControllerRole_LeftHand) {
+		return leftHandIndex;
+	}
+	else if (unDeviceType == TrackedControllerRole_RightHand) {
+		return rightHandIndex;
+	}
 	STUBBED();
 }
 
@@ -190,7 +193,7 @@ ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t d
 		return TrackedDeviceClass_HMD;
 	}
 
-	if (deviceIndex == LEFT_HAND_DEVICE_INDEX || deviceIndex == RIGHT_HAND_DEVICE_INDEX) {
+	if (deviceIndex == leftHandIndex || deviceIndex == rightHandIndex) {
 		return TrackedDeviceClass_Controller;
 	}
 
@@ -202,11 +205,11 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) 
 		return true; // TODO
 	}
 
-	if (deviceIndex == LEFT_HAND_DEVICE_INDEX) {
+	if (deviceIndex == leftHandIndex) {
 		unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 		return connected && ovrControllerType_LTouch != 0;
 	}
-	else if (deviceIndex == RIGHT_HAND_DEVICE_INDEX) {
+	else if (deviceIndex == rightHandIndex) {
 		unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 		return connected && ovrControllerType_RTouch != 0;
 	}
@@ -215,6 +218,30 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) 
 }
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	switch (unDeviceIndex) {
+
+		// Motion controllers
+	case leftHandIndex:
+	case rightHandIndex:
+		switch (prop) {
+		case Prop_DeviceProvidesBatteryStatus_Bool:
+			return true;
+		}
+		break;
+
+		// HMD
+	case k_unTrackedDeviceIndex_Hmd:
+		switch (prop) {
+		case Prop_DeviceProvidesBatteryStatus_Bool:
+			return false;
+		}
+		break;
+	}
+
+	char msg[1024];
+	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
+	OOVR_LOG(msg);
+
 	STUBBED();
 }
 
@@ -223,6 +250,31 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 }
 
 int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	// For input mappings, see:
+	// https://github.com/jMonkeyEngine/jmonkeyengine/blob/826908b0422d96189ea9827b05ced50d77aadf09/jme3-vr/src/main/java/com/jme3/input/vr/openvr/OpenVRInput.java#L29
+	// The rest of the file also contains quite a bit of information about input.
+
+	if (unDeviceIndex == leftHandIndex || unDeviceIndex == rightHandIndex) {
+		switch (prop) {
+		case Prop_Axis0Type_Int32:
+			// TODO find out which of these SteamVR returns and do likewise
+			//return k_eControllerAxis_TrackPad;
+			return k_eControllerAxis_Joystick;
+
+		case Prop_Axis1Type_Int32:
+			return k_eControllerAxis_Trigger;
+
+		case Prop_Axis2Type_Int32:
+		case Prop_Axis3Type_Int32:
+		case Prop_Axis4Type_Int32:
+			return k_eControllerAxis_None;
+		}
+	}
+
+	char msg[1024];
+	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
+	OOVR_LOG(msg);
+
 	STUBBED();
 }
 
@@ -294,10 +346,10 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 
 	ovrHandType id = ovrHand_Count;
 
-	if (controllerDeviceIndex == LEFT_HAND_DEVICE_INDEX) {
+	if (controllerDeviceIndex == leftHandIndex) {
 		id = ovrHand_Left;
 	}
-	else if (controllerDeviceIndex == RIGHT_HAND_DEVICE_INDEX) {
+	else if (controllerDeviceIndex == rightHandIndex) {
 		id = ovrHand_Right;
 	}
 
