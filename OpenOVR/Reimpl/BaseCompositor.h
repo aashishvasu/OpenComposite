@@ -28,6 +28,8 @@ private:
 
 	Compositor * compositor = NULL;
 
+	ovrLayerEyeFov layer;
+
 public:
 	typedef int ovr_enum_t;
 

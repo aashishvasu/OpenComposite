@@ -191,7 +191,7 @@ DX11Compositor::DX11Compositor(ID3D11Texture2D *initial, OVR::Sizei size, ovrTex
 }
 
 void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-	vr::EVRSubmitFlags submitFlags) {
+	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
 
 	ovrTextureSwapChain tex = chains[eye];
 

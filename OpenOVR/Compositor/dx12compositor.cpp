@@ -338,7 +338,9 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 	}
 }
 
-void DX12Compositor::Invoke(ovrEyeType eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
+void DX12Compositor::Invoke(ovrEyeType eye, const Texture_t * texture, const VRTextureBounds_t * bounds,
+	EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
+
 	// TODO without this, the eye images are reversed. What is the root cause of this?
 	// TODO or is this a misinterpretation?
 	eye = (ovrEyeType) (1 - eye);

@@ -46,7 +46,7 @@ unsigned int GLCompositor::GetFlags() {
 }
 
 void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-	vr::EVRSubmitFlags submitFlags) {
+	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
 
 	ovrTextureSwapChain tex = chains[eye];
 

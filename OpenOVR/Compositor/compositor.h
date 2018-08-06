@@ -17,7 +17,7 @@ typedef unsigned int GLuint;
 class Compositor {
 public:
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags) = 0;
+		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;
 
 	virtual unsigned int GetFlags() { return 0; }
 protected:
@@ -31,7 +31,7 @@ public:
 
 	// Override
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags);
+		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 
 private:
 	ComPtr<ID3D12Device> device;
@@ -60,7 +60,7 @@ public:
 
 	// Override
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags);
+		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 
 private:
 	void ThrowIfFailed(HRESULT test);
@@ -84,7 +84,7 @@ public:
 
 	// Override
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags);
+		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 
 private:
 	GLuint fboId;

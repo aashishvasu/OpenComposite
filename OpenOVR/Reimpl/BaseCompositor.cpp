@@ -68,19 +68,17 @@ void BaseCompositor::SubmitFrames() {
 
 	// Do distortion rendering, Present and flush/sync
 
-	ovrLayerEyeFov ld;
-	ld.Header.Type = ovrLayerType_EyeFov;
-	ld.Header.Flags = compositor->GetFlags();
+	layer.Header.Type = ovrLayerType_EyeFov;
+	layer.Header.Flags = compositor->GetFlags();
 
 	for (int eye = 0; eye < 2; ++eye) {
-		ld.ColorTexture[eye] = chains[eye];
-		ld.Viewport[eye] = Recti(size);
-		ld.Fov[eye] = hmdDesc.DefaultEyeFov[eye];
-		ld.RenderPose[eye] = EyeRenderPose[eye];
-		ld.SensorSampleTime = sensorSampleTime;
+		layer.ColorTexture[eye] = chains[eye];
+		layer.Fov[eye] = hmdDesc.DefaultEyeFov[eye];
+		layer.RenderPose[eye] = EyeRenderPose[eye];
+		layer.SensorSampleTime = sensorSampleTime;
 	}
 
-	ovrLayerHeader* layers = &ld.Header;
+	ovrLayerHeader* layers = &layer.Header;
 	ovrResult result = ovr_SubmitFrame(session, frameIndex, nullptr, &layers, 1);
 	// exit the rendering loop if submit returns an error, will retry on ovrError_DisplayLost
 	if (!OVR_SUCCESS(result))
@@ -211,9 +209,11 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 	// TODO make sure we don't start on the second eye.
 	//if (sessionStatus.IsVisible) return;
 
+	layer.Viewport[S2O_eye(eye)] = Recti(size);
+
 	ovrTextureSwapChain tex = chains[S2O_eye(eye)];
 
-	compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags);
+	compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags, layer);
 
 	ovr_CommitTextureSwapChain(SESS, tex);
 
