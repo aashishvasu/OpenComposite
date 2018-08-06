@@ -70,7 +70,7 @@ void BaseCompositor::SubmitFrames() {
 
 	ovrLayerEyeFov ld;
 	ld.Header.Type = ovrLayerType_EyeFov;
-	ld.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;   // Because OpenGL.
+	ld.Header.Flags = compositor->GetFlags();
 
 	for (int eye = 0; eye < 2; ++eye) {
 		ld.ColorTexture[eye] = chains[eye];

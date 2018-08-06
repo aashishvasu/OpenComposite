@@ -18,6 +18,8 @@ class Compositor {
 public:
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags) = 0;
+
+	virtual unsigned int GetFlags() { return 0; }
 protected:
 	ovrTextureSwapChain *chains;
 	OVR::Sizei singleScreenSize;
@@ -77,6 +79,8 @@ private:
 class GLCompositor : public Compositor {
 public:
 	GLCompositor(ovrTextureSwapChain *chains, OVR::Sizei size);
+
+	unsigned int GetFlags() override;
 
 	// Override
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,

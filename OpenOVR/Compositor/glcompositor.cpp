@@ -41,6 +41,10 @@ GLCompositor::GLCompositor(ovrTextureSwapChain *chains, OVR::Sizei size) {
 	}
 }
 
+unsigned int GLCompositor::GetFlags() {
+	return ovrLayerFlag_TextureOriginAtBottomLeft;
+}
+
 void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 	vr::EVRSubmitFlags submitFlags) {
 
