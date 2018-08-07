@@ -65,15 +65,12 @@ public:
 private:
 	void ThrowIfFailed(HRESULT test);
 
+	bool CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc & chainDesc);
+
 	ID3D11Device *device;
 	ID3D11DeviceContext *context;
 
-	ID3D11InputLayout *pLayout;
-	ID3D11VertexShader *pVS;
-	ID3D11PixelShader *pPS;
-	ID3D11Buffer *pVBuffer;
-
-	std::vector<ID3D11RenderTargetView*> renderTargets[2];
+	ovrTextureSwapChainDesc chainDescs[2];
 };
 
 class GLCompositor : public Compositor {

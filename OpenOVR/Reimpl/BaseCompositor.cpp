@@ -207,7 +207,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		}
 
 		for (int ieye = 0; ieye < 2; ++ieye) {
-			if (!chains[ieye]) {
+			if (!chains[ieye] && texture->eType != TextureType_DirectX) {
 				throw string("Failed to create texture.");
 			}
 		}
@@ -224,9 +224,12 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 
 	layer.Viewport[S2O_eye(eye)] = Recti(size);
 
-	ovrTextureSwapChain tex = chains[S2O_eye(eye)];
-
 	compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags, layer);
+
+	ovrTextureSwapChain tex = chains[S2O_eye(eye)];
+	if (!tex) {
+		throw string("Missing swapchain").c_str();
+	}
 
 	ovr_CommitTextureSwapChain(SESS, tex);
 
