@@ -59,8 +59,8 @@ void BaseSystem::GetProjectionRaw(EVREye eye, float * pfLeft, float * pfRight, f
 	*/
 
 	ovrFovPort fov = ovr::hmdDesc.DefaultEyeFov[S2O_eye(eye)];
-	*pfTop = -fov.UpTan; // negate
-	*pfBottom = fov.DownTan;
+	*pfTop = -fov.DownTan; // negate, and for some reason the up and down have to be switched
+	*pfBottom = fov.UpTan;
 	*pfLeft = -fov.LeftTan; // negate
 	*pfRight = fov.RightTan;
 }
