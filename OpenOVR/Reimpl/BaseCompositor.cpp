@@ -274,13 +274,62 @@ void BaseCompositor::PostPresentHandoff() {
 	STUBBED();
 }
 
-//bool BaseCompositor::GetFrameTiming(Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
-//	STUBBED();
-//}
+bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
+	//if (pTiming->m_nSize != sizeof(OOVR_Compositor_FrameTiming)) {
+	//	STUBBED();
+	//}
 
-//uint32_t BaseCompositor::GetFrameTimings(Compositor_FrameTiming * pTiming, uint32_t nFrames) {
-//	STUBBED();
-//}
+	static int framenum = 0; // TODO do this properly
+
+	memset(pTiming, 0, sizeof(OOVR_Compositor_FrameTiming));
+
+	pTiming->m_nSize = sizeof(OOVR_Compositor_FrameTiming); // Set to sizeof( Compositor_FrameTiming ) // TODO in methods calling this
+	pTiming->m_nFrameIndex = framenum++; // TODO
+	pTiming->m_nNumFramePresents = 1; // number of times this frame was presented
+	pTiming->m_nNumMisPresented = 0; // number of times this frame was presented on a vsync other than it was originally predicted to
+	pTiming->m_nNumDroppedFrames = 0; // number of additional times previous frame was scanned out
+	pTiming->m_nReprojectionFlags = 0;
+
+	/** Absolute time reference for comparing frames.  This aligns with the vsync that running start is relative to. */
+	pTiming->m_flSystemTimeInSeconds = 0;
+
+	/*
+	/ ** These times may include work from other processes due to OS scheduling.
+	* The fewer packets of work these are broken up into, the less likely this will happen.
+	* GPU work can be broken up by calling Flush.  This can sometimes be useful to get the GPU started
+	* processing that work earlier in the frame. * /
+	pTiming.m_flPreSubmitGpuMs; // time spent rendering the scene (gpu work submitted between WaitGetPoses and second Submit)
+	pTiming.m_flPostSubmitGpuMs; // additional time spent rendering by application (e.g. companion window)
+	*/
+	pTiming->m_flTotalRenderGpuMs = 5; // TODO // time between work submitted immediately after present (ideally vsync) until the end of compositor submitted work
+	/*
+	pTiming.m_flCompositorRenderGpuMs; // time spend performing distortion correction, rendering chaperone, overlays, etc.
+	pTiming.m_flCompositorRenderCpuMs; // time spent on cpu submitting the above work for this frame
+	pTiming.m_flCompositorIdleCpuMs; // time spent waiting for running start (application could have used this much more time)
+
+								   / ** Miscellaneous measured intervals. * /
+	pTiming.m_flClientFrameIntervalMs; // time between calls to WaitGetPoses
+	pTiming.m_flPresentCallCpuMs; // time blocked on call to present (usually 0.0, but can go long)
+	pTiming.m_flWaitForPresentCpuMs; // time spent spin-waiting for frame index to change (not near-zero indicates wait object failure)
+	pTiming.m_flSubmitFrameMs; // time spent in IVRCompositor::Submit (not near-zero indicates driver issue)
+
+							 / ** The following are all relative to this frame's SystemTimeInSeconds * /
+	pTiming.m_flWaitGetPosesCalledMs;
+	pTiming.m_flNewPosesReadyMs;
+	pTiming.m_flNewFrameReadyMs; // second call to IVRCompositor::Submit
+	pTiming.m_flCompositorUpdateStartMs;
+	pTiming.m_flCompositorUpdateEndMs;
+	pTiming.m_flCompositorRenderStartMs;
+	*/
+
+	GetSinglePose(k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose); // pose used by app to render this frame
+
+	return true;
+}
+
+uint32_t BaseCompositor::GetFrameTimings(OOVR_Compositor_FrameTiming * pTiming, uint32_t nFrames) {
+	STUBBED();
+}
 
 float BaseCompositor::GetFrameTimeRemaining() {
 	STUBBED();

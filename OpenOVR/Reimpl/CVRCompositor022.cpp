@@ -80,15 +80,29 @@ void CVRCompositor_022::PostPresentHandoff() {
 }
 
 bool CVRCompositor_022::GetFrameTiming(Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
-	throw "stub";
-	// TODO sort out structs
-	//return base.GetFrameTiming(pTiming, unFramesAgo);
+	OOVR_Compositor_FrameTiming dest;
+	bool result = base.GetFrameTiming(&dest, unFramesAgo);
+	// Copy just the relevant data in
+	memcpy(pTiming, &dest, sizeof(Compositor_FrameTiming));
+
+	// Make sure we know if the struct changes
+	// TODO enable C++17
+	// static_assert(sizeof(Compositor_FrameTiming) == sizeof(OOVR_Compositor_FrameTiming));
+
+	return result;
 }
 
 uint32_t CVRCompositor_022::GetFrameTimings(Compositor_FrameTiming * pTiming, uint32_t nFrames) {
-	throw "stub";
-	// TODO sort out structs
-	//return base.GetFrameTimings(pTiming, nFrames);
+	OOVR_Compositor_FrameTiming dest;
+	bool result = base.GetFrameTimings(&dest, nFrames);
+	// Copy just the relevant data in
+	memcpy(pTiming, &dest, sizeof(Compositor_FrameTiming));
+
+	// Make sure we know if the struct changes
+	// TODO enable C++17
+	// static_assert(sizeof(Compositor_FrameTiming) == sizeof(OOVR_Compositor_FrameTiming));
+
+	return result;
 }
 
 void CVRCompositor_022::GetCumulativeStats(Compositor_CumulativeStats * pStats, uint32_t nStatsSizeInBytes) {
