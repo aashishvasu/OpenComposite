@@ -29,6 +29,8 @@ private:
 	Compositor * compositor = NULL;
 
 	ovrLayerEyeFov layer;
+	vr::HmdColor_t fadeColour = { 0, 0, 0, 0 };
+	float fadeTime = 0;
 
 	void GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
 

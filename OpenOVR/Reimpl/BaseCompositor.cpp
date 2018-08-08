@@ -291,11 +291,17 @@ float BaseCompositor::GetFrameTimeRemaining() {
 //}
 
 void BaseCompositor::FadeToColor(float fSeconds, float fRed, float fGreen, float fBlue, float fAlpha, bool bBackground) {
-	STUBBED();
+	fadeTime = fSeconds;
+	fadeColour.r = fRed;
+	fadeColour.g = fGreen;
+	fadeColour.b = fBlue;
+	fadeColour.a = fAlpha;
+
+	// TODO what does background do?
 }
 
 HmdColor_t BaseCompositor::GetCurrentFadeColor(bool bBackground) {
-	STUBBED();
+	return fadeColour;
 }
 
 void BaseCompositor::FadeGrid(float fSeconds, bool bFadeIn) {
@@ -307,11 +313,14 @@ float BaseCompositor::GetCurrentGridAlpha() {
 }
 
 ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t * pTextures, uint32_t unTextureCount) {
-	STUBBED();
+	// TODO!
+	//STUBBED();
+	return VRCompositorError_None;
 }
 
 void BaseCompositor::ClearSkyboxOverride() {
-	STUBBED();
+	// TODO
+	//STUBBED();
 }
 
 void BaseCompositor::CompositorBringToFront() {
@@ -371,7 +380,10 @@ void BaseCompositor::ForceReconnectProcess() {
 }
 
 void BaseCompositor::SuspendRendering(bool bSuspend) {
-	STUBBED();
+	// TODO
+	// I'm not sure what the purpose of this function is. If you know, please tell me.
+	// - ZNix
+	//STUBBED();
 }
 
 ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
