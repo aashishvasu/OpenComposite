@@ -30,6 +30,8 @@ private:
 
 	ovrLayerEyeFov layer;
 
+	void GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
+
 public:
 	typedef int ovr_enum_t;
 

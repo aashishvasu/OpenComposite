@@ -124,39 +124,52 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 	return GetLastPoses(renderPoseArray, renderPoseArrayCount, gamePoseArray, gamePoseArrayCount);
 }
 
+void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose) {
+	memset(pose, 0, sizeof(TrackedDevicePose_t));
+
+	if (index == k_unTrackedDeviceIndex_Hmd) {
+		pose->bPoseIsValid = true;
+
+		// TODO deal with the HMD not being connected
+		pose->bDeviceIsConnected = true;
+
+		// TODO
+		pose->eTrackingResult = TrackingResult_Running_OK;
+
+		ovrPoseStatef &hmdPose = trackingState.HeadPose;
+
+		O2S_v3f(hmdPose.LinearVelocity, pose->vVelocity);
+		O2S_v3f(hmdPose.AngularVelocity, pose->vAngularVelocity);
+
+		Posef ovrPose(hmdPose.ThePose);
+		Matrix4f hmdTransform(ovrPose);
+
+		O2S_om34(hmdTransform, pose->mDeviceToAbsoluteTracking);
+	}
+	else {
+		pose->bPoseIsValid = false;
+		pose->bDeviceIsConnected = false;
+	}
+}
+
 ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
 	TrackedDevicePose_t * gamePoseArray, uint32_t gamePoseArrayCount) {
 
-	if (gamePoseArrayCount != 0)
-		throw "Game poses not yet supported!";
+	for (size_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
+		TrackedDevicePose_t *renderPose = i < renderPoseArrayCount ? renderPoseArray + i : NULL;
+		TrackedDevicePose_t *gamePose = i < gamePoseArrayCount ? gamePoseArray + i : NULL;
 
-	for (size_t i = 0; i < renderPoseArrayCount; i++) {
-		TrackedDevicePose_t *pose = renderPoseArray + i;
-
-		memset(pose, 0, sizeof(TrackedDevicePose_t));
-
-		if (i == k_unTrackedDeviceIndex_Hmd) {
-			pose->bPoseIsValid = true;
-
-			// TODO deal with the HMD not being connected
-			pose->bDeviceIsConnected = true;
-
-			// TODO
-			pose->eTrackingResult = TrackingResult_Running_OK;
-
-			ovrPoseStatef &hmdPose = trackingState.HeadPose;
-
-			O2S_v3f(hmdPose.LinearVelocity, pose->vVelocity);
-			O2S_v3f(hmdPose.AngularVelocity, pose->vAngularVelocity);
-
-			Posef ovrPose(hmdPose.ThePose);
-			Matrix4f hmdTransform(ovrPose);
-
-			O2S_om34(hmdTransform, pose->mDeviceToAbsoluteTracking);
+		if (renderPose) {
+			GetSinglePose(i, renderPose);
 		}
-		else {
-			pose->bPoseIsValid = false;
-			pose->bDeviceIsConnected = false;
+
+		if (gamePose) {
+			if (renderPose) {
+				*gamePose = *renderPose;
+			}
+			else {
+				GetSinglePose(i, gamePose);
+			}
 		}
 	}
 
