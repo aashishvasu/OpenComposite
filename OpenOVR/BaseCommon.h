@@ -10,3 +10,5 @@
 }
 
 #endif
+
+#define INTERFACE_FUNC(ret, name, ...) virtual ret name(__VA_ARGS__) override

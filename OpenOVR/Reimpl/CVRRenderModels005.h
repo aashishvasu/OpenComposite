@@ -1,6 +1,9 @@
 #pragma once
 #include "OpenVR/interfaces/IVRRenderModels_005.h"
 
+// Include INTERFACE_FUNC since there isn't a base for this class
+#include "BaseCommon.h"
+
 using namespace vr;
 using namespace IVRRenderModels_005; // TODO remove this
 
@@ -16,35 +19,35 @@ public:
 	*
 	* The method returns VRRenderModelError_Loading while the render model is still being loaded.
 	* The method returns VRRenderModelError_None once loaded successfully, otherwise will return an error. */
-	virtual EVRRenderModelError LoadRenderModel_Async(const char *pchRenderModelName, RenderModel_t **ppRenderModel);
+	INTERFACE_FUNC(EVRRenderModelError, LoadRenderModel_Async, const char *pchRenderModelName, RenderModel_t **ppRenderModel);
 
 	/** Frees a previously returned render model
 	*   It is safe to call this on a null ptr. */
-	virtual void FreeRenderModel(RenderModel_t *pRenderModel);
+	INTERFACE_FUNC(void, FreeRenderModel, RenderModel_t *pRenderModel);
 
 	/** Loads and returns a texture for use in the application. */
-	virtual EVRRenderModelError LoadTexture_Async(TextureID_t textureId, RenderModel_TextureMap_t **ppTexture);
+	INTERFACE_FUNC(EVRRenderModelError, LoadTexture_Async, TextureID_t textureId, RenderModel_TextureMap_t **ppTexture);
 
 	/** Frees a previously returned texture
 	*   It is safe to call this on a null ptr. */
-	virtual void FreeTexture(RenderModel_TextureMap_t *pTexture);
+	INTERFACE_FUNC(void, FreeTexture, RenderModel_TextureMap_t *pTexture);
 
 	/** Creates a D3D11 texture and loads data into it. */
-	virtual EVRRenderModelError LoadTextureD3D11_Async(TextureID_t textureId, void *pD3D11Device, void **ppD3D11Texture2D);
+	INTERFACE_FUNC(EVRRenderModelError, LoadTextureD3D11_Async, TextureID_t textureId, void *pD3D11Device, void **ppD3D11Texture2D);
 
 	/** Helper function to copy the bits into an existing texture. */
-	virtual EVRRenderModelError LoadIntoTextureD3D11_Async(TextureID_t textureId, void *pDstTexture);
+	INTERFACE_FUNC(EVRRenderModelError, LoadIntoTextureD3D11_Async, TextureID_t textureId, void *pDstTexture);
 
 	/** Use this to free textures created with LoadTextureD3D11_Async instead of calling Release on them. */
-	virtual void FreeTextureD3D11(void *pD3D11Texture2D);
+	INTERFACE_FUNC(void, FreeTextureD3D11, void *pD3D11Texture2D);
 
 	/** Use this to get the names of available render models.  Index does not correlate to a tracked device index, but
 	* is only used for iterating over all available render models.  If the index is out of range, this function will return 0.
 	* Otherwise, it will return the size of the buffer required for the name. */
-	virtual uint32_t GetRenderModelName(uint32_t unRenderModelIndex, VR_OUT_STRING() char *pchRenderModelName, uint32_t unRenderModelNameLen);
+	INTERFACE_FUNC(uint32_t, GetRenderModelName, uint32_t unRenderModelIndex, VR_OUT_STRING() char *pchRenderModelName, uint32_t unRenderModelNameLen);
 
 	/** Returns the number of available render models. */
-	virtual uint32_t GetRenderModelCount();
+	INTERFACE_FUNC(uint32_t, GetRenderModelCount);
 
 
 	/** Returns the number of components of the specified render model.
@@ -54,23 +57,23 @@ public:
 	*   non-renderable things which include coordinate systems such as 'tip', 'base', a neutral controller agnostic hand-pose
 	*   If all controller components are enumerated and rendered, it will be equivalent to drawing the traditional render model
 	*   Returns 0 if components not supported, >0 otherwise */
-	virtual uint32_t GetComponentCount(const char *pchRenderModelName);
+	INTERFACE_FUNC(uint32_t, GetComponentCount, const char *pchRenderModelName);
 
 	/** Use this to get the names of available components.  Index does not correlate to a tracked device index, but
 	* is only used for iterating over all available components.  If the index is out of range, this function will return 0.
 	* Otherwise, it will return the size of the buffer required for the name. */
-	virtual uint32_t GetComponentName(const char *pchRenderModelName, uint32_t unComponentIndex, VR_OUT_STRING() char *pchComponentName, uint32_t unComponentNameLen);
+	INTERFACE_FUNC(uint32_t, GetComponentName, const char *pchRenderModelName, uint32_t unComponentIndex, VR_OUT_STRING() char *pchComponentName, uint32_t unComponentNameLen);
 
 	/** Get the button mask for all buttons associated with this component
 	*   If no buttons (or axes) are associated with this component, return 0
 	*   Note: multiple components may be associated with the same button. Ex: two grip buttons on a single controller.
 	*   Note: A single component may be associated with multiple buttons. Ex: A trackpad which also provides "D-pad" functionality */
-	virtual uint64_t GetComponentButtonMask(const char *pchRenderModelName, const char *pchComponentName);
+	INTERFACE_FUNC(uint64_t, GetComponentButtonMask, const char *pchRenderModelName, const char *pchComponentName);
 
 	/** Use this to get the render model name for the specified rendermode/component combination, to be passed to LoadRenderModel.
 	* If the component name is out of range, this function will return 0.
 	* Otherwise, it will return the size of the buffer required for the name. */
-	virtual uint32_t GetComponentRenderModelName(const char *pchRenderModelName, const char *pchComponentName, VR_OUT_STRING() char *pchComponentRenderModelName, uint32_t unComponentRenderModelNameLen);
+	INTERFACE_FUNC(uint32_t, GetComponentRenderModelName, const char *pchRenderModelName, const char *pchComponentName, VR_OUT_STRING() char *pchComponentRenderModelName, uint32_t unComponentRenderModelNameLen);
 
 	/** Use this to query information about the component, as a function of the controller state.
 	*
@@ -80,19 +83,19 @@ public:
 	* If the pchRenderModelName or pchComponentName is invalid, this will return false (and transforms will be set to identity).
 	* Otherwise, return true
 	* Note: For dynamic objects, visibility may be dynamic. (I.e., true/false will be returned based on controller state and controller mode state ) */
-	virtual bool GetComponentState(const char *pchRenderModelName, const char *pchComponentName, const vr::VRControllerState_t *pControllerState, const RenderModel_ControllerMode_State_t *pState, RenderModel_ComponentState_t *pComponentState);
+	INTERFACE_FUNC(bool, GetComponentState, const char *pchRenderModelName, const char *pchComponentName, const vr::VRControllerState_t *pControllerState, const RenderModel_ControllerMode_State_t *pState, RenderModel_ComponentState_t *pComponentState);
 
 	/** Returns true if the render model has a component with the specified name */
-	virtual bool RenderModelHasComponent(const char *pchRenderModelName, const char *pchComponentName);
+	INTERFACE_FUNC(bool, RenderModelHasComponent, const char *pchRenderModelName, const char *pchComponentName);
 
 	/** Returns the URL of the thumbnail image for this rendermodel */
-	virtual uint32_t GetRenderModelThumbnailURL(const char *pchRenderModelName, VR_OUT_STRING() char *pchThumbnailURL, uint32_t unThumbnailURLLen, vr::IVRRenderModels_005::EVRRenderModelError *peError);
+	INTERFACE_FUNC(uint32_t, GetRenderModelThumbnailURL, const char *pchRenderModelName, VR_OUT_STRING() char *pchThumbnailURL, uint32_t unThumbnailURLLen, vr::IVRRenderModels_005::EVRRenderModelError *peError);
 
 	/** Provides a render model path that will load the unskinned model if the model name provided has been replace by the user. If the model
 	* hasn't been replaced the path value will still be a valid path to load the model. Pass this to LoadRenderModel_Async, etc. to load the
 	* model. */
-	virtual uint32_t GetRenderModelOriginalPath(const char *pchRenderModelName, VR_OUT_STRING() char *pchOriginalPath, uint32_t unOriginalPathLen, vr::IVRRenderModels_005::EVRRenderModelError *peError);
+	INTERFACE_FUNC(uint32_t, GetRenderModelOriginalPath, const char *pchRenderModelName, VR_OUT_STRING() char *pchOriginalPath, uint32_t unOriginalPathLen, vr::IVRRenderModels_005::EVRRenderModelError *peError);
 
 	/** Returns a string for a render model error */
-	virtual const char *GetRenderModelErrorNameFromEnum(vr::IVRRenderModels_005::EVRRenderModelError error);
+	INTERFACE_FUNC(const char *, GetRenderModelErrorNameFromEnum, vr::IVRRenderModels_005::EVRRenderModelError error);
 };
