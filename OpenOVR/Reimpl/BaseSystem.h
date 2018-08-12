@@ -1,4 +1,5 @@
 #pragma once
+#include "BaseCommon.h"
 #include "OpenVR/interfaces/IVRSystem_017.h"
 
 using namespace vr;

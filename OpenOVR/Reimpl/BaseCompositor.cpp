@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#define BASE_IMPL
+
 #include "OVR_CAPI.h"
 #include "libovr_wrapper.h"
 #include "convert.h"
@@ -29,12 +31,6 @@ typedef int ovr_enum_t;
 #ifdef SUPPORT_VK
 #include "OVR_CAPI_Vk.h"
 #endif
-
-#define STUBBED() { \
-	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
-	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
-	throw "stub"; \
-}
 
 void BaseCompositor::SubmitFrames() {
 	ovrSession &session = *ovr::session;

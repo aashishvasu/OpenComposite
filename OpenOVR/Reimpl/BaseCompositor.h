@@ -1,4 +1,5 @@
 #pragma once
+#include "BaseCommon.h"
 #include "OpenVR/interfaces/IVRCompositor_022.h"
 
 #include "Extras/OVR_Math.h"

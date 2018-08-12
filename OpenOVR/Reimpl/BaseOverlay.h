@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenVR/interfaces/vrtypes.h"
+#include "BaseCommon.h"
 
 using namespace vr; // TODO eliminate this
 

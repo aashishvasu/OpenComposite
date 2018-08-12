@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#define BASE_IMPL
 #include "BaseSettings.h"
 #include "OpenVR/interfaces/IVRSettings_002.h"
 #include <string>

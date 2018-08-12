@@ -169,6 +169,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BaseCommon.h" />
     <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
     <ClInclude Include="libovr_wrapper.h" />

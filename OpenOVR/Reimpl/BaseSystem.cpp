@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#define BASE_IMPL
 #include "BaseSystem.h"
 #include "OVR_CAPI.h"
 #include "libovr_wrapper.h"
@@ -10,12 +11,6 @@
 #include <dxgi.h> // for GetDefaultAdapterLuid
 #pragma comment(lib, "dxgi.lib")
 #endif
-
-#define STUBBED() { \
-	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
-	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
-	throw "stub"; \
-}
 
 using namespace std;
 

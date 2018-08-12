@@ -1,12 +1,7 @@
 #include "stdafx.h"
+#define BASE_IMPL
 #include "BaseOverlay.h"
 #include <string>
-
-#define STUBBED() { \
-	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
-	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
-	throw "stub"; \
-}
 
 using namespace std;
 
