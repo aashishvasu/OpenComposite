@@ -52,5 +52,12 @@ namespace ovr {
 		return result.IsOculusHMDConnected;
 	}
 
+	void Shutdown() {
+		ovr_Destroy(*session);
+		ovr_Shutdown();
+
+		session = NULL;
+	}
+
 	// TODO cleanup method
 };

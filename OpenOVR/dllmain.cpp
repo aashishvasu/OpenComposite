@@ -99,6 +99,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 		ERR("Cannot init VR: Already running!");
 
 	ovr::Setup();
+	running = true;
 
 	*peError = VRInitError_None;
 
@@ -123,5 +124,8 @@ VR_INTERFACE const char *VR_CALLTYPE VR_RuntimePath() {
 }
 
 VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
-	throw "stub";
+	ovr::Shutdown();
+	running = false;
+
+	// TODO reset interfaces
 }

@@ -13,4 +13,5 @@ namespace ovr {
 
 	void Setup();
 	bool IsAvailable();
+	void Shutdown();
 };
