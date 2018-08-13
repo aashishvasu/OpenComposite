@@ -3,6 +3,8 @@
 #include "CVROverlay017.h"
 CVR_GEN_IMPL(CVROverlay_017);
 
+using namespace IVROverlay_017;
+
 #include <string>
 #define STUBBED() { \
 	std::string str = "Hit stubbed file at " __FILE__ " func "  " line " + std::to_string(__LINE__); \

@@ -3,9 +3,8 @@
 #include "OpenVR/interfaces/IVROverlay_017.h"
 
 using namespace vr;
-using namespace IVROverlay_017;
 
-class CVROverlay_017 : IVROverlay, public CVRCommon {
+class CVROverlay_017 : IVROverlay_017::IVROverlay, public CVRCommon {
 	CVR_GEN_IFACE();
 
 private:
@@ -68,10 +67,10 @@ public:
 	INTERFACE_FUNC(uint32_t, GetOverlayRenderingPid, VROverlayHandle_t ulOverlayHandle);
 
 	/** Specify flag setting for a given overlay */
-	INTERFACE_FUNC(EVROverlayError, SetOverlayFlag, VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool bEnabled);
+	INTERFACE_FUNC(EVROverlayError, SetOverlayFlag, VROverlayHandle_t ulOverlayHandle, IVROverlay_017::VROverlayFlags eOverlayFlag, bool bEnabled);
 
 	/** Sets flag setting for a given overlay */
-	INTERFACE_FUNC(EVROverlayError, GetOverlayFlag, VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool *pbEnabled);
+	INTERFACE_FUNC(EVROverlayError, GetOverlayFlag, VROverlayHandle_t ulOverlayHandle, IVROverlay_017::VROverlayFlags eOverlayFlag, bool *pbEnabled);
 
 	/** Sets the color tint of the overlay quad. Use 0.0 to 1.0 per channel. */
 	INTERFACE_FUNC(EVROverlayError, SetOverlayColor, VROverlayHandle_t ulOverlayHandle, float fRed, float fGreen, float fBlue);
@@ -140,7 +139,7 @@ public:
 	INTERFACE_FUNC(EVROverlayError, SetOverlayRenderModel, VROverlayHandle_t ulOverlayHandle, const char *pchRenderModel, const HmdColor_t *pColor);
 
 	/** Returns the transform type of this overlay. */
-	INTERFACE_FUNC(EVROverlayError, GetOverlayTransformType, VROverlayHandle_t ulOverlayHandle, VROverlayTransformType *peTransformType);
+	INTERFACE_FUNC(EVROverlayError, GetOverlayTransformType, VROverlayHandle_t ulOverlayHandle, IVROverlay_017::VROverlayTransformType *peTransformType);
 
 	/** Sets the transform to absolute tracking origin. */
 	INTERFACE_FUNC(EVROverlayError, SetOverlayTransformAbsolute, VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToOverlayTransform);
@@ -188,10 +187,10 @@ public:
 	INTERFACE_FUNC(bool, PollNextOverlayEvent, VROverlayHandle_t ulOverlayHandle, VREvent_t *pEvent, uint32_t uncbVREvent);
 
 	/** Returns the current input settings for the specified overlay. */
-	INTERFACE_FUNC(EVROverlayError, GetOverlayInputMethod, VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod *peInputMethod);
+	INTERFACE_FUNC(EVROverlayError, GetOverlayInputMethod, VROverlayHandle_t ulOverlayHandle, IVROverlay_017::VROverlayInputMethod *peInputMethod);
 
 	/** Sets the input settings for the specified overlay. */
-	INTERFACE_FUNC(EVROverlayError, SetOverlayInputMethod, VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod eInputMethod);
+	INTERFACE_FUNC(EVROverlayError, SetOverlayInputMethod, VROverlayHandle_t ulOverlayHandle, IVROverlay_017::VROverlayInputMethod eInputMethod);
 
 	/** Gets the mouse scaling factor that is used for mouse events. The actual texture may be a different size, but this is
 	* typically the size of the underlying UI in pixels. */
@@ -203,7 +202,7 @@ public:
 
 	/** Computes the overlay-space pixel coordinates of where the ray intersects the overlay with the
 	* specified settings. Returns false if there is no intersection. */
-	INTERFACE_FUNC(bool, ComputeOverlayIntersection, VROverlayHandle_t ulOverlayHandle, const VROverlayIntersectionParams_t *pParams, VROverlayIntersectionResults_t *pResults);
+	INTERFACE_FUNC(bool, ComputeOverlayIntersection, VROverlayHandle_t ulOverlayHandle, const IVROverlay_017::VROverlayIntersectionParams_t *pParams, IVROverlay_017::VROverlayIntersectionResults_t *pResults);
 
 	/** Processes mouse input from the specified controller as though it were a mouse pointed at a compositor overlay with the
 	* specified settings. The controller is treated like a laser pointer on the -z axis. The point where the laser pointer would
@@ -225,11 +224,11 @@ public:
 	/** Sets an overlay's neighbor. This will also set the neighbor of the "to" overlay
 	* to point back to the "from" overlay. If an overlay's neighbor is set to invalid both
 	* ends will be cleared */
-	INTERFACE_FUNC(EVROverlayError, SetOverlayNeighbor, EOverlayDirection eDirection, VROverlayHandle_t ulFrom, VROverlayHandle_t ulTo);
+	INTERFACE_FUNC(EVROverlayError, SetOverlayNeighbor, IVROverlay_017::EOverlayDirection eDirection, VROverlayHandle_t ulFrom, VROverlayHandle_t ulTo);
 
 	/** Changes the Gamepad focus from one overlay to one of its neighbors. Returns VROverlayError_NoNeighbor if there is no
 	* neighbor in that direction */
-	INTERFACE_FUNC(EVROverlayError, MoveGamepadFocusToNeighbor, EOverlayDirection eDirection, VROverlayHandle_t ulFrom);
+	INTERFACE_FUNC(EVROverlayError, MoveGamepadFocusToNeighbor, IVROverlay_017::EOverlayDirection eDirection, VROverlayHandle_t ulFrom);
 
 	/** Sets the analog input to Dual Analog coordinate scale for the specified overlay. */
 	INTERFACE_FUNC(EVROverlayError, SetOverlayDualAnalogTransform, VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, const HmdVector2_t & vCenter, float fRadius);
@@ -309,9 +308,9 @@ public:
 	// ---------------------------------------------
 
 	/** Show the virtual keyboard to accept input **/
-	INTERFACE_FUNC(EVROverlayError, ShowKeyboard, EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue);
+	INTERFACE_FUNC(EVROverlayError, ShowKeyboard, IVROverlay_017::EGamepadTextInputMode eInputMode, IVROverlay_017::EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue);
 
-	INTERFACE_FUNC(EVROverlayError, ShowKeyboardForOverlay, VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue);
+	INTERFACE_FUNC(EVROverlayError, ShowKeyboardForOverlay, VROverlayHandle_t ulOverlayHandle, IVROverlay_017::EGamepadTextInputMode eInputMode, IVROverlay_017::EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue);
 
 	/** Get the text that was entered into the text input **/
 	INTERFACE_FUNC(uint32_t, GetKeyboardText, VR_OUT_STRING() char *pchText, uint32_t cchText);
@@ -331,7 +330,7 @@ public:
 
 	/** Sets a list of primitives to be used for controller ray intersection
 	* typically the size of the underlying UI in pixels (not in world space). */
-	INTERFACE_FUNC(EVROverlayError, SetOverlayIntersectionMask, VROverlayHandle_t ulOverlayHandle, VROverlayIntersectionMaskPrimitive_t *pMaskPrimitives, uint32_t unNumMaskPrimitives, uint32_t unPrimitiveSize = sizeof(VROverlayIntersectionMaskPrimitive_t));
+	INTERFACE_FUNC(EVROverlayError, SetOverlayIntersectionMask, VROverlayHandle_t ulOverlayHandle, IVROverlay_017::VROverlayIntersectionMaskPrimitive_t *pMaskPrimitives, uint32_t unNumMaskPrimitives, uint32_t unPrimitiveSize = sizeof(IVROverlay_017::VROverlayIntersectionMaskPrimitive_t));
 
 	INTERFACE_FUNC(EVROverlayError, GetOverlayFlags, VROverlayHandle_t ulOverlayHandle, uint32_t *pFlags);
 
@@ -340,7 +339,7 @@ public:
 	// ---------------------------------------------
 
 	/** Show the message overlay. This will block and return you a result. **/
-	INTERFACE_FUNC(VRMessageOverlayResponse, ShowMessageOverlay, const char* pchText, const char* pchCaption, const char* pchButton0Text, const char* pchButton1Text = nullptr, const char* pchButton2Text = nullptr, const char* pchButton3Text = nullptr);
+	INTERFACE_FUNC(IVROverlay_017::VRMessageOverlayResponse, ShowMessageOverlay, const char* pchText, const char* pchCaption, const char* pchButton0Text, const char* pchButton1Text = nullptr, const char* pchButton2Text = nullptr, const char* pchButton3Text = nullptr);
 
 	/** If the calling process owns the overlay and it's open, this will close it. **/
 	INTERFACE_FUNC(void, CloseMessageOverlay);
