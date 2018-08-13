@@ -14,6 +14,12 @@ class CVRCommon {
 
 #endif
 
+#ifdef CVR_IMPL
+
+#define CVR_GEN_IMPL(name) \
+
+#endif
+
 #define INTERFACE_FUNC(ret, name, ...) virtual ret name(__VA_ARGS__) override
 
 #define CVR_GEN_IFACE() \

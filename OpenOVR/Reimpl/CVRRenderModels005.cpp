@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#define CVR_IMPL
 #include "CVRRenderModels005.h"
+CVR_GEN_IMPL(CVRRenderModels_005);
 
 EVRRenderModelError CVRRenderModels_005::LoadRenderModel_Async(const char * pchRenderModelName, RenderModel_t ** renderModel) {
 	*renderModel = new RenderModel_t();

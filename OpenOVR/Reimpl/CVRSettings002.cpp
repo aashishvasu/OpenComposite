@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#define CVR_IMPL
 #include "CVRSettings002.h"
+CVR_GEN_IMPL(CVRSettings_002);
 
 const char * CVRSettings_002::GetSettingsErrorNameFromEnum(EVRSettingsError eError) {
 	return base.GetSettingsErrorNameFromEnum(eError);

@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#define CVR_IMPL
 #include "CVROverlay017.h"
+CVR_GEN_IMPL(CVROverlay_017);
 
 #include <string>
 #define STUBBED() { \

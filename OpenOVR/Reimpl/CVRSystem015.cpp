@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#define CVR_IMPL
 #include "CVRSystem015.h"
+CVR_GEN_IMPL(CVRSystem_015);
 
 #define SIMPLE_REDIR(rettype, name) \
 rettype CVRSystem_015::name() { \

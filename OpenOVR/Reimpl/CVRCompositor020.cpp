@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#define CVR_IMPL
 #include "CVRCompositor020.h"
+CVR_GEN_IMPL(CVRCompositor_020);
 
 using namespace vr;
 using namespace IVRCompositor_020;

@@ -8,6 +8,7 @@ namespace CVRCompositor_022_scope {
 	using namespace vr;
 	using namespace IVRCompositor_022;
 
+	//!! SET_CLASS_TYPE(CVRCommon)
 	class CVRCompositor_022 : IVRCompositor_022::IVRCompositor, public CVRCommon {
 		CVR_GEN_IFACE();
 
