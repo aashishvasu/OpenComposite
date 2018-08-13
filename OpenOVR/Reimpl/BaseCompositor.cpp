@@ -11,6 +11,10 @@ using namespace OVR;
 using namespace std;
 
 #include "BaseCompositor.h"
+
+// For the left and right hand constants - TODO move them to their own file
+#include "BaseSystem.h"
+
 using namespace vr;
 using namespace IVRCompositor_022;
 
@@ -123,29 +127,56 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose) {
 	memset(pose, 0, sizeof(TrackedDevicePose_t));
 
+	ovrPoseStatef ovrPose;
+
 	if (index == k_unTrackedDeviceIndex_Hmd) {
-		pose->bPoseIsValid = true;
+		ovrPose = trackingState.HeadPose;
+	}
+	else if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
+		ovrPose = trackingState.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
 
-		// TODO deal with the HMD not being connected
-		pose->bDeviceIsConnected = true;
+		// Yay for there not being a PI constant in the standard
+		float pi = 3.14159265358979323846;
+		float deg_to_rad = pi / 180;
 
-		// TODO
-		pose->eTrackingResult = TrackingResult_Running_OK;
+		// The angle offset between the Touch and Vive controllers.
+		// If this is incorrect, virtual hands will feel off.
+		float controller_offset_angle = 49.5;
 
-		ovrPoseStatef &hmdPose = trackingState.HeadPose;
+		// When testing to try and find the correct value above, uncomment
+		//  this to lock the controller perfectly flat.
+		// ovrPose.ThePose.Orientation = { 0,0,0,1 };
 
-		O2S_v3f(hmdPose.LinearVelocity, pose->vVelocity);
-		O2S_v3f(hmdPose.AngularVelocity, pose->vAngularVelocity);
+		Vector3f rotateAxis = Vector3f(1, 0, 0);
+		Quatf rotation = Quatf(rotateAxis, controller_offset_angle * deg_to_rad); //count++ * 0.01f);
 
-		Posef ovrPose(hmdPose.ThePose);
-		Matrix4f hmdTransform(ovrPose);
-
-		O2S_om34(hmdTransform, pose->mDeviceToAbsoluteTracking);
+		Quatf f = ovrPose.ThePose.Orientation;
+		f = rotation * f;
+		//ovrPose.ThePose.Orientation = f;
 	}
 	else {
 		pose->bPoseIsValid = false;
 		pose->bDeviceIsConnected = false;
+		return;
 	}
+
+	// Configure the pose
+
+	pose->bPoseIsValid = true;
+
+	// TODO deal with the HMD not being connected
+	pose->bDeviceIsConnected = true;
+
+	// TODO
+	pose->eTrackingResult = TrackingResult_Running_OK;
+
+	O2S_v3f(ovrPose.LinearVelocity, pose->vVelocity);
+	O2S_v3f(ovrPose.AngularVelocity, pose->vAngularVelocity);
+
+	Posef thePose(ovrPose.ThePose);
+	Matrix4f hmdTransform(thePose);
+
+	O2S_om34(hmdTransform, pose->mDeviceToAbsoluteTracking);
 }
 
 ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
