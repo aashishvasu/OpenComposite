@@ -5,7 +5,9 @@
 using namespace vr;
 using namespace IVROverlay_017;
 
-class CVROverlay_017 : IVROverlay {
+class CVROverlay_017 : IVROverlay, public CVRCommon {
+	CVR_GEN_IFACE();
+
 private:
 	BaseOverlay base;
 public:

@@ -1,6 +1,9 @@
 #pragma once
 #include "OpenVR/interfaces/vrtypes.h"
 
+class CVRCommon {
+};
+
 #ifdef BASE_IMPL
 
 #define STUBBED() { \
@@ -12,3 +15,7 @@
 #endif
 
 #define INTERFACE_FUNC(ret, name, ...) virtual ret name(__VA_ARGS__) override
+
+#define CVR_GEN_IFACE() \
+public: \
+private: \

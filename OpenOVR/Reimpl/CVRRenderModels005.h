@@ -7,7 +7,9 @@
 using namespace vr;
 using namespace IVRRenderModels_005; // TODO remove this
 
-class CVRRenderModels_005 : public IVRRenderModels_005::IVRRenderModels {
+class CVRRenderModels_005 : public IVRRenderModels_005::IVRRenderModels, public CVRCommon {
+	CVR_GEN_IFACE();
+
 public:
 
 	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name

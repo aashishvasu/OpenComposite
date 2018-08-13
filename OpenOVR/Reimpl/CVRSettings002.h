@@ -4,7 +4,9 @@
 
 using namespace vr; // TODO remove
 
-class CVRSettings_002 : public IVRSettings_002::IVRSettings {
+class CVRSettings_002 : public IVRSettings_002::IVRSettings, public CVRCommon {
+	CVR_GEN_IFACE();
+
 private:
 	BaseSettings base;
 	using EVRSettingsError = IVRSettings_002::EVRSettingsError;

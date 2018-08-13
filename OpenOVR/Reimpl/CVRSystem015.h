@@ -4,7 +4,9 @@
 
 using namespace vr;
 
-class CVRSystem_015 : public IVRSystem_015::IVRSystem {
+class CVRSystem_015 : public IVRSystem_015::IVRSystem, public CVRCommon {
+	CVR_GEN_IFACE();
+
 	// Copied from IVRSystem, because MSVC made me.
 
 	BaseSystem base;
