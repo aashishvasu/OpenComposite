@@ -2,7 +2,12 @@
 #include "libovr_wrapper.h"
 #include "OVR_CAPI.h"
 
-#define VALIDATE(x, msg) if (!(x)) { MessageBoxA(NULL, (msg), "OculusRoomTiny", MB_ICONERROR | MB_OK); exit(-1); }
+#define VALIDATE(x, msg) if (!OVR_SUCCESS(x)) { \
+	char buff[1024]; \
+	snprintf(buff, sizeof(buff), "%s: %d", (msg), x); \
+	MessageBoxA(NULL, buff, "OpenOVR", MB_ICONERROR | MB_OK); \
+	exit(-1); \
+}
 
 namespace ovr {
 	ovrSession *session = NULL;
@@ -21,13 +26,13 @@ namespace ovr {
 		// Initializes LibOVR, and the Rift
 		ovrInitParams initParams = { ovrInit_RequestVersion | ovrInit_FocusAware, OVR_MINOR_VERSION, NULL, 0, 0 };
 		ovrResult result = ovr_Initialize(&initParams);
-		VALIDATE(OVR_SUCCESS(result), "Failed to initialize libOVR.");
+		VALIDATE(result, "Failed to initialize libOVR.");
 
 		// Allocate the memory for the session and LUID
 		session = new ovrSession();
 		luid = new ovrGraphicsLuid();
 		result = ovr_Create(session, luid);
-		VALIDATE(OVR_SUCCESS(result), "Failed to create libOVR session.");
+		VALIDATE(result, "Failed to create libOVR session.");
 
 		// Get the HMD information - we use this for FOV information, etc.
 		// TODO run this every frame
