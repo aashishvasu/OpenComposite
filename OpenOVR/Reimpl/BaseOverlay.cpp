@@ -5,6 +5,21 @@
 
 using namespace std;
 
+// Class to represent an overlay
+class BaseOverlay::OverlayData {
+public:
+	const string key;
+	string name;
+	HmdColor_t colour;
+	float widthMeters = 1; // default 1 meter
+	float autoCurveDistanceRangeMin, autoCurveDistanceRangeMax; // WTF does this do?
+	EColorSpace colourSpace = ColorSpace_Auto;
+	bool visible = false; // TODO check against SteamVR
+
+	OverlayData(string key, string name) : key(key), name(name) {
+	}
+};
+
 // These enums are ints
 typedef int VROverlayFlags;
 typedef int VROverlayTransformType;
@@ -14,14 +29,46 @@ typedef int EGamepadTextInputMode;
 typedef int EGamepadTextInputLineMode;
 typedef int VRMessageOverlayResponse;
 
+// TODO don't pass around handles, as it will cause
+// crashes when we should merely return VROverlayError_InvalidHandle
+#define OVL (*((OverlayData**)pOverlayHandle))
+#define USEH() \
+OverlayData *overlay = (OverlayData*)ulOverlayHandle; \
+if (!overlay || !overlays.count(overlay->name)) { \
+	return VROverlayError_InvalidHandle; \
+}
+
+BaseOverlay::~BaseOverlay() {
+}
+
 EVROverlayError BaseOverlay::FindOverlay(const char *pchOverlayKey, VROverlayHandle_t * pOverlayHandle) {
-	STUBBED();
+	if (overlays.count(pchOverlayKey)) {
+		OVL = overlays[pchOverlayKey];
+		return VROverlayError_None;
+	}
+
+	// TODO is this the correct return value
+	return VROverlayError_InvalidParameter;
 }
 EVROverlayError BaseOverlay::CreateOverlay(const char *pchOverlayKey, const char *pchOverlayName, VROverlayHandle_t * pOverlayHandle) {
-	STUBBED();
+	if (overlays.count(pchOverlayKey)) {
+		return VROverlayError_KeyInUse;
+	}
+
+	OverlayData *data = new OverlayData(pchOverlayKey, pchOverlayName);
+	OVL = data;
+
+	overlays[pchOverlayKey] = data;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::DestroyOverlay(VROverlayHandle_t ulOverlayHandle) {
-	STUBBED();
+	USEH();
+
+	overlays.erase(overlay->key);
+	delete overlay;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetHighQualityOverlay(VROverlayHandle_t ulOverlayHandle) {
 	STUBBED();
@@ -30,18 +77,83 @@ VROverlayHandle_t BaseOverlay::GetHighQualityOverlay() {
 	STUBBED();
 }
 uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char *pchValue, uint32_t unBufferSize, EVROverlayError *pError) {
-	STUBBED();
+	OverlayData *overlay = (OverlayData*)ulOverlayHandle;
+	if (!overlays.count(overlay->key)) {
+		*pError = VROverlayError_InvalidHandle;
+		if (unBufferSize != 0)
+			pchValue[0] = NULL;
+		return 0;
+	}
+
+	const char *key = overlay->key.c_str();
+	strncpy_s(pchValue, unBufferSize, key, unBufferSize);
+
+	if (strlen(key) >= unBufferSize && unBufferSize != 0) {
+		pchValue[unBufferSize - 1] = 0;
+	}
+
+	// Is this supposed to include the NULL or not?
+	// TODO test, this could cause some very nasty bugs
+	return strlen(pchValue) + 1;
 }
 uint32_t BaseOverlay::GetOverlayName(VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, EVROverlayError *pError) {
-	STUBBED();
+	OverlayData *overlay = (OverlayData*)ulOverlayHandle;
+	if (!overlays.count(overlay->key)) {
+		*pError = VROverlayError_InvalidHandle;
+		if (unBufferSize != 0)
+			pchValue[0] = NULL;
+		return 0;
+	}
+
+	const char *name = overlay->name.c_str();
+	strncpy_s(pchValue, unBufferSize, name, unBufferSize);
+
+	if (strlen(name) >= unBufferSize && unBufferSize != 0) {
+		pchValue[unBufferSize - 1] = 0;
+	}
+
+	// Is this supposed to include the NULL or not?
+	// TODO test, this could cause some very nasty bugs
+	return strlen(pchValue) + 1;
 }
 EVROverlayError BaseOverlay::SetOverlayName(VROverlayHandle_t ulOverlayHandle, const char *pchName) {
-	STUBBED();
+	USEH();
+
+	overlay->name = pchName;
 }
 EVROverlayError BaseOverlay::GetOverlayImageData(VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unBufferSize, uint32_t *punWidth, uint32_t *punHeight) {
 	STUBBED();
 }
 const char * BaseOverlay::GetOverlayErrorNameFromEnum(EVROverlayError error) {
+#define ERR_CASE(name) case VROverlayError_ ## name: return #name;
+	switch (error) {
+		ERR_CASE(None);
+		ERR_CASE(UnknownOverlay);
+		ERR_CASE(InvalidHandle);
+		ERR_CASE(PermissionDenied);
+		ERR_CASE(OverlayLimitExceeded);
+		ERR_CASE(WrongVisibilityType);
+		ERR_CASE(KeyTooLong);
+		ERR_CASE(NameTooLong);
+		ERR_CASE(KeyInUse);
+		ERR_CASE(WrongTransformType);
+		ERR_CASE(InvalidTrackedDevice);
+		ERR_CASE(InvalidParameter);
+		ERR_CASE(ThumbnailCantBeDestroyed);
+		ERR_CASE(ArrayTooSmall);
+		ERR_CASE(RequestFailed);
+		ERR_CASE(InvalidTexture);
+		ERR_CASE(UnableToLoadFile);
+		ERR_CASE(KeyboardAlreadyInUse);
+		ERR_CASE(NoNeighbor);
+		ERR_CASE(TooManyMaskPrimitives);
+		ERR_CASE(BadMaskPrimitive);
+	}
+#undef ERR_CASE
+
+	string msg = "Unknown overlay error code: " + to_string(error);
+	OOVR_LOG(msg.c_str());
+
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayRenderingPid(VROverlayHandle_t ulOverlayHandle, uint32_t unPID) {
@@ -57,16 +169,36 @@ EVROverlayError BaseOverlay::GetOverlayFlag(VROverlayHandle_t ulOverlayHandle, V
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayColor(VROverlayHandle_t ulOverlayHandle, float fRed, float fGreen, float fBlue) {
-	STUBBED();
+	USEH();
+
+	overlay->colour.r = fRed;
+	overlay->colour.g = fGreen;
+	overlay->colour.b = fBlue;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayColor(VROverlayHandle_t ulOverlayHandle, float *pfRed, float *pfGreen, float *pfBlue) {
-	STUBBED();
+	USEH();
+
+	*pfRed = overlay->colour.r;
+	*pfGreen = overlay->colour.g;
+	*pfBlue = overlay->colour.b;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayAlpha(VROverlayHandle_t ulOverlayHandle, float fAlpha) {
-	STUBBED();
+	USEH();
+
+	overlay->colour.a = fAlpha;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayAlpha(VROverlayHandle_t ulOverlayHandle, float *pfAlpha) {
-	STUBBED();
+	USEH();
+
+	*pfAlpha = overlay->colour.a;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayTexelAspect(VROverlayHandle_t ulOverlayHandle, float fTexelAspect) {
 	STUBBED();
@@ -75,28 +207,55 @@ EVROverlayError BaseOverlay::GetOverlayTexelAspect(VROverlayHandle_t ulOverlayHa
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlaySortOrder(VROverlayHandle_t ulOverlayHandle, uint32_t unSortOrder) {
-	STUBBED();
+	// TODO
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlaySortOrder(VROverlayHandle_t ulOverlayHandle, uint32_t *punSortOrder) {
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayWidthInMeters(VROverlayHandle_t ulOverlayHandle, float fWidthInMeters) {
-	STUBBED();
+	USEH();
+
+	overlay->widthMeters = fWidthInMeters;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayWidthInMeters(VROverlayHandle_t ulOverlayHandle, float *pfWidthInMeters) {
-	STUBBED();
+	USEH();
+
+	*pfWidthInMeters = overlay->widthMeters;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayAutoCurveDistanceRangeInMeters(VROverlayHandle_t ulOverlayHandle, float fMinDistanceInMeters, float fMaxDistanceInMeters) {
-	STUBBED();
+	USEH();
+
+	overlay->autoCurveDistanceRangeMin = fMinDistanceInMeters;
+	overlay->autoCurveDistanceRangeMax = fMaxDistanceInMeters;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayAutoCurveDistanceRangeInMeters(VROverlayHandle_t ulOverlayHandle, float *pfMinDistanceInMeters, float *pfMaxDistanceInMeters) {
-	STUBBED();
+	USEH();
+
+	*pfMinDistanceInMeters = overlay->autoCurveDistanceRangeMin;
+	*pfMaxDistanceInMeters = overlay->autoCurveDistanceRangeMax;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayTextureColorSpace(VROverlayHandle_t ulOverlayHandle, EColorSpace eTextureColorSpace) {
-	STUBBED();
+	USEH();
+
+	overlay->colourSpace = eTextureColorSpace;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayTextureColorSpace(VROverlayHandle_t ulOverlayHandle, EColorSpace *peTextureColorSpace) {
-	STUBBED();
+	USEH();
+
+	*peTextureColorSpace = overlay->colourSpace;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayTextureBounds(VROverlayHandle_t ulOverlayHandle, const VRTextureBounds_t *pOverlayTextureBounds) {
 	STUBBED();
@@ -114,7 +273,7 @@ EVROverlayError BaseOverlay::GetOverlayTransformType(VROverlayHandle_t ulOverlay
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToOverlayTransform) {
-	STUBBED();
+	return VROverlayError_None; // TODO
 }
 EVROverlayError BaseOverlay::GetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin *peTrackingOrigin, HmdMatrix34_t *pmatTrackingOriginToOverlayTransform) {
 	STUBBED();
@@ -135,16 +294,22 @@ EVROverlayError BaseOverlay::GetOverlayTransformOverlayRelative(VROverlayHandle_
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTransformOverlayRelative(VROverlayHandle_t ulOverlayHandle, VROverlayHandle_t ulOverlayHandleParent, const HmdMatrix34_t *pmatParentOverlayToOverlayTransform) {
-	STUBBED();
+	// TODO
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::ShowOverlay(VROverlayHandle_t ulOverlayHandle) {
-	STUBBED();
+	USEH();
+	overlay->visible = true;
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::HideOverlay(VROverlayHandle_t ulOverlayHandle) {
-	STUBBED();
+	USEH();
+	overlay->visible = false;
+	return VROverlayError_None;
 }
 bool BaseOverlay::IsOverlayVisible(VROverlayHandle_t ulOverlayHandle) {
-	STUBBED();
+	USEH();
+	return overlay->visible;
 }
 EVROverlayError BaseOverlay::GetTransformForOverlayCoordinates(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, HmdVector2_t coordinatesInOverlay, HmdMatrix34_t *pmatTransform) {
 	STUBBED();
@@ -192,7 +357,8 @@ EVROverlayError BaseOverlay::GetOverlayDualAnalogTransform(VROverlayHandle_t ulO
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle, const Texture_t *pTexture) {
-	STUBBED();
+	// TODO
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::ClearOverlayTexture(VROverlayHandle_t ulOverlayHandle) {
 	STUBBED();

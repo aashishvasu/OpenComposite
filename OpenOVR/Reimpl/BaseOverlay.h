@@ -1,5 +1,6 @@
 #pragma once
 #include "BaseCommon.h"
+#include <map>
 
 using namespace vr; // TODO eliminate this
 
@@ -14,7 +15,14 @@ private:
 	typedef int EGamepadTextInputLineMode;
 	typedef int VRMessageOverlayResponse;
 
+	class OverlayData;
+
+	// Name-to-overlay mapping
+	std::map<std::string, OverlayData*> overlays;
+
 public:
+	// Destructor, since we have a map of pointers
+	~BaseOverlay();
 
 	// ---------------------------------------------
 	// Overlay management methods
