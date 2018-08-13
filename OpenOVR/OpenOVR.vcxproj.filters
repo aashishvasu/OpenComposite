@@ -28,6 +28,12 @@
     <Filter Include="Header Files\OpenVR">
       <UniqueIdentifier>{12eb05f6-fbdd-4b99-b1ce-d61859037ef7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\FnTable">
+      <UniqueIdentifier>{561ad098-72eb-4dd2-a60f-a33240abe274}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FnTable">
+      <UniqueIdentifier>{f97153b3-7590-4bdf-a589-9d30aa52795d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -53,6 +59,18 @@
     </ClInclude>
     <ClInclude Include="Reimpl\CVRSystem015.h">
       <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="FnTable\FnTable.h">
+      <Filter>Header Files\FnTable</Filter>
+    </ClInclude>
+    <ClInclude Include="FnTable\defs_h.gen.h">
+      <Filter>Header Files\FnTable</Filter>
+    </ClInclude>
+    <ClInclude Include="FnTable\decls_h.gen.h">
+      <Filter>Header Files\FnTable</Filter>
+    </ClInclude>
+    <ClInclude Include="FnTable\decls_public.gen.h">
+      <Filter>Header Files\FnTable</Filter>
     </ClInclude>
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h">
       <Filter>Header Files\OpenVR</Filter>
@@ -205,6 +223,9 @@
     </ClCompile>
     <ClCompile Include="logging.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FnTable\FnTable.cpp">
+      <Filter>Source Files\FnTable</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
