@@ -33,11 +33,11 @@ namespace CVRCompositor_020_scope {
 		*	- IsNotSceneApplication (make sure to call VR_Init with VRApplicaiton_Scene)
 		*	- DoNotHaveFocus (some other app has taken focus - this will throttle the call to 10hz to reduce the impact on that app)
 		*/
-		virtual EVRCompositorError WaitGetPoses(VR_ARRAY_COUNT(unRenderPoseArrayCount) TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount,
+		INTERFACE_FUNC(EVRCompositorError, WaitGetPoses, VR_ARRAY_COUNT(unRenderPoseArrayCount) TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount, \
 			VR_ARRAY_COUNT(unGamePoseArrayCount) TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount);
 
 		/** Get the last set of poses returned by WaitGetPoses. */
-		virtual EVRCompositorError GetLastPoses(VR_ARRAY_COUNT(unRenderPoseArrayCount) TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount,
+		INTERFACE_FUNC(EVRCompositorError, GetLastPoses, VR_ARRAY_COUNT(unRenderPoseArrayCount) TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount, \
 			VR_ARRAY_COUNT(unGamePoseArrayCount) TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount);
 
 		/** Interface for accessing last set of poses returned by WaitGetPoses one at a time.

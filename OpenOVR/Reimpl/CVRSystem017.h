@@ -145,10 +145,10 @@ public:
 	INTERFACE_FUNC(void, ApplyTransform, TrackedDevicePose_t *pOutputPose, const TrackedDevicePose_t *pTrackedDevicePose, const HmdMatrix34_t *pTransform);
 
 	/** Returns the device index associated with a specific role, for example the left hand or the right hand. */
-	virtual vr::TrackedDeviceIndex_t GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType);
+	INTERFACE_FUNC(vr::TrackedDeviceIndex_t, GetTrackedDeviceIndexForControllerRole, vr::ETrackedControllerRole unDeviceType);
 
 	/** Returns the controller type associated with a device index. */
-	virtual vr::ETrackedControllerRole GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex);
+	INTERFACE_FUNC(vr::ETrackedControllerRole, GetControllerRoleForTrackedDeviceIndex, vr::TrackedDeviceIndex_t unDeviceIndex);
 
 	// ------------------------------------
 	// Property methods
@@ -274,7 +274,7 @@ public:
 	* Use the properties Prop_Firmware_UpdateAvailable_Bool, Prop_Firmware_ManualUpdate_Bool, and Prop_Firmware_ManualUpdateURL_String
 	* to figure our whether a firmware update is available, and to figure out whether its a manual update
 	* Prop_Firmware_ManualUpdateURL_String should point to an URL describing the manual update process */
-	virtual vr::EVRFirmwareError PerformFirmwareUpdate(vr::TrackedDeviceIndex_t unDeviceIndex);
+	INTERFACE_FUNC(vr::EVRFirmwareError, PerformFirmwareUpdate, vr::TrackedDeviceIndex_t unDeviceIndex);
 
 	// ------------------------------------
 	// Application life cycle methods
