@@ -76,6 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>openvr_api</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -83,6 +84,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>openvr_api</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -111,12 +113,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;OPENOVR_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;OPENOVR_EXPORTS;_WINDOWS;_USRDLL;SUPPORT_GL;SUPPORT_DX;SUPPORT_VK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\BundledLibs;..\libovr\OculusSDK\LibOVRKernel\Src;..\libovr\OculusSDK\LibOVR\Include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>../libovr/OculusSDK/LibOVR/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVR.lib;../libovr/OculusSDK/LibOVRKernel/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVRKernel.lib;opengl32.lib;d3dcompiler.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "..\x64\Debug\openvr_api.dll" "..\..\openvr-master\samples\bin\win64\openvr_api.dll"</Command>

@@ -1,10 +1,12 @@
 # Binaries
 /Debug
 /Release
+/x64
 
 # Object files
 /OpenOVR/Debug
 /OpenOVR/Release
+/OpenOVR/x64
 
 # Visual Studio
 /.vs
