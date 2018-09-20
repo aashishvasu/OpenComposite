@@ -40,7 +40,30 @@ void ERR(string msg) {
 	throw msg;
 }
 
+class _InheritCVRLayout { virtual void _ignore() = 0; };
+class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {};
+
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
+	// First check if they're getting the 'FnTable' version of this interface.
+	// This is a table of methods, but critically they *don't* take a 'this' pointer,
+	//  so we can't cheat and return the vtable.
+	const char *fnTableStr = "FnTable:";
+	if (!strncmp(fnTableStr, interfaceVersion, strlen(fnTableStr))) {
+		const char *baseInterface = interfaceVersion + strlen(fnTableStr);
+
+		// Get the C++ interface
+		// Note we can't directly cast to CVRCommon, as we'll then be referring to the OpenVR interface
+		// vtable - look up how vtables work with multiple inheritance if you're confused about this.
+		CVRCorrectLayout *interfaceClass = (CVRCorrectLayout*) VR_GetGenericInterface(baseInterface, error);
+
+		// If the interface is NULL, then error will have been set and we can return null too.
+		if (!interfaceClass) {
+			return NULL;
+		}
+
+		return interfaceClass->_GetStatFuncList();
+	}
+
 	// Notes on the interface macro:
 	// If interfaceVersion is the same as IVRname_Version, it returns a copy
 	// of CVRname, which is cached in the variable CVRImplAccess.vr_name
