@@ -12,6 +12,7 @@
 #include "Reimpl/CVRSettings002.h"
 #include "Reimpl/CVRChaperone003.h"
 #include "Reimpl/CVRChaperoneSetup005.h"
+#include "Reimpl/CVRScreenshots001.h"
 
 using namespace std;
 
@@ -91,6 +92,7 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	INTERFACE(002, Settings);
 	INTERFACE(003, Chaperone);
 	INTERFACE(005, ChaperoneSetup);
+	INTERFACE(001, Screenshots);
 
 	ERR("unknown/unsupported interface " + string(interfaceVersion));
 #undef INTERFACE

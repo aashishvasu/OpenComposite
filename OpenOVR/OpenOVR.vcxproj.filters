@@ -144,6 +144,12 @@
     <ClInclude Include="Reimpl\BaseCompositor.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="Reimpl\BaseScreenshots.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVRScreenshots001.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
     <ClInclude Include="Reimpl\CVRCompositor020.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
@@ -250,6 +256,12 @@
     </ClCompile>
     <ClCompile Include="FnTable\FnTable.cpp">
       <Filter>Source Files\FnTable</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\BaseScreenshots.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRScreenshots001.cpp">
+      <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
