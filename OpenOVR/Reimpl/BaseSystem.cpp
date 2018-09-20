@@ -372,14 +372,37 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 
 	BUTTON(A, X, A); // k_EButton_A is the SteamVR name for the lower buttons on the Touch controllers
 	BUTTON(B, Y, ApplicationMenu);
+	BUTTON(LThumb, RThumb, SteamVR_Touchpad);
 	// TODO
 
 #undef BUTTON
 #undef CHECK
 
+	// Grip/Trigger button
+	// TODO what should the cutoff be?
+	if (inputState.HandTrigger[id] >= 0.4) {
+		Buttons |= k_EButton_Grip;
+	}
+	if (inputState.IndexTrigger[id] >= 0.4) {
+		Buttons |= k_EButton_SteamVR_Trigger;
+	}
+
 	controllerState->ulButtonPressed = Buttons;
 	controllerState->ulButtonTouched = Touches;
-	// TODO
+
+	// Trigger and Thumbstick - Analog (axis) inputs
+	VRControllerAxis_t &trigger = controllerState->rAxis[1];
+	trigger.x = inputState.IndexTrigger[id];
+	trigger.y = 0;
+
+	VRControllerAxis_t &thumbstick = controllerState->rAxis[0];
+	ovrVector2f &ovrThumbstick = inputState.Thumbstick[id];
+	thumbstick.x = ovrThumbstick.x;
+	thumbstick.y = ovrThumbstick.y;
+
+	// TODO do this properly
+	static uint32_t unPacketNum = 0;
+	controllerState->unPacketNum = unPacketNum++;
 
 	return true;
 }
