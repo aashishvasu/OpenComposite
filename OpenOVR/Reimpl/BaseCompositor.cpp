@@ -444,7 +444,7 @@ uint32_t BaseCompositor::GetLastFrameRenderer() {
 }
 
 bool BaseCompositor::CanRenderScene() {
-	STUBBED();
+	return true; // TODO implement
 }
 
 void BaseCompositor::ShowMirrorWindow() {
@@ -464,7 +464,8 @@ void BaseCompositor::CompositorDumpImages() {
 }
 
 bool BaseCompositor::ShouldAppRenderWithLowResources() {
-	STUBBED();
+	// TODO put in config file
+	return false;
 }
 
 void BaseCompositor::ForceInterleavedReprojectionOn(bool bOverride) {
