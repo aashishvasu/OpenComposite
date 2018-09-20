@@ -28,6 +28,15 @@ using namespace std;
 namespace kk = vr::IVRSettings_002;
 
 const char * BaseSettings::GetSettingsErrorNameFromEnum(EVRSettingsError eError) {
+	switch (eError) {
+	case VRSettingsError_None: return NULL;
+	case VRSettingsError_IPCFailed: return "IPC Failed";
+	case VRSettingsError_WriteFailed: return "Write Failed";
+	case VRSettingsError_ReadFailed: return "Read Failed";
+	case VRSettingsError_JsonParseFailed: return "JSON Parse Failed";
+	case VRSettingsError_UnsetSettingHasNoDefault: return "IPC Failed";
+	}
+	OOVR_LOG(to_string(eError).c_str());
 	STUBBED_BASIC();
 }
 bool  BaseSettings::Sync(bool bForce, EVRSettingsError * peError) {
