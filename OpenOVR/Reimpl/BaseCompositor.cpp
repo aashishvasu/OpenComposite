@@ -107,7 +107,12 @@ void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
 }
 
 ETrackingUniverseOrigin BaseCompositor::GetTrackingSpace() {
-	STUBBED();
+	if (ovr_GetTrackingOriginType(SESS) == ovrTrackingOrigin_EyeLevel) {
+		return TrackingUniverseSeated;
+	}
+	else {
+		return TrackingUniverseStanding;
+	}
 }
 
 ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
