@@ -7,6 +7,17 @@
 using namespace std;
 #define OVSS (*ovr::session)
 
+static void XTrace(LPCSTR lpszFormat, ...) {
+	va_list args;
+	va_start(args, lpszFormat);
+	int nBuf;
+	char szBuffer[512]; // get rid of this hard-coded buffer
+	nBuf = _vsnprintf_s(szBuffer, 511, lpszFormat, args);
+	OutputDebugStringA(szBuffer);
+	OOVR_LOG(szBuffer);
+	va_end(args);
+}
+
 ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi) {
 	switch (dxgi) {
 #define MAPPING(name) \
@@ -25,10 +36,22 @@ ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi) {
 		MAPPING(FORMAT_R16G16B16A16_FLOAT);
 		MAPPING(FORMAT_R11G11B10_FLOAT);
 
+		// TODO
+	case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+		return OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+
 #undef MAPPING
 	}
 
 	return OVR_FORMAT_UNKNOWN;
+}
+
+#define ERR(msg) { \
+	std::string str = "Hit DX11-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
+	OOVR_LOG(str.c_str()); \
+	MessageBoxA(NULL, str.c_str(), "Errored func!", MB_OK); \
+	/**((int*)NULL) = 0;*/\
+	throw str; \
 }
 
 void DX11Compositor::ThrowIfFailed(HRESULT test) {
@@ -45,7 +68,7 @@ DX11Compositor::DX11Compositor(ID3D11Texture2D *initial, OVR::Sizei size, ovrTex
 	device->GetImmediateContext(&context); // TODO cleanup - copyContext->Release()
 }
 
-void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
 	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
 
 	ovrTextureSwapChain &chain = chains[eye];
@@ -80,11 +103,11 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 		desc.StaticImage = ovrFalse;
 
 		desc.MiscFlags = ovrTextureMisc_DX_Typeless | ovrTextureMisc_AutoGenerateMips;
-		desc.BindFlags = ovrTextureBind_DX_RenderTarget;
+		desc.BindFlags = ovrTextureBind_None; // ovrTextureBind_DX_RenderTarget;
 
 		ovrResult result = ovr_CreateTextureSwapChainDX(OVSS, device, &desc, &chain);
 		if (!OVR_SUCCESS(result))
-			throw string("Cannot create GL texture swap chain");
+			ERR("Cannot create DX texture swap chain " + to_string(result));
 	}
 
 	ID3D11Texture2D* tex = nullptr;
@@ -93,17 +116,38 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 
 	// Set the viewport up
 	ovrRecti &viewport = layer.Viewport[eye];
-	if (bounds) {
-		viewport.Pos.x = (int)(bounds->uMin * srcDesc.Width);
-		viewport.Pos.y = (int)(bounds->vMin * srcDesc.Height);
-		viewport.Size.w = (int)((bounds->uMax - bounds->uMin) * srcDesc.Width);
-		viewport.Size.h = (int)((bounds->vMax - bounds->vMin) * srcDesc.Height);
+	if (ptrBounds) {
+		vr::VRTextureBounds_t bounds = *ptrBounds;
+
+		if (bounds.vMin > bounds.vMax) {
+			submitVerticallyFlipped = true;
+			float newMax = bounds.vMin;
+			bounds.vMin = bounds.vMax;
+			bounds.vMax = newMax;
+		}
+		else {
+			submitVerticallyFlipped = false;
+		}
+
+		viewport.Pos.x = (int)(bounds.uMin * srcDesc.Width);
+		viewport.Pos.y = (int)(bounds.vMin * srcDesc.Height);
+		viewport.Size.w = (int)((bounds.uMax - bounds.uMin) * srcDesc.Width);
+		viewport.Size.h = (int)((bounds.vMax - bounds.vMin) * srcDesc.Height);
 	}
 	else {
 		viewport.Pos.x = viewport.Pos.y = 0;
 		viewport.Size.w = srcDesc.Width;
 		viewport.Size.h = srcDesc.Height;
+
+		submitVerticallyFlipped = false;
 	}
+
+	// Update the flags in case something has changed
+	layer.Header.Flags = GetFlags();
+}
+
+unsigned int DX11Compositor::GetFlags() {
+	return submitVerticallyFlipped ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
 }
 
 bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc &chainDesc) {

@@ -62,6 +62,8 @@ public:
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 
+	unsigned int GetFlags() override;
+
 private:
 	void ThrowIfFailed(HRESULT test);
 
@@ -71,6 +73,8 @@ private:
 	ID3D11DeviceContext *context;
 
 	ovrTextureSwapChainDesc chainDescs[2];
+
+	bool submitVerticallyFlipped;
 };
 
 class GLCompositor : public Compositor {
