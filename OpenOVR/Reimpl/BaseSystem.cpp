@@ -359,8 +359,8 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 	if (!OVR_SUCCESS(ovr_GetInputState(*ovr::session, ovrControllerType_Touch, &inputState))) return false;
 
 #define CHECK(var, type, left, right, out) \
-if(inputState.var && (ovr ## type ## _ ## left || ovr ## type ## _ ## right)) \
-	var |= k_EButton_ ## out
+if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type ## _ ## right)) \
+	var |= ButtonMaskFromId(k_EButton_ ## out)
 
 #define BUTTON(left, right, out) CHECK(Buttons, Button, left, right, out); CHECK(Touches, Touch, left, right, out)
 
