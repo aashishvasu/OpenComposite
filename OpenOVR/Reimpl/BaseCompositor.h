@@ -72,7 +72,8 @@ private:
 	vr::HmdColor_t fadeColour = { 0, 0, 0, 0 };
 	float fadeTime = 0;
 
-	void GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
+	ovrTrackingState trackingState;
+	ovrSessionStatus sessionStatus;
 
 public:
 	typedef int ovr_enum_t;
@@ -81,8 +82,7 @@ public:
 	~BaseCompositor();
 
 	// Used in CVRSystem
-	ovrTrackingState trackingState;
-	ovrSessionStatus sessionStatus;
+	static void GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose, ovrTrackingState &state);
 
 	/** Sets tracking space returned by WaitGetPoses */
 	virtual void SetTrackingSpace(vr::ETrackingUniverseOrigin eOrigin);

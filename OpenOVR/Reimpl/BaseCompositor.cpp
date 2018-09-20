@@ -124,16 +124,17 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 	return GetLastPoses(renderPoseArray, renderPoseArrayCount, gamePoseArray, gamePoseArrayCount);
 }
 
-void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose) {
+void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose,
+	ovrTrackingState &state) {
 	memset(pose, 0, sizeof(TrackedDevicePose_t));
 
 	ovrPoseStatef ovrPose;
 
 	if (index == k_unTrackedDeviceIndex_Hmd) {
-		ovrPose = trackingState.HeadPose;
+		ovrPose = state.HeadPose;
 	}
 	else if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
-		ovrPose = trackingState.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
+		ovrPose = state.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
 
 		// Yay for there not being a PI constant in the standard
 		float pi = 3.14159265358979323846;
@@ -187,7 +188,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 		TrackedDevicePose_t *gamePose = i < gamePoseArrayCount ? gamePoseArray + i : NULL;
 
 		if (renderPose) {
-			GetSinglePose(i, renderPose);
+			GetSinglePose(i, renderPose, trackingState);
 		}
 
 		if (gamePose) {
@@ -195,7 +196,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 				*gamePose = *renderPose;
 			}
 			else {
-				GetSinglePose(i, gamePose);
+				GetSinglePose(i, gamePose, trackingState);
 			}
 		}
 	}
@@ -352,7 +353,7 @@ bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint3
 	pTiming.m_flCompositorRenderStartMs;
 	*/
 
-	GetSinglePose(k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose); // pose used by app to render this frame
+	GetSinglePose(k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose, trackingState); // pose used by app to render this frame
 
 	return true;
 }

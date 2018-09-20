@@ -4,6 +4,7 @@
 #include "OVR_CAPI.h"
 #include "libovr_wrapper.h"
 #include "convert.h"
+#include "BaseCompositor.h"
 
 #include <string>
 
@@ -379,7 +380,13 @@ if(inputState.var && (ovr ## type ## _ ## left || ovr ## type ## _ ## right)) \
 
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
 	vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t * pTrackedDevicePose) {
-	STUBBED();
+
+	ovrTrackingState trackingState = ovr_GetTrackingState(*ovr::session, 0 /* Most recent */, ovrTrue);
+	BaseCompositor::GetSinglePose(unControllerDeviceIndex, pTrackedDevicePose, trackingState);
+
+	// TODO handle eOrigin
+
+	return GetControllerState(unControllerDeviceIndex, pControllerState, unControllerStateSize);
 }
 
 void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
