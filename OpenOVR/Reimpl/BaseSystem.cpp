@@ -324,14 +324,21 @@ if(prop == in) { \
 	snprintf(str, sizeof(str), "(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
 	OOVR_LOG(str);
 
+	// These have been validated against SteamVR
+	// TODO add an option to fake this out with 'lighthouse' and 'HTC' in case there is a compatibility issue
 	PROP(Prop_TrackingSystemName_String, "Constellation");
-	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
-
 	PROP(Prop_ManufacturerName_String, "Oculus");
+
+	// TODO these?
+	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
+	PROP(Prop_ModelNumber_String, "<unknown>"); // Serious TODO - some software may not work correctly
+	PROP(Prop_RenderModelName_String, "<unknown>"); // Serious TODO - some software may not work correctly
 
 #undef PROP
 
 	OOVR_LOG("WARN: This property (previous) was not found");
+
+	STUBBED();
 
 	return 0; // There are tonnes, and we're not implementing all of them.
 }
