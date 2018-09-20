@@ -14,6 +14,18 @@ usingiface = False
 imports = io.StringIO()
 imports.write("#pragma once\n")
 
+def write(target, result):
+	outfile = "interfaces/" + targetfile + ".h"
+	print("Writing to: " + outfile)
+	with open(outfile, "wb") as outfile:
+		if usingiface:
+			result = result.replace("%%REPLACE%NS%START%%", "namespace vr\n{\nnamespace " + targetfile)
+			result = result + "} // Close custom namespace\n"
+			result = result.replace("vr::", "")
+		else:
+			result = result.replace("%%REPLACE%NS%START%%", "namespace vr")
+		outfile.write(result.encode())
+
 with open(feed, "r") as headerfile:
 	for line in headerfile:
 		niceline = line.rstrip("\n")
@@ -21,18 +33,10 @@ with open(feed, "r") as headerfile:
 		vmatch = versionmatcher.search(niceline)
 
 		if match:
+
+			# Write out the previous interface file, unless this was the first one
 			if targetfile:
-				outfile = "interfaces/" + targetfile + ".h"
-				print("Writing to: " + outfile)
-				with open(outfile, "wb") as outfile:
-					result = outbuff.getvalue()
-					if usingiface:
-						result = result.replace("%%REPLACE%NS%START%%", "namespace vr\n{\nnamespace " + targetfile)
-						result = result + "} // Close custom namespace\n"
-						result = result.replace("vr::", "")
-					else:
-						result = result.replace("%%REPLACE%NS%START%%", "namespace vr")
-					outfile.write(result.encode())
+				write(targetfile, outbuff.getvalue())
 
 				# Add the import, unless it's a versioned interface
 				if not usingiface:
@@ -42,8 +46,9 @@ with open(feed, "r") as headerfile:
 				outbuff.write(imports.getvalue())
 				usingiface = False
 
+			# Grab the name of the next interface
 			targetfile = match.group(1)
-			#print(nextfile)
+
 		if vmatch:
 			targetfile = vmatch.group(1)
 			usingiface = True
@@ -54,3 +59,6 @@ with open(feed, "r") as headerfile:
 		elif "_OPENVR_API" not in line and "_INCLUDE_" not in line:
 			outbuff.write(line)
 
+	# Write the last interface
+	if targetfile:
+		write(targetfile, outbuff.getvalue())
