@@ -166,6 +166,17 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 		return;
 	}
 
+	// If we haven't yet got a frame, set it to an identity position
+	// This prevents errors due to 0,0,0,0 quaternions (as they're unnormalised)
+	if (!state.HeadPose.TimeInSeconds) {
+		HmdMatrix34_t ident;
+		ident.m[0][0] = 1;
+		ident.m[1][1] = 1;
+		ident.m[2][2] = 1;
+		pose->mDeviceToAbsoluteTracking = ident;
+		return;
+	}
+
 	// Configure the pose
 
 	pose->bPoseIsValid = true;
