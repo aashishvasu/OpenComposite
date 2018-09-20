@@ -163,7 +163,8 @@ uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eT
 }
 
 EDeviceActivityLevel BaseSystem::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId) {
-	STUBBED();
+	// TODO implement
+	return k_EDeviceActivityLevel_UserInteraction;
 }
 
 void BaseSystem::ApplyTransform(TrackedDevicePose_t * pOutputPose, const TrackedDevicePose_t * pTrackedDevicePose, const HmdMatrix34_t * pTransform) {
@@ -181,7 +182,15 @@ vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::
 }
 
 vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex) {
-	STUBBED();
+	if (unDeviceIndex == leftHandIndex) {
+		return TrackedControllerRole_LeftHand;
+	}
+	else if (unDeviceIndex == rightHandIndex) {
+		return TrackedControllerRole_RightHand;
+	}
+	else {
+		return TrackedControllerRole_Invalid;
+	}
 }
 
 ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex) {
@@ -333,7 +342,13 @@ const char * BaseSystem::GetEventTypeNameFromEnum(EVREventType eType) {
 }
 
 HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type) {
-	STUBBED();
+	// TODO implement
+
+	HiddenAreaMesh_t result;
+	result.pVertexData = NULL;
+	result.unTriangleCount = 0;
+
+	return result;
 }
 
 bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
