@@ -356,7 +356,13 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 
 	// TODO cache this
 	ovrInputState inputState;
-	if (!OVR_SUCCESS(ovr_GetInputState(*ovr::session, ovrControllerType_Touch, &inputState))) return false;
+	ovrResult result = ovr_GetInputState(*ovr::session, ovrControllerType_Touch, &inputState);
+	if (!OVR_SUCCESS(result)) {
+		string str = "[WARN] Could not get input: ";
+		str += to_string(result);
+		OOVR_LOG(str.c_str());
+		return false;
+	}
 
 #define CHECK(var, type, left, right, out) \
 if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type ## _ ## right)) \
