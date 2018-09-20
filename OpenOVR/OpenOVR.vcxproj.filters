@@ -60,6 +60,12 @@
     <ClInclude Include="Reimpl\CVRSystem015.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="Reimpl\BaseChaperone.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVRChaperone003.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
     <ClInclude Include="FnTable\FnTable.h">
       <Filter>Header Files\FnTable</Filter>
     </ClInclude>
@@ -223,6 +229,12 @@
     </ClCompile>
     <ClCompile Include="logging.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\BaseChaperone.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRChaperone003.cpp">
+      <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="FnTable\FnTable.cpp">
       <Filter>Source Files\FnTable</Filter>

@@ -10,6 +10,7 @@
 #include "Reimpl/CVRCompositor022.h"
 #include "Reimpl/CVROverlay017.h"
 #include "Reimpl/CVRSettings002.h"
+#include "Reimpl/CVRChaperone003.h"
 
 using namespace std;
 
@@ -87,6 +88,7 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	INTERFACE(022, Compositor);
 	INTERFACE(017, Overlay);
 	INTERFACE(002, Settings);
+	INTERFACE(003, Chaperone);
 
 	ERR("unknown/unsupported interface " + string(interfaceVersion));
 #undef INTERFACE
