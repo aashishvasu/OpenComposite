@@ -31,7 +31,7 @@ HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfa
 	ovrMatrix4f matrix = ovrMatrix4f_Projection(
 		ovr::hmdDesc.DefaultEyeFov[S2O_eye(eye)],
 		znear, zfar,
-		ovrProjection_None | ovrProjection_ClipRangeOpenGL // TODO API independent
+		ovrProjection_None // | ovrProjection_ClipRangeOpenGL // TODO API independent
 	);
 
 	return O2S_m4(matrix);
