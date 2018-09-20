@@ -157,8 +157,8 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 		Quatf rotation = Quatf(rotateAxis, controller_offset_angle * deg_to_rad); //count++ * 0.01f);
 
 		Quatf f = ovrPose.ThePose.Orientation;
-		f = rotation * f;
-		//ovrPose.ThePose.Orientation = f;
+		f = f * rotation;
+		ovrPose.ThePose.Orientation = f;
 	}
 	else {
 		pose->bPoseIsValid = false;
