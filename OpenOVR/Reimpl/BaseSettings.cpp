@@ -55,6 +55,18 @@ void  BaseSettings::SetString(const char * pchSection, const char * pchSettingsK
 	STUBBED();
 }
 bool  BaseSettings::GetBool(const char * pchSection, const char * pchSettingsKey, EVRSettingsError * peError) {
+	string section = pchSection;
+	string key = pchSettingsKey;
+
+	if (section == kk::k_pch_SteamVR_Section) {
+		if (key == kk::k_pch_SteamVR_UsingSpeakers_Bool) {
+			// True if the user is using external speakers (not attached to
+			// their head), and the sound should thus be adjusted.
+			// Note when set to true, expect k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float
+			return false; // TODO
+		}
+	}
+
 	STUBBED();
 }
 int32_t  BaseSettings::GetInt32(const char * pchSection, const char * pchSettingsKey, EVRSettingsError * peError) {
