@@ -252,6 +252,16 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 }
 
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	if (unDeviceIndex == k_unTrackedDeviceIndex_Hmd) {
+		switch (prop) {
+		case Prop_DisplayFrequency_Float:
+			return 90.0; // TODO grab this from LibOVR
+		}
+	}
+	
+	char msg[1024];
+	snprintf(msg, sizeof(msg), "(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
+	OOVR_LOG(msg);
 	STUBBED();
 }
 
