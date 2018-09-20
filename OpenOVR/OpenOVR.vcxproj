@@ -107,9 +107,6 @@
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>copy "..\Debug\openvr_api.dll" "..\..\openvr-master\samples\bin\win32\openvr_api.dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -126,9 +123,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>../libovr/OculusSDK/LibOVR/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVR.lib;../libovr/OculusSDK/LibOVRKernel/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVRKernel.lib;opengl32.lib;d3dcompiler.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy "..\x64\Debug\openvr_api.dll" "..\..\openvr-master\samples\bin\win64\openvr_api.dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -151,9 +145,6 @@
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>copy "..\Debug\openvr_api.dll" "..\..\openvr-master\samples\bin\win32\openvr_api.dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -173,9 +164,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PostBuildEvent>
-      <Command>copy "..\x64\Debug\openvr_api.dll" "..\..\openvr-master\samples\bin\win64\openvr_api.dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BaseCommon.h" />
