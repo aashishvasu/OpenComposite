@@ -62,6 +62,7 @@ void BaseSystem::GetProjectionRaw(EVREye eye, float * pfLeft, float * pfRight, f
 }
 
 bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * pDistortionCoordinates) {
+	STUBBED();
 	return false;
 }
 
