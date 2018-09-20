@@ -207,11 +207,13 @@
     <ClInclude Include="OpenVR\interfaces\vrannotation.h" />
     <ClInclude Include="OpenVR\interfaces\vrtypes.h" />
     <ClInclude Include="Reimpl\BaseChaperone.h" />
+    <ClInclude Include="Reimpl\BaseChaperoneSetup.h" />
     <ClInclude Include="Reimpl\BaseCompositor.h" />
     <ClInclude Include="Reimpl\BaseOverlay.h" />
     <ClInclude Include="Reimpl\BaseSettings.h" />
     <ClInclude Include="Reimpl\BaseSystem.h" />
     <ClInclude Include="Reimpl\CVRChaperone003.h" />
+    <ClInclude Include="Reimpl\CVRChaperoneSetup005.h" />
     <ClInclude Include="Reimpl\CVRCompositor020.h" />
     <ClInclude Include="Reimpl\CVRCompositor022.h" />
     <ClInclude Include="Reimpl\CVROverlay017.h" />
@@ -234,11 +236,13 @@
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="OpenOVR.cpp" />
     <ClCompile Include="Reimpl\BaseChaperone.cpp" />
+    <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp" />
     <ClCompile Include="Reimpl\BaseCompositor.cpp" />
     <ClCompile Include="Reimpl\BaseOverlay.cpp" />
     <ClCompile Include="Reimpl\BaseSettings.cpp" />
     <ClCompile Include="Reimpl\BaseSystem.cpp" />
     <ClCompile Include="Reimpl\CVRChaperone003.cpp" />
+    <ClCompile Include="Reimpl\CVRChaperoneSetup005.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor020.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor022.cpp" />
     <ClCompile Include="Reimpl\CVROverlay017.cpp" />
