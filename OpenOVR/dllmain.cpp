@@ -1,7 +1,5 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "stdafx.h"
-#include "steamvr_abi.h"
-#include "libovr_wrapper.h"
 
 #include "Reimpl/CVRSystem015.h"
 #include "Reimpl/CVRSystem016.h"
@@ -16,6 +14,8 @@
 #include "Reimpl/CVRChaperoneSetup005.h"
 #include "Reimpl/CVRScreenshots001.h"
 
+#include "steamvr_abi.h"
+#include "libovr_wrapper.h"
 #include "Misc/debug_helper.h"
 
 using namespace std;
@@ -46,6 +46,7 @@ static uint32_t current_init_token = 1;
 void ERR(string msg) {
 	char buff[4096];
 	snprintf(buff, sizeof(buff), "OpenOVR DLLMain ERROR: %s", msg.c_str());
+	OOVR_LOG(buff);
 	MessageBoxA(NULL, buff, "OpenOVR Error", MB_OK);
 	throw msg;
 }
@@ -109,6 +110,8 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	INTERFACE(005, ChaperoneSetup);
 	INTERFACE(001, Screenshots);
 
+	OOVR_LOG(interfaceVersion);
+	MessageBoxA(NULL, interfaceVersion, "Missing interface", MB_OK);
 	ERR("unknown/unsupported interface " + string(interfaceVersion));
 #undef INTERFACE
 }
