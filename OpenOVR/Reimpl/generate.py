@@ -60,6 +60,11 @@ impldef = re.compile(r"^\w[\w\d\s]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d
 impl = open("stubs.gen.cpp", "w")
 impl.write("#include \"stdafx.h\"\n")
 
+# Delete the old headers, in case the cpp for one is removed
+# Leave the stubs file alone as it'll get overwritten anyway
+for filename in glob.glob("GVR*.gen.h"):
+    os.remove(filename)
+
 for filename in glob.glob("CVR*.cpp"):
     todo_interfaces = []
     implemented_functions = []
