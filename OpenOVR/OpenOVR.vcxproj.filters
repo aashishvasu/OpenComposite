@@ -34,6 +34,12 @@
     <Filter Include="Source Files\FnTable">
       <UniqueIdentifier>{f97153b3-7590-4bdf-a589-9d30aa52795d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Misc">
+      <UniqueIdentifier>{e877b4ca-4217-4f43-8081-a9af075a64f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Misc">
+      <UniqueIdentifier>{52948503-33e2-4d78-839c-5f6b8d1ed600}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -153,6 +159,9 @@
     <ClInclude Include="Reimpl\CVRCompositor020.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="Misc\Haptics.h">
+      <Filter>Header Files\Misc</Filter>
+    </ClInclude>
     <ClInclude Include="Reimpl\BaseSystem.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
@@ -262,6 +271,9 @@
     </ClCompile>
     <ClCompile Include="Reimpl\CVRScreenshots001.cpp">
       <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\Haptics.cpp">
+      <Filter>Source Files\Misc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

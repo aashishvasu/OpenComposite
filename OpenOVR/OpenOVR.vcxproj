@@ -175,6 +175,7 @@
     <ClInclude Include="FnTable\FnTable.h" />
     <ClInclude Include="libovr_wrapper.h" />
     <ClInclude Include="logging.h" />
+    <ClInclude Include="Misc\Haptics.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h" />
     <ClInclude Include="OpenVR\interfaces\IVRChaperoneSetup_005.h" />
     <ClInclude Include="OpenVR\interfaces\IVRChaperone_003.h" />
@@ -224,6 +225,7 @@
     <ClCompile Include="FnTable\FnTable.cpp" />
     <ClCompile Include="libovr_wrapper.cpp" />
     <ClCompile Include="logging.cpp" />
+    <ClCompile Include="Misc\Haptics.cpp" />
     <ClCompile Include="OpenOVR.cpp" />
     <ClCompile Include="Reimpl\BaseChaperone.cpp" />
     <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp" />

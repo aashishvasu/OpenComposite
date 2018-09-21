@@ -5,6 +5,7 @@
 #include "libovr_wrapper.h"
 #include "convert.h"
 #include "BaseCompositor.h"
+#include "Misc/Haptics.h"
 
 #include <string>
 
@@ -452,6 +453,15 @@ bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr:
 }
 
 void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
+	if (unControllerDeviceIndex == leftHandIndex || unControllerDeviceIndex == rightHandIndex) {
+		static Haptics haptics;
+
+		haptics.StartSimplePulse(unControllerDeviceIndex == leftHandIndex ? ovrControllerType_LTouch : ovrControllerType_RTouch, usDurationMicroSec);
+
+		return;
+	}
+
+	// Invalid controller
 	STUBBED();
 }
 
