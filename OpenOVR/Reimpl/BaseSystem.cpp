@@ -415,10 +415,10 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 	// Grip/Trigger button
 	// TODO what should the cutoff be?
 	if (inputState.HandTrigger[id] >= 0.4) {
-		Buttons |= k_EButton_Grip;
+		Buttons |= ButtonMaskFromId(k_EButton_Grip);
 	}
 	if (inputState.IndexTrigger[id] >= 0.4) {
-		Buttons |= k_EButton_SteamVR_Trigger;
+		Buttons |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
 	}
 
 	controllerState->ulButtonPressed = Buttons;
