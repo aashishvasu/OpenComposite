@@ -84,6 +84,12 @@
     <ClInclude Include="FnTable\decls_public.gen.h">
       <Filter>Header Files\FnTable</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRSystem_016.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\CVRSystem016.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
@@ -265,6 +271,9 @@
     </ClCompile>
     <ClCompile Include="FnTable\FnTable.cpp">
       <Filter>Source Files\FnTable</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRSystem016.cpp">
+      <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseScreenshots.cpp">
       <Filter>Source Files\Reimpl</Filter>
