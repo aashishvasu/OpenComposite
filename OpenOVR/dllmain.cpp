@@ -16,6 +16,8 @@
 #include "Reimpl/CVRChaperoneSetup005.h"
 #include "Reimpl/CVRScreenshots001.h"
 
+#include "Misc/debug_helper.h"
+
 using namespace std;
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -26,6 +28,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
+#if defined(_DEBUG)
+		DbgSetModule(hModule);
+#endif
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:

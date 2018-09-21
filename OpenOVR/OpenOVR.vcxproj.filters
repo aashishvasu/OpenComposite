@@ -198,6 +198,9 @@
     <ClInclude Include="BaseCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Misc\debug_helper.h">
+      <Filter>Source Files\Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -288,6 +291,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Misc\Haptics.cpp">
+      <Filter>Source Files\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\debug_helper.cpp">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
   </ItemGroup>
