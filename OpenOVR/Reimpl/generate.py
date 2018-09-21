@@ -43,8 +43,21 @@ def gen_interface(interface, version, header, impl):
                 # Generate definition
                 # Only do so if the user hasn't defined it
                 if not (cname, func.name) in implemented_functions:
-                    nargs = ", ".join([a.name for a in func.args])
-                    impl.write("%s %s::%s(%s) { return base.%s(%s); }\n" % ( func.return_type, cname, func.name, args, func.name, nargs ))
+                    nargs = []
+                    for a in func.args:
+                        if namespace in a.type:
+                            casttype = "OOVR_%s" % (a.type[len(namespace) + 2:])
+                            nargs.append("(%s) %s" % (casttype, a.name))
+                        else:
+                            nargs.append(a.name)
+
+                    nargs = ", ".join(nargs)
+
+                    safereturn = "return"
+                    if namespace in func.return_type:
+                        safereturn += " (%s)" % func.return_type
+
+                    impl.write("%s %s::%s(%s) { %s base.%s(%s); }\n" % ( func.return_type, cname, func.name, args, safereturn, func.name, nargs ))
 
     header.write("};\n")
 
