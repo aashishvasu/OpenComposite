@@ -144,9 +144,6 @@
     <ClInclude Include="Reimpl\CVRRenderModels005.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRCompositor022.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="Reimpl\BaseCompositor.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
@@ -154,9 +151,6 @@
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
     <ClInclude Include="Reimpl\CVRScreenshots001.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
-    <ClInclude Include="Reimpl\CVRCompositor020.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
     <ClInclude Include="Misc\Haptics.h">
@@ -221,13 +215,7 @@
     <ClCompile Include="Reimpl\BaseCompositor.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRCompositor022.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
-    <ClCompile Include="Reimpl\CVRCompositor020.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseSystem.cpp">
@@ -282,6 +270,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRSystem.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRCompositor.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>

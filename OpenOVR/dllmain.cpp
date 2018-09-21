@@ -3,8 +3,7 @@
 
 #include "Reimpl/GVRSystem.gen.h"
 #include "Reimpl/CVRRenderModels005.h"
-#include "Reimpl/CVRCompositor020.h"
-#include "Reimpl/CVRCompositor022.h"
+#include "Reimpl/GVRCompositor.gen.h"
 #include "Reimpl/CVROverlay016.h"
 #include "Reimpl/CVROverlay017.h"
 #include "Reimpl/CVRSettings002.h"

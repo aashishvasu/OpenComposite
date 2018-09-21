@@ -57,6 +57,12 @@ struct OOVR_Compositor_FrameTiming {
 	vr::TrackedDevicePose_t m_HmdPose; // pose used by app to render this frame
 };
 
+enum OOVR_EVRCompositorTimingMode {
+	VRCompositorTimingMode_Implicit = 0,
+	VRCompositorTimingMode_Explicit_RuntimePerformsPostPresentHandoff = 1,
+	VRCompositorTimingMode_Explicit_ApplicationPerformsPostPresentHandoff = 2,
+};
+
 class BaseCompositor {
 private:
 	bool leftEyeSubmitted = false, rightEyeSubmitted = false;
