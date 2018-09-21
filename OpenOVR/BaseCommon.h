@@ -25,6 +25,8 @@ void** name::_GetStatFuncList() { \
 	return FnTable::Get ## name(this); \
 }; \
 
+#define GEN_INTERFACE(if_name, version)
+
 #endif
 
 #define INTERFACE_FUNC(ret, name, ...) virtual ret name(__VA_ARGS__) override

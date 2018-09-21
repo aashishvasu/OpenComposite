@@ -19,3 +19,10 @@
 /OpenOVR/FnTable/decls_h.gen.h
 /OpenOVR/FnTable/decls_public.gen.h
 /OpenOVR/FnTable/defs_h.gen.h
+
+# Audogenerated implementation files
+/OpenOVR/Reimpl/stubs.gen.cpp
+/OpenOVR/Reimpl/GVR*.gen.h
+
+# Python cache
+/scripts/__pycache__

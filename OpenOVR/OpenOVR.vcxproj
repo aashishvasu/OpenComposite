@@ -251,6 +251,7 @@
     <ClCompile Include="Reimpl\CVRSystem015.cpp" />
     <ClCompile Include="Reimpl\CVRSystem016.cpp" />
     <ClCompile Include="Reimpl\CVRSystem017.cpp" />
+    <ClCompile Include="Reimpl\stubs.gen.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

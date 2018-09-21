@@ -296,5 +296,8 @@
     <ClCompile Include="Misc\debug_helper.cpp">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
+    <ClCompile Include="Reimpl\stubs.gen.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
