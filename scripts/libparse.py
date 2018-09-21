@@ -11,6 +11,8 @@ argr = re.compile(arg_src)
 
 typedecl = re.compile(r"^(?:enum|struct)\s+(?P<name>\w+)$")
 
+typedef = re.compile(r"^typedef\s+(?P<def>[\w\s\d_\*&]+)\s+(?P<name>\w+);$")
+
 def read_context(context, filename, namespace):
     if not namespace:
         raise RuntimeError("Automatic namespace detection not yet implemented! Please specify a namespace!")
@@ -19,6 +21,8 @@ def read_context(context, filename, namespace):
         for line in fi:
             line = line.strip()
             match = typedecl.match(line)
+            if not match:
+                match = typedef.match(line)
             if match:
                 name = match.group("name")
                 context[name] = namespace + "::" + name # TODO
