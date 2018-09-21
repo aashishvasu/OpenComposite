@@ -16,6 +16,8 @@ typedef unsigned int GLuint;
 
 class Compositor {
 public:
+	virtual ~Compositor() {};
+
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;
 
@@ -57,6 +59,8 @@ private:
 class DX11Compositor : public Compositor {
 public:
 	DX11Compositor(ID3D11Texture2D* td, OVR::Sizei bufferSize, ovrTextureSwapChain *chains);
+
+	virtual ~DX11Compositor() override;
 
 	// Override
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,

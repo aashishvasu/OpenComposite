@@ -68,6 +68,16 @@ DX11Compositor::DX11Compositor(ID3D11Texture2D *initial, OVR::Sizei size, ovrTex
 	device->GetImmediateContext(&context); // TODO cleanup - copyContext->Release()
 }
 
+DX11Compositor::~DX11Compositor() {
+	context->Release();
+	device->Release();
+
+	for (int i = 0; i < 2; i++) {
+		if (chains[i])
+			ovr_DestroyTextureSwapChain(OVSS, chains[i]);
+	}
+}
+
 void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
 	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
 

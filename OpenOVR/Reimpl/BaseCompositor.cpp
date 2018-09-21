@@ -94,7 +94,8 @@ BaseCompositor::BaseCompositor() {
 }
 
 BaseCompositor::~BaseCompositor() {
-	// TODO
+	if (compositor)
+		delete compositor;
 }
 
 void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
