@@ -214,9 +214,6 @@
     <ClInclude Include="Reimpl\CVRRenderModels005.h" />
     <ClInclude Include="Reimpl\CVRScreenshots001.h" />
     <ClInclude Include="Reimpl\CVRSettings002.h" />
-    <ClInclude Include="Reimpl\CVRSystem015.h" />
-    <ClInclude Include="Reimpl\CVRSystem016.h" />
-    <ClInclude Include="Reimpl\CVRSystem017.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="steamvr_abi.h" />
     <ClInclude Include="targetver.h" />
@@ -249,9 +246,7 @@
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp" />
     <ClCompile Include="Reimpl\CVRScreenshots001.cpp" />
     <ClCompile Include="Reimpl\CVRSettings002.cpp" />
-    <ClCompile Include="Reimpl\CVRSystem015.cpp" />
-    <ClCompile Include="Reimpl\CVRSystem016.cpp" />
-    <ClCompile Include="Reimpl\CVRSystem017.cpp" />
+    <ClCompile Include="Reimpl\CVRSystem.cpp" />
     <ClCompile Include="Reimpl\stubs.gen.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

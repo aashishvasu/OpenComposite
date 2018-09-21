@@ -1,9 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "stdafx.h"
 
-#include "Reimpl/CVRSystem015.h"
-#include "Reimpl/CVRSystem016.h"
-#include "Reimpl/CVRSystem017.h"
+#include "Reimpl/GVRSystem.gen.h"
 #include "Reimpl/CVRRenderModels005.h"
 #include "Reimpl/CVRCompositor020.h"
 #include "Reimpl/CVRCompositor022.h"

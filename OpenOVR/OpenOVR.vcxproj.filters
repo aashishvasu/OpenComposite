@@ -60,12 +60,6 @@
     <ClInclude Include="Compositor\compositor.h">
       <Filter>Header Files\Compositor</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRSystem017.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
-    <ClInclude Include="Reimpl\CVRSystem015.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="Reimpl\BaseChaperone.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
@@ -88,9 +82,6 @@
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
     <ClInclude Include="Reimpl\CVROverlay016.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
-    <ClInclude Include="Reimpl\CVRSystem016.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h">
@@ -230,13 +221,7 @@
     <ClCompile Include="Reimpl\BaseCompositor.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRSystem017.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="Reimpl\CVRCompositor022.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
-    <ClCompile Include="Reimpl\CVRSystem015.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp">
@@ -281,9 +266,6 @@
     <ClCompile Include="Reimpl\CVROverlay016.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRSystem016.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="Reimpl\BaseScreenshots.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
@@ -297,6 +279,9 @@
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\stubs.gen.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRSystem.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
