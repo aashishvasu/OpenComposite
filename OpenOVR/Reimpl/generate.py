@@ -23,6 +23,7 @@ def gen_interface(interface, version, header, impl):
     header.write("public:\n")
     header.write("\tvirtual void** _GetStatFuncList() override;\n");
     header.write("\t// Interface methods:\n")
+    impl.write("// Interface methods for %s:\n" % cname)
     filename = ivr_path % "IVR%s_%s" % (interface, version)
     icontext = dict(context)
     libparse.read_context(icontext, filename, namespace)
@@ -50,9 +51,32 @@ def gen_interface(interface, version, header, impl):
     gen_fntable(interface, version, funcs, impl)
 
 def gen_fntable(interface, version, funcs, out):
-    # TODO until this is implemented, Unity games won't work!
     cname = "CVR%s_%s" % (interface, version)
-    out.write("void** %s::_GetStatFuncList() { return NULL; }\n" % cname)
+    prefix = "fntable_%s_%s" % (interface, version)
+    ivarname = "%s_instance" % prefix
+    arrvarname = "%s_funcs" % prefix
+    fnametemplate = "%s_impl_%%s" % prefix
+
+    out.write("// FnTable for %s:\n" % cname)
+    out.write("static %s *%s = NULL;\n" % (cname, ivarname))
+
+    # Generate the stub functions
+    for func in funcs:
+        nargs = ", ".join([a.name for a in func.args]) # name-only arguments, eg "a, *b, c"
+        call_stmt = "return %s->%s(%s);" % (ivarname, func.name, nargs)
+
+        fargs = ", ".join(["%s %s" % (a.type, a.name) for a in func.args]) # full arguments, eg "int a, char *b, uint64_t c"
+        out.write("static %s OPENVR_FNTABLE_CALLTYPE %s(%s) { %s }\n" % (func.return_type, fnametemplate % func.name, fargs, call_stmt))
+
+    # Generate the array
+    out.write("static void *%s[] = {\n" % arrvarname)
+    for func in funcs:
+        out.write("\t%s,\n" % fnametemplate % func.name)
+
+    out.write("};\n")
+
+    # Generate the getter
+    out.write("void** %s::_GetStatFuncList() { %s = this; return %s; }\n" % (cname, ivarname, arrvarname))
 
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"\)")
 impldef = re.compile(r"^\w[\w\d\s]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
