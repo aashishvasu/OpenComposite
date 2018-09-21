@@ -15,6 +15,21 @@
 #include "libovr_wrapper.h"
 #include "Misc/debug_helper.h"
 
+#define INTERFACE_LIST(INTERFACE) \
+INTERFACE(017, System); \
+INTERFACE(016, System); \
+INTERFACE(015, System); \
+INTERFACE(005, RenderModels); \
+INTERFACE(020, Compositor); \
+INTERFACE(022, Compositor); \
+INTERFACE(017, Overlay); \
+INTERFACE(016, Overlay); \
+INTERFACE(002, Settings); \
+INTERFACE(003, Chaperone); \
+INTERFACE(005, ChaperoneSetup); \
+INTERFACE(001, Screenshots); \
+;
+
 using namespace std;
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -47,6 +62,10 @@ void ERR(string msg) {
 	MessageBoxA(NULL, buff, "OpenOVR Error", MB_OK);
 	throw msg;
 }
+
+#define INTERFACE(version, name) static CVR ## name ## _ ## version *instance_ ## name ## _ ## version = nullptr;
+INTERFACE_LIST(INTERFACE);
+#undef INTERFACE
 
 class _InheritCVRLayout { virtual void _ignore() = 0; };
 class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {};
@@ -88,24 +107,15 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 #define INTERFACE(version, name) \
 	/* Just a reminder 0==false and strcmp returns 0 if the strings match */ \
 	if (!strcmp(vr::IVR ## name ## _ ## version :: IVR ## name ## _Version, interfaceVersion)) { \
-		static CVR ## name ## _ ## version *val = nullptr; \
+		auto &val = instance_ ## name ## _ ## version; \
 		if (!val) \
 			val = new CVR ## name ## _ ## version(); \
 		return val; \
 	}
 
-	INTERFACE(017, System);
-	INTERFACE(016, System);
-	INTERFACE(015, System);
-	INTERFACE(005, RenderModels);
-	INTERFACE(020, Compositor);
-	INTERFACE(022, Compositor);
-	INTERFACE(017, Overlay);
-	INTERFACE(016, Overlay);
-	INTERFACE(002, Settings);
-	INTERFACE(003, Chaperone);
-	INTERFACE(005, ChaperoneSetup);
-	INTERFACE(001, Screenshots);
+	INTERFACE_LIST(INTERFACE);
+
+#undef INTERFACE
 
 	OOVR_LOG(interfaceVersion);
 	MessageBoxA(NULL, interfaceVersion, "Missing interface", MB_OK);
@@ -168,8 +178,18 @@ VR_INTERFACE const char *VR_CALLTYPE VR_RuntimePath() {
 }
 
 VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
+	// Reset interfaces
+	// Do this first, while the OVR session is still available in case they
+	//  need to use it for cleanup.
+#define INTERFACE(version, name) { \
+		auto &val = instance_ ## name ## _ ## version; \
+		if (val) delete val; \
+		val = nullptr; \
+	}
+	INTERFACE_LIST(INTERFACE);
+#undef INTERFACE
+
+	// Shut down LibOVR
 	ovr::Shutdown();
 	running = false;
-
-	// TODO reset interfaces
 }
