@@ -160,6 +160,15 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 		Quatf f = ovrPose.ThePose.Orientation;
 		f = f * rotation;
 		ovrPose.ThePose.Orientation = f;
+
+		// Controller offset
+		// Note this is about right, found by playing around in Unity until everything
+		//  roughly lines up. If you want to contribute better numbers, please go ahead!
+		Vector3f translation = Vector3f(0, 0.0353, -0.0451);
+
+		Vector3f position = ovrPose.ThePose.Position;
+		position += f * translation;
+		ovrPose.ThePose.Position = position;
 	}
 	else {
 		pose->bPoseIsValid = false;
