@@ -7,7 +7,7 @@ public:
 	virtual void** _GetStatFuncList() = 0;
 };
 
-#ifdef BASE_IMPL
+#if defined(BASE_IMPL) || defined(GENFILE)
 
 #define STUBBED() { \
 	std::string str = "Hit stubbed file at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
@@ -18,15 +18,17 @@ public:
 
 #endif
 
-#ifdef CVR_IMPL
+#if defined(CVR_IMPL)
 
 #define CVR_GEN_IMPL(name) \
 void** name::_GetStatFuncList() { \
 	return FnTable::Get ## name(this); \
 }; \
 
-#define GEN_INTERFACE(if_name, version)
+#endif
 
+#if defined(GENFILE)
+#define GEN_INTERFACE(if_name, version)
 #endif
 
 #define INTERFACE_FUNC(ret, name, ...) virtual ret name(__VA_ARGS__) override
