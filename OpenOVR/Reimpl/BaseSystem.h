@@ -1,11 +1,15 @@
 #pragma once
 #include "BaseCommon.h"
 #include "OpenVR/interfaces/IVRSystem_017.h"
+#include <OVR_CAPI.h>
 
 using namespace vr;
 
 class BaseSystem {
 	// Copied from IVRSystem, because MSVC made me.
+
+private:
+	ovrSessionStatus lastStatus;
 
 public:
 	static const TrackedDeviceIndex_t leftHandIndex = 1;

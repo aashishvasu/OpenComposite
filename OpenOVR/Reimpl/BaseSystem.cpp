@@ -147,7 +147,8 @@ void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin eOrigin
 }
 
 void BaseSystem::ResetSeatedZeroPose() {
-	STUBBED();
+	// TODO should this only work when seated or whatever?
+	ovr_RecenterTrackingOrigin(*ovr::session);
 }
 
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
@@ -349,7 +350,47 @@ const char * BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
 }
 
 bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
-	return false; // TODO
+	memset(pEvent, 0, uncbVREvent);
+
+	ovrSessionStatus status;
+	ovr_GetSessionStatus(*ovr::session, &status);
+
+	VREvent_t e;
+
+	if (status.ShouldQuit && !lastStatus.ShouldQuit) {
+		lastStatus.ShouldQuit = status.ShouldQuit;
+
+		e.eventType = VREvent_Quit;
+		e.trackedDeviceIndex = k_unTrackedDeviceIndex_Hmd;
+		e.eventAgeSeconds = 0; // Is this required for quit events?
+
+		VREvent_Process_t data;
+		data.bForced = false;
+		data.pid = data.oldPid = 0; // TODO but probably very rarely used
+		e.data.process = data;
+
+		goto handle_event;
+	}
+
+	// Not exactly an event, but this is a convenient place to put it
+	// TODO move all the event handling out and run it per frame, and queue up events
+	// Also note this is done after all other events, as it doesn't set ShouldRecenter
+	// and thus could end up resetting the pose several times if it occured at the same time
+	// as another event
+	if (status.ShouldRecenter && !lastStatus.ShouldRecenter) {
+		// Why on earth doesn't OpenVR have a recenter event?!
+		ResetSeatedZeroPose();
+	}
+
+	// Note this isn't called if handle_event is called, preventing one
+	//  event from firing despite another event also being changed in the same poll call
+	lastStatus = status;
+
+	return false;
+
+handle_event:
+	memcpy(pEvent, &e, min(uncbVREvent, sizeof(e)));
+	return true;
 }
 
 bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
