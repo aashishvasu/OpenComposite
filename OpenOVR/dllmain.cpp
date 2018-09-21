@@ -54,6 +54,12 @@ class _InheritCVRLayout { virtual void _ignore() = 0; };
 class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {};
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
+	if (!running) {
+		OOVR_LOG("[INFO] VR_GetGenericInterface called while OOVR not running, setting error=NotInitialized");
+		*error = VRInitError_Init_NotInitialized;
+		return NULL;
+	}
+
 	// First check if they're getting the 'FnTable' version of this interface.
 	// This is a table of methods, but critically they *don't* take a 'this' pointer,
 	//  so we can't cheat and return the vtable.
