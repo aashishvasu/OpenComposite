@@ -9,6 +9,7 @@
 #include "Reimpl/CVRRenderModels005.h"
 #include "Reimpl/CVRCompositor020.h"
 #include "Reimpl/CVRCompositor022.h"
+#include "Reimpl/CVROverlay016.h"
 #include "Reimpl/CVROverlay017.h"
 #include "Reimpl/CVRSettings002.h"
 #include "Reimpl/CVRChaperone003.h"
@@ -91,6 +92,7 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	INTERFACE(020, Compositor);
 	INTERFACE(022, Compositor);
 	INTERFACE(017, Overlay);
+	INTERFACE(016, Overlay);
 	INTERFACE(002, Settings);
 	INTERFACE(003, Chaperone);
 	INTERFACE(005, ChaperoneSetup);
