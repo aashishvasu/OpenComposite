@@ -32,15 +32,6 @@
  * each line to combine it into a single line. C++ doesn't require this, but the generation tool certainly does.
  */
 
-// Use stdcall on Windows, see openvr_capi.h
-// Note that VC++ (and most other compilers) ignore calltype definitions on 64-bit, using fastcall instead. Not that it's
-// relevant for 99% of this, but if you're getting mysterious bugs in 64-bit software don't think it's caused by this.
-#if defined( _WIN32 )
-#define OPENVR_FNTABLE_CALLTYPE __stdcall
-#else
-#define OPENVR_FNTABLE_CALLTYPE
-#endif
-
 // Implementation of the getter methods
 #include "decls_h.gen.h"
 
