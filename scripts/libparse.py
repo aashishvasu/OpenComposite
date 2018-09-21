@@ -39,9 +39,30 @@ def convert_type(t, context):
         else:
             break
 
+    # Strip any remaining whitespace on the left side
+    t = t.lstrip()
+
+    # If there is a brace, it must be due to a macro.
+    # Thus, remove until the end of the last macro.
+    # Note these macros are unimportant, spplying attributes to Clang.
+    # If necessary these can be saved and added back on later.
+    if "(" in t:
+        t = t[t.index(")")+1:]
+        t = t.lstrip()
+
+    # Strip off the const, if applicable
+    const = t.startswith("const")
+    if const:
+        t = t[5:]
+        t = t.lstrip()
+
     # Transform the type, assuming we have a context
     if context and t in context:
         t = context[t]
+
+    # If necessary, add the const back
+    if const:
+        t = "const " + t
 
     # Add the pointer/reference symbols back in
     return t + ptr_str
