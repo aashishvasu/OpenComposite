@@ -13,12 +13,34 @@ typedecl = re.compile(r"^(?:enum|struct)\s+(?P<name>\w+)$")
 
 typedef = re.compile(r"^typedef\s+(?P<def>[\w\s\d_\*&]+)\s+(?P<name>\w+);$")
 
+def nice_lines(fi):
+    lines = []
+    carry = None
+
+    for line in fi:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if carry:
+            line = carry + line
+            carry = None
+
+        if line[-1] == "," or line[-1] == "\\":
+            carry = line
+            continue
+
+        lines.append(line)
+
+    return lines
+
 def read_context(context, filename, namespace):
     if not namespace:
         raise RuntimeError("Automatic namespace detection not yet implemented! Please specify a namespace!")
 
     with open(filename) as fi:
-        for line in fi:
+        for line in nice_lines(fi):
             line = line.strip()
             match = typedecl.match(line)
             if not match:

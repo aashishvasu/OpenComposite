@@ -30,7 +30,7 @@ def gen_interface(interface, version, header, impl):
 
     with open(filename) as f:
         funcs = []
-        for line in f:
+        for line in libparse.nice_lines(f):
             func = libparse.parseline(line, icontext)
             if func:
                 funcs.append(func)
