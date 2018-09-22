@@ -186,6 +186,15 @@
     <ClInclude Include="Misc\debug_helper.h">
       <Filter>Source Files\Misc</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRDriverManager_001.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVROverlay_018.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRSystem_019.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

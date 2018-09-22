@@ -183,10 +183,12 @@
     <ClInclude Include="OpenVR\interfaces\IVRChaperone_003.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_020.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_022.h" />
+    <ClInclude Include="OpenVR\interfaces\IVRDriverManager_001.h" />
     <ClInclude Include="OpenVR\interfaces\IVRExtendedDisplay_001.h" />
     <ClInclude Include="OpenVR\interfaces\IVRNotifications_002.h" />
     <ClInclude Include="OpenVR\interfaces\IVROverlay_016.h" />
     <ClInclude Include="OpenVR\interfaces\IVROverlay_017.h" />
+    <ClInclude Include="OpenVR\interfaces\IVROverlay_018.h" />
     <ClInclude Include="OpenVR\interfaces\IVRRenderModels_005.h" />
     <ClInclude Include="OpenVR\interfaces\IVRResources_001.h" />
     <ClInclude Include="OpenVR\interfaces\IVRScreenshots_001.h" />
@@ -194,6 +196,7 @@
     <ClInclude Include="OpenVR\interfaces\IVRSystem_015.h" />
     <ClInclude Include="OpenVR\interfaces\IVRSystem_016.h" />
     <ClInclude Include="OpenVR\interfaces\IVRSystem_017.h" />
+    <ClInclude Include="OpenVR\interfaces\IVRSystem_019.h" />
     <ClInclude Include="OpenVR\interfaces\IVRTrackedCamera_003.h" />
     <ClInclude Include="OpenVR\interfaces\openvr.h" />
     <ClInclude Include="OpenVR\interfaces\vrannotation.h" />

@@ -11,7 +11,12 @@ for fi in glob.glob("interfaces/*"):
 # Be sure to list these in ascending order!
 # This ensures that non-interface files get the
 # latest version available
-versions = ["1.0.7", "1.0.8", "1.0.11"]
+versions = [
+    "1.0.7",
+    "1.0.8",
+    "1.0.11",
+    "1.0.12",
+]
 
 python_cmd = "py -3" if sys.platform == "win32" else "python3"
 
