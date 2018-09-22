@@ -14,6 +14,7 @@ versions = [
 #####################################################
 
 import sys, re, io, os, glob
+import hashlib
 
 # Should we avoid overwriting interface files if they already exist?
 #  This prevents the compiler from recompiling the entire project due
@@ -51,18 +52,31 @@ def write(target, result, usingiface):
 
 	files_written.append(filename)
 
+	# Fix up the namespaces
+	if usingiface:
+		result = result.replace("%%REPLACE%NS%START%%", "namespace vr\n{\nnamespace " + target)
+		result = result + "} // Close custom namespace\n"
+		result = result.replace("vr::", "")
+	else:
+		result = result.replace("%%REPLACE%NS%START%%", "namespace vr")
+
 	if nooverwrite and os.path.isfile(outfile):
-		print("Skipping " + outfile)
-		return
+		# Check the hashes of the files, in case the headers have been modified, a new
+		#  header has been added, or anything like that.
+		current = hashlib.md5()
+		with open(outfile, "rb") as fi:
+			current.update(fi.read())
+
+		new = hashlib.md5()
+		new.update(result.encode())
+
+		if current.digest() == new.digest():
+			return
+		else:
+			print("Hash changed, cannot skip " + outfile)
 
 	print("Writing to: " + outfile)
 	with open(outfile, "wb") as outfile:
-		if usingiface:
-			result = result.replace("%%REPLACE%NS%START%%", "namespace vr\n{\nnamespace " + target)
-			result = result + "} // Close custom namespace\n"
-			result = result.replace("vr::", "")
-		else:
-			result = result.replace("%%REPLACE%NS%START%%", "namespace vr")
 		outfile.write(result.encode())
 
 def split_header(headerfile):
