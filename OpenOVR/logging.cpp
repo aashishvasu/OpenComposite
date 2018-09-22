@@ -12,4 +12,12 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 	// Do we need to close the stream or something? What about multiple threads?
 }
 
+void oovr_abort_raw(const char * file, long line, const char * func, const char * msg) {
+	OOVR_LOG("Abort!");
+	oovr_log_raw(file, line, func, msg);
+
+	MessageBoxA(NULL, msg, "OpenOVR Error - info in log", MB_OK);
+	exit(1);
+}
+
 const float math_pi = 3.14159265358979323846;
