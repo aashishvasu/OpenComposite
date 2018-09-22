@@ -296,13 +296,28 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 	STUBBED();
 }
 
-uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t dev, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
 	if (prop == Prop_CurrentUniverseId_Uint64) {
 		return 1; // Oculus Rift's universe
 	}
 
+	bool is_ctrl = dev == leftHandIndex || dev == rightHandIndex;
+
+	if (is_ctrl && prop == Prop_SupportedButtons_Uint64) {
+		return
+			ButtonMaskFromId(k_EButton_ApplicationMenu) |
+			ButtonMaskFromId(k_EButton_Grip) |
+			ButtonMaskFromId(k_EButton_DPad_Left) |
+			ButtonMaskFromId(k_EButton_DPad_Up) |
+			ButtonMaskFromId(k_EButton_DPad_Down) |
+			ButtonMaskFromId(k_EButton_DPad_Right) |
+			ButtonMaskFromId(k_EButton_A) |
+			ButtonMaskFromId(k_EButton_SteamVR_Touchpad) |
+			ButtonMaskFromId(k_EButton_SteamVR_Trigger);
+	}
+
 	char msg[1024];
-	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
+	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", dev, prop);
 	MessageBoxA(NULL, msg, "GetUint64TrackedDeviceProperty", MB_OK);
 	STUBBED();
 }
