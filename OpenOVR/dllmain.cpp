@@ -7,7 +7,7 @@
 #include "Reimpl/CVROverlay016.h"
 #include "Reimpl/CVROverlay017.h"
 #include "Reimpl/CVRSettings002.h"
-#include "Reimpl/CVRChaperone003.h"
+#include "Reimpl/GVRChaperone.gen.h"
 #include "Reimpl/CVRChaperoneSetup005.h"
 #include "Reimpl/CVRScreenshots001.h"
 

@@ -238,7 +238,7 @@
     <ClCompile Include="Reimpl\BaseScreenshots.cpp" />
     <ClCompile Include="Reimpl\BaseSettings.cpp" />
     <ClCompile Include="Reimpl\BaseSystem.cpp" />
-    <ClCompile Include="Reimpl\CVRChaperone003.cpp" />
+    <ClCompile Include="Reimpl\CVRChaperone.cpp" />
     <ClCompile Include="Reimpl\CVRChaperoneSetup005.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor.cpp" />
     <ClCompile Include="Reimpl\CVROverlay016.cpp" />

@@ -248,9 +248,6 @@
     <ClCompile Include="Reimpl\BaseChaperone.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRChaperone003.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
@@ -282,6 +279,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRCompositor.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRChaperone.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
