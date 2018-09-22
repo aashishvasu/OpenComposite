@@ -311,6 +311,10 @@ HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceInde
 	STUBBED();
 }
 
+uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void * pBuffer, uint32_t unBufferSize, ETrackedPropertyError * pError) {
+	STUBBED();
+}
+
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
 	VR_OUT_STRING() char * value, uint32_t bufferSize, ETrackedPropertyError * pErrorL) {
 
@@ -347,6 +351,22 @@ if(prop == in) { \
 
 const char * BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
 	STUBBED();
+}
+
+bool BaseSystem::IsInputAvailable() {
+	return true; // TODO
+}
+
+bool BaseSystem::IsSteamVRDrawingControllers() {
+	return false; // TODO
+}
+
+bool BaseSystem::ShouldApplicationPause() {
+	return false; // TODO
+}
+
+bool BaseSystem::ShouldApplicationReduceRenderingWork() {
+	return false; // TODO
 }
 
 bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {

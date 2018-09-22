@@ -185,6 +185,11 @@ public:
 	/** Returns a matrix property. If the device index is not valid or the property is not a matrix type, this function will return identity. */
 	virtual HmdMatrix34_t GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pErrorL);
 
+	/** Returns an array of one type of property. If the device index is not valid or the property is not a single value or an array of the specified type,
+	* this function will return 0. Otherwise it returns the number of bytes necessary to hold the array of properties. If unBufferSize is
+	* greater than the returned size and pBuffer is non-NULL, pBuffer is filled with the contents of array of properties. */
+	virtual uint32_t GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void *pBuffer, uint32_t unBufferSize, ETrackedPropertyError *pError);
+
 	/** Returns a string property. If the device index is not valid or the property is not a string type this function will
 	* return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing
 	* null. Strings will always fit in buffers of k_unMaxPropertyStringSize characters. */
@@ -193,6 +198,22 @@ public:
 	/** returns a string that corresponds with the specified property error. The string will be the name
 	* of the error enum value for all valid error codes */
 	virtual const char *GetPropErrorNameFromEnum(ETrackedPropertyError error);
+
+	/** Returns true if this application is receiving input from the system. This would return false if
+	* system-related functionality is consuming the input stream. */
+	virtual bool IsInputAvailable();
+
+	/** Returns true SteamVR is drawing controllers on top of the application. Applications should consider
+	* not drawing anything attached to the user's hands in this case. */
+	virtual bool IsSteamVRDrawingControllers();
+
+	/** Returns true if the user has put SteamVR into a mode that is distracting them from the application.
+	* For applications where this is appropriate, the application should pause ongoing activity. */
+	virtual bool ShouldApplicationPause();
+
+	/** Returns true if SteamVR is doing significant rendering work and the game should do what it can to reduce
+	* its own workload. One common way to do this is to reduce the size of the render target provided for each eye. */
+	virtual bool ShouldApplicationReduceRenderingWork();
 
 	// ------------------------------------
 	// Event methods
