@@ -82,57 +82,57 @@ void BaseRenderModels::FreeTexture(RenderModel_TextureMap_t * texture) {
 }
 
 EVRRenderModelError BaseRenderModels::LoadTextureD3D11_Async(TextureID_t textureId, void * pD3D11Device, void ** ppD3D11Texture2D) {
-	throw "stub";
+	STUBBED();
 }
 
 EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t textureId, void * pDstTexture) {
-	throw "stub";
+	STUBBED();
 }
 
 void BaseRenderModels::FreeTextureD3D11(void * pD3D11Texture2D) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OUT_STRING() char * pchRenderModelName, uint32_t unRenderModelNameLen) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetRenderModelCount() {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetComponentCount(const char * pchRenderModelName) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetComponentName(const char * pchRenderModelName, uint32_t unComponentIndex, VR_OUT_STRING() char * pchComponentName, uint32_t unComponentNameLen) {
-	throw "stub";
+	STUBBED();
 }
 
 uint64_t BaseRenderModels::GetComponentButtonMask(const char * pchRenderModelName, const char * pchComponentName) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetComponentRenderModelName(const char * pchRenderModelName, const char * pchComponentName, VR_OUT_STRING() char * pchComponentRenderModelName, uint32_t unComponentRenderModelNameLen) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseRenderModels::GetComponentState(const char * pchRenderModelName, const char * pchComponentName, const vr::VRControllerState_t * pControllerState, const OOVR_RenderModel_ControllerMode_State_t * pState, OOVR_RenderModel_ComponentState_t * pComponentState) {
-	throw "stub";
+	STUBBED();
 }
 
 bool BaseRenderModels::RenderModelHasComponent(const char * pchRenderModelName, const char * pchComponentName) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetRenderModelThumbnailURL(const char * pchRenderModelName, VR_OUT_STRING() char * pchThumbnailURL, uint32_t unThumbnailURLLen, EVRRenderModelError * peError) {
-	throw "stub";
+	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetRenderModelOriginalPath(const char * pchRenderModelName, VR_OUT_STRING() char * pchOriginalPath, uint32_t unOriginalPathLen, EVRRenderModelError * peError) {
-	throw "stub";
+	STUBBED();
 }
 
 const char * BaseRenderModels::GetRenderModelErrorNameFromEnum(EVRRenderModelError error) {
-	throw "stub";
+	STUBBED();
 }
