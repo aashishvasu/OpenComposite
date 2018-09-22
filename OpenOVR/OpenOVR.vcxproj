@@ -209,7 +209,6 @@
     <ClInclude Include="Reimpl\BaseScreenshots.h" />
     <ClInclude Include="Reimpl\BaseSettings.h" />
     <ClInclude Include="Reimpl\BaseSystem.h" />
-    <ClInclude Include="Reimpl\CVRScreenshots001.h" />
     <ClInclude Include="Reimpl\CVRSettings002.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="steamvr_abi.h" />
@@ -240,7 +239,7 @@
     <ClCompile Include="Reimpl\CVRCompositor.cpp" />
     <ClCompile Include="Reimpl\CVROverlay.cpp" />
     <ClCompile Include="Reimpl\CVRRenderModels.cpp" />
-    <ClCompile Include="Reimpl\CVRScreenshots001.cpp" />
+    <ClCompile Include="Reimpl\CVRScreenshots.cpp" />
     <ClCompile Include="Reimpl\CVRSettings002.cpp" />
     <ClCompile Include="Reimpl\CVRSystem.cpp" />
     <ClCompile Include="Reimpl\stubs.gen.cpp" />

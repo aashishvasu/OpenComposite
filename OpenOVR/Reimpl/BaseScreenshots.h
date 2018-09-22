@@ -1,9 +1,18 @@
 #pragma once
 #include "BaseCommon.h"
 
+enum OOVR_EVRScreenshotError {
+	VRScreenshotError_None = 0,
+	VRScreenshotError_RequestFailed = 1,
+	VRScreenshotError_IncompatibleVersion = 100,
+	VRScreenshotError_NotFound = 101,
+	VRScreenshotError_BufferTooSmall = 102,
+	VRScreenshotError_ScreenshotAlreadyInProgress = 108,
+};
+
 class BaseScreenshots {
 public:
-	enum EVRScreenshotError;
+	typedef OOVR_EVRScreenshotError EVRScreenshotError;
 
 	/** Request a screenshot of the requested type.
 	*  A request of the VRScreenshotType_Stereo type will always
@@ -85,13 +94,4 @@ public:
 	*  was a new shot taking by the app to be saved and not
 	*  initiated by a user (achievement earned or something) */
 	virtual EVRScreenshotError SubmitScreenshot(vr::ScreenshotHandle_t screenshotHandle, vr::EVRScreenshotType type, const char *pchSourcePreviewFilename, const char *pchSourceVRFilename);
-
-	enum EVRScreenshotError {
-		VRScreenshotError_None = 0,
-		VRScreenshotError_RequestFailed = 1,
-		VRScreenshotError_IncompatibleVersion = 100,
-		VRScreenshotError_NotFound = 101,
-		VRScreenshotError_BufferTooSmall = 102,
-		VRScreenshotError_ScreenshotAlreadyInProgress = 108,
-	};
 };

@@ -141,9 +141,6 @@
     <ClInclude Include="Reimpl\BaseScreenshots.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRScreenshots001.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="Misc\Haptics.h">
       <Filter>Header Files\Misc</Filter>
     </ClInclude>
@@ -239,9 +236,6 @@
     <ClCompile Include="Reimpl\BaseScreenshots.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRScreenshots001.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="Misc\Haptics.cpp">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
@@ -270,6 +264,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRRenderModels.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRScreenshots.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>

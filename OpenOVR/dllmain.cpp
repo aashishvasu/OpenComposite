@@ -8,7 +8,7 @@
 #include "Reimpl/CVRSettings002.h"
 #include "Reimpl/GVRChaperone.gen.h"
 #include "Reimpl/GVRChaperoneSetup.gen.h"
-#include "Reimpl/CVRScreenshots001.h"
+#include "Reimpl/GVRScreenshots.gen.h"
 
 #include "steamvr_abi.h"
 #include "libovr_wrapper.h"
