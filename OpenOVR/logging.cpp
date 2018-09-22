@@ -11,3 +11,5 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 
 	// Do we need to close the stream or something? What about multiple threads?
 }
+
+const float math_pi = 3.14159265358979323846;

@@ -142,9 +142,7 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 	else if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
 		ovrPose = state.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
 
-		// Yay for there not being a PI constant in the standard
-		float pi = 3.14159265358979323846;
-		float deg_to_rad = pi / 180;
+		float deg_to_rad = math_pi / 180;
 
 		// The angle offset between the Touch and Vive controllers.
 		// If this is incorrect, virtual hands will feel off.
