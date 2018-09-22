@@ -20,15 +20,6 @@ public:
 	}
 };
 
-// These enums are ints
-typedef int VROverlayFlags;
-typedef int VROverlayTransformType;
-typedef int VROverlayInputMethod;
-typedef int EOverlayDirection;
-typedef int EGamepadTextInputMode;
-typedef int EGamepadTextInputLineMode;
-typedef int VRMessageOverlayResponse;
-
 // TODO don't pass around handles, as it will cause
 // crashes when we should merely return VROverlayError_InvalidHandle
 #define OVL (*((OverlayData**)pOverlayHandle))
@@ -331,9 +322,9 @@ EVROverlayError BaseOverlay::GetOverlayMouseScale(VROverlayHandle_t ulOverlayHan
 EVROverlayError BaseOverlay::SetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, const HmdVector2_t *pvecMouseScale) {
 	STUBBED();
 }
-//bool BaseOverlay::ComputeOverlayIntersection(VROverlayHandle_t ulOverlayHandle, const VROverlayIntersectionParams_t *pParams, VROverlayIntersectionResults_t *pResults) {
-//	STUBBED();
-//}
+bool BaseOverlay::ComputeOverlayIntersection(VROverlayHandle_t ulOverlayHandle, const OOVR_VROverlayIntersectionParams_t *pParams, OOVR_VROverlayIntersectionResults_t *pResults) {
+	STUBBED();
+}
 bool BaseOverlay::HandleControllerOverlayInteractionAsMouse(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t unControllerDeviceIndex) {
 	STUBBED();
 }
@@ -419,13 +410,13 @@ void BaseOverlay::SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTracking
 void BaseOverlay::SetKeyboardPositionForOverlay(VROverlayHandle_t ulOverlayHandle, HmdRect2_t avoidRect) {
 	STUBBED();
 }
-//EVROverlayError BaseOverlay::SetOverlayIntersectionMask(VROverlayHandle_t ulOverlayHandle, VROverlayIntersectionMaskPrimitive_t *pMaskPrimitives, uint32_t unNumMaskPrimitives, uint32_t unPrimitiveSize = sizeof(VROverlayIntersectionMaskPrimitive_t)) {
-//	STUBBED();
-//}
+EVROverlayError BaseOverlay::SetOverlayIntersectionMask(VROverlayHandle_t ulOverlayHandle, OOVR_VROverlayIntersectionMaskPrimitive_t *pMaskPrimitives, uint32_t unNumMaskPrimitives, uint32_t unPrimitiveSize) {
+	STUBBED();
+}
 EVROverlayError BaseOverlay::GetOverlayFlags(VROverlayHandle_t ulOverlayHandle, uint32_t *pFlags) {
 	STUBBED();
 }
-VRMessageOverlayResponse BaseOverlay::ShowMessageOverlay(const char* pchText, const char* pchCaption, const char* pchButton0Text, const char* pchButton1Text, const char* pchButton2Text, const char* pchButton3Text) {
+BaseOverlay::VRMessageOverlayResponse BaseOverlay::ShowMessageOverlay(const char* pchText, const char* pchCaption, const char* pchButton0Text, const char* pchButton1Text, const char* pchButton2Text, const char* pchButton3Text) {
 	STUBBED();
 }
 void BaseOverlay::CloseMessageOverlay() {

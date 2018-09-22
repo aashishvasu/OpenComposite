@@ -4,16 +4,148 @@
 
 using namespace vr; // TODO eliminate this
 
+enum OOVR_VROverlayInputMethod {
+	VROverlayInputMethod_None = 0, // No input events will be generated automatically for this overlay
+	VROverlayInputMethod_Mouse = 1, // Tracked controllers will get mouse events automatically
+	VROverlayInputMethod_DualAnalog = 2, // Analog inputs from tracked controllers are turned into DualAnalog events
+};
+
+/** Allows the caller to figure out which overlay transform getter to call. */
+enum OOVR_VROverlayTransformType {
+	VROverlayTransform_Absolute = 0,
+	VROverlayTransform_TrackedDeviceRelative = 1,
+	VROverlayTransform_SystemOverlay = 2,
+	VROverlayTransform_TrackedComponent = 3,
+};
+
+/** Overlay control settings */
+enum OOVR_VROverlayFlags {
+	VROverlayFlags_None = 0,
+
+	// The following only take effect when rendered using the high quality render path (see SetHighQualityOverlay).
+	VROverlayFlags_Curved = 1,
+	VROverlayFlags_RGSS4X = 2,
+
+	// Set this flag on a dashboard overlay to prevent a tab from showing up for that overlay
+	VROverlayFlags_NoDashboardTab = 3,
+
+	// Set this flag on a dashboard that is able to deal with gamepad focus events
+	VROverlayFlags_AcceptsGamepadEvents = 4,
+
+	// Indicates that the overlay should dim/brighten to show gamepad focus
+	VROverlayFlags_ShowGamepadFocus = 5,
+
+	// When in VROverlayInputMethod_Mouse you can optionally enable sending VRScroll_t 
+	VROverlayFlags_SendVRScrollEvents = 6,
+	VROverlayFlags_SendVRTouchpadEvents = 7,
+
+	// If set this will render a vertical scroll wheel on the primary controller, 
+	//  only needed if not using VROverlayFlags_SendVRScrollEvents but you still want to represent a scroll wheel
+	VROverlayFlags_ShowTouchPadScrollWheel = 8,
+
+	// If this is set ownership and render access to the overlay are transferred 
+	// to the new scene process on a call to IVRApplications::LaunchInternalProcess
+	VROverlayFlags_TransferOwnershipToInternalProcess = 9,
+
+	// If set, renders 50% of the texture in each eye, side by side
+	VROverlayFlags_SideBySide_Parallel = 10, // Texture is left/right
+	VROverlayFlags_SideBySide_Crossed = 11, // Texture is crossed and right/left
+
+	VROverlayFlags_Panorama = 12, // Texture is a panorama
+	VROverlayFlags_StereoPanorama = 13, // Texture is a stereo panorama
+
+	// If this is set on an overlay owned by the scene application that overlay
+	// will be sorted with the "Other" overlays on top of all other scene overlays
+	VROverlayFlags_SortWithNonSceneOverlays = 14,
+
+	// If set, the overlay will be shown in the dashboard, otherwise it will be hidden.
+	VROverlayFlags_VisibleInDashboard = 15,
+};
+
+enum OOVR_VRMessageOverlayResponse {
+	VRMessageOverlayResponse_ButtonPress_0 = 0,
+	VRMessageOverlayResponse_ButtonPress_1 = 1,
+	VRMessageOverlayResponse_ButtonPress_2 = 2,
+	VRMessageOverlayResponse_ButtonPress_3 = 3,
+	VRMessageOverlayResponse_CouldntFindSystemOverlay = 4,
+	VRMessageOverlayResponse_CouldntFindOrCreateClientOverlay = 5,
+	VRMessageOverlayResponse_ApplicationQuit = 6
+};
+
+struct OOVR_VROverlayIntersectionParams_t {
+	HmdVector3_t vSource;
+	HmdVector3_t vDirection;
+	ETrackingUniverseOrigin eOrigin;
+};
+
+struct OOVR_VROverlayIntersectionResults_t {
+	HmdVector3_t vPoint;
+	HmdVector3_t vNormal;
+	HmdVector2_t vUVs;
+	float fDistance;
+};
+
+// Input modes for the Big Picture gamepad text entry
+enum OOVR_EGamepadTextInputMode {
+	k_EGamepadTextInputModeNormal = 0,
+	k_EGamepadTextInputModePassword = 1,
+	k_EGamepadTextInputModeSubmit = 2,
+};
+
+// Controls number of allowed lines for the Big Picture gamepad text entry
+enum OOVR_EGamepadTextInputLineMode {
+	k_EGamepadTextInputLineModeSingleLine = 0,
+	k_EGamepadTextInputLineModeMultipleLines = 1
+};
+
+/** Directions for changing focus between overlays with the gamepad */
+enum OOVR_EOverlayDirection {
+	OverlayDirection_Up = 0,
+	OverlayDirection_Down = 1,
+	OverlayDirection_Left = 2,
+	OverlayDirection_Right = 3,
+
+	OverlayDirection_Count = 4,
+};
+
+enum OOVR_EVROverlayIntersectionMaskPrimitiveType {
+	OverlayIntersectionPrimitiveType_Rectangle,
+	OverlayIntersectionPrimitiveType_Circle,
+};
+
+struct OOVR_IntersectionMaskRectangle_t {
+	float m_flTopLeftX;
+	float m_flTopLeftY;
+	float m_flWidth;
+	float m_flHeight;
+};
+
+struct OOVR_IntersectionMaskCircle_t {
+	float m_flCenterX;
+	float m_flCenterY;
+	float m_flRadius;
+};
+
+typedef union {
+	OOVR_IntersectionMaskRectangle_t m_Rectangle;
+	OOVR_IntersectionMaskCircle_t m_Circle;
+} OOVR_VROverlayIntersectionMaskPrimitive_Data_t;
+
+struct OOVR_VROverlayIntersectionMaskPrimitive_t {
+	OOVR_EVROverlayIntersectionMaskPrimitiveType m_nPrimitiveType;
+	OOVR_VROverlayIntersectionMaskPrimitive_Data_t m_Primitive;
+};
+
 class BaseOverlay {
 private:
 	// These enums are ints
-	typedef int VROverlayFlags;
-	typedef int VROverlayTransformType;
-	typedef int VROverlayInputMethod;
-	typedef int EOverlayDirection;
-	typedef int EGamepadTextInputMode;
-	typedef int EGamepadTextInputLineMode;
-	typedef int VRMessageOverlayResponse;
+	typedef OOVR_VROverlayFlags VROverlayFlags;
+	typedef OOVR_VROverlayTransformType VROverlayTransformType;
+	typedef OOVR_VROverlayInputMethod VROverlayInputMethod;
+	typedef OOVR_EOverlayDirection EOverlayDirection;
+	typedef OOVR_EGamepadTextInputMode EGamepadTextInputMode;
+	typedef OOVR_EGamepadTextInputLineMode EGamepadTextInputLineMode;
+	typedef OOVR_VRMessageOverlayResponse VRMessageOverlayResponse;
 
 	class OverlayData;
 
@@ -215,8 +347,7 @@ public:
 
 	/** Computes the overlay-space pixel coordinates of where the ray intersects the overlay with the
 	* specified settings. Returns false if there is no intersection. */
-	// TODO structs
-	//virtual bool ComputeOverlayIntersection(VROverlayHandle_t ulOverlayHandle, const VROverlayIntersectionParams_t *pParams, VROverlayIntersectionResults_t *pResults);
+	virtual bool ComputeOverlayIntersection(VROverlayHandle_t ulOverlayHandle, const OOVR_VROverlayIntersectionParams_t *pParams, OOVR_VROverlayIntersectionResults_t *pResults);
 
 	/** Processes mouse input from the specified controller as though it were a mouse pointed at a compositor overlay with the
 	* specified settings. The controller is treated like a laser pointer on the -z axis. The point where the laser pointer would
@@ -344,8 +475,7 @@ public:
 
 	/** Sets a list of primitives to be used for controller ray intersection
 	* typically the size of the underlying UI in pixels (not in world space). */
-	// TODO structs
-	//virtual EVROverlayError SetOverlayIntersectionMask(VROverlayHandle_t ulOverlayHandle, VROverlayIntersectionMaskPrimitive_t *pMaskPrimitives, uint32_t unNumMaskPrimitives, uint32_t unPrimitiveSize = sizeof(VROverlayIntersectionMaskPrimitive_t));
+	virtual EVROverlayError SetOverlayIntersectionMask(VROverlayHandle_t ulOverlayHandle, OOVR_VROverlayIntersectionMaskPrimitive_t *pMaskPrimitives, uint32_t unNumMaskPrimitives, uint32_t unPrimitiveSize = sizeof(OOVR_VROverlayIntersectionMaskPrimitive_t));
 
 	virtual EVROverlayError GetOverlayFlags(VROverlayHandle_t ulOverlayHandle, uint32_t *pFlags);
 

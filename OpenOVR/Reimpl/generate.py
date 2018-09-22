@@ -7,6 +7,7 @@ interfaces_list = [
     "Compositor",
     "System",
     "Chaperone",
+    "Overlay",
 ]
 
 import sys, os, glob, re

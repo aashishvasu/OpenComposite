@@ -78,9 +78,6 @@
     <ClInclude Include="OpenVR\interfaces\IVRSystem_016.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVROverlay016.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
@@ -159,9 +156,6 @@
     <ClInclude Include="Reimpl\BaseOverlay.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVROverlay017.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="Reimpl\BaseSettings.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
@@ -230,9 +224,6 @@
     <ClCompile Include="Reimpl\BaseOverlay.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVROverlay017.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="Reimpl\BaseSettings.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
@@ -253,9 +244,6 @@
     </ClCompile>
     <ClCompile Include="FnTable\FnTable.cpp">
       <Filter>Source Files\FnTable</Filter>
-    </ClCompile>
-    <ClCompile Include="Reimpl\CVROverlay016.cpp">
-      <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseScreenshots.cpp">
       <Filter>Source Files\Reimpl</Filter>
@@ -279,6 +267,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRChaperone.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVROverlay.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
