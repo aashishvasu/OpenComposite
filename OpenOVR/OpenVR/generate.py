@@ -31,6 +31,9 @@ if not os.path.isdir("interfaces"):
 #  ensure the only files remaining are from the interfaces
 files_to_delete = os.listdir("interfaces")
 
+# List of files we've already written, this prevents us from overwriting newer files
+files_written = []
+
 matcher = re.compile(r"^\/\/ ([\w_-]+)\.h$")
 versionmatcher = re.compile(r"_Version = \"([\w-]*)\";")
 
@@ -41,6 +44,12 @@ def write(target, result, usingiface):
 	# Don't delete this file, since it gets overwritten
 	if filename in files_to_delete:
 		files_to_delete.remove(filename)
+
+	if filename in files_written:
+		# This file is already written by a later version
+		return
+
+	files_written.append(filename)
 
 	if nooverwrite and os.path.isfile(outfile):
 		print("Skipping " + outfile)
@@ -100,7 +109,9 @@ def split_header(headerfile):
 	if targetfile:
 		write(targetfile, outbuff.getvalue(), usingiface)
 
-for version in versions:
+# Go through the list backwards, and not overwriting interfaces which
+#  ensures we have the latest version of every file
+for version in versions[::-1]:
     feed = "openvr-%s.h" % version
     print("Reading: " + feed)
 
