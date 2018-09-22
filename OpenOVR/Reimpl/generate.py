@@ -9,6 +9,7 @@ interfaces_list = [
     "Chaperone",
     "Overlay",
     "ChaperoneSetup",
+    "RenderModels",
 ]
 
 import sys, os, glob, re

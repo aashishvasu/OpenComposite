@@ -2,7 +2,7 @@
 #include "stdafx.h"
 
 #include "Reimpl/GVRSystem.gen.h"
-#include "Reimpl/CVRRenderModels005.h"
+#include "Reimpl/GVRRenderModels.gen.h"
 #include "Reimpl/GVRCompositor.gen.h"
 #include "Reimpl/GVROverlay.gen.h"
 #include "Reimpl/CVRSettings002.h"
