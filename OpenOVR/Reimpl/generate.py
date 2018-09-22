@@ -56,7 +56,7 @@ def gen_interface(interface, version, header, impl):
                     nargs = []
                     for a in func.args:
                         if namespace in a.type:
-                            casttype = "OOVR_%s" % (a.type[len(namespace) + 2:])
+                            casttype = a.type.replace(namespace + "::", "OOVR_")
                             nargs.append("(%s) %s" % (casttype, a.name))
                         else:
                             nargs.append(a.name)
