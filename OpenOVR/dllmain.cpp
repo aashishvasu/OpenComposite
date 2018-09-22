@@ -128,15 +128,15 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_GetInitToken() {
 }
 
 VR_INTERFACE char * VR_GetStringForHmdError(int err) {
-	throw "stub";
+	OOVR_ABORT("Stub");
 }
 
 VR_INTERFACE const char *VR_CALLTYPE VR_GetVRInitErrorAsEnglishDescription(EVRInitError error) {
-	throw "stub";
+	OOVR_ABORT("Stub");
 }
 
 VR_INTERFACE const char *VR_CALLTYPE VR_GetVRInitErrorAsSymbol(EVRInitError error) {
-	throw "stub";
+	OOVR_ABORT("Stub");
 }
 
 VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError * peError, EVRApplicationType eApplicationType) {
@@ -174,7 +174,7 @@ VR_INTERFACE bool VR_CALLTYPE VR_IsRuntimeInstalled() {
 }
 
 VR_INTERFACE const char *VR_CALLTYPE VR_RuntimePath() {
-	throw "stub";
+	OOVR_ABORT("Stub");
 }
 
 VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
