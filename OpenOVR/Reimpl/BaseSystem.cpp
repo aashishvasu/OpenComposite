@@ -347,7 +347,7 @@ if(prop == in) { \
 
 	// These have been validated against SteamVR
 	// TODO add an option to fake this out with 'lighthouse' and 'HTC' in case there is a compatibility issue
-	PROP(Prop_TrackingSystemName_String, "Constellation");
+	PROP(Prop_TrackingSystemName_String, "oculus");
 	PROP(Prop_ManufacturerName_String, "Oculus");
 
 	// TODO these?
