@@ -63,9 +63,6 @@
     <ClInclude Include="Reimpl\BaseChaperone.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRChaperone003.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="FnTable\FnTable.h">
       <Filter>Header Files\FnTable</Filter>
     </ClInclude>

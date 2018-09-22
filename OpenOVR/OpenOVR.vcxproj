@@ -208,7 +208,6 @@
     <ClInclude Include="Reimpl\BaseScreenshots.h" />
     <ClInclude Include="Reimpl\BaseSettings.h" />
     <ClInclude Include="Reimpl\BaseSystem.h" />
-    <ClInclude Include="Reimpl\CVRChaperone003.h" />
     <ClInclude Include="Reimpl\CVRChaperoneSetup005.h" />
     <ClInclude Include="Reimpl\CVROverlay016.h" />
     <ClInclude Include="Reimpl\CVROverlay017.h" />
