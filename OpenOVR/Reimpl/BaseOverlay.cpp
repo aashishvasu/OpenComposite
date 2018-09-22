@@ -120,6 +120,8 @@ EVROverlayError BaseOverlay::SetOverlayName(VROverlayHandle_t ulOverlayHandle, c
 	USEH();
 
 	overlay->name = pchName;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayImageData(VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unBufferSize, uint32_t *punWidth, uint32_t *punHeight) {
 	STUBBED();
