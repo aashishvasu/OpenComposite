@@ -205,6 +205,7 @@
     <ClInclude Include="Reimpl\BaseChaperoneSetup.h" />
     <ClInclude Include="Reimpl\BaseCompositor.h" />
     <ClInclude Include="Reimpl\BaseOverlay.h" />
+    <ClInclude Include="Reimpl\BaseRenderModels.h" />
     <ClInclude Include="Reimpl\BaseScreenshots.h" />
     <ClInclude Include="Reimpl\BaseSettings.h" />
     <ClInclude Include="Reimpl\BaseSystem.h" />
@@ -231,6 +232,7 @@
     <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp" />
     <ClCompile Include="Reimpl\BaseCompositor.cpp" />
     <ClCompile Include="Reimpl\BaseOverlay.cpp" />
+    <ClCompile Include="Reimpl\BaseRenderModels.cpp" />
     <ClCompile Include="Reimpl\BaseScreenshots.cpp" />
     <ClCompile Include="Reimpl\BaseSettings.cpp" />
     <ClCompile Include="Reimpl\BaseSystem.cpp" />

@@ -183,6 +183,9 @@
     <ClInclude Include="OpenVR\interfaces\IVRSystem_019.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
+    <ClInclude Include="Reimpl\BaseRenderModels.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -267,6 +270,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRChaperoneSetup.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\BaseRenderModels.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
