@@ -29,10 +29,6 @@ echo Generating headers
 cd "%~dp0/OpenOVR/OpenVR"
 py -3 generate.py --nooverwrite
 
-echo Generating Legacy FnTables
-cd "%~dp0/OpenOVR/FnTable"
-py -3 generate.py
-
 echo Generating Interface Stubs
 cd "%~dp0/OpenOVR/Reimpl"
 py -3 generate.py

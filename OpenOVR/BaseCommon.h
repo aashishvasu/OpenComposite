@@ -1,6 +1,5 @@
 #pragma once
 #include "OpenVR/interfaces/vrtypes.h"
-#include "FnTable/FnTable.h"
 
 class CVRCommon {
 public:
@@ -18,22 +17,6 @@ public:
 
 #endif
 
-#if defined(CVR_IMPL)
-
-#define CVR_GEN_IMPL(name) \
-void** name::_GetStatFuncList() { \
-	return FnTable::Get ## name(this); \
-}; \
-
-#endif
-
 #if defined(GENFILE)
 #define GEN_INTERFACE(if_name, version)
 #endif
-
-#define INTERFACE_FUNC(ret, name, ...) virtual ret name(__VA_ARGS__) override
-
-#define CVR_GEN_IFACE() \
-public: \
-	virtual void** _GetStatFuncList() override; \
-private: \
