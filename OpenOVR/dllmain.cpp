@@ -22,6 +22,7 @@ INTERFACE(015, System); \
 INTERFACE(005, RenderModels); \
 INTERFACE(020, Compositor); \
 INTERFACE(022, Compositor); \
+INTERFACE(018, Overlay); \
 INTERFACE(017, Overlay); \
 INTERFACE(016, Overlay); \
 INTERFACE(002, Settings); \
