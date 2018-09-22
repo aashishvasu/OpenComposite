@@ -11,6 +11,7 @@ interfaces_list = [
     "ChaperoneSetup",
     "RenderModels",
     "Screenshots",
+    "Settings",
 ]
 
 import sys, os, glob, re

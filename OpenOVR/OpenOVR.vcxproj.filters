@@ -153,9 +153,6 @@
     <ClInclude Include="Reimpl\BaseSettings.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRSettings002.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="logging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -218,9 +215,6 @@
     <ClCompile Include="Reimpl\BaseSettings.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRSettings002.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -267,6 +261,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRScreenshots.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRSettings.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,17 +1,19 @@
 #pragma once
 #include "BaseCommon.h"
 
+enum OOVR_EVRSettingsError {
+	VRSettingsError_None = 0,
+	VRSettingsError_IPCFailed = 1,
+	VRSettingsError_WriteFailed = 2,
+	VRSettingsError_ReadFailed = 3,
+	VRSettingsError_JsonParseFailed = 4,
+	VRSettingsError_UnsetSettingHasNoDefault = 5, // This will be returned if the setting does not appear in the appropriate default file and has not been set
+};
+
 class BaseSettings {
 private:
 public:
-	enum EVRSettingsError {
-		VRSettingsError_None = 0,
-		VRSettingsError_IPCFailed = 1,
-		VRSettingsError_WriteFailed = 2,
-		VRSettingsError_ReadFailed = 3,
-		VRSettingsError_JsonParseFailed = 4,
-		VRSettingsError_UnsetSettingHasNoDefault = 5, // This will be returned if the setting does not appear in the appropriate default file and has not been set
-	};
+	typedef OOVR_EVRSettingsError EVRSettingsError;
 
 	virtual const char *GetSettingsErrorNameFromEnum(EVRSettingsError eError);
 

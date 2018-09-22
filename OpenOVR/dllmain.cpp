@@ -5,7 +5,7 @@
 #include "Reimpl/GVRRenderModels.gen.h"
 #include "Reimpl/GVRCompositor.gen.h"
 #include "Reimpl/GVROverlay.gen.h"
-#include "Reimpl/CVRSettings002.h"
+#include "Reimpl/GVRSettings.gen.h"
 #include "Reimpl/GVRChaperone.gen.h"
 #include "Reimpl/GVRChaperoneSetup.gen.h"
 #include "Reimpl/GVRScreenshots.gen.h"
