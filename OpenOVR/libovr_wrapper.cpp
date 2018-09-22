@@ -43,6 +43,9 @@ namespace ovr {
 		eyeRenderDesc[1] = ovr_GetRenderDesc(*session, ovrEye_Right, hmdDesc.DefaultEyeFov[1]);
 		hmdToEyeViewPose[0] = eyeRenderDesc[0].HmdToEyePose;
 		hmdToEyeViewPose[1] = eyeRenderDesc[1].HmdToEyePose;
+
+		// It seems that SteamVR defaults to a floor-level tracking origin, while LibOVR does the opposite.
+		ovr_SetTrackingOriginType(*session, ovrTrackingOrigin_FloorLevel);
 	}
 
 	bool IsAvailable() {
