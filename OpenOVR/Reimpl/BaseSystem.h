@@ -13,7 +13,11 @@ private:
 	ovrSessionStatus lastStatus;
 	std::queue<VREvent_t> events;
 
+	VRControllerState_t lastLeftHandState;
+	VRControllerState_t lastRightHandState;
+
 	void CheckEvents();
+	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t &last);
 
 public:
 	static const TrackedDeviceIndex_t leftHandIndex = 1;

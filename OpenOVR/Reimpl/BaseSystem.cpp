@@ -405,6 +405,9 @@ void BaseSystem::CheckEvents() {
 		events.push(e);
 	}
 
+	CheckControllerEvents(leftHandIndex, lastLeftHandState);
+	CheckControllerEvents(rightHandIndex, lastRightHandState);
+
 	// Not exactly an event, but this is a convenient place to put it
 	// TODO move all the event handling out and run it per frame, and queue up events
 	// Also note this is done after all other events, as it doesn't set ShouldRecenter
@@ -418,6 +421,45 @@ void BaseSystem::CheckEvents() {
 	// Note this isn't called if handle_event is called, preventing one
 	//  event from firing despite another event also being changed in the same poll call
 	lastStatus = status;
+}
+
+void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerState_t &last) {
+	VRControllerState_t state;
+	GetControllerState(hand, &state, sizeof(state));
+
+	VREvent_t ev_base;
+	ev_base.trackedDeviceIndex = hand;
+	ev_base.eventAgeSeconds = 0; // TODO
+	ev_base.data.controller = { 0 };
+
+	// Check each possible button, and fire an event if it changed
+	// (note that incrementing enums in C++ is a bit of a pain, wrt the casting)
+	for (EVRButtonId id = k_EButton_ApplicationMenu; id < k_EButton_Max; id = (EVRButtonId)(id + 1)) {
+		ev_base.data.controller.button = id;
+		uint64_t mask = ButtonMaskFromId(id);
+
+		// Was the button pressed or released?
+		bool oldState = (last.ulButtonPressed & mask) != 0;
+		bool newState = (state.ulButtonPressed & mask) != 0;
+
+		if (newState != oldState) {
+			VREvent_t e = ev_base;
+			e.eventType = newState ? VREvent_ButtonPress : VREvent_ButtonUnpress;
+			events.push(e);
+		}
+
+		// Did the user touch or break contact with the button?
+		oldState = (last.ulButtonTouched & mask) != 0;
+		newState = (state.ulButtonTouched & mask) != 0;
+
+		if (newState != oldState) {
+			VREvent_t e = ev_base;
+			e.eventType = newState ? VREvent_ButtonTouch : VREvent_ButtonUntouch;
+			events.push(e);
+		}
+	}
+
+	last = state;
 }
 
 bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
