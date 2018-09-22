@@ -505,9 +505,6 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 		Buttons |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
 	}
 
-	controllerState->ulButtonPressed = Buttons;
-	controllerState->ulButtonTouched = Touches;
-
 	// Trigger and Thumbstick - Analog (axis) inputs
 	VRControllerAxis_t &trigger = controllerState->rAxis[1];
 	trigger.x = inputState.IndexTrigger[id];
@@ -521,6 +518,40 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 	ovrVector2f &ovrThumbstick = inputState.Thumbstick[id];
 	thumbstick.x = ovrThumbstick.x;
 	thumbstick.y = ovrThumbstick.y;
+
+	// Pythagoras, and don't bother square rooting it since that's much slower than squaring what we compare it to
+	float valueSquared = thumbstick.x * thumbstick.x + thumbstick.y * thumbstick.y;
+
+	// The threshold for activating the virtual DPad buttons
+	// TODO add a latch thing so you can't have it flip back and forth
+	float threshold = 0.6f;
+
+	if (valueSquared > threshold * threshold) {
+		// 0=west
+		float angle = atan2(thumbstick.y, thumbstick.x);
+
+		// Subtract 45deg so the divisions are diagonal
+		angle -= math_pi / 4;
+
+		if (angle < 0)
+			angle += math_pi * 2;
+
+		if (angle < math_pi * 0.5) {
+			Buttons = ButtonMaskFromId(k_EButton_DPad_Right);
+		}
+		else if (angle < math_pi * 1.0) {
+			Buttons = ButtonMaskFromId(k_EButton_DPad_Down);
+		}
+		else if (angle < math_pi * 1.5) {
+			Buttons = ButtonMaskFromId(k_EButton_DPad_Left);
+		}
+		else {
+			Buttons = ButtonMaskFromId(k_EButton_DPad_Up);
+		}
+	}
+
+	controllerState->ulButtonPressed = Buttons;
+	controllerState->ulButtonTouched = Touches;
 
 	// TODO do this properly
 	static uint32_t unPacketNum = 0;
