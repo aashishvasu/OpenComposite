@@ -102,7 +102,9 @@ uint32_t BaseRenderModels::GetRenderModelCount() {
 }
 
 uint32_t BaseRenderModels::GetComponentCount(const char * pchRenderModelName) {
-	STUBBED();
+	return 0;
+	// This means there are no moving components (eg buttons thumbstick etc) which
+	//  can be animated via the Component functions, which thus shouldn't be called.
 }
 
 uint32_t BaseRenderModels::GetComponentName(const char * pchRenderModelName, uint32_t unComponentIndex, VR_OUT_STRING() char * pchComponentName, uint32_t unComponentNameLen) {

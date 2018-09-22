@@ -355,7 +355,7 @@ if(prop == in) { \
 	// TODO these?
 	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
 	PROP(Prop_ModelNumber_String, "<unknown>"); // Serious TODO - some software may not work correctly
-	PROP(Prop_RenderModelName_String, "<unknown>"); // Serious TODO - some software may not work correctly
+	PROP(Prop_RenderModelName_String, "<unknown>"); // It appears this just gets passed into IVRRenderModels as the render model name
 
 #undef PROP
 
