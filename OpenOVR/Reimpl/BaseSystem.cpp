@@ -369,16 +369,12 @@ bool BaseSystem::ShouldApplicationReduceRenderingWork() {
 	return false; // TODO
 }
 
-bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
-	memset(pEvent, 0, uncbVREvent);
-
+void BaseSystem::CheckEvents() {
 	ovrSessionStatus status;
 	ovr_GetSessionStatus(*ovr::session, &status);
 
-	VREvent_t e;
-
 	if (status.ShouldQuit && !lastStatus.ShouldQuit) {
-		lastStatus.ShouldQuit = status.ShouldQuit;
+		VREvent_t e;
 
 		e.eventType = VREvent_Quit;
 		e.trackedDeviceIndex = k_unTrackedDeviceIndex_Hmd;
@@ -389,7 +385,7 @@ bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
 		data.pid = data.oldPid = 0; // TODO but probably very rarely used
 		e.data.process = data;
 
-		goto handle_event;
+		events.push(e);
 	}
 
 	// Not exactly an event, but this is a convenient place to put it
@@ -405,10 +401,20 @@ bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
 	// Note this isn't called if handle_event is called, preventing one
 	//  event from firing despite another event also being changed in the same poll call
 	lastStatus = status;
+}
 
-	return false;
+bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
+	CheckEvents();
 
-handle_event:
+	memset(pEvent, 0, uncbVREvent);
+
+	if (events.empty()) {
+		return false;
+	}
+
+	VREvent_t e = events.front();
+	events.pop();
+
 	memcpy(pEvent, &e, min(uncbVREvent, sizeof(e)));
 	return true;
 }

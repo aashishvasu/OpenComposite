@@ -2,6 +2,7 @@
 #include "BaseCommon.h"
 #include "OpenVR/interfaces/IVRSystem_017.h"
 #include <OVR_CAPI.h>
+#include <queue>
 
 using namespace vr;
 
@@ -10,6 +11,9 @@ class BaseSystem {
 
 private:
 	ovrSessionStatus lastStatus;
+	std::queue<VREvent_t> events;
+
+	void CheckEvents();
 
 public:
 	static const TrackedDeviceIndex_t leftHandIndex = 1;
