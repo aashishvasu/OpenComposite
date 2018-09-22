@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+
+# List these rather than scanning for files, as this ensures
+# that files not checked into version control won't interfere
+# with the build process.
+interfaces_list = [
+    "Compositor",
+    "System",
+]
+
 import sys, os, glob, re
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../scripts")
@@ -102,7 +111,8 @@ impl.write("#include \"stdafx.h\"\n")
 for filename in glob.glob("GVR*.gen.h"):
     os.remove(filename)
 
-for filename in glob.glob("CVR*.cpp"):
+for interface in interfaces_list:
+    filename = "CVR" + interface + ".cpp"
     todo_interfaces = []
     implemented_functions = []
 
@@ -126,7 +136,6 @@ for filename in glob.glob("CVR*.cpp"):
     if not todo_interfaces:
         continue
 
-    interface = filename[3:-4]
     header_filename = "GVR%s.gen.h" % interface
     header = open(header_filename, "w")
     header.write("#pragma once\n")
