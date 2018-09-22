@@ -328,7 +328,17 @@ void BaseCompositor::ClearLastSubmittedFrame() {
 }
 
 void BaseCompositor::PostPresentHandoff() {
-	STUBBED();
+	// It appears (from the documentation) that SteamVR will, even after all frames are submitted, not begin
+	//  compositing the submitted textures until WaitGetPoses is called. Thus is you want to do some rendering
+	//  or game logic or whatever, it will delay the compositor. Calling this tells SteamVR that no further changes
+	//  are to be made to the frame, and it can begin the compositor - in the aforementioned cases, this would be
+	//  called directly after the last Submit call.
+	//
+	// On the other hand, LibOVR starts compositing as soon as ovr_EndFrame is called. So we don't have to do
+	//  anything here.
+	//
+	// TODO: use ovr_EndFrame and co instead of ovr_SubmitFrame for better performance, not just here but in all cases
+	//  that way we can call ovr_WaitToBeginFrame in WaitGetPoses to mimick SteamVR.
 }
 
 bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
