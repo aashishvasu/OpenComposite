@@ -283,6 +283,8 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 			return k_eControllerAxis_Trigger;
 
 		case Prop_Axis2Type_Int32:
+			return k_eControllerAxis_Trigger;
+
 		case Prop_Axis3Type_Int32:
 		case Prop_Axis4Type_Int32:
 			return k_eControllerAxis_None;
@@ -510,6 +512,10 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 	VRControllerAxis_t &trigger = controllerState->rAxis[1];
 	trigger.x = inputState.IndexTrigger[id];
 	trigger.y = 0;
+
+	VRControllerAxis_t &grip = controllerState->rAxis[2];
+	grip.x = inputState.HandTrigger[id];
+	grip.y = 0;
 
 	VRControllerAxis_t &thumbstick = controllerState->rAxis[0];
 	ovrVector2f &ovrThumbstick = inputState.Thumbstick[id];
