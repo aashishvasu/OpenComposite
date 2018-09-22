@@ -7,14 +7,7 @@ print("Reading: " + feed)
 matcher = re.compile(r"^\/\/ ([\w_-]+)\.h$")
 versionmatcher = re.compile(r"_Version = \"([\w-]*)\";")
 
-outbuff = io.StringIO()
-targetfile = None
-usingiface = False
-
-imports = io.StringIO()
-imports.write("#pragma once\n")
-
-def write(target, result):
+def write(targetfile, result, usingiface):
 	outfile = "interfaces/" + targetfile + ".h"
 	print("Writing to: " + outfile)
 	with open(outfile, "wb") as outfile:
@@ -26,7 +19,14 @@ def write(target, result):
 			result = result.replace("%%REPLACE%NS%START%%", "namespace vr")
 		outfile.write(result.encode())
 
-with open(feed, "r") as headerfile:
+def split_header(headerfile):
+	outbuff = io.StringIO()
+	targetfile = None
+	usingiface = False
+
+	imports = io.StringIO()
+	imports.write("#pragma once\n")
+
 	for line in headerfile:
 		niceline = line.rstrip("\n")
 		match = matcher.match(niceline)
@@ -36,7 +36,7 @@ with open(feed, "r") as headerfile:
 
 			# Write out the previous interface file, unless this was the first one
 			if targetfile:
-				write(targetfile, outbuff.getvalue())
+				write(targetfile, outbuff.getvalue(), usingiface)
 
 				# Add the import, unless it's a versioned interface
 				if not usingiface:
@@ -61,4 +61,7 @@ with open(feed, "r") as headerfile:
 
 	# Write the last interface
 	if targetfile:
-		write(targetfile, outbuff.getvalue())
+		write(targetfile, outbuff.getvalue(), usingiface)
+
+with open(feed, "r") as headerfile:
+	split_header(headerfile)
