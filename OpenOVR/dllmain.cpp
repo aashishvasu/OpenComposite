@@ -15,6 +15,7 @@
 #include "Misc/debug_helper.h"
 
 #define INTERFACE_LIST(INTERFACE) \
+INTERFACE(019, System); \
 INTERFACE(017, System); \
 INTERFACE(016, System); \
 INTERFACE(015, System); \
