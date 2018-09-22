@@ -168,9 +168,6 @@
     <ClInclude Include="Reimpl\BaseChaperoneSetup.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
-    <ClInclude Include="Reimpl\CVRChaperoneSetup005.h">
-      <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
     <ClInclude Include="BaseCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -239,9 +236,6 @@
     <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
-    <ClCompile Include="Reimpl\CVRChaperoneSetup005.cpp">
-      <Filter>Source Files\Reimpl</Filter>
-    </ClCompile>
     <ClCompile Include="FnTable\FnTable.cpp">
       <Filter>Source Files\FnTable</Filter>
     </ClCompile>
@@ -270,6 +264,9 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVROverlay.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRChaperoneSetup.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>

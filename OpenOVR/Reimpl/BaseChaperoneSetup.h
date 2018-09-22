@@ -1,10 +1,19 @@
 #pragma once
 #include "BaseCommon.h"
 
+enum OOVR_EChaperoneConfigFile {
+	EChaperoneConfigFile_Live = 1,		// The live chaperone config, used by most applications and games
+	EChaperoneConfigFile_Temp = 2,		// The temporary chaperone config, used to live-preview collision bounds in room setup
+};
+
+enum OOVR_EChaperoneImportFlags {
+	EChaperoneImport_BoundsOnly = 0x0001,
+};
+
 class BaseChaperoneSetup {
 public:
-	enum EChaperoneConfigFile;
-	enum EChaperoneConfigFlags;
+	typedef OOVR_EChaperoneConfigFile EChaperoneConfigFile;
+	typedef OOVR_EChaperoneImportFlags EChaperoneConfigFlags;
 
 	/** Saves the current working copy to disk */
 	bool CommitWorkingCopy(EChaperoneConfigFile configFile);
@@ -66,13 +75,4 @@ public:
 
 	bool ExportLiveToBuffer(VR_OUT_STRING() char *pBuffer, uint32_t *pnBufferLength);
 	bool ImportFromBufferToWorking(const char *pBuffer, uint32_t nImportFlags);
-
-	enum EChaperoneConfigFile {
-		EChaperoneConfigFile_Live = 1,		// The live chaperone config, used by most applications and games
-		EChaperoneConfigFile_Temp = 2,		// The temporary chaperone config, used to live-preview collision bounds in room setup
-	};
-
-	enum EChaperoneImportFlags {
-		EChaperoneImport_BoundsOnly = 0x0001,
-	};
 };

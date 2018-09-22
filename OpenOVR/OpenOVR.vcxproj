@@ -208,7 +208,6 @@
     <ClInclude Include="Reimpl\BaseScreenshots.h" />
     <ClInclude Include="Reimpl\BaseSettings.h" />
     <ClInclude Include="Reimpl\BaseSystem.h" />
-    <ClInclude Include="Reimpl\CVRChaperoneSetup005.h" />
     <ClInclude Include="Reimpl\CVRRenderModels005.h" />
     <ClInclude Include="Reimpl\CVRScreenshots001.h" />
     <ClInclude Include="Reimpl\CVRSettings002.h" />
@@ -236,7 +235,7 @@
     <ClCompile Include="Reimpl\BaseSettings.cpp" />
     <ClCompile Include="Reimpl\BaseSystem.cpp" />
     <ClCompile Include="Reimpl\CVRChaperone.cpp" />
-    <ClCompile Include="Reimpl\CVRChaperoneSetup005.cpp" />
+    <ClCompile Include="Reimpl\CVRChaperoneSetup.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor.cpp" />
     <ClCompile Include="Reimpl\CVROverlay.cpp" />
     <ClCompile Include="Reimpl\CVRRenderModels005.cpp" />
