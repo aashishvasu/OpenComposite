@@ -27,7 +27,7 @@ if [%1] == [clean] (
 
 echo Generating headers
 cd "%~dp0/OpenOVR/OpenVR"
-py -3 generate.py
+py -3 generate.py --nooverwrite
 
 echo Generating Legacy FnTables
 cd "%~dp0/OpenOVR/FnTable"

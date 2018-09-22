@@ -15,6 +15,12 @@ versions = [
 
 import sys, re, io, os, glob
 
+# Should we avoid overwriting interface files if they already exist?
+#  This prevents the compiler from recompiling the entire project due
+#  to the modification of the interface files, and can only cause problems
+#  if one of the OpenVR headers is modified.
+nooverwrite = "--nooverwrite" in sys.argv
+
 # Setup the interfaces folder and remove the old interfaces
 if not os.path.isdir("interfaces"):
     os.mkdir("interfaces")
@@ -35,6 +41,10 @@ def write(target, result, usingiface):
 	# Don't delete this file, since it gets overwritten
 	if filename in files_to_delete:
 		files_to_delete.remove(filename)
+
+	if nooverwrite and os.path.isfile(outfile):
+		print("Skipping " + outfile)
+		return
 
 	print("Writing to: " + outfile)
 	with open(outfile, "wb") as outfile:
