@@ -18,18 +18,28 @@ import sys, re, io, os, glob
 # Setup the interfaces folder and remove the old interfaces
 if not os.path.isdir("interfaces"):
     os.mkdir("interfaces")
-for fi in glob.glob("interfaces/*"):
-    os.remove(fi)
+
+# A list of files that don't belong to any of the interfaces and thus
+#  should be deleted. When files are written they are removed from
+#  this list, and at the end removing all the files in this list will
+#  ensure the only files remaining are from the interfaces
+files_to_delete = os.listdir("interfaces")
 
 matcher = re.compile(r"^\/\/ ([\w_-]+)\.h$")
 versionmatcher = re.compile(r"_Version = \"([\w-]*)\";")
 
-def write(targetfile, result, usingiface):
-	outfile = "interfaces/" + targetfile + ".h"
+def write(target, result, usingiface):
+	filename = target + ".h"
+	outfile = "interfaces/" + filename
+
+	# Don't delete this file, since it gets overwritten
+	if filename in files_to_delete:
+		files_to_delete.remove(filename)
+
 	print("Writing to: " + outfile)
 	with open(outfile, "wb") as outfile:
 		if usingiface:
-			result = result.replace("%%REPLACE%NS%START%%", "namespace vr\n{\nnamespace " + targetfile)
+			result = result.replace("%%REPLACE%NS%START%%", "namespace vr\n{\nnamespace " + target)
 			result = result + "} // Close custom namespace\n"
 			result = result.replace("vr::", "")
 		else:
@@ -86,3 +96,7 @@ for version in versions:
 
     with open(feed, "r") as headerfile:
         split_header(headerfile)
+
+for fi in files_to_delete:
+    fi = "interfaces/" + fi
+    os.remove(fi)
