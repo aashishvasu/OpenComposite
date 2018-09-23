@@ -50,6 +50,30 @@ the 32-bit DLL, even though you're probably running a 64-bit computer. Simple so
 Some time in the near future I plan to release a system-wide install - run an EXE and all your games will open via OpenOVR, and
 you'll be able to switch back by starting SteamVR. This will make updating much easier.
 
+## Audio Patching
+
+LibOVR includes functionality to tell a game what audio device it should output to, and thus when playing games using this API
+you don't have to change the default Windows audio device. Unfortunately, OpenVR has no such API and games using it almost always
+emit audio to the default audio device. OpenOVR includes a feature to fix this.
+
+Whenever you start a game using OpenOVR, it will attempt to patch the game's audio system (note this does **not** change the actual
+Windows audio device like SteamVR tries to, which causes a huge number of issues). This works in most of the games I tried it
+with. Depending on the game, one of three things can happen:
+
+1. The game sets up it's audio system before the OpenOVR DLL is loaded (should be very uncommon). Unfortunately there's not a lot
+I can do about this, and the audio plays through your default audio device.
+2. The game sets up it's audio system after the DLL is loaded, but before starting the VR system. This will send audio to your rift,
+same as if you'd set it as the default audio device. However, the fancy Oculus audio features (eg audio mirroring) won't work. This is
+probably the most common.
+3. The game sets up it's audio after setting up the VR system. This means the audio will work perfectly, including features like audio
+mirroring, as set up in the Oculus settings.
+
+Notes:
+
+1. If the game allows you to select an audio output, you must set it to the default output if you want the patching
+to take effect.
+2. This does not yet work with microphones - only your speakers.
+
 ## Reporting a bug
 
 If you find an issue, missing interface, crash etc then *please* let me know about it.
