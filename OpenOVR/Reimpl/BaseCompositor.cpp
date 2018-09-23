@@ -228,7 +228,23 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 
 ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose,
 	TrackedDevicePose_t * pOutputGamePose) {
-	STUBBED();
+
+	if (unDeviceIndex < 0 || unDeviceIndex >= k_unMaxTrackedDeviceCount) {
+		return VRCompositorError_IndexOutOfRange;
+	}
+
+	TrackedDevicePose_t pose;
+	GetSinglePose(unDeviceIndex, &pose, trackingState);
+
+	if (pOutputPose) {
+		*pOutputPose = pose;
+	}
+
+	if (pOutputGamePose) {
+		*pOutputGamePose = pose;
+	}
+
+	return VRCompositorError_None;
 }
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
