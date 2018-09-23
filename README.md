@@ -3,6 +3,9 @@
 OpenOVR (OpenVR for OculusVR) is an implementation of SteamVR's API - OpenVR, forwarding calls directly
 to the Oculus runtime. Think of it as a backwards version of ReVive, for the Rift.
 
+This allows you to play SteamVR-based games on an Oculus Rift as though they were native titles, without
+the use of SteamVR!
+
 Why would you want to do this? There are several of good reasons:
 
 * Some users have trouble running SteamVR on their machines
