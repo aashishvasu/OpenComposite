@@ -1,0 +1,14 @@
+version: 1.0.{build}
+branches:
+  only:
+  - master
+image: Visual Studio 2017
+configuration: Release
+platform: x64
+install:
+  - ps: appveyor DownloadFile http://znix.xyz/random/ovr_sdk_win_1.26.0_public_nosamples.7z
+  - ps: 7z x -olibovr ovr_sdk_win_1.26.0_public_nosamples.7z
+  - ps: ./configure.cmd
+build:
+  project: OpenOVR.sln
+  verbosity: minimal
