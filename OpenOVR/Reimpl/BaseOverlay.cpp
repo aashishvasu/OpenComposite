@@ -396,7 +396,9 @@ EVROverlayError BaseOverlay::CreateDashboardOverlay(const char *pchOverlayKey, c
 	STUBBED();
 }
 bool BaseOverlay::IsDashboardVisible() {
-	STUBBED();
+	// TODO should this be based of whether Dash is open?
+	// Probably, but handling focus opens some other issues as it triggers under other conditions.
+	return false;
 }
 bool BaseOverlay::IsActiveDashboardOverlay(VROverlayHandle_t ulOverlayHandle) {
 	STUBBED();
