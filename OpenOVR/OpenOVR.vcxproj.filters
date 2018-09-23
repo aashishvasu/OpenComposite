@@ -168,6 +168,9 @@
     <ClInclude Include="OpenVR\interfaces\IVROverlay_014.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_021.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -179,6 +179,7 @@
     <ClInclude Include="OpenVR\interfaces\IVRChaperone_003.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_019.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_020.h" />
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_021.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_022.h" />
     <ClInclude Include="OpenVR\interfaces\IVRDriverManager_001.h" />
     <ClInclude Include="OpenVR\interfaces\IVRExtendedDisplay_001.h" />
