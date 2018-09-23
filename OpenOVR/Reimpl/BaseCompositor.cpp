@@ -141,7 +141,21 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 	}
 	else if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
 		ovrPose = state.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
+	}
+	else {
+		pose->bPoseIsValid = false;
+		pose->bDeviceIsConnected = false;
+		return;
+	}
 
+	// If we haven't yet got a frame, mark the controller as having
+	// an invalid pose to avoid errors from unnormalised 0,0,0,0 quaternions
+	if (!ovrPose.TimeInSeconds) {
+		pose->bPoseIsValid = false;
+		return;
+	}
+
+	if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
 		float deg_to_rad = math_pi / 180;
 
 		// The angle offset between the Touch and Vive controllers.
@@ -167,22 +181,6 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 		Vector3f position = ovrPose.ThePose.Position;
 		position += f * translation;
 		ovrPose.ThePose.Position = position;
-	}
-	else {
-		pose->bPoseIsValid = false;
-		pose->bDeviceIsConnected = false;
-		return;
-	}
-
-	// If we haven't yet got a frame, set it to an identity position
-	// This prevents errors due to 0,0,0,0 quaternions (as they're unnormalised)
-	if (!state.HeadPose.TimeInSeconds) {
-		HmdMatrix34_t ident;
-		ident.m[0][0] = 1;
-		ident.m[1][1] = 1;
-		ident.m[2][2] = 1;
-		pose->mDeviceToAbsoluteTracking = ident;
-		return;
 	}
 
 	// Configure the pose
