@@ -152,7 +152,14 @@ void BaseSystem::ResetSeatedZeroPose() {
 }
 
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
-	STUBBED();
+	// TODO can we discover the player's seated height somehow?
+	// For now just add 0.5 meters
+	OVR::Matrix4f in;
+	in.Translation(OVR::Vector3f(0, 0.5, 0));
+
+	HmdMatrix34_t res;
+	O2S_om34(in, res);
+	return res;
 }
 
 HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
