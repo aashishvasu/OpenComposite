@@ -342,50 +342,88 @@ bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint3
 	//	STUBBED();
 	//}
 
-	static int framenum = 0; // TODO do this properly
+	// TODO implement unFramesAgo
+
+	ovrPerfStats stats;
+	ovr_GetPerfStats(*ovr::session, &stats);
+	const ovrPerfStatsPerCompositorFrame &frame = stats.FrameStats[0];
 
 	memset(pTiming, 0, sizeof(OOVR_Compositor_FrameTiming));
 
 	pTiming->m_nSize = sizeof(OOVR_Compositor_FrameTiming); // Set to sizeof( Compositor_FrameTiming ) // TODO in methods calling this
-	pTiming->m_nFrameIndex = framenum++; // TODO
-	pTiming->m_nNumFramePresents = 1; // number of times this frame was presented
-	pTiming->m_nNumMisPresented = 0; // number of times this frame was presented on a vsync other than it was originally predicted to
-	pTiming->m_nNumDroppedFrames = 0; // number of additional times previous frame was scanned out
+	pTiming->m_nFrameIndex = frame.AppFrameIndex; // TODO is this per submitted frame or per HMD frame?
+	pTiming->m_nNumFramePresents = 1; // TODO
+	pTiming->m_nNumMisPresented = 0; // TODO
+	pTiming->m_nNumDroppedFrames = 0; // TODO
 	pTiming->m_nReprojectionFlags = 0;
 
 	/** Absolute time reference for comparing frames.  This aligns with the vsync that running start is relative to. */
-	pTiming->m_flSystemTimeInSeconds = 0;
+	// Note: OVR's method has no guarantees about aligning to vsync
+	pTiming->m_flSystemTimeInSeconds = ovr_GetTimeInSeconds();
 
-	/*
-	/ ** These times may include work from other processes due to OS scheduling.
+	/** These times may include work from other processes due to OS scheduling.
 	* The fewer packets of work these are broken up into, the less likely this will happen.
 	* GPU work can be broken up by calling Flush.  This can sometimes be useful to get the GPU started
-	* processing that work earlier in the frame. * /
-	pTiming.m_flPreSubmitGpuMs; // time spent rendering the scene (gpu work submitted between WaitGetPoses and second Submit)
-	pTiming.m_flPostSubmitGpuMs; // additional time spent rendering by application (e.g. companion window)
-	*/
-	pTiming->m_flTotalRenderGpuMs = 5; // TODO // time between work submitted immediately after present (ideally vsync) until the end of compositor submitted work
+	* processing that work earlier in the frame. */
+
+	// time spent rendering the scene (gpu work submitted between WaitGetPoses and second Submit)
+	// TODO this should be easy to time, using ovr_GetTimeInSeconds and storing
+	//  that when WaitGetPoses (or PostPresentHandoff) and Submit are called, and calculating the difference
+	pTiming->m_flPreSubmitGpuMs = 0;
+
+	// additional time spent rendering by application (e.g. companion window)
+	// AFAIK this is similar to m_flPreSubmitGpuMs, it's the time between PostPresentHandoff and WaitGetPoses
+	// Probably not as important though
+	pTiming->m_flPostSubmitGpuMs = 0;
+
+	// time between work submitted immediately after present (ideally vsync) until the end of compositor submitted work
+	// TODO CompositorCpuStartToGpuEndElapsedTime might be -1 if it's unavailable, handle that
+	pTiming->m_flTotalRenderGpuMs = (frame.AppGpuElapsedTime + frame.CompositorCpuStartToGpuEndElapsedTime) / 1000;
+
+	// time spend performing distortion correction, rendering chaperone, overlays, etc.
+	pTiming->m_flCompositorRenderGpuMs = frame.CompositorGpuElapsedTime / 1000;
+
+	// time spent on cpu submitting the above work for this frame
+	// FIXME afaik CompositorCpuElapsedTime includes a bunch of other stuff too
+	pTiming->m_flCompositorRenderCpuMs = frame.CompositorCpuElapsedTime / 1000;
+
+	// time spent waiting for running start (application could have used this much more time)
+	// TODO but probably not too important. I would imagine this is used primaraly for debugging.
+	pTiming->m_flCompositorIdleCpuMs = 0;
+
+	/** Miscellaneous measured intervals. */
+
+	// time between calls to WaitGetPoses
+	// TODO this should be easy to time ourselves using ovr_GetTimeInSeconds
+	pTiming->m_flClientFrameIntervalMs = 0;
+
+	// time blocked on call to present (usually 0.0, but can go long)
+	// AFAIK LibOVR doesn't give us this information, but it's probably unimportant
+	pTiming->m_flPresentCallCpuMs = 0;
+
+	// time spent spin-waiting for frame index to change (not near-zero indicates wait object failure)
+	// AFAIK LibOVR doesn't give us this information, though it sounds like this is again a debugging aid.
+	pTiming->m_flWaitForPresentCpuMs;
+
+	// time spent in IVRCompositor::Submit (not near-zero indicates driver issue)
+	// We *could* time this, but I think it's unlikely there's any need to.
+	//  This also depends on splitting up our SubmitFrame call into the three different calls and
+	//  getting the wait into WaitGetPoses
+	pTiming->m_flSubmitFrameMs;
+
+	/** The following are all relative to this frame's SystemTimeInSeconds */
+	// TODO these should be trivial to implement, just call ovr_GetTimeInSeconds at the right time
 	/*
-	pTiming.m_flCompositorRenderGpuMs; // time spend performing distortion correction, rendering chaperone, overlays, etc.
-	pTiming.m_flCompositorRenderCpuMs; // time spent on cpu submitting the above work for this frame
-	pTiming.m_flCompositorIdleCpuMs; // time spent waiting for running start (application could have used this much more time)
-
-								   / ** Miscellaneous measured intervals. * /
-	pTiming.m_flClientFrameIntervalMs; // time between calls to WaitGetPoses
-	pTiming.m_flPresentCallCpuMs; // time blocked on call to present (usually 0.0, but can go long)
-	pTiming.m_flWaitForPresentCpuMs; // time spent spin-waiting for frame index to change (not near-zero indicates wait object failure)
-	pTiming.m_flSubmitFrameMs; // time spent in IVRCompositor::Submit (not near-zero indicates driver issue)
-
-							 / ** The following are all relative to this frame's SystemTimeInSeconds * /
-	pTiming.m_flWaitGetPosesCalledMs;
-	pTiming.m_flNewPosesReadyMs;
-	pTiming.m_flNewFrameReadyMs; // second call to IVRCompositor::Submit
-	pTiming.m_flCompositorUpdateStartMs;
-	pTiming.m_flCompositorUpdateEndMs;
-	pTiming.m_flCompositorRenderStartMs;
+	pTiming->m_flWaitGetPosesCalledMs;
+	pTiming->m_flNewPosesReadyMs;
+	pTiming->m_flNewFrameReadyMs;
+	pTiming->m_flCompositorUpdateStartMs;
+	pTiming->m_flCompositorUpdateEndMs;
+	pTiming->m_flCompositorRenderStartMs;
 	*/
 
-	GetSinglePose(k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose, trackingState); // pose used by app to render this frame
+	// pose used by app to render this frame
+	GetSinglePose(k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose, trackingState);
 
 	return true;
 }
