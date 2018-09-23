@@ -4,8 +4,13 @@
 
 using namespace std;
 
+static ofstream stream;
+
 void oovr_log_raw(const char *file, long line, const char *func, const char *msg) {
-	static ofstream stream("openovr_log");
+	if (!stream.is_open()) {
+		stream.open("openovr_log");
+	}
+
 	//stream << file << ":" << line << ":" << func << "\t- " << msg << endl;
 	stream << func << "\t- " << msg << endl;
 
@@ -15,6 +20,9 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 void oovr_abort_raw(const char * file, long line, const char * func, const char * msg) {
 	OOVR_LOG("Abort!");
 	oovr_log_raw(file, line, func, msg);
+
+	// Ensure everything gets written
+	stream << flush;
 
 	MessageBoxA(NULL, msg, "OpenOVR Error - info in log", MB_OK);
 	exit(1);
