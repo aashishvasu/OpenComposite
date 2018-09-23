@@ -15,13 +15,13 @@ ovrEyeType S2O_eye(EVREye eye) {
 	return eye == Eye_Left ? ovrEye_Left : ovrEye_Right;
 }
 
-void O2S_v3f(ovrVector3f & in, vr::HmdVector3_t & out) {
+void O2S_v3f(const ovrVector3f & in, vr::HmdVector3_t & out) {
 	out.v[0] = in.x;
 	out.v[1] = in.y;
 	out.v[2] = in.z;
 }
 
-void O2S_om34(OVR::Matrix4f & in, HmdMatrix34_t & out) {
+void O2S_om34(const OVR::Matrix4f & in, HmdMatrix34_t & out) {
 	for (size_t y = 0; y < 3; y++) {
 		for (size_t x = 0; x < 4; x++) {
 			out.m[y][x] = in.M[y][x];
