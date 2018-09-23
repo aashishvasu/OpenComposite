@@ -526,13 +526,13 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 
 #define CHECK(var, type, left, right, out) \
 if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type ## _ ## right)) \
-	var |= ButtonMaskFromId(k_EButton_ ## out)
+	var |= ButtonMaskFromId(out)
 
 #define BUTTON(left, right, out) CHECK(Buttons, Button, left, right, out); CHECK(Touches, Touch, left, right, out)
 
-	BUTTON(A, X, A); // k_EButton_A is the SteamVR name for the lower buttons on the Touch controllers
-	BUTTON(B, Y, ApplicationMenu);
-	BUTTON(LThumb, RThumb, SteamVR_Touchpad);
+	BUTTON(Y, B, k_EButton_ApplicationMenu);
+	BUTTON(X, A, k_EButton_A); // k_EButton_A is the SteamVR name for the lower buttons on the Touch controllers
+	BUTTON(LThumb, RThumb, k_EButton_SteamVR_Touchpad);
 	// TODO
 
 #undef BUTTON
