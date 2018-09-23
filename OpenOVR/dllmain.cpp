@@ -100,7 +100,11 @@ VR_INTERFACE char * VR_GetStringForHmdError(int err) {
 }
 
 VR_INTERFACE const char *VR_CALLTYPE VR_GetVRInitErrorAsEnglishDescription(EVRInitError error) {
-	OOVR_ABORT("Stub");
+	switch (error) {
+	case VRInitError_None:
+		return "None";
+	}
+	OOVR_ABORT(("Init desc: Unknown value " + to_string(error)).c_str());
 }
 
 VR_INTERFACE const char *VR_CALLTYPE VR_GetVRInitErrorAsSymbol(EVRInitError error) {
