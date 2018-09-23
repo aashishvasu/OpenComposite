@@ -128,10 +128,16 @@ bool BaseRenderModels::RenderModelHasComponent(const char * pchRenderModelName, 
 }
 
 uint32_t BaseRenderModels::GetRenderModelThumbnailURL(const char * pchRenderModelName, VR_OUT_STRING() char * pchThumbnailURL, uint32_t unThumbnailURLLen, EVRRenderModelError * peError) {
+	if (peError)
+		*peError = VRRenderModelError_None;
+
 	STUBBED();
 }
 
 uint32_t BaseRenderModels::GetRenderModelOriginalPath(const char * pchRenderModelName, VR_OUT_STRING() char * pchOriginalPath, uint32_t unOriginalPathLen, EVRRenderModelError * peError) {
+	if (peError)
+		*peError = VRRenderModelError_None;
+
 	STUBBED();
 }
 

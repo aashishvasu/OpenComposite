@@ -43,22 +43,35 @@ bool  BaseSettings::Sync(bool bForce, EVRSettingsError * peError) {
 	STUBBED_BASIC();
 }
 void  BaseSettings::SetBool(const char * pchSection, const char * pchSettingsKey, bool bValue, EVRSettingsError * peError) {
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED();
 }
 void  BaseSettings::SetInt32(const char * pchSection, const char * pchSettingsKey, int32_t nValue, EVRSettingsError * peError) {
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED();
 }
 void  BaseSettings::SetFloat(const char * pchSection, const char * pchSettingsKey, float flValue, EVRSettingsError * peError) {
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED();
 }
 void  BaseSettings::SetString(const char * pchSection, const char * pchSettingsKey, const char * pchValue, EVRSettingsError * peError) {
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED();
 }
 bool  BaseSettings::GetBool(const char * pchSection, const char * pchSettingsKey, EVRSettingsError * peError) {
 	string section = pchSection;
 	string key = pchSettingsKey;
 
-	*peError = VRSettingsError_None;
+	if (peError)
+		*peError = VRSettingsError_None;
 
 	if (section == kk::k_pch_SteamVR_Section) {
 		if (key == kk::k_pch_SteamVR_UsingSpeakers_Bool) {
@@ -72,13 +85,17 @@ bool  BaseSettings::GetBool(const char * pchSection, const char * pchSettingsKey
 	STUBBED();
 }
 int32_t  BaseSettings::GetInt32(const char * pchSection, const char * pchSettingsKey, EVRSettingsError * peError) {
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED();
 }
 float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsKey, EVRSettingsError * peError) {
 	string section = pchSection;
 	string key = pchSettingsKey;
 
-	*peError = VRSettingsError_None;
+	if (peError)
+		*peError = VRSettingsError_None;
 
 	if (section == kk::k_pch_SteamVR_Section) {
 		if (key == kk::k_pch_SteamVR_SupersampleScale_Float) {
@@ -90,11 +107,21 @@ float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsK
 }
 void  BaseSettings::GetString(const char * pchSection, const char * pchSettingsKey, VR_OUT_STRING() char * pchValue,
 	uint32_t unValueLen, EVRSettingsError * peError) {
+
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED();
 }
 void  BaseSettings::RemoveSection(const char * pchSection, EVRSettingsError * peError) {
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED_BASIC();
 }
 void  BaseSettings::RemoveKeyInSection(const char * pchSection, const char * pchSettingsKey, EVRSettingsError * peError) {
+	if (peError)
+		*peError = VRSettingsError_None;
+
 	STUBBED();
 }

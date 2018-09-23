@@ -70,7 +70,8 @@ VROverlayHandle_t BaseOverlay::GetHighQualityOverlay() {
 uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char *pchValue, uint32_t unBufferSize, EVROverlayError *pError) {
 	OverlayData *overlay = (OverlayData*)ulOverlayHandle;
 	if (!overlays.count(overlay->key)) {
-		*pError = VROverlayError_InvalidHandle;
+		if (pError)
+			*pError = VROverlayError_InvalidHandle;
 		if (unBufferSize != 0)
 			pchValue[0] = NULL;
 		return 0;
@@ -83,14 +84,21 @@ uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char *pch
 		pchValue[unBufferSize - 1] = 0;
 	}
 
+	if(pError)
+		*pError = VROverlayError_None;
+
 	// Is this supposed to include the NULL or not?
 	// TODO test, this could cause some very nasty bugs
 	return strlen(pchValue) + 1;
 }
 uint32_t BaseOverlay::GetOverlayName(VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, EVROverlayError *pError) {
+	if (pError)
+		*pError = VROverlayError_None;
+
 	OverlayData *overlay = (OverlayData*)ulOverlayHandle;
 	if (!overlays.count(overlay->key)) {
-		*pError = VROverlayError_InvalidHandle;
+		if (pError)
+			*pError = VROverlayError_InvalidHandle;
 		if (unBufferSize != 0)
 			pchValue[0] = NULL;
 		return 0;
@@ -257,6 +265,9 @@ EVROverlayError BaseOverlay::GetOverlayTextureBounds(VROverlayHandle_t ulOverlay
 	STUBBED();
 }
 uint32_t BaseOverlay::GetOverlayRenderModel(VROverlayHandle_t ulOverlayHandle, char *pchValue, uint32_t unBufferSize, HmdColor_t *pColor, EVROverlayError *pError) {
+	if (pError)
+		*pError = VROverlayError_None;
+
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayRenderModel(VROverlayHandle_t ulOverlayHandle, const char *pchRenderModel, const HmdColor_t *pColor) {

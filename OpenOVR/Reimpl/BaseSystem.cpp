@@ -226,6 +226,9 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) 
 }
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = TrackedProp_Success;
+
 	switch (unDeviceIndex) {
 
 		// Motion controllers
@@ -254,6 +257,9 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 }
 
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = TrackedProp_Success;
+
 	if (unDeviceIndex == k_unTrackedDeviceIndex_Hmd) {
 		switch (prop) {
 		case Prop_DisplayFrequency_Float:
@@ -268,6 +274,9 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 }
 
 int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = TrackedProp_Success;
+
 	// For input mappings, see:
 	// https://github.com/jMonkeyEngine/jmonkeyengine/blob/826908b0422d96189ea9827b05ced50d77aadf09/jme3-vr/src/main/java/com/jme3/input/vr/openvr/OpenVRInput.java#L29
 	// The rest of the file also contains quite a bit of information about input.
@@ -299,6 +308,9 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 }
 
 uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t dev, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	if(pErrorL)
+		*pErrorL = TrackedProp_Success;
+
 	if (prop == Prop_CurrentUniverseId_Uint64) {
 		return 1; // Oculus Rift's universe
 	}
@@ -325,15 +337,24 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t dev
 }
 
 HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = TrackedProp_Success;
+
 	STUBBED();
 }
 
 uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void * pBuffer, uint32_t unBufferSize, ETrackedPropertyError * pError) {
+	if (pError)
+		*pError = TrackedProp_Success;
+
 	STUBBED();
 }
 
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
 	VR_OUT_STRING() char * value, uint32_t bufferSize, ETrackedPropertyError * pErrorL) {
+
+	if (pErrorL)
+		*pErrorL = TrackedProp_Success;
 
 #define PROP(in, out) \
 if(prop == in) { \

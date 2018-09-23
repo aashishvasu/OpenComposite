@@ -14,9 +14,15 @@ EVRScreenshotError BaseScreenshots::HookScreenshot(VR_ARRAY_COUNT(numTypes) cons
 	return VRScreenshotError_None;
 }
 EVRScreenshotType BaseScreenshots::GetScreenshotPropertyType(ScreenshotHandle_t screenshotHandle, EVRScreenshotError *pError) {
+	if (pError)
+		*pError = VRScreenshotError_None;
+
 	STUBBED();
 }
 uint32_t BaseScreenshots::GetScreenshotPropertyFilename(ScreenshotHandle_t screenshotHandle, EVRScreenshotPropertyFilenames filenameType, VR_OUT_STRING() char *pchFilename, uint32_t cchFilename, EVRScreenshotError *pError) {
+	if (pError)
+		*pError = VRScreenshotError_None;
+
 	STUBBED();
 }
 EVRScreenshotError BaseScreenshots::UpdateScreenshotProgress(ScreenshotHandle_t screenshotHandle, float flProgress) {
