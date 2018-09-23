@@ -163,7 +163,10 @@ HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
 }
 
 HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
-	STUBBED();
+	// These *are* the same coordinate systems
+	HmdMatrix34_t res;
+	O2S_om34(OVR::Matrix4f::Identity(), res);
+	return res;
 }
 
 uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass,
