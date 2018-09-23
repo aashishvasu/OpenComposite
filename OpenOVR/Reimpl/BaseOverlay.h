@@ -1,6 +1,7 @@
 #pragma once
 #include "BaseCommon.h"
 #include <map>
+#include <queue>
 
 using namespace vr; // TODO eliminate this
 
@@ -151,6 +152,9 @@ private:
 
 	// Name-to-overlay mapping
 	std::map<std::string, OverlayData*> overlays;
+
+	// Events
+	std::queue<vr::VREvent_t> eventQueue;
 
 public:
 	// Destructor, since we have a map of pointers

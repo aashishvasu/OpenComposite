@@ -307,8 +307,18 @@ bool BaseOverlay::IsOverlayVisible(VROverlayHandle_t ulOverlayHandle) {
 EVROverlayError BaseOverlay::GetTransformForOverlayCoordinates(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, HmdVector2_t coordinatesInOverlay, HmdMatrix34_t *pmatTransform) {
 	STUBBED();
 }
-bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREvent_t *pEvent, uint32_t uncbVREvent) {
-	STUBBED();
+bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREvent_t *pEvent, uint32_t eventSize) {
+	memset(pEvent, 0, eventSize);
+
+	if (eventQueue.empty())
+		return false;
+
+	VREvent_t e = eventQueue.front();
+	eventQueue.pop();
+
+	memcpy(pEvent, &e, min(sizeof(e), eventSize));
+
+	return true;
 }
 EVROverlayError BaseOverlay::GetOverlayInputMethod(VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod *peInputMethod) {
 	STUBBED();
