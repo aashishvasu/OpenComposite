@@ -390,9 +390,7 @@ if(prop == in) { \
 
 #undef PROP
 
-	OOVR_LOG("WARN: This property (previous) was not found");
-
-	STUBBED();
+	OOVR_ABORT("This string property (in log) was not found");
 
 	return 0; // There are tonnes, and we're not implementing all of them.
 }

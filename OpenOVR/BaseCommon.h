@@ -13,9 +13,7 @@ public:
 
 #define STUBBED() { \
 	std::string str = "Hit stubbed file at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
-	OOVR_LOG(str.c_str()); \
-	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
-	throw "stub"; \
+	OOVR_ABORT(str.c_str()); \
 }
 
 #endif
