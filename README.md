@@ -34,8 +34,8 @@ It probably works in quite a few other games, but I have not tried them.
 ## Downloading and installation
 
 Download:
-[32-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x86/openvr_api.dll?branch=mas64ter&job=Platform%3A+x86)
-[64-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x64/openvr_api.dll?branch=master&job=Platform%3A+x64)
+[32-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x86/openvr_api.dll?branch=master&job=Platform%3A+x86&pr=false)
+[64-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x64/openvr_api.dll?branch=master&job=Platform%3A+x64&pr=false)
 
 These come from [AppVeyor](https://ci.appveyor.com/project/ZNix/openovr) - whenever I push some new code, it will be compiled
 and uploaded to those links automatically.
