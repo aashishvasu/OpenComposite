@@ -130,7 +130,7 @@ for interface in interfaces_list:
     implemented_functions = []
 
     with open(filename) as f:
-        for line in f:
+        for line in libparse.nice_lines(f):
             line = line.strip()
             match = geniface.match(line)
             implmatch = impldef.match(line)
