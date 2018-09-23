@@ -110,6 +110,11 @@ Copyright (c) 2015, Valve Corporation
 All rights reserved.
 ```
 
+### audio-router
+
+This program contains code derived from [audio-router](https://github.com/audiorouterdev/audio-router). Audio-router
+is Free Software under the GPLv3, same as this project.
+
 ## Compiling (**for developers**)
 
 Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR) - it's under the GPLv3 licence.

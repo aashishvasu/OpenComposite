@@ -172,6 +172,7 @@
     <ClInclude Include="convert.h" />
     <ClInclude Include="libovr_wrapper.h" />
     <ClInclude Include="logging.h" />
+    <ClInclude Include="Misc\audio_override.h" />
     <ClInclude Include="Misc\debug_helper.h" />
     <ClInclude Include="Misc\Haptics.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h" />
@@ -221,6 +222,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="libovr_wrapper.cpp" />
     <ClCompile Include="logging.cpp" />
+    <ClCompile Include="Misc\audio_override.cpp" />
     <ClCompile Include="Misc\debug_helper.cpp" />
     <ClCompile Include="Misc\Haptics.cpp" />
     <ClCompile Include="OpenOVR.cpp" />

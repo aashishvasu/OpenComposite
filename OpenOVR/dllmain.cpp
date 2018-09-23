@@ -6,10 +6,16 @@
 #include "steamvr_abi.h"
 #include "libovr_wrapper.h"
 #include "Misc/debug_helper.h"
+#include "Misc/audio_override.h"
 #include <map>
 #include <memory>
 
+#include "OVR_CAPI_Audio.h"
+
 using namespace std;
+
+static void init_audio();
+static void setup_audio();
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -22,6 +28,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #if defined(_DEBUG)
 		DbgSetModule(hModule);
 #endif
+		init_audio();
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
@@ -127,6 +134,8 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 	ovr::Setup();
 	running = true;
 
+	setup_audio();
+
 	*peError = VRInitError_None;
 
 	return current_init_token;
@@ -158,4 +167,29 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 	// Shut down LibOVR
 	ovr::Shutdown();
 	running = false;
+}
+
+// Hook the audio thing as soon as possible. This will use the Rift device
+//  as listed in the Windows audio settings.
+void init_audio() {
+	std::wstring dev;
+	HRESULT hr = find_basic_rift_output_device(dev);
+
+	/*if (hr) {
+		string s = "Cannot get Rift device: " + to_string(hr);
+		OOVR_ABORT(s.c_str());
+	}*/
+
+	if(!hr)
+		set_app_default_audio_device(dev);
+}
+
+// This switches over to the audio device returned by LibOVR, which supports
+//  stuff like audio mirroring. This can only be called after LibOVR is initialised,
+//  and thus will work on some games and not on others.
+void setup_audio() {
+	WCHAR deviceOutStrBuffer[OVR_AUDIO_MAX_DEVICE_STR_SIZE];
+	ovrResult r = ovr_GetAudioDeviceOutGuidStr(deviceOutStrBuffer);
+	if (r == ovrSuccess)
+		set_app_default_audio_device(deviceOutStrBuffer);
 }

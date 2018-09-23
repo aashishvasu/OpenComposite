@@ -171,6 +171,9 @@
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_021.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
+    <ClInclude Include="Misc\audio_override.h">
+      <Filter>Header Files\Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -256,6 +259,9 @@
     </ClCompile>
     <ClCompile Include="Reimpl\CVRSettings.cpp">
       <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\audio_override.cpp">
+      <Filter>Source Files\Misc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
