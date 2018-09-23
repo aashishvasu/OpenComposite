@@ -170,7 +170,6 @@
     <ClInclude Include="BaseCommon.h" />
     <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
-    <ClInclude Include="FnTable\FnTable.h" />
     <ClInclude Include="libovr_wrapper.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="Misc\debug_helper.h" />
@@ -206,6 +205,7 @@
     <ClInclude Include="Reimpl\BaseScreenshots.h" />
     <ClInclude Include="Reimpl\BaseSettings.h" />
     <ClInclude Include="Reimpl\BaseSystem.h" />
+    <ClInclude Include="Reimpl\Interfaces.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="steamvr_abi.h" />
     <ClInclude Include="targetver.h" />

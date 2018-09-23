@@ -1,10 +1,10 @@
 #pragma once
+#include "BaseCommon.h"
 
-/**
- * FnTable.h
- *
- * Defines OPENVR_FNTABLE_CALLTYPE - if you need to generate a function table, this correctly sets the call type.
- */
+// Note we return void* not CVRCommon* - that's due to vtable magic.
+// Since our interfaces don't use CVRCommon as their first ancestor, this
+// would return a reference to the CVRCommon part of the object.
+void *CreateInterfaceByName(const char *name);
 
 // Use stdcall on Windows, see openvr_capi.h
 // Note that VC++ (and most other compilers) ignore calltype definitions on 64-bit, using fastcall instead. Not that it's

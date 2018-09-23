@@ -3,6 +3,9 @@
 
 class CVRCommon {
 public:
+	// Ensure the resources of the base get freed properly
+	virtual ~CVRCommon() {}
+
 	virtual void** _GetStatFuncList() = 0;
 };
 

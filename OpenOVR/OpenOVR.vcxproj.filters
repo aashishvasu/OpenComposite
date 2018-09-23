@@ -28,9 +28,6 @@
     <Filter Include="Header Files\OpenVR">
       <UniqueIdentifier>{12eb05f6-fbdd-4b99-b1ce-d61859037ef7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\FnTable">
-      <UniqueIdentifier>{561ad098-72eb-4dd2-a60f-a33240abe274}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Misc">
       <UniqueIdentifier>{e877b4ca-4217-4f43-8081-a9af075a64f1}</UniqueIdentifier>
     </Filter>
@@ -59,9 +56,6 @@
     </ClInclude>
     <ClInclude Include="Reimpl\BaseChaperone.h">
       <Filter>Header Files\Reimpl</Filter>
-    </ClInclude>
-    <ClInclude Include="FnTable\FnTable.h">
-      <Filter>Header Files\FnTable</Filter>
     </ClInclude>
     <ClInclude Include="OpenVR\interfaces\IVRSystem_016.h">
       <Filter>Header Files\OpenVR</Filter>
@@ -163,6 +157,9 @@
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
     <ClInclude Include="Reimpl\BaseRenderModels.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="Reimpl\Interfaces.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
   </ItemGroup>

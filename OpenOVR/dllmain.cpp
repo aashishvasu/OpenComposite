@@ -1,35 +1,13 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "stdafx.h"
 
-#include "Reimpl/GVRSystem.gen.h"
-#include "Reimpl/GVRRenderModels.gen.h"
-#include "Reimpl/GVRCompositor.gen.h"
-#include "Reimpl/GVROverlay.gen.h"
-#include "Reimpl/GVRSettings.gen.h"
-#include "Reimpl/GVRChaperone.gen.h"
-#include "Reimpl/GVRChaperoneSetup.gen.h"
-#include "Reimpl/GVRScreenshots.gen.h"
+#include "Reimpl/Interfaces.h"
 
 #include "steamvr_abi.h"
 #include "libovr_wrapper.h"
 #include "Misc/debug_helper.h"
-
-#define INTERFACE_LIST(INTERFACE) \
-INTERFACE(019, System); \
-INTERFACE(017, System); \
-INTERFACE(016, System); \
-INTERFACE(015, System); \
-INTERFACE(005, RenderModels); \
-INTERFACE(020, Compositor); \
-INTERFACE(022, Compositor); \
-INTERFACE(018, Overlay); \
-INTERFACE(017, Overlay); \
-INTERFACE(016, Overlay); \
-INTERFACE(002, Settings); \
-INTERFACE(003, Chaperone); \
-INTERFACE(005, ChaperoneSetup); \
-INTERFACE(001, Screenshots); \
-;
+#include <map>
+#include <memory>
 
 using namespace std;
 
@@ -64,12 +42,10 @@ void ERR(string msg) {
 	throw msg;
 }
 
-#define INTERFACE(version, name) static CVR ## name ## _ ## version *instance_ ## name ## _ ## version = nullptr;
-INTERFACE_LIST(INTERFACE);
-#undef INTERFACE
-
 class _InheritCVRLayout { virtual void _ignore() = 0; };
 class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {};
+
+static map<string, unique_ptr<CVRCorrectLayout>> interfaces;
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
 	if (!running) {
@@ -98,25 +74,16 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 		return interfaceClass->_GetStatFuncList();
 	}
 
-	// Notes on the interface macro:
-	// If interfaceVersion is the same as IVRname_Version, it returns a copy
-	// of CVRname, which is cached in the variable CVRImplAccess.vr_name
-	// Ex: if name is System:
-	//   target interface name is IVRSystem_Version
-	//   Instance of object CVRSystem
-	//   cached in CVRImplAccess.vr_System
-#define INTERFACE(version, name) \
-	/* Just a reminder 0==false and strcmp returns 0 if the strings match */ \
-	if (!strcmp(vr::IVR ## name ## _ ## version :: IVR ## name ## _Version, interfaceVersion)) { \
-		auto &val = instance_ ## name ## _ ## version; \
-		if (!val) \
-			val = new CVR ## name ## _ ## version(); \
-		return val; \
+	if (interfaces.count(interfaceVersion)) {
+		return interfaces[interfaceVersion].get();
 	}
 
-	INTERFACE_LIST(INTERFACE);
-
-#undef INTERFACE
+	CVRCorrectLayout *impl = (CVRCorrectLayout*) CreateInterfaceByName(interfaceVersion);
+	if (impl) {
+		unique_ptr<CVRCorrectLayout> ptr(impl);
+		interfaces[interfaceVersion] = move(ptr);
+		return impl;
+	}
 
 	OOVR_LOG(interfaceVersion);
 	MessageBoxA(NULL, interfaceVersion, "Missing interface", MB_OK);
@@ -182,13 +149,7 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 	// Reset interfaces
 	// Do this first, while the OVR session is still available in case they
 	//  need to use it for cleanup.
-#define INTERFACE(version, name) { \
-		auto &val = instance_ ## name ## _ ## version; \
-		if (val) delete val; \
-		val = nullptr; \
-	}
-	INTERFACE_LIST(INTERFACE);
-#undef INTERFACE
+	interfaces.clear();
 
 	// Shut down LibOVR
 	ovr::Shutdown();

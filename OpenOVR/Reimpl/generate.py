@@ -112,14 +112,17 @@ impldef = re.compile(r"^\w[\w\d\s]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d
 impl = open("stubs.gen.cpp", "w")
 impl.write("#include \"stdafx.h\"\n")
 
-# Now that FnTable.h is no longer included in BaseCommon.h, we
-#  need to include it for the OPENVR_FNTABLE_CALLTYPE macro
-impl.write("#include \"FnTable/FnTable.h\"\n")
+# The interfaces header contains OPENVR_FNTABLE_CALLTYPE, along with declarations
+#  for any non-static functions we define
+impl.write("#include \"Interfaces.h\"\n")
 
 # Delete the old headers, in case the cpp for one is removed
 # Leave the stubs file alone as it'll get overwritten anyway
 for filename in glob.glob("GVR*.gen.h"):
     os.remove(filename)
+
+# Keep track of all the interfaces we define
+all_interfaces = []
 
 for interface in interfaces_list:
     filename = "CVR" + interface + ".cpp"
@@ -159,6 +162,21 @@ for interface in interfaces_list:
     for i in todo_interfaces:
         gen_interface(i[0], i[1], header, impl)
 
+    all_interfaces += todo_interfaces
+
     header.close()
+
+# Generate CreateInterfaceByName
+impl.write("// Get interface by name\n")
+impl.write("void *CreateInterfaceByName(const char *name) {\n")
+
+for i in all_interfaces:
+    name = "CVR%s_%s" % i
+    var = "vr::IVR%s_%s::IVR%s_Version" % (i[0], i[1], i[0])
+
+    impl.write("\tif(strcmp(%s, name) == 0) return new %s();\n" % (var, name))
+
+impl.write("\treturn NULL;\n")
+impl.write("}\n")
 
 impl.close()
