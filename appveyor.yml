@@ -14,6 +14,11 @@ install:
 build:
   project: OpenOVR.sln
   verbosity: minimal
-artifacts:
-  - path: $(platform)/$(configuration)/openvr_api.dll
-    name: OpenOVR-$(configuration)-$(platform)
+on_success:
+- ps: >-
+    If ($env:Platform -Match "x86") {
+        $effective_plat = "Win32"
+    } Else {
+        $effective_plat = $env:Platform
+    }
+    Push-AppveyorArtifact "$effective_plat/$env:Configuration/openvr_api.dll" -FileName "$env:Platform/openvr_api.dll"
