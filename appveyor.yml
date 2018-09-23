@@ -4,7 +4,9 @@ branches:
   - master
 image: Visual Studio 2017
 configuration: Release
-platform: x64
+platform:
+  - x86
+  - x64
 install:
   - ps: appveyor DownloadFile http://znix.xyz/random/ovr_sdk_win_1.26.0_public_nosamples.7z
   - ps: 7z x -olibovr ovr_sdk_win_1.26.0_public_nosamples.7z
@@ -12,3 +14,10 @@ install:
 build:
   project: OpenOVR.sln
   verbosity: minimal
+before_package:
+  - ps: 7z a "OpenOVR-$APPVEYOR_BUILD_VERSION.zip" Win32/Release/openvr_api.dll x64/Release/openvr_api.dll
+  - ps: 7z rn "OpenOVR-$APPVEYOR_BUILD_VERSION.zip" Win32/Release/openvr_api.dll OpenOVR/Win32/openvr_api.dll
+  - ps: 7z rn "OpenOVR-$APPVEYOR_BUILD_VERSION.zip" x64/Release/openvr_api.dll OpenOVR/Win64/openvr_api.dll
+artifacts:
+  - path: OpenOVR-$(APPVEYOR_BUILD_VERSION).zip
+    name: OpenOVR-Release
