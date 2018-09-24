@@ -22,6 +22,7 @@ private:
 public:
 	static const TrackedDeviceIndex_t leftHandIndex = 1;
 	static const TrackedDeviceIndex_t rightHandIndex = 2;
+	static const TrackedDeviceIndex_t thirdTouchIndex = 3;
 
 public:
 

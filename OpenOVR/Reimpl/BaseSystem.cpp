@@ -201,13 +201,17 @@ vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr
 }
 
 ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex) {
-	if (deviceIndex == k_unTrackedDeviceIndex_Hmd) {
-		return TrackedDeviceClass_HMD;
-	}
+	if (!IsTrackedDeviceConnected(deviceIndex))
+		return TrackedDeviceClass_Invalid;
 
-	if (deviceIndex == leftHandIndex || deviceIndex == rightHandIndex) {
+	if (deviceIndex == k_unTrackedDeviceIndex_Hmd)
+		return TrackedDeviceClass_HMD;
+
+	if (deviceIndex == leftHandIndex || deviceIndex == rightHandIndex)
 		return TrackedDeviceClass_Controller;
-	}
+
+	if (deviceIndex == thirdTouchIndex)
+		return TrackedDeviceClass_GenericTracker;
 
 	return TrackedDeviceClass_Invalid;
 }
@@ -217,13 +221,15 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) 
 		return true; // TODO
 	}
 
+	unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 	if (deviceIndex == leftHandIndex) {
-		unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 		return connected && ovrControllerType_LTouch != 0;
 	}
 	else if (deviceIndex == rightHandIndex) {
-		unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 		return connected && ovrControllerType_RTouch != 0;
+	}
+	else if (deviceIndex == thirdTouchIndex) {
+		return connected && ovrControllerType_Object0 != 0;
 	}
 
 	return false;
@@ -238,6 +244,7 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 		// Motion controllers
 	case leftHandIndex:
 	case rightHandIndex:
+	case thirdTouchIndex:
 		switch (prop) {
 		case Prop_DeviceProvidesBatteryStatus_Bool:
 			return true;
