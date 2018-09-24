@@ -539,7 +539,7 @@ bool BaseCompositor::ShouldAppRenderWithLowResources() {
 }
 
 void BaseCompositor::ForceInterleavedReprojectionOn(bool bOverride) {
-	STUBBED();
+	// Force timewarp on? Yeah right.
 }
 
 void BaseCompositor::ForceReconnectProcess() {
