@@ -18,28 +18,33 @@ static void XTrace(LPCSTR lpszFormat, ...) {
 	va_end(args);
 }
 
-ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi) {
+ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi, vr::EColorSpace colourSpace) {
+	// TODO is this really how it should work?
+	bool useSrgb = colourSpace != vr::ColorSpace_Auto;
+
 	switch (dxgi) {
 #define MAPPING(name) \
 			case DXGI_ ## name: \
 				return OVR_ ## name;
 
+#define C_MAPPING(name) \
+			case DXGI_ ## name: \
+			case DXGI_ ## name ## _SRGB: \
+				return useSrgb ? OVR_ ## name ## _SRGB : OVR_ ## name;
+
 		MAPPING(FORMAT_B5G6R5_UNORM);
 		MAPPING(FORMAT_B5G5R5A1_UNORM);
 		MAPPING(FORMAT_B4G4R4A4_UNORM);
-		MAPPING(FORMAT_R8G8B8A8_UNORM);
-		MAPPING(FORMAT_R8G8B8A8_UNORM_SRGB);
-		MAPPING(FORMAT_B8G8R8A8_UNORM);
-		MAPPING(FORMAT_B8G8R8A8_UNORM_SRGB);
-		MAPPING(FORMAT_B8G8R8X8_UNORM);
-		MAPPING(FORMAT_B8G8R8X8_UNORM_SRGB);
+		C_MAPPING(FORMAT_R8G8B8A8_UNORM);
+		C_MAPPING(FORMAT_B8G8R8A8_UNORM);
+		C_MAPPING(FORMAT_B8G8R8X8_UNORM);
 		MAPPING(FORMAT_R16G16B16A16_FLOAT);
 		MAPPING(FORMAT_R11G11B10_FLOAT);
 
-		// TODO
 	case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-		return OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+		return useSrgb ? OVR_FORMAT_R8G8B8A8_UNORM_SRGB : OVR_FORMAT_R8G8B8A8_UNORM;
 
+#undef C_MAPPING
 #undef MAPPING
 	}
 
@@ -92,7 +97,7 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 	D3D11_TEXTURE2D_DESC srcDesc;
 	src->GetDesc(&srcDesc);
 
-	bool usable = chain == NULL ? false : CheckChainCompatible(srcDesc, desc);
+	bool usable = chain == NULL ? false : CheckChainCompatible(srcDesc, desc, texture->eColorSpace);
 
 	if (!usable) {
 		OOVR_LOG("Generating new swap chain");
@@ -107,7 +112,7 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 		desc.ArraySize = 1;
 		desc.Width = srcDesc.Width;
 		desc.Height = srcDesc.Height;
-		desc.Format = dxgiToOvrFormat(srcDesc.Format);
+		desc.Format = dxgiToOvrFormat(srcDesc.Format, texture->eColorSpace);
 		desc.MipLevels = srcDesc.MipLevels;
 		desc.SampleCount = 1;
 		desc.StaticImage = ovrFalse;
@@ -160,7 +165,7 @@ unsigned int DX11Compositor::GetFlags() {
 	return submitVerticallyFlipped ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
 }
 
-bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc &chainDesc) {
+bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace) {
 	bool usable = true;
 #define FAIL(name) { \
 	usable = false; \
@@ -173,7 +178,7 @@ if(inputDesc.name != chainDesc.chainName) FAIL(name);
 	CHECK(Width);
 	CHECK(Height);
 	CHECK(MipLevels);
-	if(chainDesc.Format != dxgiToOvrFormat(inputDesc.Format)) FAIL(Format);
+	if(chainDesc.Format != dxgiToOvrFormat(inputDesc.Format, colourSpace)) FAIL(Format);
 	//CHECK_ADV(SampleDesc.Count, SampleCount);
 	//CHECK_ADV(SampleDesc.Quality);
 #undef CHECK
