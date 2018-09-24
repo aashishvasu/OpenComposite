@@ -61,6 +61,9 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 		return NULL;
 	}
 
+	// Unless we later change this otherwise, it was successful.
+	*error = VRInitError_None;
+
 	// First check if they're getting the 'FnTable' version of this interface.
 	// This is a table of methods, but critically they *don't* take a 'this' pointer,
 	//  so we can't cheat and return the vtable.
