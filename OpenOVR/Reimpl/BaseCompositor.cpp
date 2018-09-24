@@ -160,7 +160,7 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 
 		// The angle offset between the Touch and Vive controllers.
 		// If this is incorrect, virtual hands will feel off.
-		float controller_offset_angle = 49.5;
+		float controller_offset_angle = 39.5;
 
 		// When testing to try and find the correct value above, uncomment
 		//  this to lock the controller perfectly flat.
