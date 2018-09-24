@@ -170,6 +170,7 @@
     <ClInclude Include="BaseCommon.h" />
     <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
+    <ClInclude Include="custom_types.h" />
     <ClInclude Include="libovr_wrapper.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="Misc\audio_override.h" />

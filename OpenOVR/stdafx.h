@@ -19,6 +19,7 @@
 //#include "OpenVR/openvr.h"
 #include "OpenVR/interfaces/vrtypes.h"
 #include "OpenVR/interfaces/vrannotation.h"
+#include "custom_types.h"
 
 #include "logging.h"
 
