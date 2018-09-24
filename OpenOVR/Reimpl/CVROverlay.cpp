@@ -2,6 +2,7 @@
 #define GENFILE
 #include "BaseCommon.h"
 
+GEN_INTERFACE("Overlay", "010")
 GEN_INTERFACE("Overlay", "014")
 // TODO 015
 GEN_INTERFACE("Overlay", "016")
