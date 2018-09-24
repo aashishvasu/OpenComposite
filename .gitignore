@@ -22,6 +22,7 @@
 
 # Audogenerated implementation files
 /OpenOVR/Reimpl/stubs.gen.cpp
+/OpenOVR/Reimpl/static_bases.gen.h
 /OpenOVR/Reimpl/GVR*.gen.h
 
 # Python cache

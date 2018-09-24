@@ -26,7 +26,40 @@ context = dict()
 
 libparse.read_context(context, ivr_path % "vrtypes", "vr")
 
+bases_header_fn = "static_bases.gen.h"
+bases_header = open(bases_header_fn, "w")
+bases_header.write("#pragma once\n")
+bases_header.write("#include <memory>\n")
+
+base_class_getters = []
+def check_base_class_inst(interface, impl):
+    if interface in base_class_getters:
+        return
+
+    cls = "Base%s" % interface
+    var = "_single_inst_%s" % interface
+
+    base_class_getters.append(interface)
+
+    bases_header.write("class %s;\n" % cls)
+    bases_header.write("std::shared_ptr<%s> GetBase%s();\n" % (cls, interface))
+    bases_header.write("std::shared_ptr<%s> GetCreateBase%s();\n" % (cls, interface))
+
+    impl.write("// Single inst of %s\n" % cls)
+    impl.write("static std::weak_ptr<%s> %s;\n" % (cls, var))
+    impl.write("std::shared_ptr<%s> GetBase%s() { return %s.lock(); };\n" % (cls, interface, var))
+    impl.write("std::shared_ptr<%s> GetCreateBase%s() {\n" % (cls, interface))
+    impl.write("\tstd::shared_ptr<%s> ret = %s.lock();\n" % (cls, var))
+    impl.write("\tif(!ret) {\n")
+    impl.write("\t\tret = std::make_shared<%s>();\n" % cls)
+    impl.write("\t\t%s = ret;\n" % var)
+    impl.write("\t}\n")
+    impl.write("\treturn ret;\n")
+    impl.write("}\n")
+
 def gen_interface(interface, version, header, impl):
+    check_base_class_inst(interface, impl)
+
     iv = "VR%s_%s" % (interface, version)
     namespace = "vr::I%s" % iv
     cname = "C" + iv
@@ -34,10 +67,13 @@ def gen_interface(interface, version, header, impl):
     header.write("#include \"Base%s.h\"\n" % interface)
     header.write("class %s : public %s::IVR%s, public CVRCommon {\n" % (cname, namespace, interface))
     header.write("private:\n")
-    header.write("\tBase%s base;\n" % interface)
+    header.write("\tconst std::shared_ptr<Base%s> base;\n" % interface)
     header.write("public:\n")
     header.write("\tvirtual void** _GetStatFuncList() override;\n");
+    header.write("\t%s();\n" % cname);
     header.write("\t// Interface methods:\n")
+    impl.write("// Misc for %s:\n" % cname)
+    impl.write("%s::%s() : base(GetCreateBase%s()) {}\n" % (cname, cname, interface))
     impl.write("// Interface methods for %s:\n" % cname)
     filename = ivr_path % "IVR%s_%s" % (interface, version)
     icontext = dict(context)
@@ -72,7 +108,7 @@ def gen_interface(interface, version, header, impl):
                     if namespace in func.return_type:
                         safereturn += " (%s)" % func.return_type
 
-                    impl.write("%s %s::%s(%s) { %s base.%s(%s); }\n" % ( func.return_type, cname, func.name, args, safereturn, func.name, nargs ))
+                    impl.write("%s %s::%s(%s) { %s base->%s(%s); }\n" % ( func.return_type, cname, func.name, args, safereturn, func.name, nargs ))
 
     header.write("};\n")
 
@@ -115,6 +151,7 @@ impl.write("#include \"stdafx.h\"\n")
 # The interfaces header contains OPENVR_FNTABLE_CALLTYPE, along with declarations
 #  for any non-static functions we define
 impl.write("#include \"Interfaces.h\"\n")
+impl.write("#include \"%s\"\n" % bases_header_fn)
 
 # Delete the old headers, in case the cpp for one is removed
 # Leave the stubs file alone as it'll get overwritten anyway
@@ -165,6 +202,8 @@ for interface in interfaces_list:
     all_interfaces += todo_interfaces
 
     header.close()
+
+bases_header.close()
 
 # Generate CreateInterfaceByName
 impl.write("// Get interface by name\n")

@@ -19,6 +19,7 @@ if [%1] == [clean] (
 
 	cd "%~dp0/OpenOVR/Reimpl"
 	if exist stubs.gen.cpp del stubs.gen.cpp
+	if exist static_bases.gen.h del static_bases.gen.h
 	if exist GVR*.gen.h del GVR*.gen.h
 
 	echo Clean complete
