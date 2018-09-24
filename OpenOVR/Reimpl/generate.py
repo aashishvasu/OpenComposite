@@ -138,7 +138,7 @@ for interface in interfaces_list:
                 version = match.group("version")
                 interface = match.group("interface")
                 todo_interfaces.append((interface, version))
-            elif "GEN_INTERFACE" in line and not "#define" in line:
+            elif "GEN_INTERFACE" in line and not "#define" in line and not line.startswith("//"):
                 print(line)
                 raise RuntimeError("GEN_INTERFACE syntax error!")
             elif implmatch:
