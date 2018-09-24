@@ -434,19 +434,19 @@ const char * BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
 }
 
 bool BaseSystem::IsInputAvailable() {
-	return true; // TODO
+	return lastStatus.HasInputFocus;
 }
 
 bool BaseSystem::IsSteamVRDrawingControllers() {
-	return false; // TODO
+	return !lastStatus.HasInputFocus;
 }
 
 bool BaseSystem::ShouldApplicationPause() {
-	return false; // TODO
+	return !lastStatus.HasInputFocus;
 }
 
 bool BaseSystem::ShouldApplicationReduceRenderingWork() {
-	return false; // TODO
+	return lastStatus.OverlayPresent;
 }
 
 void BaseSystem::CheckEvents() {
@@ -706,7 +706,7 @@ void BaseSystem::ReleaseInputFocus() {
 }
 
 bool BaseSystem::IsInputFocusCapturedByAnotherProcess() {
-	return false; // TODO
+	return !lastStatus.HasInputFocus;
 }
 
 uint32_t BaseSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {
