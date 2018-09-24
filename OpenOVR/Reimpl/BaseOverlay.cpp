@@ -15,6 +15,7 @@ public:
 	float autoCurveDistanceRangeMin, autoCurveDistanceRangeMax; // WTF does this do?
 	EColorSpace colourSpace = ColorSpace_Auto;
 	bool visible = false; // TODO check against SteamVR
+	VRTextureBounds_t textureBounds = { 0, 0, 1, 1 };
 
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
@@ -259,10 +260,21 @@ EVROverlayError BaseOverlay::GetOverlayTextureColorSpace(VROverlayHandle_t ulOve
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayTextureBounds(VROverlayHandle_t ulOverlayHandle, const VRTextureBounds_t *pOverlayTextureBounds) {
-	STUBBED();
+	USEH();
+
+	if(pOverlayTextureBounds)
+		overlay->textureBounds = *pOverlayTextureBounds;
+	else
+		overlay->textureBounds = { 0, 0, 1, 1 };
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayTextureBounds(VROverlayHandle_t ulOverlayHandle, VRTextureBounds_t *pOverlayTextureBounds) {
-	STUBBED();
+	USEH();
+
+	*pOverlayTextureBounds = overlay->textureBounds;
+
+	return VROverlayError_None;
 }
 uint32_t BaseOverlay::GetOverlayRenderModel(VROverlayHandle_t ulOverlayHandle, char *pchValue, uint32_t unBufferSize, HmdColor_t *pColor, EVROverlayError *pError) {
 	if (pError)
