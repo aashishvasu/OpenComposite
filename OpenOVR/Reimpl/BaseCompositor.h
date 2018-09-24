@@ -57,6 +57,33 @@ struct OOVR_Compositor_FrameTiming {
 	vr::TrackedDevicePose_t m_HmdPose; // pose used by app to render this frame
 };
 
+struct OOVR_Compositor_CumulativeStats {
+	uint32_t m_nPid; // Process id associated with these stats (may no longer be running).
+	uint32_t m_nNumFramePresents; // total number of times we called present (includes reprojected frames)
+	uint32_t m_nNumDroppedFrames; // total number of times an old frame was re-scanned out (without reprojection)
+	uint32_t m_nNumReprojectedFrames; // total number of times a frame was scanned out a second time (with reprojection)
+
+	/** Values recorded at startup before application has fully faded in the first time. */
+	uint32_t m_nNumFramePresentsOnStartup;
+	uint32_t m_nNumDroppedFramesOnStartup;
+	uint32_t m_nNumReprojectedFramesOnStartup;
+
+	/** Applications may explicitly fade to the compositor.  This is usually to handle level transitions, and loading often causes
+	* system wide hitches.  The following stats are collected during this period.  Does not include values recorded during startup. */
+	uint32_t m_nNumLoading;
+	uint32_t m_nNumFramePresentsLoading;
+	uint32_t m_nNumDroppedFramesLoading;
+	uint32_t m_nNumReprojectedFramesLoading;
+
+	/** If we don't get a new frame from the app in less than 2.5 frames, then we assume the app has hung and start
+	* fading back to the compositor.  The following stats are a result of this, and are a subset of those recorded above.
+	* Does not include values recorded during start up or loading. */
+	uint32_t m_nNumTimedOut;
+	uint32_t m_nNumFramePresentsTimedOut;
+	uint32_t m_nNumDroppedFramesTimedOut;
+	uint32_t m_nNumReprojectedFramesTimedOut;
+};
+
 enum OOVR_EVRCompositorTimingMode {
 	VRCompositorTimingMode_Implicit = 0,
 	VRCompositorTimingMode_Explicit_RuntimePerformsPostPresentHandoff = 1,
@@ -157,7 +184,7 @@ public:
 	virtual float GetFrameTimeRemaining();
 
 	/** Fills out stats accumulated for the last connected application.  Pass in sizeof( Compositor_CumulativeStats ) as second parameter. */
-	//virtual void GetCumulativeStats(Compositor_CumulativeStats *pStats, uint32_t nStatsSizeInBytes);
+	virtual void GetCumulativeStats(OOVR_Compositor_CumulativeStats *pStats, uint32_t nStatsSizeInBytes);
 
 	/** Fades the view on the HMD to the specified color. The fade will take fSeconds, and the color values are between
 	* 0.0 and 1.0. This color is faded on top of the scene based on the alpha parameter. Removing the fade color instantly

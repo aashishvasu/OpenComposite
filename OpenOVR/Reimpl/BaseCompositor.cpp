@@ -452,9 +452,9 @@ float BaseCompositor::GetFrameTimeRemaining() {
 	STUBBED();
 }
 
-//void BaseCompositor::GetCumulativeStats(Compositor_CumulativeStats * pStats, uint32_t nStatsSizeInBytes) {
-//	STUBBED();
-//}
+void BaseCompositor::GetCumulativeStats(OOVR_Compositor_CumulativeStats * pStats, uint32_t nStatsSizeInBytes) {
+	STUBBED();
+}
 
 void BaseCompositor::FadeToColor(float fSeconds, float fRed, float fGreen, float fBlue, float fAlpha, bool bBackground) {
 	fadeTime = fSeconds;
