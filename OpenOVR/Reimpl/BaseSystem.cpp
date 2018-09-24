@@ -405,7 +405,7 @@ if(prop == in) { \
 	if (value != NULL && bufferSize > 0) { \
 		strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
 	} \
-	return strlen(out) + 1; \
+	return (uint32_t) strlen(out) + 1; \
 }
 
 	char str[1024];
