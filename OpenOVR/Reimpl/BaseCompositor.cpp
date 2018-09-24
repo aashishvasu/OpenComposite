@@ -471,7 +471,7 @@ HmdColor_t BaseCompositor::GetCurrentFadeColor(bool bBackground) {
 }
 
 void BaseCompositor::FadeGrid(float fSeconds, bool bFadeIn) {
-	STUBBED();
+	// What is this supposed to do?
 }
 
 float BaseCompositor::GetCurrentGridAlpha() {
