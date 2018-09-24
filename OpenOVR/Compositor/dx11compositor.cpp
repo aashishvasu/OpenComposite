@@ -20,7 +20,9 @@ static void XTrace(LPCSTR lpszFormat, ...) {
 
 ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi, vr::EColorSpace colourSpace) {
 	// TODO is this really how it should work?
-	bool useSrgb = colourSpace != vr::ColorSpace_Auto;
+	// No idea why or how or what, but for now just force SRGB on as otherwise
+	// it causes trouble.
+	bool useSrgb = true; // colourSpace != vr::ColorSpace_Auto;
 
 	switch (dxgi) {
 #define MAPPING(name) \
