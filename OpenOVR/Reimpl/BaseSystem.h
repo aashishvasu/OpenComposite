@@ -25,6 +25,7 @@ public:
 	static const TrackedDeviceIndex_t thirdTouchIndex = 3;
 
 public:
+	BaseSystem();
 
 	// ------------------------------------
 	// Display Methods

@@ -16,6 +16,39 @@
 
 using namespace std;
 
+BaseSystem::BaseSystem() {
+	// Captured focus
+	{
+		VREvent_t e = { 0 };
+
+		e.eventType = VREvent_InputFocusCaptured;
+		e.trackedDeviceIndex = k_unTrackedDeviceIndex_Hmd;
+		e.eventAgeSeconds = 0;
+
+		VREvent_Process_t data;
+		data.bForced = false;
+		data.pid = data.oldPid = 0;
+		e.data.process = data;
+
+		events.push(e);
+
+		// Now push a changed event
+		e.eventType = VREvent_InputFocusChanged;
+		events.push(e);
+	}
+
+	// Show controllers
+	{
+		VREvent_t e = { 0 };
+
+		e.eventType = VREvent_ShowRenderModels;
+		e.trackedDeviceIndex = k_unTrackedDeviceIndex_Hmd;
+		e.eventAgeSeconds = 0;
+
+		events.push(e);
+	}
+}
+
 void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
 	ovrSizei size = ovr_GetFovTextureSize(
 		*ovr::session,
