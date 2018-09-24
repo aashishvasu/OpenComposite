@@ -642,16 +642,16 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 			angle += math_pi * 2;
 
 		if (angle < math_pi * 0.5) {
-			Buttons = ButtonMaskFromId(k_EButton_DPad_Right);
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Right);
 		}
 		else if (angle < math_pi * 1.0) {
-			Buttons = ButtonMaskFromId(k_EButton_DPad_Down);
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Down);
 		}
 		else if (angle < math_pi * 1.5) {
-			Buttons = ButtonMaskFromId(k_EButton_DPad_Left);
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Left);
 		}
 		else {
-			Buttons = ButtonMaskFromId(k_EButton_DPad_Up);
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Up);
 		}
 	}
 
