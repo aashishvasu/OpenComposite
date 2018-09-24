@@ -321,4 +321,22 @@ public:
 	* halts the timeout and dismisses the dashboard (if it was up). Applications should be sure to actually
 	* prompt the user to save and then exit afterward, otherwise the user will be left in a confusing state. */
 	virtual void AcknowledgeQuit_UserPrompt();
+
+public:
+	// Legacy methods
+
+	virtual DistortionCoordinates_t ComputeDistortion(EVREye eEye, float fU, float fV);
+	virtual HmdMatrix44_t GetProjectionMatrix(EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention);
+
+	// ------------------------------------
+	// Performance Test methods
+	// ------------------------------------
+
+	/** Performance Testing applications can call this to enable/disable when frame timing data should be
+	* captured for the Perf Test Report. */
+	virtual void PerformanceTestEnableCapture(bool bEnable);
+
+	/** Performance Testing applications can call this to note on the Perf Test Report when they've shifted
+	* their fidelity to a new mode. */
+	virtual void PerformanceTestReportFidelityLevelChange(int nFidelityLevel);
 };

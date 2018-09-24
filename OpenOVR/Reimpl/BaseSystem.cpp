@@ -29,13 +29,7 @@ void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * hei
 }
 
 HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar) {
-	ovrMatrix4f matrix = ovrMatrix4f_Projection(
-		ovr::hmdDesc.DefaultEyeFov[S2O_eye(eye)],
-		znear, zfar,
-		ovrProjection_None // | ovrProjection_ClipRangeOpenGL // TODO API independent
-	);
-
-	return O2S_m4(matrix);
+	return GetProjectionMatrix(eye, znear, zfar, API_DirectX);
 }
 
 void BaseSystem::GetProjectionRaw(EVREye eye, float * pfLeft, float * pfRight, float * pfTop, float * pfBottom) {
@@ -688,5 +682,27 @@ void BaseSystem::AcknowledgeQuit_Exiting() {
 }
 
 void BaseSystem::AcknowledgeQuit_UserPrompt() {
+	STUBBED();
+}
+
+DistortionCoordinates_t BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV) {
+	STUBBED();
+}
+
+HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar, EGraphicsAPIConvention convention) {
+	ovrMatrix4f matrix = ovrMatrix4f_Projection(
+		ovr::hmdDesc.DefaultEyeFov[S2O_eye(eye)],
+		znear, zfar,
+		convention == API_OpenGL ? ovrProjection_ClipRangeOpenGL : ovrProjection_None // TODO is this right?
+	);
+
+	return O2S_m4(matrix);
+}
+
+void BaseSystem::PerformanceTestEnableCapture(bool bEnable) {
+	STUBBED();
+}
+
+void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel) {
 	STUBBED();
 }
