@@ -195,6 +195,15 @@
     <ClInclude Include="custom_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRApplications_005.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVROverlay_011.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRSystem_012.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

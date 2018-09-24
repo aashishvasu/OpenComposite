@@ -6,6 +6,7 @@
 # latest version available
 versions = [
     "0.9.18",
+    "0.9.19",
     "1.0.5",
     "1.0.7",
     "1.0.8",
