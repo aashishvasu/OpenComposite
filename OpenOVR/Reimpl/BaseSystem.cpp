@@ -118,11 +118,11 @@ void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 	DXGIFactory->Release();
 
 	if (!match)
-		throw string("Cannot find graphics card!");
+		OOVR_ABORT("Cannot find graphics card!");
 
 #undef VALIDATE
 #else
-	throw "DX not supported - build with SUPPORT_DX defined";
+	OOVR_ABORT("DX not supported - build with SUPPORT_DX defined");
 #endif
 }
 
@@ -531,7 +531,7 @@ HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType 
 
 bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
 	if (sizeof(VRControllerState_t) != controllerStateSize)
-		throw string("Bad controller state size - was the host compiled with an older version of OpenVR?");
+		OOVR_ABORT("Bad controller state size - was the host compiled with an older version of OpenVR?");
 
 	ovrHandType id = ovrHand_Count;
 

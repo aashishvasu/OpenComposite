@@ -81,8 +81,10 @@ void BaseCompositor::SubmitFrames() {
 	ovrLayerHeader* layers = &layer.Header;
 	ovrResult result = ovr_SubmitFrame(session, frameIndex, nullptr, &layers, 1);
 	// exit the rendering loop if submit returns an error, will retry on ovrError_DisplayLost
-	if (!OVR_SUCCESS(result))
-		throw result;
+	if (!OVR_SUCCESS(result)) {
+		string err = "ovr_SubmitFrame error: " + to_string(result);
+		OOVR_ABORT(err.c_str());
+	}
 
 	frameIndex++;
 }
@@ -269,12 +271,13 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		}
 #endif
 		default:
-			throw string("[BaseCompositor::Submit] Unsupported texture type: ") + to_string(texture->eType);
+			string err = "[BaseCompositor::Submit] Unsupported texture type: " + to_string(texture->eType);
+			OOVR_ABORT(err.c_str());
 		}
 
 		for (int ieye = 0; ieye < 2; ++ieye) {
 			if (!chains[ieye] && texture->eType != TextureType_DirectX) {
-				throw string("Failed to create texture.");
+				OOVR_ABORT("Failed to create texture.");
 			}
 		}
 	}
@@ -290,11 +293,24 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 
 	layer.Viewport[S2O_eye(eye)] = Recti(size);
 
-	compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags, layer);
+	try {
+		compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags, layer);
+	}
+	catch (const string& ex) {
+		string err = "Comp exception: " + ex;
+		OOVR_ABORT(err.c_str());
+	}
+	catch (const char* ex) {
+		string err = "Comp.C exception: " + string(ex);
+		OOVR_ABORT(err.c_str());
+	}
+	catch (...) {
+		OOVR_ABORT("Unknown compositor exception (catch r1)");
+	}
 
 	ovrTextureSwapChain tex = chains[S2O_eye(eye)];
 	if (!tex) {
-		throw string("Missing swapchain").c_str();
+		OOVR_ABORT("Missing swapchain");
 	}
 
 	ovr_CommitTextureSwapChain(SESS, tex);
@@ -318,7 +334,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		state = rightEyeSubmitted;
 
 	if (state) {
-		throw "Eye already submitted!";
+		OOVR_ABORT("Eye already submitted!");
 	}
 
 	if (eye == Eye_Left)
