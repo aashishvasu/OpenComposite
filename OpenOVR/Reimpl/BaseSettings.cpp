@@ -51,11 +51,58 @@ void  BaseSettings::SetBool(const char * pchSection, const char * pchSettingsKey
 	if (peError)
 		*peError = VRSettingsError_None;
 
+	string section = pchSection;
+	string key = pchSettingsKey;
+	if (section == kk::k_pch_SteamVR_Section) {
+		if (key == kk::k_pch_SteamVR_ShowStage_Bool) {
+			// AFAIK we can just ignore this, it shows a box on the floor.
+			return;
+		}
+		else if (key == kk::k_pch_SteamVR_ForceFadeOnBadTracking_Bool) {
+			// Ignore this, it's very unlikely the user will have tracking problems inside their guardian boundries.
+			return;
+		}
+		else if (key == kk::k_pch_SteamVR_BackgroundUseDomeProjection_Bool) {
+			// We don't have overlay (which == background?) support
+			return;
+		}
+	}
+	else if (section == kk::k_pch_Notifications_Section) {
+		if (key == kk::k_pch_Notifications_DoNotDisturb_Bool) {
+			// AFAIK there's no way to handle this with LibOVR
+			return;
+		}
+	}
+	else if (section == kk::k_pch_CollisionBounds_Section) {
+		// No way to alter guardian from LibOVR
+		if (key == kk::k_pch_CollisionBounds_GroundPerimeterOn_Bool) {
+			return;
+		} else if (key == kk::k_pch_CollisionBounds_CenterMarkerOn_Bool) {
+			return;
+		}
+	}
+	else if (section == kk::k_pch_Dashboard_Section) {
+		if (key == kk::k_pch_Dashboard_EnableDashboard_Bool) {
+			// OpenOVR doesn't have a dashboard
+			return;
+		}
+	}
+
+	OOVR_LOG(to_string(bValue).c_str());
 	STUBBED();
 }
 void  BaseSettings::SetInt32(const char * pchSection, const char * pchSettingsKey, int32_t nValue, EVRSettingsError * peError) {
 	if (peError)
 		*peError = VRSettingsError_None;
+
+	string section = pchSection;
+	string key = pchSettingsKey;
+	if (section == kk::k_pch_CollisionBounds_Section) {
+		if (key == kk::k_pch_CollisionBounds_ColorGammaA_Int32) {
+			// AFAIK you can't change the opacity of Guardian, however you can change it's colour
+			return;
+		}
+	}
 
 	STUBBED();
 }
@@ -116,7 +163,29 @@ void  BaseSettings::GetString(const char * pchSection, const char * pchSettingsK
 	if (peError)
 		*peError = VRSettingsError_None;
 
+	string section = pchSection;
+	string key = pchSettingsKey;
+
+	string result;
+
+	if (section == kk::k_pch_SteamVR_Section) {
+		if (key == kk::k_pch_SteamVR_GridColor_String) {
+			// When I tested it under SteamVR, it did actually just return an empty string
+			result = "";
+			goto found;
+		}
+	}
+
 	STUBBED();
+
+found:
+
+	// +1 for the null
+	if (unValueLen < result.length() + 1) {
+		OOVR_ABORT("unValueLen too short!");
+	}
+
+	strcpy_s(pchValue, unValueLen, result.c_str());
 }
 void  BaseSettings::RemoveSection(const char * pchSection, EVRSettingsError * peError) {
 	if (peError)
