@@ -25,7 +25,8 @@ static bool parse_bool(string orig, string name, int line) {
 	if (val == "false" || val == "off" || val == "disabled")
 		return false;
 
-	string err = "Unknown value " + orig + " for in config file for " + name + " on line " + to_string(line);
+	string err = "Value " + orig + " for in config file for " + name + " on line "
+		+ to_string(line) + " is not a boolean - true/on/enabled/false/off/disabled";
 	ABORT(err);
 }
 
