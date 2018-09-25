@@ -6,6 +6,7 @@
 #include <algorithm>
 
 using namespace std;
+using vr::HmdColor_t;
 
 Config oovr_global_configuration;
 
@@ -15,6 +16,15 @@ Config oovr_global_configuration;
 static string str_tolower(std::string val) {
 	transform(val.begin(), val.end(), val.begin(), ::tolower);
 	return val;
+}
+
+unsigned char hexval(unsigned char c) {
+	if ('0' <= c && c <= '9')
+		return c - '0';
+	else if ('a' <= c && c <= 'f')
+		return c - 'a' + 10;
+	else
+		return 0;
 }
 
 static bool parse_bool(string orig, string name, int line) {
@@ -27,6 +37,35 @@ static bool parse_bool(string orig, string name, int line) {
 
 	string err = "Value " + orig + " for in config file for " + name + " on line "
 		+ to_string(line) + " is not a boolean - true/on/enabled/false/off/disabled";
+	ABORT(err);
+}
+
+static HmdColor_t parse_HmdColor_t(string orig, string name, int line) {
+	string val = str_tolower(orig);
+
+	if (val.length() != 7 || val[0] != '#') {
+		goto invalid;
+	}
+
+	for (int i = 1; i < val.length(); i++) {
+		char c = val[i];
+		if ((c < '0' || c > '9') && (c < 'a' || c > 'f'))
+			goto invalid;
+	}
+
+	HmdColor_t c;
+	c.a = 255; // Full alpha
+
+	c.r = ((hexval(val[1]) << 4) + hexval(val[2])) / 255.0f;
+	c.g = ((hexval(val[3]) << 4) + hexval(val[4])) / 255.0f;
+	c.b = ((hexval(val[5]) << 4) + hexval(val[6])) / 255.0f;
+
+	return c;
+
+	invalid:
+
+	string err = "Value " + orig + " for in config file for " + name + " on line "
+		+ to_string(line) + " is not a hex (CSS) colour code";
 	ABORT(err);
 }
 
@@ -44,6 +83,8 @@ int Config::ini_handler(void* user, const char* pSection,
 
 	if (section == "" || section == "default") {
 		CFGOPT(bool, enableAudio);
+		CFGOPT(bool, renderCustomHands);
+		CFGOPT(HmdColor_t, handColour);
 	}
 
 #undef CFGOPT

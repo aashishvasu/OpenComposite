@@ -3,6 +3,7 @@
 #include "BaseRenderModels.h"
 #include "resources.h"
 #include "convert.h"
+#include "Misc/Config.h"
 
 // Used for the hand offsets
 #include "BaseCompositor.h"
@@ -248,8 +249,11 @@ EVRRenderModelError BaseRenderModels::LoadTexture_Async(TextureID_t textureId, R
 	uint8_t *d = new uint8_t[tx.unWidth * tx.unHeight * 4];
 	tx.rubTextureMapData = d;
 
-	d[0] = d[1] = d[2] = (uint8_t) (255 * 0.3);
-	d[3] = 255;
+	vr::HmdColor_t colour = oovr_global_configuration.HandColour();
+	d[0] = (uint8_t)(colour.r * 255);
+	d[1] = (uint8_t)(colour.g * 255);
+	d[2] = (uint8_t)(colour.b * 255);
+	d[3] = (uint8_t)(colour.a * 255);
 
 	return VRRenderModelError_None;
 }
@@ -281,7 +285,7 @@ uint32_t BaseRenderModels::GetRenderModelCount() {
 
 uint32_t BaseRenderModels::GetComponentCount(const char * pchRenderModelName) {
 	// Left at zero for now until I can properly test it, and add textures
-	return 0;
+	return oovr_global_configuration.RenderCustomHands() ? 1 : 0;
 
 	// This means there are no moving components (eg buttons thumbstick etc) which
 	//  can be animated via the Component functions, which thus shouldn't be called.
