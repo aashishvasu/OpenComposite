@@ -39,7 +39,7 @@ int Config::ini_handler(void* user, const char* pSection,
 
 	Config *cfg = (Config*)user;
 
-#define CFGOPT(type, name) cfg->name = parse_ ## type(value, #name, lineno)
+#define CFGOPT(type, vname) if(name == #vname) cfg->vname = parse_ ## type(value, #vname, lineno)
 
 	if (section == "" || section == "default") {
 		CFGOPT(bool, enableAudio);
