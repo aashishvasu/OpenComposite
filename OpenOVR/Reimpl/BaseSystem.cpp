@@ -394,9 +394,24 @@ if(prop == in) { \
 	PROP(Prop_TrackingSystemName_String, "oculus");
 	PROP(Prop_ManufacturerName_String, "Oculus");
 
+	// Only CV1 has been validated
+	switch (ovr::hmdDesc.Type) {
+	case ovrHmd_DK1:
+		PROP(Prop_ModelNumber_String, "Oculus Rift DK1");
+		break;
+	case ovrHmd_DK2:
+		PROP(Prop_ModelNumber_String, "Oculus Rift DK2");
+		break;
+	case ovrHmd_CV1:
+		PROP(Prop_ModelNumber_String, "Oculus Rift CV1");
+		break;
+	default:
+		PROP(Prop_ModelNumber_String, "<unknown>");
+		break;
+	}
+
 	// TODO these?
 	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
-	PROP(Prop_ModelNumber_String, "<unknown>"); // Serious TODO - some software may not work correctly
 	PROP(Prop_RenderModelName_String, "<unknown>"); // It appears this just gets passed into IVRRenderModels as the render model name
 
 #undef PROP
