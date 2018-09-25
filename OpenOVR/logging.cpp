@@ -28,4 +28,4 @@ void oovr_abort_raw(const char * file, long line, const char * func, const char 
 	exit(1);
 }
 
-const float math_pi = 3.14159265358979323846;
+const float math_pi = 3.14159265358979323846f;
