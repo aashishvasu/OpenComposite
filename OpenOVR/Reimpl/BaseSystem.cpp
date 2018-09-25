@@ -419,7 +419,7 @@ bool BaseSystem::ShouldApplicationReduceRenderingWork() {
 	return lastStatus.OverlayPresent;
 }
 
-void BaseSystem::CheckEvents() {
+void BaseSystem::_OnPostFrame() {
 	ovrSessionStatus status;
 	ovr_GetSessionStatus(*ovr::session, &status);
 
@@ -496,8 +496,6 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 }
 
 bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
-	CheckEvents();
-
 	memset(pEvent, 0, uncbVREvent);
 
 	if (events.empty()) {

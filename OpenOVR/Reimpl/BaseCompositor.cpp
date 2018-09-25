@@ -14,6 +14,7 @@ using namespace std;
 
 // For the left and right hand constants - TODO move them to their own file
 #include "BaseSystem.h"
+#include "static_bases.gen.h"
 
 using namespace vr;
 using namespace IVRCompositor_022;
@@ -87,6 +88,11 @@ void BaseCompositor::SubmitFrames() {
 	}
 
 	frameIndex++;
+
+	shared_ptr<BaseSystem> sys = GetBaseSystem();
+	if (sys) {
+		sys->_OnPostFrame();
+	}
 }
 
 BaseCompositor::BaseCompositor() {

@@ -16,7 +16,10 @@ private:
 	VRControllerState_t lastLeftHandState;
 	VRControllerState_t lastRightHandState;
 
-	void CheckEvents();
+public:
+	// To be called by other base classes
+	void _OnPostFrame();
+private:
 	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t &last);
 
 public:
