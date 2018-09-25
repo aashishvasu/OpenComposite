@@ -79,7 +79,7 @@ int Config::ini_handler(void* user, const char* pSection,
 
 	Config *cfg = (Config*)user;
 
-#define CFGOPT(type, vname) if(name == #vname) cfg->vname = parse_ ## type(value, #vname, lineno)
+#define CFGOPT(type, vname) if(name == #vname) { cfg->vname = parse_ ## type(value, #vname, lineno); return true; }
 
 	if (section == "" || section == "default") {
 		CFGOPT(bool, enableAudio);
@@ -89,8 +89,8 @@ int Config::ini_handler(void* user, const char* pSection,
 
 #undef CFGOPT
 
-	// Success
-	return true;
+	string err = "Unknown config option " + name + " on line " + to_string(lineno);
+	ABORT(err);
 }
 
 static int wini_parse(const wchar_t* filename, ini_handler handler, void* user) {
