@@ -13,6 +13,9 @@
 
 #include <d3d11.h>
 
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "d3d12.lib")
+
 using namespace vr;
 
 std::string SHADER_STRING = R"HLSL(
