@@ -117,6 +117,8 @@ public:
 	// Used in CVRSystem
 	static void GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose, ovrTrackingState &state);
 
+	static OVR::Matrix4f GetHandTransform();
+
 	/** Sets tracking space returned by WaitGetPoses */
 	virtual void SetTrackingSpace(vr::ETrackingUniverseOrigin eOrigin);
 

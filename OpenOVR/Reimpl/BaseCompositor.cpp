@@ -158,31 +158,9 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 	}
 
 	if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
-		float deg_to_rad = math_pi / 180;
+		static Posef transform = Posef(Quatf(GetHandTransform()), GetHandTransform().GetTranslation());
 
-		// The angle offset between the Touch and Vive controllers.
-		// If this is incorrect, virtual hands will feel off.
-		float controller_offset_angle = 39.5;
-
-		// When testing to try and find the correct value above, uncomment
-		//  this to lock the controller perfectly flat.
-		// ovrPose.ThePose.Orientation = { 0,0,0,1 };
-
-		Vector3f rotateAxis = Vector3f(1, 0, 0);
-		Quatf rotation = Quatf(rotateAxis, controller_offset_angle * deg_to_rad); //count++ * 0.01f);
-
-		Quatf f = ovrPose.ThePose.Orientation;
-		f = f * rotation;
-		ovrPose.ThePose.Orientation = f;
-
-		// Controller offset
-		// Note this is about right, found by playing around in Unity until everything
-		//  roughly lines up. If you want to contribute better numbers, please go ahead!
-		Vector3f translation = Vector3f(0, 0.0353, -0.0451);
-
-		Vector3f position = ovrPose.ThePose.Position;
-		position += f * translation;
-		ovrPose.ThePose.Position = position;
+		ovrPose.ThePose = Posef(ovrPose.ThePose) * transform;
 	}
 
 	// Configure the pose
@@ -202,6 +180,30 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 	Matrix4f hmdTransform(thePose);
 
 	O2S_om34(hmdTransform, pose->mDeviceToAbsoluteTracking);
+}
+
+Matrix4f BaseCompositor::GetHandTransform() {
+	float deg_to_rad = math_pi / 180;
+
+	// The angle offset between the Touch and Vive controllers.
+	// If this is incorrect, virtual hands will feel off.
+	float controller_offset_angle = 39.5;
+
+	// When testing to try and find the correct value above, uncomment
+	//  this to lock the controller perfectly flat.
+	// ovrPose.ThePose.Orientation = { 0,0,0,1 };
+
+	Vector3f rotateAxis = Vector3f(1, 0, 0);
+	Quatf rotation = Quatf(rotateAxis, controller_offset_angle * deg_to_rad); //count++ * 0.01f);
+
+	Matrix4f transform(rotation);
+
+	// Controller offset
+	// Note this is about right, found by playing around in Unity until everything
+	//  roughly lines up. If you want to contribute better numbers, please go ahead!
+	transform.SetTranslation(Vector3f(0, 0.0353, -0.0451));
+
+	return transform;
 }
 
 ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
