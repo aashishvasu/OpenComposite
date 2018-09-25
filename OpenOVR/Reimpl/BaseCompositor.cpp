@@ -574,7 +574,7 @@ void BaseCompositor::ForceInterleavedReprojectionOn(bool bOverride) {
 }
 
 void BaseCompositor::ForceReconnectProcess() {
-	STUBBED();
+	// We should always be connected
 }
 
 void BaseCompositor::SuspendRendering(bool bSuspend) {
