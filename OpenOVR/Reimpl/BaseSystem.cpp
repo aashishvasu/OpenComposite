@@ -382,6 +382,13 @@ if(prop == in) { \
 	snprintf(str, sizeof(str), "(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
 	OOVR_LOG(str);
 
+	if (unDeviceIndex == leftHandIndex) {
+		PROP(Prop_RenderModelName_String, "renderLeftHand");
+	}
+	else if(unDeviceIndex == rightHandIndex) {
+		PROP(Prop_RenderModelName_String, "renderRightHand");
+	}
+
 	// These have been validated against SteamVR
 	// TODO add an option to fake this out with 'lighthouse' and 'HTC' in case there is a compatibility issue
 	PROP(Prop_TrackingSystemName_String, "oculus");

@@ -223,6 +223,7 @@
     <ClInclude Include="Reimpl\BaseSystem.h" />
     <ClInclude Include="Reimpl\Interfaces.h" />
     <ClInclude Include="Reimpl\static_bases.gen.h" />
+    <ClInclude Include="resources.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="steamvr_abi.h" />
     <ClInclude Include="targetver.h" />
@@ -262,6 +263,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

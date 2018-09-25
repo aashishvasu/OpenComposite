@@ -24,3 +24,6 @@
 #include "logging.h"
 
 #include <string>
+
+// This module's ID, from DLLMain
+extern HMODULE openovr_module_id;

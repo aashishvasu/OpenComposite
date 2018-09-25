@@ -17,6 +17,8 @@ using namespace std;
 static void init_audio();
 static void setup_audio();
 
+HMODULE openovr_module_id;
+
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -25,6 +27,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
+		openovr_module_id = hModule;
 #if defined(_DEBUG)
 		DbgSetModule(hModule);
 #endif

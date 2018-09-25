@@ -213,6 +213,9 @@
     <ClInclude Include="Reimpl\static_bases.gen.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -302,5 +305,10 @@
     <ClCompile Include="Misc\audio_override.cpp">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
