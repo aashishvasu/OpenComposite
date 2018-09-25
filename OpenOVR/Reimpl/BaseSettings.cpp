@@ -40,7 +40,12 @@ const char * BaseSettings::GetSettingsErrorNameFromEnum(EVRSettingsError eError)
 	STUBBED_BASIC();
 }
 bool  BaseSettings::Sync(bool bForce, EVRSettingsError * peError) {
-	STUBBED_BASIC();
+	// We update everything immmediately, so AFAIK this shouldn't do anything?
+
+	if (peError)
+		*peError = VRSettingsError_None;
+
+	return false;
 }
 void  BaseSettings::SetBool(const char * pchSection, const char * pchSettingsKey, bool bValue, EVRSettingsError * peError) {
 	if (peError)
