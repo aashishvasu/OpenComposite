@@ -143,6 +143,12 @@ Config::Config() {
 	int err = wini_parse(file.c_str(), ini_handler, this);
 
 	if (err == -1) {
+		// No such file, check the working directory
+		file = L"opencomposite.ini";
+		err = wini_parse(file.c_str(), ini_handler, this);
+	}
+
+	if (err == -1) {
 		// Couldn't open file, no problen since the config file is optional and
 		//  the defaults are set up as the default values for the variables
 		return;
