@@ -222,6 +222,9 @@
     <ClInclude Include="Misc\Config.h">
       <Filter>Header Files\Misc</Filter>
     </ClInclude>
+    <ClInclude Include="Reimpl\BaseExtendedDisplay.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -316,6 +319,12 @@
     </ClCompile>
     <ClCompile Include="Misc\Config.cpp">
       <Filter>Source Files\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRExtendedDisplay.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\BaseExtendedDisplay.cpp">
+      <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

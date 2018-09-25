@@ -12,6 +12,7 @@ interfaces_list = [
     "RenderModels",
     "Screenshots",
     "Settings",
+    "ExtendedDisplay",
 ]
 
 import sys, os, glob, re
