@@ -150,6 +150,10 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 	else if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
 		ovrPose = state.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
 	}
+	else if (index == BaseSystem::thirdTouchIndex) {
+		ovrTrackedDeviceType type = ovrTrackedDevice_Object0;
+		ovr_GetDevicePoses(*ovr::session, &type, 1, 0, &ovrPose);
+	}
 	else {
 		pose->bPoseIsValid = false;
 		pose->bDeviceIsConnected = false;
@@ -168,6 +172,9 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 
 		ovrPose.ThePose = Posef(ovrPose.ThePose) * transform;
 	}
+
+	// AFAIK we don't need to do anything like the above for the third Touch controller, since it
+	//  isn't used as a controller anyway but rather a tracking device.
 
 	// Configure the pose
 
