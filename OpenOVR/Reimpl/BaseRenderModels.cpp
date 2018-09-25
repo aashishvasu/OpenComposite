@@ -240,13 +240,22 @@ void BaseRenderModels::FreeRenderModel(RenderModel_t * renderModel) {
 
 EVRRenderModelError BaseRenderModels::LoadTexture_Async(TextureID_t textureId, RenderModel_TextureMap_t ** texture) {
 	*texture = new RenderModel_TextureMap_t();
-	// TODO use Oculus Avatars SDK
+	RenderModel_TextureMap_t &tx = **texture;
+
+	// For now use a 1x1 single coloured texture
+	tx.unWidth = 1;
+	tx.unHeight = 1;
+	uint8_t *d = new uint8_t[tx.unWidth * tx.unHeight * 4];
+	tx.rubTextureMapData = d;
+
+	d[0] = d[1] = d[2] = (uint8_t) (255 * 0.3);
+	d[3] = 255;
 
 	return VRRenderModelError_None;
 }
 
 void BaseRenderModels::FreeTexture(RenderModel_TextureMap_t * texture) {
-	// TODO
+	delete texture->rubTextureMapData;
 	delete texture;
 }
 
