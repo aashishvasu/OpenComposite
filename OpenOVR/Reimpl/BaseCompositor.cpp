@@ -280,6 +280,8 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 			compositor = new DX11Compositor((ID3D11Texture2D*)texture->handle, size, chains);
 			break;
 		}
+#endif
+#if defined(SUPPORT_DX12)
 		case TextureType_DirectX12: {
 			compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, size, chains);
 			break;

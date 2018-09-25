@@ -1,4 +1,7 @@
 #include "stdafx.h"
+
+#if defined(SUPPORT_DX12)
+
 #include "compositor.h"
 #include "libovr_wrapper.h"
 
@@ -407,3 +410,5 @@ void DX12Compositor::Invoke(ovrEyeType eye, const Texture_t * texture, const VRT
 	ID3D12CommandList *set[] = { commandList.Get() };
 	queue->ExecuteCommandLists(1, set);
 }
+
+#endif
