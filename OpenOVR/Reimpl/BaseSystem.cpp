@@ -6,6 +6,7 @@
 #include "convert.h"
 #include "BaseCompositor.h"
 #include "Misc/Haptics.h"
+#include "Misc/Config.h"
 
 #include <string>
 
@@ -24,8 +25,11 @@ void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * hei
 		*ovr::session,
 		ovrEye_Left, // Resolutions are done per-eye in LibOVR, no particular reason for left eye
 		ovr::hmdDesc.DefaultEyeFov[ovrEye_Left],
-		1.0f // 1.0x supersampling default, resulting in no stretched pixels (purpose of this function)
+		oovr_global_configuration.SupersampleRatio()
 	);
+
+	string msg = "Recommended target size: " + to_string(size.w) + " " + to_string(size.h);
+	OOVR_LOG(msg.c_str());
 
 	*width = size.w;
 	*height = size.h;

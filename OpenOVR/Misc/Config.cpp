@@ -69,6 +69,22 @@ static HmdColor_t parse_HmdColor_t(string orig, string name, int line) {
 	ABORT(err);
 }
 
+static float parse_float(string orig, string name, int line) {
+	string val = str_tolower(orig);
+
+	const char *str = orig.c_str();
+	char *end = NULL;
+	float result = strtof(str, &end);
+
+	if (end != str + orig.length()) {
+		string err = "Value " + orig + " for in config file for " + name + " on line "
+			+ to_string(line) + " is not a decimal number (eg 12.34)";
+		ABORT(err);
+	}
+
+	return result;
+}
+
 int Config::ini_handler(void* user, const char* pSection,
 	const char* pName, const char* pValue,
 	int lineno) {
@@ -85,6 +101,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, enableAudio);
 		CFGOPT(bool, renderCustomHands);
 		CFGOPT(HmdColor_t, handColour);
+		CFGOPT(float, supersampleRatio);
 	}
 
 #undef CFGOPT
