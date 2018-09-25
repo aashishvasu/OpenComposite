@@ -233,7 +233,8 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char * pchRend
 }
 
 void BaseRenderModels::FreeRenderModel(RenderModel_t * renderModel) {
-	// TODO
+	delete renderModel->rVertexData;
+	delete renderModel->rIndexData;
 	delete renderModel;
 }
 
