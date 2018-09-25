@@ -48,9 +48,7 @@ static uint32_t current_init_token = 1;
 void ERR(string msg) {
 	char buff[4096];
 	snprintf(buff, sizeof(buff), "OpenOVR DLLMain ERROR: %s", msg.c_str());
-	OOVR_LOG(buff);
-	MessageBoxA(NULL, buff, "OpenOVR Error", MB_OK);
-	throw msg;
+	OOVR_ABORT_T(buff, "OpenOVR Error");
 }
 
 class _InheritCVRLayout { virtual void _ignore() = 0; };

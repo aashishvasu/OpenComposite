@@ -6,22 +6,19 @@
 
 #define STUBBED_BASIC() { \
 	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
-	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
-	throw "stub"; \
+	OOVR_ABORT_T(str.c_str(), "Stubbed func!"); \
 }
 
 #define STUBBED() { \
 	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
 	str += "via " + string(pchSection) + "." + string(pchSettingsKey); \
-	MessageBoxA(NULL, str.c_str(), "Stubbed func!", MB_OK); \
-	throw "stub"; \
+	OOVR_ABORT_T(str.c_str(), "Stubbed func!"); \
 }
 
 #define UNSET_SETTING() { \
 	string str = "Hit undefined setting at " __FILE__ " func "  " line " + to_string(__LINE__); \
 	str += "via " + string(pchSection) + "." + string(pchSettingsKey); \
-	MessageBoxA(NULL, str.c_str(), "Stubbed setting!", MB_OK); \
-	throw "stub"; \
+	OOVR_ABORT_T(str.c_str(), "Stubbed func!"); \
 }
 
 using namespace std;
