@@ -7,6 +7,7 @@
 #include "libovr_wrapper.h"
 #include "Misc/debug_helper.h"
 #include "Misc/audio_override.h"
+#include "Misc/Config.h"
 #include <map>
 #include <memory>
 
@@ -178,6 +179,9 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 // Hook the audio thing as soon as possible. This will use the Rift device
 //  as listed in the Windows audio settings.
 void init_audio() {
+	if (!oovr_global_configuration.EnableAudio())
+		return;
+
 	std::wstring dev;
 	HRESULT hr = find_basic_rift_output_device(dev);
 
@@ -194,6 +198,9 @@ void init_audio() {
 //  stuff like audio mirroring. This can only be called after LibOVR is initialised,
 //  and thus will work on some games and not on others.
 void setup_audio() {
+	if (!oovr_global_configuration.EnableAudio())
+		return;
+
 	WCHAR deviceOutStrBuffer[OVR_AUDIO_MAX_DEVICE_STR_SIZE];
 	ovrResult r = ovr_GetAudioDeviceOutGuidStr(deviceOutStrBuffer);
 	if (r == ovrSuccess)

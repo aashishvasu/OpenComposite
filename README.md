@@ -139,6 +139,11 @@ All rights reserved.
 This program contains code derived from [audio-router](https://github.com/audiorouterdev/audio-router). Audio-router
 is Free Software under the GPLv3, same as this project.
 
+### INIH
+
+This program uses the [inih](https://github.com/benhoyt/inih) INI parsing library by Ben Hoyt. This is available under
+the MIT licence, a copy of which can be found in the `LICENSE_INIH` file of this repository.
+
 ## Compiling (**for developers**)
 
 Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR) - it's under the GPLv3 licence.

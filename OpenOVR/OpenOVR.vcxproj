@@ -174,8 +174,10 @@
     <ClInclude Include="libovr_wrapper.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="Misc\audio_override.h" />
+    <ClInclude Include="Misc\Config.h" />
     <ClInclude Include="Misc\debug_helper.h" />
     <ClInclude Include="Misc\Haptics.h" />
+    <ClInclude Include="Misc\ini.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_004.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_005.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h" />
@@ -237,8 +239,15 @@
     <ClCompile Include="libovr_wrapper.cpp" />
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="Misc\audio_override.cpp" />
+    <ClCompile Include="Misc\Config.cpp" />
     <ClCompile Include="Misc\debug_helper.cpp" />
     <ClCompile Include="Misc\Haptics.cpp" />
+    <ClCompile Include="Misc\ini.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="OpenOVR.cpp" />
     <ClCompile Include="Reimpl\BaseChaperone.cpp" />
     <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp" />
