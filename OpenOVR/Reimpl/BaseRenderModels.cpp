@@ -63,6 +63,22 @@ struct OOVR_RenderModel_TextureMap_t {
 #pragma pack( pop )
 #endif
 
+typedef uint32_t VRComponentProperties;
+enum OOVR_EVRComponentProperty {
+	VRComponentProperty_IsStatic = (1 << 0),
+	VRComponentProperty_IsVisible = (1 << 1),
+	VRComponentProperty_IsTouched = (1 << 2),
+	VRComponentProperty_IsPressed = (1 << 3),
+	VRComponentProperty_IsScrolled = (1 << 4),
+};
+
+/** Describes state information about a render-model component, including transforms and other dynamic properties */
+struct OOVR_RenderModel_ComponentState_t {
+	vr::HmdMatrix34_t mTrackingToComponentRenderModel;  // Transform required when drawing the component render model
+	vr::HmdMatrix34_t mTrackingToComponentLocal;        // Transform available for attaching to a local component coordinate system (-Z out from surface )
+	VRComponentProperties uProperties; // See OOVR_EVRComponentProperty
+};
+
 #pragma endregion
 
 typedef OOVR_RenderModel_t RenderModel_t;
@@ -291,20 +307,83 @@ uint32_t BaseRenderModels::GetComponentCount(const char * pchRenderModelName) {
 	//  can be animated via the Component functions, which thus shouldn't be called.
 }
 
-uint32_t BaseRenderModels::GetComponentName(const char * pchRenderModelName, uint32_t unComponentIndex, VR_OUT_STRING() char * pchComponentName, uint32_t unComponentNameLen) {
-	STUBBED();
+uint32_t BaseRenderModels::GetComponentName(const char * pchRenderModelName, uint32_t unComponentIndex,
+	char * pchComponentName, uint32_t unComponentNameLen) {
+
+	string name = pchRenderModelName;
+
+	if (name != "renderLeftHand" && name != "renderRightHand") {
+		string err = "Unknown render model name: " + string(pchRenderModelName);
+		OOVR_ABORT(err.c_str());
+		return VRRenderModelError_None;
+	}
+
+	// Only the first component exists
+	if (unComponentIndex != 0) {
+		return 0;
+	}
+
+	if (pchComponentName) {
+		// +1 for NULL
+		if (unComponentNameLen < name.length() + 1) {
+			OOVR_ABORT("unComponentNameLen too small!");
+		}
+
+		// TODO should we allow too small buffers?
+		strcpy_s(pchComponentName, unComponentNameLen, name.c_str());
+		pchComponentName[unComponentNameLen - 1] = 0;
+	}
+
+	// +1 for null
+	return (uint32_t) name.length() + 1;
 }
 
 uint64_t BaseRenderModels::GetComponentButtonMask(const char * pchRenderModelName, const char * pchComponentName) {
 	STUBBED();
 }
 
-uint32_t BaseRenderModels::GetComponentRenderModelName(const char * pchRenderModelName, const char * pchComponentName, VR_OUT_STRING() char * pchComponentRenderModelName, uint32_t unComponentRenderModelNameLen) {
-	STUBBED();
+uint32_t BaseRenderModels::GetComponentRenderModelName(const char * pchRenderModelName, const char * pchComponentName,
+	char * componentModelName, uint32_t componentModelNameLen) {
+
+	string name = pchRenderModelName;
+	if (name != "renderLeftHand" && name != "renderRightHand") {
+		string err = "Unknown render model name: " + string(pchRenderModelName);
+		OOVR_ABORT(err.c_str());
+		return VRRenderModelError_None;
+	}
+
+	if (name != pchComponentName) {
+		OOVR_ABORT("pchRenderModelName and pchComponentName mismatch");
+	}
+
+	if (componentModelName) {
+		// +1 for NULL
+		if (componentModelNameLen < name.length() + 1) {
+			OOVR_ABORT("componentModelNameLen too small!");
+		}
+
+		// TODO should we allow too small buffers?
+		strcpy_s(componentModelName, componentModelNameLen, name.c_str());
+		componentModelName[componentModelNameLen - 1] = 0;
+	}
+
+	// +1 for null
+	return (uint32_t) name.length() + 1;
 }
 
-bool BaseRenderModels::GetComponentState(const char * pchRenderModelName, const char * pchComponentName, const vr::VRControllerState_t * pControllerState, const OOVR_RenderModel_ControllerMode_State_t * pState, OOVR_RenderModel_ComponentState_t * pComponentState) {
-	STUBBED();
+bool BaseRenderModels::GetComponentState(const char * pchRenderModelName, const char * pchComponentName,
+	const vr::VRControllerState_t * pControllerState,const OOVR_RenderModel_ControllerMode_State_t * pState,
+	OOVR_RenderModel_ComponentState_t * pComponentState) {
+
+	vr::HmdMatrix34_t ident = { 0 };
+	ident.m[0][0] = ident.m[1][1] = ident.m[2][2] = 1;
+
+	pComponentState->mTrackingToComponentLocal = ident;
+	pComponentState->mTrackingToComponentRenderModel = ident;
+
+	pComponentState->uProperties = VRComponentProperty_IsVisible | VRComponentProperty_IsStatic;
+
+	return true;
 }
 
 bool BaseRenderModels::RenderModelHasComponent(const char * pchRenderModelName, const char * pchComponentName) {
