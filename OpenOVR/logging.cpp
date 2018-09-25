@@ -17,14 +17,21 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 	// Do we need to close the stream or something? What about multiple threads?
 }
 
-void oovr_abort_raw(const char * file, long line, const char * func, const char * msg) {
-	OOVR_LOG("Abort!");
+void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title) {
+	if (title == NULL) {
+		title = "OpenOVR Error - info in log";
+		OOVR_LOG("Abort!");
+	}
+	else {
+		OOVR_LOG(title);
+	}
+
 	oovr_log_raw(file, line, func, msg);
 
 	// Ensure everything gets written
 	stream << flush;
 
-	MessageBoxA(NULL, msg, "OpenOVR Error - info in log", MB_OK);
+	MessageBoxA(NULL, msg, title, MB_OK);
 	exit(1);
 }
 
