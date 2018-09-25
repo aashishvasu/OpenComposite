@@ -129,6 +129,10 @@ bool  BaseSettings::GetBool(const char * pchSection, const char * pchSettingsKey
 			// Note when set to true, expect k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float
 			return false; // TODO
 		}
+		else if (key == kk::k_pch_SteamVR_DirectMode_Bool) {
+			// Oculus doesn't support windowed mode
+			return true;
+		}
 	}
 
 	STUBBED();
