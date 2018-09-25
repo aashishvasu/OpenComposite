@@ -284,7 +284,50 @@ EVRRenderModelError BaseRenderModels::LoadTextureD3D11_Async(TextureID_t texture
 }
 
 EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t textureId, void * pDstTexture) {
-	STUBBED();
+	ID3D11Texture2D *output = (ID3D11Texture2D*)pDstTexture;
+
+	// Grab the desired colour
+	vr::HmdColor_t colour = oovr_global_configuration.HandColour();
+
+	// Since we don't know what the map flags are, make an identical texture and copy across
+
+	// D3D11 setup
+	ID3D11Device *device;
+	ID3D11DeviceContext *context;
+	output->GetDevice(&device);
+	device->GetImmediateContext(&context);
+
+	// Create the temporary texture
+	D3D11_TEXTURE2D_DESC desc;
+	output->GetDesc(&desc);
+
+	// Quite conveniently, HmdColor_t happens to have the perfect layout for this
+	int px_count = desc.Width * desc.Height;
+	vr::HmdColor_t *pixels = new vr::HmdColor_t[px_count];
+	for (int i = 0; i < px_count; i++) {
+		pixels[i] = colour;
+	}
+
+	// Cross our fingers it's a four-byte RGBA format.
+	int count = desc.MipLevels * desc.ArraySize;
+	D3D11_SUBRESOURCE_DATA *init = new D3D11_SUBRESOURCE_DATA[count];
+	for (int i = 0; i < count; i++) {
+		init[i] = { &pixels, sizeof(uint32_t), 0 };
+	}
+
+	ID3D11Texture2D *tempTex;
+	HRESULT hr = device->CreateTexture2D(&desc, init, &tempTex);
+
+	// Copy over the texture
+	context->CopyResource(output, tempTex);
+
+	// Cleanup
+	tempTex->Release();
+	delete init;
+	context->Release();
+	device->Release();
+
+	return VRRenderModelError_None;
 }
 
 void BaseRenderModels::FreeTextureD3D11(void * pD3D11Texture2D) {
