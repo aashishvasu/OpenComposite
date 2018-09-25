@@ -514,7 +514,7 @@ void BaseCompositor::ClearSkyboxOverride() {
 }
 
 void BaseCompositor::CompositorBringToFront() {
-	STUBBED();
+	// No actions required, Oculus runs via direct mode
 }
 
 void BaseCompositor::CompositorGoToBack() {
