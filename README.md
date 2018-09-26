@@ -1,5 +1,8 @@
 # OpenComposite - Play SteamVR games without SteamVR!
 
+[![Discord](https://img.shields.io/discord/494387738821525504.svg)](https://discord.gg/3bGcZeK)
+[![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg)](https://ci.appveyor.com/project/ZNix/openovr)
+
 OpenComposite (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
 to the Oculus runtime. Think of it as a backwards version of ReVive, for the Rift.
@@ -50,6 +53,9 @@ the 32-bit DLL, even though you're probably running a 64-bit computer. Simple so
 
 Some time in the near future I plan to release a system-wide install - run an EXE and all your games will open via OpenComposite, and
 you'll be able to switch back by starting SteamVR. This will make updating much easier.
+
+If you have any questions, feel free to jump on our Discord server:
+[![Discord](https://img.shields.io/discord/494387738821525504.svg)](https://discord.gg/3bGcZeK)
 
 ## Configuration file
 
