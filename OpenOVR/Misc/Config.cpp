@@ -102,6 +102,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, renderCustomHands);
 		CFGOPT(HmdColor_t, handColour);
 		CFGOPT(float, supersampleRatio);
+		CFGOPT(bool, haptics);
 	}
 
 #undef CFGOPT

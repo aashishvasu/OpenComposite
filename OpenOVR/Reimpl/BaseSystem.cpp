@@ -668,6 +668,9 @@ bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr:
 }
 
 void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
+	if (!oovr_global_configuration.Haptics())
+		return;
+
 	if (unControllerDeviceIndex == leftHandIndex || unControllerDeviceIndex == rightHandIndex) {
 		static Haptics haptics;
 
