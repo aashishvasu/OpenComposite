@@ -225,6 +225,9 @@
     <ClInclude Include="Reimpl\BaseExtendedDisplay.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_012.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

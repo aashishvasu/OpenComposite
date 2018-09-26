@@ -183,6 +183,7 @@
     <ClInclude Include="OpenVR\interfaces\IVRApplications_006.h" />
     <ClInclude Include="OpenVR\interfaces\IVRChaperoneSetup_005.h" />
     <ClInclude Include="OpenVR\interfaces\IVRChaperone_003.h" />
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_012.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_013.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_016.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_019.h" />

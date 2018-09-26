@@ -5,6 +5,7 @@
 # This ensures that non-interface files get the
 # latest version available
 versions = [
+    "0.9.17",
     "0.9.18",
     "0.9.19",
     "1.0.2",
