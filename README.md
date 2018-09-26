@@ -50,6 +50,54 @@ the 32-bit DLL, even though you're probably running a 64-bit computer. Simple so
 Some time in the near future I plan to release a system-wide install - run an EXE and all your games will open via OpenOVR, and
 you'll be able to switch back by starting SteamVR. This will make updating much easier.
 
+## Configuration file
+
+On startup, OpenOVR searches for a file named `opencomposite.ini`, first next to the `openvr_api.dll` file, and if it can't find
+that, then it looks in the working directory (usually in the same folder as the EXE). If no file is found, that's fine and all
+the default values are used.
+
+This is it's configuration file, where you can specify a number of options. These are listed in `name=value` format, and you
+can define a comment by starting a like with `;` or a `#`. Note the option names **are** case sensitive. If you specify an invalid
+option, the game will immediately crash on startup. Any whitespace between the name, equals sign, and value is ignored, as is whitespace
+on the end of the line. Ensure your lines do not being with whitespace however.
+
+The available options are:
+
+* `enableAudio` - boolean, default `enabled`. Should OpenOVR redirect the game's audio to the Rift builtin audio. This means you
+don't have to set the Windows default audio device. This doesn't always work and can sometimes cause crashes, see below for
+more information about it.
+* `renderCustomHands` - boolean, default `enabled`. Should OpenOVR render custom hands. Disable this if you *really* dislike
+the hand models, and some games (like Skyrim) come with backup models that will be used instead.
+* `handColour` - colour, default `#4c4c4c`. The colour of the hands OpenOVR draws, as they currently lack proper textures.
+* `supersampleRatio` - float, default `1.0`. The supersample ratio in use - this is similar to what you would enter into SteamVR,
+a value of `145%` in SteamVR is a value of `1.45` here. A value of `80%` in SteamVR is `0.8` here, and so on. Higher numbers improve
+graphics, at a major performance cost.
+* `haptics` - boolean, default `enabled`. Should haptic feedback to the Touch controllers be enabled.
+
+The possible types are as follows:
+
+* boolean - one of `on`, `true`, `enabled` to enable the setting, or `off`, `false` or `disabled` to do the opposite. These
+are not case-sensitive, so `Enabled` or `tRUe` work fine.
+* colour - same as the format used in HTML/CSS, it's a `#` followed by six hex characters. Mozilla has a
+[tool](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Colors/Color_picker_tool) to help with this. Again, it's case-insensitive.
+* float - a floating point (decimal) number, eg `123.456`.
+
+Example files:
+
+- Running a simulator on a powerful computer, and wearing external headphones so you don't want the audio redirected:
+
+```
+enableAudio=off
+supersampleRatio=1.4
+```
+
+- Running SkyrimVR with yellow hands, and haptic feedback disabled:
+
+```
+handColour=#ffff00
+haptics = off
+```
+
 ## Audio Patching
 
 LibOVR includes functionality to tell a game what audio device it should output to, and thus when playing games using this API
