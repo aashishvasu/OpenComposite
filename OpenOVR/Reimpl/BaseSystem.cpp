@@ -601,6 +601,10 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 		Buttons |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
 	}
 
+	if (inputState.Touches & (id == ovrHand_Left ? ovrTouch_LIndexTrigger : ovrTouch_RIndexTrigger)) {
+		Touches |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
+	}
+
 	// Trigger and Thumbstick - Analog (axis) inputs
 	VRControllerAxis_t &trigger = controllerState->rAxis[1];
 	trigger.x = inputState.IndexTrigger[id];
