@@ -28,9 +28,6 @@ void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * hei
 		oovr_global_configuration.SupersampleRatio()
 	);
 
-	string msg = "Recommended target size: " + to_string(size.w) + " " + to_string(size.h);
-	OOVR_LOG(msg.c_str());
-
 	*width = size.w;
 	*height = size.h;
 }
