@@ -21,11 +21,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../scripts")
 
 import libparse
 
-ivr_path = "../OpenVR/interfaces/%s.h"
-
 context = dict()
 
-libparse.read_context(context, ivr_path % "vrtypes", "vr")
+libparse.read_context(context, "../OpenVR/interfaces/vrtypes.h", "vr")
 
 bases_header_fn = "static_bases.gen.h"
 bases_header = open(bases_header_fn, "w")
@@ -58,7 +56,7 @@ def check_base_class_inst(interface, impl):
     impl.write("\treturn ret;\n")
     impl.write("}\n")
 
-def gen_interface(interface, version, header, impl):
+def gen_interface(interface, version, header, impl, basename):
     check_base_class_inst(interface, impl)
 
     iv = "VR%s_%s" % (interface, version)
@@ -76,7 +74,7 @@ def gen_interface(interface, version, header, impl):
     impl.write("// Misc for %s:\n" % cname)
     impl.write("%s::%s() : base(GetCreateBase%s()) {}\n" % (cname, cname, interface))
     impl.write("// Interface methods for %s:\n" % cname)
-    filename = ivr_path % "IVR%s_%s" % (interface, version)
+    filename = "../" + basename
     icontext = dict(context)
     libparse.read_context(icontext, filename, namespace)
 
@@ -143,7 +141,7 @@ def gen_fntable(interface, version, funcs, out):
     # Generate the getter
     out.write("void** %s::_GetStatFuncList() { %s = this; return %s; }\n" % (cname, ivarname, arrvarname))
 
-geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"\)")
+geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
 
 impl = open("stubs.gen.cpp", "w")
@@ -175,7 +173,12 @@ for interface in interfaces_list:
             if match:
                 version = match.group("version")
                 interface = match.group("interface")
-                todo_interfaces.append((interface, version))
+                flags = match.group("flags")
+                header_name = "OpenVR/interfaces/IVR%s_%s.h" % (interface, version)
+                if flags:
+                    flags = [e.strip() for e in flags.split(",")]
+                    header_name = "OpenVR/custom_interfaces/IVR%s_%s.h" % (interface, version)
+                todo_interfaces.append((interface, version, flags, header_name))
             elif "GEN_INTERFACE" in line and not "#define" in line and not line.startswith("//"):
                 print(line)
                 raise RuntimeError("GEN_INTERFACE syntax error!")
@@ -193,12 +196,12 @@ for interface in interfaces_list:
     header.write("#include \"BaseCommon.h\"\n")
 
     for i in todo_interfaces:
-        header.write("#include \"OpenVR/interfaces/IVR%s_%s.h\"\n" % (i[0], i[1]))
+        header.write("#include \"%s\"\n" % i[3])
 
     impl.write("#include \"%s\"\n" % header_filename)
 
     for i in todo_interfaces:
-        gen_interface(i[0], i[1], header, impl)
+        gen_interface(i[0], i[1], header, impl, i[3])
 
     all_interfaces += todo_interfaces
 
@@ -211,7 +214,7 @@ impl.write("// Get interface by name\n")
 impl.write("void *CreateInterfaceByName(const char *name) {\n")
 
 for i in all_interfaces:
-    name = "CVR%s_%s" % i
+    name = "CVR%s_%s" % (i[0], i[1])
     var = "vr::IVR%s_%s::IVR%s_Version" % (i[0], i[1], i[0])
 
     impl.write("\tif(strcmp(%s, name) == 0) return new %s();\n" % (var, name))

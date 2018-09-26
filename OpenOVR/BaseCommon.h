@@ -19,5 +19,5 @@ public:
 #endif
 
 #if defined(GENFILE)
-#define GEN_INTERFACE(if_name, version)
+#define GEN_INTERFACE(if_name, version, ...)
 #endif
