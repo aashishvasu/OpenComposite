@@ -5,6 +5,8 @@
 GEN_INTERFACE("Compositor", "012")
 GEN_INTERFACE("Compositor", "013")
 GEN_INTERFACE("Compositor", "016")
+//
+GEN_INTERFACE("Compositor", "018")
 GEN_INTERFACE("Compositor", "019")
 GEN_INTERFACE("Compositor", "020")
 GEN_INTERFACE("Compositor", "021")
