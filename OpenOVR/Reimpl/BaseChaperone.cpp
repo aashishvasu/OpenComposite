@@ -75,8 +75,13 @@ void BaseChaperone::GetBoundsColor(HmdColor_t *pOutputColorArray, int nNumOutput
 	STUBBED();
 }
 bool BaseChaperone::AreBoundsVisible() {
-	STUBBED();
+	ovrBool out;
+
+	// Ignore the result, which could tell us the boundraries are not set up.
+	ovrResult res = ovr_GetBoundaryVisible(*ovr::session, &out);
+
+	return out;
 }
 void BaseChaperone::ForceBoundsVisible(bool bForce) {
-	STUBBED();
+	ovr_RequestBoundaryVisible(*ovr::session, bForce);
 }
