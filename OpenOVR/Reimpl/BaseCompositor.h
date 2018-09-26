@@ -106,6 +106,8 @@ private:
 	float fadeTime = 0;
 
 	ovrTrackingState trackingState;
+	float sensorSampleTime;
+
 	ovrSessionStatus sessionStatus;
 
 public:

@@ -52,8 +52,7 @@ void BaseCompositor::SubmitFrames() {
 	ovrPosef HmdToEyePose[2] = { eyeRenderDesc[0].HmdToEyePose,
 		eyeRenderDesc[1].HmdToEyePose };
 
-	double sensorSampleTime;    // sensorSampleTime is fed into the layer later
-	ovr_GetEyePoses(session, frameIndex, ovrTrue, HmdToEyePose, EyeRenderPose, &sensorSampleTime);
+	ovr_CalcEyePoses2(trackingState.HeadPose.ThePose, HmdToEyePose, EyeRenderPose);
 
 	//// Render Scene to Eye Buffers
 	//for (int eye = 0; eye < 2; ++eye) {
@@ -132,8 +131,8 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 	leftEyeSubmitted = false;
 	rightEyeSubmitted = false;
 
-	double frameTiming = ovr_GetPredictedDisplayTime(SESS, frameIndex);
-	trackingState = ovr_GetTrackingState(SESS, frameTiming, ovrTrue);
+	sensorSampleTime = ovr_GetPredictedDisplayTime(SESS, 0);
+	trackingState = ovr_GetTrackingState(SESS, sensorSampleTime, ovrTrue);
 
 	return GetLastPoses(renderPoseArray, renderPoseArrayCount, gamePoseArray, gamePoseArrayCount);
 }
