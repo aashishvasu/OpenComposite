@@ -133,6 +133,10 @@ bool  BaseSettings::GetBool(const char * pchSection, const char * pchSettingsKey
 			// Oculus doesn't support windowed mode
 			return true;
 		}
+		else if (key == kk::k_pch_SteamVR_RetailDemo_Bool) {
+			// What? (Used in The Lab btw)
+			return false;
+		}
 	}
 
 	STUBBED();
