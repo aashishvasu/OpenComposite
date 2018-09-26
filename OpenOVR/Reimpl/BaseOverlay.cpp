@@ -16,6 +16,7 @@ public:
 	EColorSpace colourSpace = ColorSpace_Auto;
 	bool visible = false; // TODO check against SteamVR
 	VRTextureBounds_t textureBounds = { 0, 0, 1, 1 };
+	VROverlayInputMethod inputMethod = VROverlayInputMethod_None; // TODO fire events
 
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
@@ -344,10 +345,15 @@ bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREven
 	return true;
 }
 EVROverlayError BaseOverlay::GetOverlayInputMethod(VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod *peInputMethod) {
-	STUBBED();
+	USEH();
+
+	if (peInputMethod)
+		*peInputMethod = overlay->inputMethod;
 }
 EVROverlayError BaseOverlay::SetOverlayInputMethod(VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod eInputMethod) {
-	STUBBED();
+	USEH();
+
+	overlay->inputMethod = eInputMethod;
 }
 EVROverlayError BaseOverlay::GetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvecMouseScale) {
 	STUBBED();
