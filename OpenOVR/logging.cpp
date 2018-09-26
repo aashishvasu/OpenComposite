@@ -19,7 +19,7 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 
 void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title) {
 	if (title == NULL) {
-		title = "OpenOVR Error - info in log";
+		title = "OpenComposite Error - info in log";
 		OOVR_LOG("Abort!");
 	}
 	else {

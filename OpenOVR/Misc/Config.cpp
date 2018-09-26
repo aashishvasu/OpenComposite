@@ -11,7 +11,7 @@ using vr::HmdColor_t;
 Config oovr_global_configuration;
 
 // OOVR_ABORT doesn't work here for some reason
-#define ABORT(msg) { MessageBoxA(NULL, string(msg).c_str(), "OpenOVR Config File Error", MB_OK); exit(1); }
+#define ABORT(msg) { MessageBoxA(NULL, string(msg).c_str(), "OpenComposite Config File Error", MB_OK); exit(1); }
 
 static string str_tolower(std::string val) {
 	transform(val.begin(), val.end(), val.begin(), ::tolower);

@@ -1,6 +1,7 @@
-# OpenOVR - Play SteamVR games without SteamVR!
+# OpenComposite - Play SteamVR games without SteamVR!
 
-OpenOVR (OpenVR for OculusVR) is an implementation of SteamVR's API - OpenVR, forwarding calls directly
+OpenComposite (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
+an implementation of SteamVR's API - OpenVR, forwarding calls directly
 to the Oculus runtime. Think of it as a backwards version of ReVive, for the Rift.
 
 This allows you to play SteamVR-based games on an Oculus Rift as though they were native titles, without
@@ -9,7 +10,7 @@ the use of SteamVR!
 Why would you want to do this? There are several of good reasons:
 
 * Some users have trouble running SteamVR on their machines
-* While more work needs to be done on OpenOVR's side for this, it can potentially get slightly better
+* While more work needs to be done on OpenComposite's side for this, it can potentially get slightly better
 performance due to several design decisions, due to not having to support the Vive
 * When you run a program it's guaranteed to show up in Oculus Home, while with SteamVR if you start the
 game when SteamVR is already running this won't happen.
@@ -47,12 +48,12 @@ Find your game's `openvr_api.dll` file, and replace it (though I highly recommen
 switch back) with one of the DLLs available above. Be sure to get the matching platform - if the game is a 32-bit game you need
 the 32-bit DLL, even though you're probably running a 64-bit computer. Simple solution: if one doesn't work, try the other.
 
-Some time in the near future I plan to release a system-wide install - run an EXE and all your games will open via OpenOVR, and
+Some time in the near future I plan to release a system-wide install - run an EXE and all your games will open via OpenComposite, and
 you'll be able to switch back by starting SteamVR. This will make updating much easier.
 
 ## Configuration file
 
-On startup, OpenOVR searches for a file named `opencomposite.ini`, first next to the `openvr_api.dll` file, and if it can't find
+On startup, OpenComposite searches for a file named `opencomposite.ini`, first next to the `openvr_api.dll` file, and if it can't find
 that, then it looks in the working directory (usually in the same folder as the EXE). If no file is found, that's fine and all
 the default values are used.
 
@@ -63,12 +64,12 @@ on the end of the line. Ensure your lines do not being with whitespace however.
 
 The available options are:
 
-* `enableAudio` - boolean, default `enabled`. Should OpenOVR redirect the game's audio to the Rift builtin audio. This means you
+* `enableAudio` - boolean, default `enabled`. Should OpenComposite redirect the game's audio to the Rift builtin audio. This means you
 don't have to set the Windows default audio device. This doesn't always work and can sometimes cause crashes, see below for
 more information about it.
-* `renderCustomHands` - boolean, default `enabled`. Should OpenOVR render custom hands. Disable this if you *really* dislike
+* `renderCustomHands` - boolean, default `enabled`. Should OpenComposite render custom hands. Disable this if you *really* dislike
 the hand models, and some games (like Skyrim) come with backup models that will be used instead.
-* `handColour` - colour, default `#4c4c4c`. The colour of the hands OpenOVR draws, as they currently lack proper textures.
+* `handColour` - colour, default `#4c4c4c`. The colour of the hands OpenComposite draws, as they currently lack proper textures.
 * `supersampleRatio` - float, default `1.0`. The supersample ratio in use - this is similar to what you would enter into SteamVR,
 a value of `145%` in SteamVR is a value of `1.45` here. A value of `80%` in SteamVR is `0.8` here, and so on. Higher numbers improve
 graphics, at a major performance cost.
@@ -102,13 +103,13 @@ haptics = off
 
 LibOVR includes functionality to tell a game what audio device it should output to, and thus when playing games using this API
 you don't have to change the default Windows audio device. Unfortunately, OpenVR has no such API and games using it almost always
-emit audio to the default audio device. OpenOVR includes a feature to fix this.
+emit audio to the default audio device. OpenComposite includes a feature to fix this.
 
-Whenever you start a game using OpenOVR, it will attempt to patch the game's audio system (note this does **not** change the actual
+Whenever you start a game using OpenComposite, it will attempt to patch the game's audio system (note this does **not** change the actual
 Windows audio device like SteamVR tries to, which causes a huge number of issues). This works in most of the games I tried it
 with. Depending on the game, one of three things can happen:
 
-1. The game sets up it's audio system before the OpenOVR DLL is loaded (should be very uncommon). Unfortunately there's not a lot
+1. The game sets up it's audio system before the OpenComposite DLL is loaded (should be very uncommon). Unfortunately there's not a lot
 I can do about this, and the audio plays through your default audio device.
 2. The game sets up it's audio system after the DLL is loaded, but before starting the VR system. This will send audio to your rift,
 same as if you'd set it as the default audio device. However, the fancy Oculus audio features (eg audio mirroring) won't work. This is
@@ -139,7 +140,7 @@ load on the main menu, for example?
 
 ## Licence
 
-OpenOVR itself is Free Software under the GPLv3:
+OpenComposite itself is Free Software under the GPLv3:
 
 ```
 This program is free software: you can redistribute it and/or modify
@@ -219,7 +220,7 @@ OpenOVR: (or whatever folder you cloned/downloaded the repo into)
 	... etc
 ```
 
-Next, we need to configure the project. OpenOVR relies fairly heavily on scripts that
+Next, we need to configure the project. OpenComposite relies fairly heavily on scripts that
 generate code, and this has *vastly* simplified things - I expect the repo would contain
 roughly three to four times more code otherwise.
 
@@ -238,7 +239,7 @@ generator to make a stub for one, you MUST re-run `generate.bat` (TODO port to G
 due to AppVeyor). If you have added or removed OpenVR headers this will cause Visual Studio to rebuild
 the project, otherwise it will only rebuild a couple of files which is very quick.
 
-Whenever you check out a new version of OpenOVR, you should run the configure script. If you don't, you're
+Whenever you check out a new version of OpenComposite, you should run the configure script. If you don't, you're
 liable to get mysterious errors at both runtime and compiletime.
 
 (additionally the configure script can accept `clean` as an argument, which will make it delete all

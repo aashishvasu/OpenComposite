@@ -5,7 +5,7 @@
 #define VALIDATE(x, msg) if (!OVR_SUCCESS(x)) { \
 	char buff[1024]; \
 	snprintf(buff, sizeof(buff), "%s: %d", (msg), x); \
-	MessageBoxA(NULL, buff, "OpenOVR", MB_ICONERROR | MB_OK); \
+	MessageBoxA(NULL, buff, "OpenComposite", MB_ICONERROR | MB_OK); \
 	exit(-1); \
 }
 
