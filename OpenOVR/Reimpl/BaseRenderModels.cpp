@@ -382,7 +382,7 @@ uint32_t BaseRenderModels::GetComponentName(const char * pchRenderModelName, uin
 }
 
 uint64_t BaseRenderModels::GetComponentButtonMask(const char * pchRenderModelName, const char * pchComponentName) {
-	STUBBED();
+	return 0;
 }
 
 uint32_t BaseRenderModels::GetComponentRenderModelName(const char * pchRenderModelName, const char * pchComponentName,
