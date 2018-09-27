@@ -362,6 +362,9 @@
     <ClCompile Include="Reimpl\BaseInput.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
+    <ClCompile Include="Reimpl\CVRInput.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc">

@@ -14,6 +14,7 @@ interfaces_list = [
     "Settings",
     "ExtendedDisplay",
     "Applications",
+    "Input",
 ]
 
 import sys, os, glob, re

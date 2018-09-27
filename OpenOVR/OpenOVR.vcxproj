@@ -275,6 +275,7 @@
     <ClCompile Include="Reimpl\CVRChaperoneSetup.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor.cpp" />
     <ClCompile Include="Reimpl\CVRExtendedDisplay.cpp" />
+    <ClCompile Include="Reimpl\CVRInput.cpp" />
     <ClCompile Include="Reimpl\CVROverlay.cpp" />
     <ClCompile Include="Reimpl\CVRRenderModels.cpp" />
     <ClCompile Include="Reimpl\CVRScreenshots.cpp" />
