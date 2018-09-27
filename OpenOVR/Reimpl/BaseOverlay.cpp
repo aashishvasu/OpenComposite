@@ -18,6 +18,7 @@ public:
 	VRTextureBounds_t textureBounds = { 0, 0, 1, 1 };
 	VROverlayInputMethod inputMethod = VROverlayInputMethod_None; // TODO fire events
 	HmdVector2_t mouseScale = { 1.0f, 1.0f };
+	bool highQuality = false;
 
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
@@ -59,16 +60,26 @@ EVROverlayError BaseOverlay::CreateOverlay(const char *pchOverlayKey, const char
 EVROverlayError BaseOverlay::DestroyOverlay(VROverlayHandle_t ulOverlayHandle) {
 	USEH();
 
+	if (highQualityOverlay == ulOverlayHandle)
+		highQualityOverlay = NULL;
+
 	overlays.erase(overlay->key);
 	delete overlay;
 
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetHighQualityOverlay(VROverlayHandle_t ulOverlayHandle) {
-	STUBBED();
+	USEH();
+
+	highQualityOverlay = ulOverlayHandle;
+
+	return VROverlayError_None;
 }
 VROverlayHandle_t BaseOverlay::GetHighQualityOverlay() {
-	STUBBED();
+	if (!highQualityOverlay)
+		return k_ulOverlayHandleInvalid;
+
+	return highQualityOverlay;
 }
 uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char *pchValue, uint32_t unBufferSize, EVROverlayError *pError) {
 	OverlayData *overlay = (OverlayData*)ulOverlayHandle;

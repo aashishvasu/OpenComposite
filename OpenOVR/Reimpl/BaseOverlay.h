@@ -156,6 +156,9 @@ private:
 	// Events
 	std::queue<vr::VREvent_t> eventQueue;
 
+	// This doesn't do a whole lot, since OOVR does this for every overlay
+	VROverlayHandle_t highQualityOverlay;
+
 public:
 	// Destructor, since we have a map of pointers
 	~BaseOverlay();
