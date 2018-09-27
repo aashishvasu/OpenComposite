@@ -339,7 +339,7 @@ uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OU
 }
 
 uint32_t BaseRenderModels::GetRenderModelCount() {
-	STUBBED();
+	return 2;
 }
 
 uint32_t BaseRenderModels::GetComponentCount(const char * pchRenderModelName) {
