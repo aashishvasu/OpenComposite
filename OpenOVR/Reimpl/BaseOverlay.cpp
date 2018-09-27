@@ -17,6 +17,7 @@ public:
 	bool visible = false; // TODO check against SteamVR
 	VRTextureBounds_t textureBounds = { 0, 0, 1, 1 };
 	VROverlayInputMethod inputMethod = VROverlayInputMethod_None; // TODO fire events
+	HmdVector2_t mouseScale = { 1.0f, 1.0f };
 
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
@@ -356,10 +357,17 @@ EVROverlayError BaseOverlay::SetOverlayInputMethod(VROverlayHandle_t ulOverlayHa
 	overlay->inputMethod = eInputMethod;
 }
 EVROverlayError BaseOverlay::GetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvecMouseScale) {
-	STUBBED();
+	USEH();
+
+	*pvecMouseScale = overlay->mouseScale;
 }
 EVROverlayError BaseOverlay::SetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, const HmdVector2_t *pvecMouseScale) {
-	STUBBED();
+	USEH();
+
+	if (pvecMouseScale)
+		overlay->mouseScale = *pvecMouseScale;
+	else
+		overlay->mouseScale = HmdVector2_t{ 1.0f, 1.0f };
 }
 bool BaseOverlay::ComputeOverlayIntersection(VROverlayHandle_t ulOverlayHandle, const OOVR_VROverlayIntersectionParams_t *pParams, OOVR_VROverlayIntersectionResults_t *pResults) {
 	STUBBED();
