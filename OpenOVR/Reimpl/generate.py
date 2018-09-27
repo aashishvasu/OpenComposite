@@ -13,6 +13,7 @@ interfaces_list = [
     "Screenshots",
     "Settings",
     "ExtendedDisplay",
+    "Applications",
 ]
 
 import sys, os, glob, re

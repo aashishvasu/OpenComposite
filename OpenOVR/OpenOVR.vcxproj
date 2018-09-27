@@ -218,6 +218,7 @@
     <ClInclude Include="OpenVR\interfaces\openvr.h" />
     <ClInclude Include="OpenVR\interfaces\vrannotation.h" />
     <ClInclude Include="OpenVR\interfaces\vrtypes.h" />
+    <ClInclude Include="Reimpl\BaseApplications.h" />
     <ClInclude Include="Reimpl\BaseChaperone.h" />
     <ClInclude Include="Reimpl\BaseChaperoneSetup.h" />
     <ClInclude Include="Reimpl\BaseCompositor.h" />
@@ -253,6 +254,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="OpenOVR.cpp" />
+    <ClCompile Include="Reimpl\BaseApplications.cpp" />
     <ClCompile Include="Reimpl\BaseChaperone.cpp" />
     <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp" />
     <ClCompile Include="Reimpl\BaseCompositor.cpp" />
@@ -262,6 +264,7 @@
     <ClCompile Include="Reimpl\BaseScreenshots.cpp" />
     <ClCompile Include="Reimpl\BaseSettings.cpp" />
     <ClCompile Include="Reimpl\BaseSystem.cpp" />
+    <ClCompile Include="Reimpl\CVRApplications.cpp" />
     <ClCompile Include="Reimpl\CVRChaperone.cpp" />
     <ClCompile Include="Reimpl\CVRChaperoneSetup.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor.cpp" />
