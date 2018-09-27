@@ -12,7 +12,7 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 	}
 
 	//stream << file << ":" << line << ":" << func << "\t- " << msg << endl;
-	stream << func << "\t- " << msg << endl;
+	stream << func << "\t- " << (msg ? msg : "NULL") << endl;
 
 	// Do we need to close the stream or something? What about multiple threads?
 }
