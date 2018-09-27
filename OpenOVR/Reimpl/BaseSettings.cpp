@@ -2,6 +2,7 @@
 #define BASE_IMPL
 #include "BaseSettings.h"
 #include "OpenVR/interfaces/IVRSettings_002.h"
+#include "Misc/Config.h"
 #include <string>
 
 #define STUBBED_BASIC() { \
@@ -156,7 +157,7 @@ float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsK
 
 	if (section == kk::k_pch_SteamVR_Section) {
 		if (key == kk::k_pch_SteamVR_SupersampleScale_Float) {
-			return 1; // TODO
+			return oovr_global_configuration.SupersampleRatio();
 		}
 	}
 
