@@ -60,9 +60,18 @@ void BaseSystem::GetProjectionRaw(EVREye eye, float * pfLeft, float * pfRight, f
 	*pfRight = fov.RightTan;
 }
 
-bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * pDistortionCoordinates) {
-	STUBBED();
-	return false;
+bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * out) {
+	// Here's what SteamVR does when run on a Rift:
+	//  each of the output values match the input values, for all colour channels, regardless of the eye.
+	// This is thus essentially a identity transform function.
+
+	if (!out)
+		return true;
+
+	out->rfRed[0] = out->rfGreen[0] = out->rfBlue[0] = fU;
+	out->rfRed[1] = out->rfGreen[1] = out->rfBlue[1] = fV;
+
+	return true;
 }
 
 HmdMatrix34_t BaseSystem::GetEyeToHeadTransform(EVREye ovr_eye) {
@@ -279,6 +288,13 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 		switch (prop) {
 		case Prop_DisplayFrequency_Float:
 			return 90.0; // TODO grab this from LibOVR
+		case Prop_LensCenterLeftU_Float:
+		case Prop_LensCenterLeftV_Float:
+		case Prop_LensCenterRightU_Float:
+		case Prop_LensCenterRightV_Float:
+			// SteamVR reports it as unknown
+			*pErrorL = TrackedProp_UnknownProperty;
+			return 0;
 		}
 	}
 	
@@ -724,7 +740,9 @@ void BaseSystem::AcknowledgeQuit_UserPrompt() {
 }
 
 DistortionCoordinates_t BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV) {
-	STUBBED();
+	DistortionCoordinates_t out;
+	ComputeDistortion(eEye, fU, fV, &out);
+	return out;
 }
 
 HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar, EGraphicsAPIConvention convention) {
