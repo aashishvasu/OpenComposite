@@ -274,6 +274,11 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 		break;
 	}
 
+	if (oovr_global_configuration.AdmitUnknownProps()) {
+		*pErrorL = TrackedProp_UnknownProperty;
+		return 0;
+	}
+
 	char msg[1024];
 	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
 	OOVR_LOG(msg);
@@ -297,6 +302,11 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 			*pErrorL = TrackedProp_UnknownProperty;
 			return 0;
 		}
+	}
+
+	if (oovr_global_configuration.AdmitUnknownProps()) {
+		*pErrorL = TrackedProp_UnknownProperty;
+		return 0;
 	}
 	
 	char msg[1024];
@@ -332,6 +342,11 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 		}
 	}
 
+	if (oovr_global_configuration.AdmitUnknownProps()) {
+		*pErrorL = TrackedProp_UnknownProperty;
+		return 0;
+	}
+
 	char msg[1024];
 	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
 	OOVR_LOG(msg);
@@ -362,6 +377,11 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t dev
 			ButtonMaskFromId(k_EButton_SteamVR_Trigger);
 	}
 
+	if (oovr_global_configuration.AdmitUnknownProps()) {
+		*pErrorL = TrackedProp_UnknownProperty;
+		return 0;
+	}
+
 	char msg[1024];
 	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", dev, prop);
 	MessageBoxA(NULL, msg, "GetUint64TrackedDeviceProperty", MB_OK);
@@ -372,12 +392,27 @@ HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceInde
 	if (pErrorL)
 		*pErrorL = TrackedProp_Success;
 
+	if (oovr_global_configuration.AdmitUnknownProps()) {
+		*pErrorL = TrackedProp_UnknownProperty;
+
+		HmdMatrix34_t m = { 0 };
+		m.m[0][0] = 1;
+		m.m[1][1] = 1;
+		m.m[2][2] = 1;
+		return m;
+	}
+
 	STUBBED();
 }
 
 uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void * pBuffer, uint32_t unBufferSize, ETrackedPropertyError * pError) {
 	if (pError)
 		*pError = TrackedProp_Success;
+
+	if (oovr_global_configuration.AdmitUnknownProps()) {
+		*pError = TrackedProp_UnknownProperty;
+		return 0;
+	}
 
 	STUBBED();
 }
@@ -434,8 +469,10 @@ if(prop == in) { \
 
 #undef PROP
 
-	OOVR_ABORT("This string property (in log) was not found");
+	if(!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_ABORT("This string property (in log) was not found");
 
+	*pErrorL = TrackedProp_UnknownProperty;
 	return 0; // There are tonnes, and we're not implementing all of them.
 }
 

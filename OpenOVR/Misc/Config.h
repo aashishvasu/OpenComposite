@@ -10,6 +10,7 @@ public:
 	vr::HmdColor_t HandColour() const { return handColour; }
 	float SupersampleRatio() const { return supersampleRatio; }
 	float Haptics() const { return haptics; }
+	float AdmitUnknownProps() const { return admitUnknownProps; }
 
 private:
 	static int ini_handler(
@@ -22,6 +23,7 @@ private:
 	vr::HmdColor_t handColour = vr::HmdColor_t{ 0.3f, 0.3f, 0.3f, 1 };
 	float supersampleRatio = 1.0f;
 	bool haptics = true;
+	bool admitUnknownProps = false;
 
 };
 

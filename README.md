@@ -80,6 +80,10 @@ the hand models, and some games (like Skyrim) come with backup models that will 
 a value of `145%` in SteamVR is a value of `1.45` here. A value of `80%` in SteamVR is `0.8` here, and so on. Higher numbers improve
 graphics, at a major performance cost.
 * `haptics` - boolean, default `enabled`. Should haptic feedback to the Touch controllers be enabled.
+* `admitUnknownProps` - boolean, default `disabled`. If asked for a tracked device property it does not understand, should OpenComposite
+set that as an error and let the game continue. Enabling this may cause severe and hard-to-detect side-effects, and as such if a property
+is missing, please report it and let it get fixed like that. However, some (very few) games (namely Vivecraft) will query every property
+they know about, even if never using all but a few of them. In these cases, you should enable it.
 
 The possible types are as follows:
 
