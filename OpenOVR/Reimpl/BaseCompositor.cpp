@@ -194,6 +194,10 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 	O2S_om34(hmdTransform, pose->mDeviceToAbsoluteTracking);
 }
 
+void BaseCompositor::GetSinglePoseRendering(TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose) {
+	GetSinglePose(unDeviceIndex, pOutputPose, trackingState);
+}
+
 Matrix4f BaseCompositor::GetHandTransform() {
 	float deg_to_rad = math_pi / 180;
 

@@ -118,6 +118,7 @@ public:
 
 	// Used in CVRSystem
 	static void GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose, ovrTrackingState &state);
+	void GetSinglePoseRendering(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
 
 	static OVR::Matrix4f GetHandTransform();
 

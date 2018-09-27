@@ -10,8 +10,16 @@ class BaseSystem {
 	// Copied from IVRSystem, because MSVC made me.
 
 private:
+	struct event_info_t {
+		TrackedDevicePose_t pose = { 0 };
+		VREvent_t ev = { 0 };
+
+		event_info_t(VREvent_t ev) : ev(ev) {}
+		event_info_t(VREvent_t ev, TrackedDevicePose_t pose) : ev(ev), pose(pose) {}
+	};
+
 	ovrSessionStatus lastStatus;
-	std::queue<VREvent_t> events;
+	std::queue<event_info_t> events;
 
 	VRControllerState_t lastLeftHandState;
 	VRControllerState_t lastRightHandState;

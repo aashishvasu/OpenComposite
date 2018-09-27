@@ -7,6 +7,7 @@
 #include "BaseCompositor.h"
 #include "Misc/Haptics.h"
 #include "Misc/Config.h"
+#include "static_bases.gen.h"
 
 #include <string>
 
@@ -499,10 +500,24 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 	VRControllerState_t state;
 	GetControllerState(hand, &state, sizeof(state));
 
+	if (state.ulButtonPressed == last.ulButtonPressed && state.ulButtonTouched == last.ulButtonTouched) {
+		// Nothing has changed
+		// Though still update other properties in the state
+		last = state;
+
+		return;
+	}
+
 	VREvent_t ev_base;
 	ev_base.trackedDeviceIndex = hand;
 	ev_base.eventAgeSeconds = 0; // TODO
 	ev_base.data.controller = { 0 };
+
+	TrackedDevicePose_t pose = { 0 };
+	shared_ptr<BaseCompositor> compositor = GetBaseCompositor();
+	if (compositor) {
+		compositor->GetSinglePoseRendering(hand, &pose);
+	}
 
 	// Check each possible button, and fire an event if it changed
 	// (note that incrementing enums in C++ is a bit of a pain, wrt the casting)
@@ -517,7 +532,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 		if (newState != oldState) {
 			VREvent_t e = ev_base;
 			e.eventType = newState ? VREvent_ButtonPress : VREvent_ButtonUnpress;
-			events.push(e);
+			events.push(event_info_t(e, pose));
 		}
 
 		// Did the user touch or break contact with the button?
@@ -527,7 +542,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 		if (newState != oldState) {
 			VREvent_t e = ev_base;
 			e.eventType = newState ? VREvent_ButtonTouch : VREvent_ButtonUntouch;
-			events.push(e);
+			events.push(event_info_t(e, pose));
 		}
 	}
 
@@ -535,21 +550,27 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 }
 
 bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
+	return PollNextEventWithPose(TrackingUniverseStanding, pEvent, uncbVREvent, NULL);
+}
+
+bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
 	memset(pEvent, 0, uncbVREvent);
 
 	if (events.empty()) {
 		return false;
 	}
 
-	VREvent_t e = events.front();
+	event_info_t info = events.front();
+	VREvent_t e = info.ev;
 	events.pop();
 
 	memcpy(pEvent, &e, min(uncbVREvent, sizeof(e)));
-	return true;
-}
 
-bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
-	STUBBED();
+	if (pTrackedDevicePose) {
+		*pTrackedDevicePose = info.pose;
+	}
+
+	return true;
 }
 
 const char * BaseSystem::GetEventTypeNameFromEnum(EVREventType eType) {
