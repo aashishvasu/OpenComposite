@@ -19,6 +19,7 @@ public:
 	VROverlayInputMethod inputMethod = VROverlayInputMethod_None; // TODO fire events
 	HmdVector2_t mouseScale = { 1.0f, 1.0f };
 	bool highQuality = false;
+	uint64_t flags = 0;
 
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
@@ -178,10 +179,23 @@ uint32_t BaseOverlay::GetOverlayRenderingPid(VROverlayHandle_t ulOverlayHandle) 
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayFlag(VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool bEnabled) {
-	STUBBED();
+	USEH();
+
+	if (bEnabled) {
+		overlay->flags |= 1 << eOverlayFlag;
+	}
+	else {
+		overlay->flags &= ~(1 << eOverlayFlag);
+	}
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayFlag(VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool *pbEnabled) {
-	STUBBED();
+	USEH();
+
+	*pbEnabled = (overlay->flags & (1 << eOverlayFlag)) != 0;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayColor(VROverlayHandle_t ulOverlayHandle, float fRed, float fGreen, float fBlue) {
 	USEH();
