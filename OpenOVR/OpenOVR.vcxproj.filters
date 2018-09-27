@@ -237,6 +237,18 @@
     <ClInclude Include="Reimpl\BaseApplications.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRInput_004.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRIOBuffer_001.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRRenderModels_006.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRSpatialAnchors_001.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
