@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseApplications.h"
+#include <string>
 
 using namespace std;
 using namespace vr;
@@ -99,7 +100,31 @@ bool BaseApplications::IsQuitUserPromptRequested() {
 	STUBBED();
 }
 EVRApplicationError BaseApplications::LaunchInternalProcess(const char *pchBinaryPath, const char *pchArguments, const char *pchWorkingDirectory) {
-	STUBBED();
+	OOVR_LOG("Launching new app process: following values are path,args,workingDir:")
+	OOVR_LOG(pchBinaryPath);
+	OOVR_LOG(pchArguments);
+	OOVR_LOG(pchWorkingDirectory);
+
+	string cmd = "\""  + string(pchBinaryPath) + "\" " + string(pchArguments);
+	int buff_len = cmd.length() + 1;
+	char *cmd_c = new char[buff_len];
+	strcpy_s(cmd_c, buff_len, cmd.c_str());
+
+	STARTUPINFOA si;
+	PROCESS_INFORMATION pi;
+
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	memset(&pi, 0, sizeof(pi));
+
+	PROCESS_INFORMATION processInfo;
+	if (CreateProcessA(pchBinaryPath, cmd_c, NULL, NULL, TRUE, 0, NULL, pchWorkingDirectory, &si, &processInfo)) {
+		CloseHandle(processInfo.hProcess);
+		CloseHandle(processInfo.hThread);
+		return VRApplicationError_None;
+	}
+
+	return VRApplicationError_LaunchFailed;
 }
 uint32_t BaseApplications::GetCurrentSceneProcessId() {
 	STUBBED();
