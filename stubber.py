@@ -17,17 +17,14 @@ for line in fileinput.input():
 		name = match.group("funcname")
 		args_str = match.group("args")
 		args = args_str.split(",") if args_str else []
-		#print("Got ret %s name %s" % (ret, name))
 		argnames = []
 		argnodefaults = []
 		for fullarg in args:
 			amatch = argr.match(fullarg.strip())
 			atype = amatch.group("type").strip()
 			aname = amatch.group("name").strip()
-			#adefault = amatch.group("default").strip()
-			#print("\ttype=%s, name=%s" % (atype, aname))
 			argnames.append(aname)
 			argnodefaults.append(atype + " " + aname)
-		print("%s %s::%s(%s) {\n\treturn base.%s(%s);\n}" % (ret, cname, name, ", ".join(argnodefaults), name, ", ".join(argnames)))
-		#print("%s %s::%s(%s) {\n\tSTUBBED();\n}" % (ret, cname, name, args_str))
+
+		print("%s %s::%s(%s) {\n\tSTUBBED();\n}" % (ret, cname, name, args_str))
 
