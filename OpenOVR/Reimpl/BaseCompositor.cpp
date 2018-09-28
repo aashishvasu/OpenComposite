@@ -178,8 +178,8 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 		// Wait it out, need the swap chains to be created otherwise WaitToBeginFrame will error
 	}
 	else if (state == RS_RENDERING) {
-		// TODO is this valid?
-		OOVR_ABORT("Cannot call WaitGetPoses twice in a row!");
+		// Apparently this is indeed valid
+		OOVR_LOG("[WARN] Should not call WaitGetPoses twice in a row - skipping second beginframe!");
 	}
 
 	sensorSampleTime = ovr_GetPredictedDisplayTime(SESS, frameIndex);
