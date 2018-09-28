@@ -24,6 +24,8 @@ private:
 	VRControllerState_t lastLeftHandState;
 	VRControllerState_t lastRightHandState;
 
+	HiddenAreaMesh_t hiddenAreaMeshes[2] = { 0 };
+
 public:
 	// To be called by other base classes
 	void _OnPostFrame();

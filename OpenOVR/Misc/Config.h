@@ -12,6 +12,7 @@ public:
 	float Haptics() const { return haptics; }
 	float AdmitUnknownProps() const { return admitUnknownProps; }
 	inline bool ThreePartSubmit() const { return threePartSubmit; }
+	inline bool UseViewportStencil() const { return useViewportStencil; }
 
 private:
 	static int ini_handler(
@@ -26,6 +27,7 @@ private:
 	bool haptics = true;
 	bool admitUnknownProps = false;
 	bool threePartSubmit = true;
+	bool useViewportStencil = true;
 
 };
 

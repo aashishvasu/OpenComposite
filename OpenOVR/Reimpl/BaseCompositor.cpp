@@ -59,14 +59,15 @@ void BaseCompositor::SubmitFrames() {
 	ovrHmdDesc &hmdDesc = ovr::hmdDesc;
 
 	// Call ovr_GetRenderDesc each frame to get the ovrEyeRenderDesc, as the returned values (e.g. HmdToEyePose) may change at runtime.
-	ovrEyeRenderDesc eyeRenderDesc[2];
+	ovrEyeRenderDesc *eyeRenderDesc = ovr::eyeRenderDesc;
 	eyeRenderDesc[0] = ovr_GetRenderDesc(session, ovrEye_Left, hmdDesc.DefaultEyeFov[0]);
 	eyeRenderDesc[1] = ovr_GetRenderDesc(session, ovrEye_Right, hmdDesc.DefaultEyeFov[1]);
 
 	// Get eye poses, feeding in correct IPD offset
 	ovrPosef EyeRenderPose[2];
-	ovrPosef HmdToEyePose[2] = { eyeRenderDesc[0].HmdToEyePose,
-		eyeRenderDesc[1].HmdToEyePose };
+	ovrPosef *HmdToEyePose = ovr::hmdToEyeViewPose;
+	HmdToEyePose[0] = eyeRenderDesc[0].HmdToEyePose;
+	HmdToEyePose[1] = eyeRenderDesc[1].HmdToEyePose;
 
 	ovr_CalcEyePoses2(trackingState.HeadPose.ThePose, HmdToEyePose, EyeRenderPose);
 

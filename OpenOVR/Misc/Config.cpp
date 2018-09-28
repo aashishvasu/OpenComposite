@@ -105,6 +105,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, haptics);
 		CFGOPT(bool, admitUnknownProps);
 		CFGOPT(bool, threePartSubmit);
+		CFGOPT(bool, useViewportStencil);
 	}
 
 #undef CFGOPT
