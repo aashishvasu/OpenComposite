@@ -92,6 +92,12 @@ enum OOVR_EVRCompositorTimingMode {
 
 class BaseCompositor {
 private:
+	enum RenderState {
+		RS_NOT_STARTED,
+		RS_WAIT_BEGIN,
+		RS_RENDERING,
+	};
+
 	bool leftEyeSubmitted = false, rightEyeSubmitted = false;
 	void SubmitFrames();
 	long long frameIndex = 0;
@@ -109,6 +115,8 @@ private:
 	double sensorSampleTime;
 
 	ovrSessionStatus sessionStatus;
+
+	RenderState state = RS_NOT_STARTED;
 
 public:
 	typedef int ovr_enum_t;

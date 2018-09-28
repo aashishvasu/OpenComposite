@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #define BASE_IMPL
 
+#include "Misc/Config.h"
+
 #include "OVR_CAPI.h"
 #include "libovr_wrapper.h"
 #include "convert.h"
@@ -38,6 +40,20 @@ typedef int ovr_enum_t;
 #endif
 
 void BaseCompositor::SubmitFrames() {
+	if (state == RS_RENDERING || !oovr_global_configuration.ThreePartSubmit()) {
+		// We're in the correct state to submit frames
+	}
+	else if (state == RS_NOT_STARTED) {
+		// This is our first frame, skip it as the swap chains won't have been created yet
+		// However, the swap chains should be available now, ready for the next frame.
+		state = RS_WAIT_BEGIN;
+		return;
+	}
+	else if (state == RS_WAIT_BEGIN) {
+		// TODO should we just call WaitGetFrames ourselves?
+		OOVR_ABORT("Cannot submit frames twice in a row without waiting");
+	}
+
 	ovrSession &session = *ovr::session;
 	ovrGraphicsLuid &luid = *ovr::luid;
 	ovrHmdDesc &hmdDesc = ovr::hmdDesc;
@@ -79,12 +95,20 @@ void BaseCompositor::SubmitFrames() {
 	}
 
 	ovrLayerHeader* layers = &layer.Header;
-	ovrResult result = ovr_SubmitFrame(session, frameIndex, nullptr, &layers, 1);
+	ovrResult result;
+	if (oovr_global_configuration.ThreePartSubmit()) {
+		result = ovr_EndFrame(session, frameIndex, nullptr, &layers, 1);
+	}
+	else {
+		result = ovr_SubmitFrame(session, frameIndex, nullptr, &layers, 1);
+	}
 	// exit the rendering loop if submit returns an error, will retry on ovrError_DisplayLost
 	if (!OVR_SUCCESS(result)) {
-		string err = "ovr_SubmitFrame error: " + to_string(result);
+		string err = "ovr_EndFrame: " + to_string(result);
 		OOVR_ABORT(err.c_str());
 	}
+
+	state = RS_WAIT_BEGIN;
 
 	frameIndex++;
 
@@ -125,13 +149,40 @@ ETrackingUniverseOrigin BaseCompositor::GetTrackingSpace() {
 
 ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
 	TrackedDevicePose_t * gamePoseArray, uint32_t gamePoseArrayCount) {
-	//ovr_WaitToBeginFrame(SESS, frameIndex);
 
 	// Assume this method isn't being called between frames, b/c it really shouldn't be.
 	leftEyeSubmitted = false;
 	rightEyeSubmitted = false;
 
-	sensorSampleTime = ovr_GetPredictedDisplayTime(SESS, 0);
+	if (!oovr_global_configuration.ThreePartSubmit()) {
+		// Do nothing at this stage
+	}
+	else if (state == RS_WAIT_BEGIN) {
+		ovrResult result = ovr_WaitToBeginFrame(SESS, frameIndex);
+		if (!OVR_SUCCESS(result)) {
+			string msg = "ovr_WaitToBeginFrame: " + to_string(result);
+			OOVR_ABORT(msg.c_str());
+		}
+
+		result = ovr_BeginFrame(SESS, frameIndex);
+		if (!OVR_SUCCESS(result)) {
+			ovrErrorInfo err;
+			ovr_GetLastErrorInfo(&err);
+			string msg = "ovr_BeginFrame: " + to_string(result) + ": " + err.ErrorString;
+			OOVR_ABORT(msg.c_str());
+		}
+
+		state = RS_RENDERING;
+	}
+	else if (state == RS_NOT_STARTED) {
+		// Wait it out, need the swap chains to be created otherwise WaitToBeginFrame will error
+	}
+	else if (state == RS_RENDERING) {
+		// TODO is this valid?
+		OOVR_ABORT("Cannot call WaitGetPoses twice in a row!");
+	}
+
+	sensorSampleTime = ovr_GetPredictedDisplayTime(SESS, frameIndex);
 	trackingState = ovr_GetTrackingState(SESS, sensorSampleTime, ovrTrue);
 
 	return GetLastPoses(renderPoseArray, renderPoseArrayCount, gamePoseArray, gamePoseArrayCount);

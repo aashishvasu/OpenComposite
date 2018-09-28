@@ -104,6 +104,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(float, supersampleRatio);
 		CFGOPT(bool, haptics);
 		CFGOPT(bool, admitUnknownProps);
+		CFGOPT(bool, threePartSubmit);
 	}
 
 #undef CFGOPT

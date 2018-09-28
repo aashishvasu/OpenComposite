@@ -11,6 +11,7 @@ public:
 	float SupersampleRatio() const { return supersampleRatio; }
 	float Haptics() const { return haptics; }
 	float AdmitUnknownProps() const { return admitUnknownProps; }
+	inline bool ThreePartSubmit() const { return threePartSubmit; }
 
 private:
 	static int ini_handler(
@@ -24,6 +25,7 @@ private:
 	float supersampleRatio = 1.0f;
 	bool haptics = true;
 	bool admitUnknownProps = false;
+	bool threePartSubmit = true;
 
 };
 
