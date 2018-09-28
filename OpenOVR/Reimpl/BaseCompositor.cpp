@@ -112,7 +112,7 @@ void BaseCompositor::SubmitFrames() {
 
 	frameIndex++;
 
-	shared_ptr<BaseSystem> sys = GetBaseSystem();
+	BaseSystem *sys = GetUnsafeBaseSystem();
 	if (sys) {
 		sys->_OnPostFrame();
 	}

@@ -551,7 +551,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 	ev_base.data.controller = { 0 };
 
 	TrackedDevicePose_t pose = { 0 };
-	shared_ptr<BaseCompositor> compositor = GetBaseCompositor();
+	BaseCompositor *compositor = GetUnsafeBaseCompositor();
 	if (compositor) {
 		compositor->GetSinglePoseRendering(hand, &pose);
 	}
