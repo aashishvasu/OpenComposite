@@ -50,8 +50,8 @@ void BaseCompositor::SubmitFrames() {
 		return;
 	}
 	else if (state == RS_WAIT_BEGIN) {
-		// TODO should we just call WaitGetFrames ourselves?
-		OOVR_ABORT("Cannot submit frames twice in a row without waiting");
+		OOVR_LOG("[WARN] Should not submit frames twice in a row without waiting");
+		WaitGetPoses(NULL, 0, NULL, 0);
 	}
 
 	ovrSession &session = *ovr::session;
