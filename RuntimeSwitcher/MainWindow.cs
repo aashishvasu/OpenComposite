@@ -16,14 +16,21 @@ namespace RuntimeSwitcher
     {
         private ConfigReader config;
         private string ocRuntimePath;
+        private string ocBinPath;
 
         public MainWindow()
         {
             ocRuntimePath = Directory.GetParent(System.Reflection.Assembly.GetEntryAssembly().Location).FullName;
             ocRuntimePath += Path.DirectorySeparatorChar + "Runtime";
+            ocBinPath = ocRuntimePath + Path.DirectorySeparatorChar + "bin";
 
             if (!Directory.Exists(ocRuntimePath)) {
                 Directory.CreateDirectory(ocRuntimePath);
+            }
+
+            if (!Directory.Exists(ocBinPath))
+            {
+                Directory.CreateDirectory(ocBinPath);
             }
 
             config = new ConfigReader();
@@ -73,7 +80,7 @@ namespace RuntimeSwitcher
 
             bool downloads = false;
 
-            string vrclient = ocRuntimePath + Path.DirectorySeparatorChar + "vrclient.dll";
+            string vrclient = ocBinPath + Path.DirectorySeparatorChar + "vrclient.dll";
             if (!File.Exists(vrclient))
             {
                 downloads = true;
@@ -81,7 +88,7 @@ namespace RuntimeSwitcher
                 await DownloadFile(vrclient, "https://znix.xyz/OpenComposite/download.php?arch=x86");
             }
 
-            string vrclient_x64 = ocRuntimePath + Path.DirectorySeparatorChar + "vrclient_x64.dll";
+            string vrclient_x64 = ocBinPath + Path.DirectorySeparatorChar + "vrclient_x64.dll";
             if (!File.Exists(vrclient_x64))
             {
                 downloads = true;
