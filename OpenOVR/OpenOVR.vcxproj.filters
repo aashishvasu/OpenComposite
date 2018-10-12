@@ -34,6 +34,9 @@
     <Filter Include="Header Files\Misc">
       <UniqueIdentifier>{52948503-33e2-4d78-839c-5f6b8d1ed600}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\OpenVR\Custom">
+      <UniqueIdentifier>{1f5ccf47-7833-433f-8759-5d7c216a6d33}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -251,6 +254,9 @@
     </ClInclude>
     <ClInclude Include="Reimpl\BaseInput.h">
       <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\custom_interfaces\IVRCompositor_017.h">
+      <Filter>Header Files\OpenVR\Custom</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
