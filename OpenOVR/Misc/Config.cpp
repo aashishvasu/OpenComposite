@@ -146,8 +146,9 @@ Config::Config() {
 	wstring file = dir + L"opencomposite.ini";
 	int err = wini_parse(file.c_str(), ini_handler, this);
 
-	if (err == -1) {
-		// No such file, check the working directory
+	if (err == -1 || err == 0) {
+		// No such file or it was parsed successfully, check the working directory
+		// for a file that overrides some properties
 		file = L"opencomposite.ini";
 		err = wini_parse(file.c_str(), ini_handler, this);
 	}
