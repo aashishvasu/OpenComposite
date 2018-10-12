@@ -27,3 +27,7 @@
 
 # Python cache
 /scripts/__pycache__
+
+# Runtime switcher
+/RuntimeSwitcher/obj
+/RuntimeSwitcher/bin
