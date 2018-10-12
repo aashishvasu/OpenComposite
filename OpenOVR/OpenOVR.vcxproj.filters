@@ -264,6 +264,9 @@
     <ClInclude Include="OpenVR\custom_interfaces\IVRCompositor_017.h">
       <Filter>Header Files\OpenVR\Custom</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_002.h">
+      <Filter>Header Files\OpenVR\Custom</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

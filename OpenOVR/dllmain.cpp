@@ -188,6 +188,7 @@ VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pRetu
 		return &inst; \
 	}
 
+	CLIENT_VER(002);
 	CLIENT_VER(003);
 
 #undef CLIENT_VER
