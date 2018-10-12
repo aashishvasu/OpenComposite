@@ -24,3 +24,7 @@ on_success:
         $effective_plat = $env:Platform
     }
     Push-AppveyorArtifact "$effective_plat/$env:Configuration/openvr_api.dll" -FileName "$env:Platform/openvr_api.dll"
+
+    7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
+    7z rn OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration" "OpenComposite"
+    Push-AppveyorArtifact "OpenComposite.zip"
