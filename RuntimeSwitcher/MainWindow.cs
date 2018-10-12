@@ -20,7 +20,7 @@ namespace RuntimeSwitcher
         public MainWindow()
         {
             ocRuntimePath = Directory.GetParent(System.Reflection.Assembly.GetEntryAssembly().Location).FullName;
-            ocRuntimePath += Path.DirectorySeparatorChar + "OpenComposite";
+            ocRuntimePath += Path.DirectorySeparatorChar + "Runtime";
 
             if (!Directory.Exists(ocRuntimePath)) {
                 Directory.CreateDirectory(ocRuntimePath);
