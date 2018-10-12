@@ -255,6 +255,12 @@
     <ClInclude Include="Reimpl\BaseInput.h">
       <Filter>Header Files\Reimpl</Filter>
     </ClInclude>
+    <ClInclude Include="Reimpl\BaseClientCore.h">
+      <Filter>Header Files\Reimpl</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_003.h">
+      <Filter>Header Files\OpenVR\Custom</Filter>
+    </ClInclude>
     <ClInclude Include="OpenVR\custom_interfaces\IVRCompositor_017.h">
       <Filter>Header Files\OpenVR\Custom</Filter>
     </ClInclude>
@@ -369,6 +375,12 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRInput.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\BaseClientCore.cpp">
+      <Filter>Source Files\Reimpl</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVRClientCore.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
   </ItemGroup>

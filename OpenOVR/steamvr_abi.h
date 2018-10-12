@@ -49,3 +49,6 @@ VR_INTERFACE const char *VR_CALLTYPE VR_RuntimePath();
 
 // In openvr.h, but missing any documentation
 VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal();
+
+// The one and only vrclient function:
+VR_INTERFACE void* VRClientCoreFactory(const char *pInterfaceName, int *pReturnCode);

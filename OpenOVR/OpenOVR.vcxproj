@@ -178,6 +178,7 @@
     <ClInclude Include="Misc\debug_helper.h" />
     <ClInclude Include="Misc\Haptics.h" />
     <ClInclude Include="Misc\ini.h" />
+    <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_003.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRCompositor_017.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_004.h" />
     <ClInclude Include="OpenVR\interfaces\IVRApplications_005.h" />
@@ -226,6 +227,7 @@
     <ClInclude Include="Reimpl\BaseApplications.h" />
     <ClInclude Include="Reimpl\BaseChaperone.h" />
     <ClInclude Include="Reimpl\BaseChaperoneSetup.h" />
+    <ClInclude Include="Reimpl\BaseClientCore.h" />
     <ClInclude Include="Reimpl\BaseCompositor.h" />
     <ClInclude Include="Reimpl\BaseExtendedDisplay.h" />
     <ClInclude Include="Reimpl\BaseInput.h" />
@@ -263,6 +265,7 @@
     <ClCompile Include="Reimpl\BaseApplications.cpp" />
     <ClCompile Include="Reimpl\BaseChaperone.cpp" />
     <ClCompile Include="Reimpl\BaseChaperoneSetup.cpp" />
+    <ClCompile Include="Reimpl\BaseClientCore.cpp" />
     <ClCompile Include="Reimpl\BaseCompositor.cpp" />
     <ClCompile Include="Reimpl\BaseExtendedDisplay.cpp" />
     <ClCompile Include="Reimpl\BaseInput.cpp" />
@@ -274,6 +277,7 @@
     <ClCompile Include="Reimpl\CVRApplications.cpp" />
     <ClCompile Include="Reimpl\CVRChaperone.cpp" />
     <ClCompile Include="Reimpl\CVRChaperoneSetup.cpp" />
+    <ClCompile Include="Reimpl\CVRClientCore.cpp" />
     <ClCompile Include="Reimpl\CVRCompositor.cpp" />
     <ClCompile Include="Reimpl\CVRExtendedDisplay.cpp" />
     <ClCompile Include="Reimpl\CVRInput.cpp" />

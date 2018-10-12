@@ -15,6 +15,7 @@ interfaces_list = [
     "ExtendedDisplay",
     "Applications",
     "Input",
+    "ClientCore",
 ]
 
 import sys, os, glob, re

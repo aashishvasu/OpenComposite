@@ -3,6 +3,9 @@
 
 #include "Reimpl/Interfaces.h"
 
+// Needed for the system-wide usage of this DLL (when renamed to vrclient[_x64].dll)
+#include "Reimpl/GVRClientCore.gen.h"
+
 #include "steamvr_abi.h"
 #include "libovr_wrapper.h"
 #include "Misc/debug_helper.h"
@@ -172,6 +175,26 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 	// Shut down LibOVR
 	ovr::Shutdown();
 	running = false;
+}
+
+VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pReturnCode) {
+	*pReturnCode = VRInitError_None;
+
+	string name = pInterfaceName;
+
+#define CLIENT_VER(ver) \
+	if(IVRClientCore_ ## ver::IVRClientCore_Version == name) { \
+		static CVRClientCore_ ## ver inst; \
+		return &inst; \
+	}
+
+	CLIENT_VER(003);
+
+#undef CLIENT_VER
+
+	OOVR_LOG(pInterfaceName);
+	MessageBoxA(NULL, pInterfaceName, "Missing client interface", MB_OK);
+	ERR("unknown/unsupported interface " + name);
 }
 
 // Hook the audio thing as soon as possible. This will use the Rift device
