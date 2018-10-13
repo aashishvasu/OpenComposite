@@ -17,12 +17,14 @@ namespace RuntimeSwitcher
         private ConfigReader config;
         private string ocRuntimePath;
         private string ocBinPath;
+        private string revisionFilePath;
 
         public MainWindow()
         {
             ocRuntimePath = Directory.GetParent(System.Reflection.Assembly.GetEntryAssembly().Location).FullName;
             ocRuntimePath += Path.DirectorySeparatorChar + "Runtime";
             ocBinPath = ocRuntimePath + Path.DirectorySeparatorChar + "bin";
+            revisionFilePath = ocRuntimePath + Path.DirectorySeparatorChar + "revision.txt";
 
             if (!Directory.Exists(ocRuntimePath)) {
                 Directory.CreateDirectory(ocRuntimePath);
@@ -94,6 +96,8 @@ namespace RuntimeSwitcher
                 statusLabel.Text = "Downloading 64-bit DLL";
                 await DownloadFile(vrclient_x64, "https://znix.xyz/OpenComposite/download.php?arch=x64");
             }
+
+            File.WriteAllText(revisionFilePath, await UpdateChecker.GetLatestHash());
 
             return downloads;
         }
