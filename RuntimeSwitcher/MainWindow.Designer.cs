@@ -90,6 +90,8 @@ namespace RuntimeSwitcher
             this.Controls.Add(this.useOpenComposite);
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.label1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "OpenComposite Runtime Switcher";
             this.ResumeLayout(false);
