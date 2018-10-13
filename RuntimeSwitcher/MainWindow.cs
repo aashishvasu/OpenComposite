@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -18,6 +19,8 @@ namespace RuntimeSwitcher
         private string ocRuntimePath;
         private string ocBinPath;
         private string revisionFilePath;
+
+        private SemaphoreSlim dllDownloadMutex = new SemaphoreSlim(1);
 
         public MainWindow()
         {
@@ -78,6 +81,7 @@ namespace RuntimeSwitcher
 
         private async Task<bool> UpdateDLLs()
         {
+            await dllDownloadMutex.WaitAsync().ConfigureAwait(false);
 
             bool downloads = false;
 
@@ -98,6 +102,8 @@ namespace RuntimeSwitcher
             }
 
             File.WriteAllText(revisionFilePath, await UpdateChecker.GetLatestHash());
+
+            dllDownloadMutex.Release();
 
             return downloads;
         }
