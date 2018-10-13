@@ -40,7 +40,21 @@ It probably works in quite a few other games, but I have not tried them.
 
 ## Downloading and installation
 
-Download:
+OpenComposite can either be installed system-wide (all SteamVR-based games will use it automatically) or per-game (replace a DLL
+file for each game, this usually must be done each time said game is updated).
+
+### System-wide installation
+
+Download the [OpenComposite Launcher](https://znix.xyz/OpenComposite/runtimeswitcher.php). Unzip it to a folder of your choosing,
+and run `OpenComposite.exe`. Click 'Switch to OpenComposite', and wait while the DLLs are downloaded. Games will now run via OpenComposite
+rather than SteamVR.
+
+To update OpenComposite, run `OpenComposite.exe` again. The text at the bottom of the window will indicate if an update is available, and
+if so an update button will appear. Click it and OpenComposite will be updated.
+
+### Per-game installation
+
+Download the DLLs:
 [32-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x86/openvr_api.dll?branch=master&job=Platform%3A+x86&pr=false)
 [64-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x64/openvr_api.dll?branch=master&job=Platform%3A+x64&pr=false)
 
