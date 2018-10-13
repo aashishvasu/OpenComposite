@@ -33,6 +33,8 @@ namespace RuntimeSwitcher
             this.useOpenComposite = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.updatesLabel = new System.Windows.Forms.Label();
+            this.doUpdate = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -80,11 +82,34 @@ namespace RuntimeSwitcher
             this.progressBar.TabIndex = 4;
             this.progressBar.Visible = false;
             // 
+            // updatesLabel
+            // 
+            this.updatesLabel.AutoSize = true;
+            this.updatesLabel.Location = new System.Drawing.Point(16, 103);
+            this.updatesLabel.Name = "updatesLabel";
+            this.updatesLabel.Size = new System.Drawing.Size(73, 13);
+            this.updatesLabel.TabIndex = 5;
+            this.updatesLabel.Text = "Update status";
+            this.updatesLabel.Visible = false;
+            // 
+            // doUpdate
+            // 
+            this.doUpdate.Location = new System.Drawing.Point(19, 120);
+            this.doUpdate.Name = "doUpdate";
+            this.doUpdate.Size = new System.Drawing.Size(331, 23);
+            this.doUpdate.TabIndex = 6;
+            this.doUpdate.Text = "Update Now";
+            this.doUpdate.UseVisualStyleBackColor = true;
+            this.doUpdate.Visible = false;
+            this.doUpdate.Click += new System.EventHandler(this.doUpdate_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(398, 142);
+            this.ClientSize = new System.Drawing.Size(398, 153);
+            this.Controls.Add(this.doUpdate);
+            this.Controls.Add(this.updatesLabel);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.useOpenComposite);
@@ -106,6 +131,8 @@ namespace RuntimeSwitcher
         private System.Windows.Forms.Button useOpenComposite;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.Label updatesLabel;
+        private System.Windows.Forms.Button doUpdate;
     }
 }
 

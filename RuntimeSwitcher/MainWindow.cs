@@ -43,6 +43,11 @@ namespace RuntimeSwitcher
             InitializeComponent();
 
             UpdateStatus();
+
+            if(File.Exists(revisionFilePath))
+            {
+                CheckForUpdate();
+            }
         }
 
         private void UpdateStatus()
@@ -67,6 +72,39 @@ namespace RuntimeSwitcher
             {
                 statusLabel.Text = "Other";
             }
+        }
+
+        private async void CheckForUpdate()
+        {
+            string currentRevision = File.ReadAllText(revisionFilePath).Trim();
+
+            updatesLabel.Visible = true;
+            updatesLabel.Text = "Checking for updates...";
+
+            string serverRevision = await UpdateChecker.GetLatestHash();
+
+            if(serverRevision != currentRevision)
+            {
+                updatesLabel.Text = "Update Found!";
+                doUpdate.Visible = true;
+            } else
+            {
+                updatesLabel.Text = "Already up-to-date";
+            }
+        }
+
+        private async void doUpdate_Click(object sender, EventArgs e)
+        {
+            doUpdate.Enabled = false;
+            updatesLabel.Text = "Updating...";
+
+            File.Delete(ocBinPath + Path.DirectorySeparatorChar + "vrclient.dll");
+            File.Delete(ocBinPath + Path.DirectorySeparatorChar + "vrclient_x64.dll");
+
+            await UpdateDLLs();
+
+            doUpdate.Visible = false;
+            updatesLabel.Text = "Update Complete";
         }
 
         private void SwitchToOpenComposite()
