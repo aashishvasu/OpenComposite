@@ -74,9 +74,8 @@ namespace RuntimeSwitcher
             UpdateStatus();
         }
 
-        private async void useOpenComposite_Click(object sender, EventArgs e)
+        private async Task<bool> UpdateDLLs()
         {
-            useOpenComposite.Enabled = false;
 
             bool downloads = false;
 
@@ -95,6 +94,15 @@ namespace RuntimeSwitcher
                 statusLabel.Text = "Downloading 64-bit DLL";
                 await DownloadFile(vrclient_x64, "https://znix.xyz/OpenComposite/download.php?arch=x64");
             }
+
+            return downloads;
+        }
+
+        private async void useOpenComposite_Click(object sender, EventArgs e)
+        {
+            useOpenComposite.Enabled = false;
+
+            bool downloads = await UpdateDLLs();
 
             SwitchToOpenComposite();
 
