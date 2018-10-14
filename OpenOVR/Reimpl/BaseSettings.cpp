@@ -164,6 +164,13 @@ float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsK
 		if (key == kk::k_pch_SteamVR_SupersampleScale_Float || key == kk1::k_pch_SteamVR_RenderTargetMultiplier_Float) {
 			return oovr_global_configuration.SupersampleRatio();
 		}
+		else if (key == kk::k_pch_SteamVR_IPD_Float) {
+			// TODO use the real values, but they're a bit of a pain to get
+			//  for now, hope that no software actually uses this for rendering (it certainly shouldn't).
+			// Set it to 10 meters, so that if something *does* use it then it's immediately apparent
+			//  that something isn't right.
+			return 10;
+		}
 	}
 
 	UNSET_SETTING();
