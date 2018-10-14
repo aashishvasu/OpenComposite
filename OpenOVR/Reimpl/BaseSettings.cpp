@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseSettings.h"
+#include "OpenVR/interfaces/IVRSettings_001.h"
 #include "OpenVR/interfaces/IVRSettings_002.h"
 #include "Misc/Config.h"
 #include <string>
@@ -23,6 +24,7 @@
 }
 
 using namespace std;
+namespace kk1 = vr::IVRSettings_001;
 namespace kk = vr::IVRSettings_002;
 
 const char * BaseSettings::GetSettingsErrorNameFromEnum(EVRSettingsError eError) {
@@ -156,7 +158,7 @@ float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsK
 		*peError = VRSettingsError_None;
 
 	if (section == kk::k_pch_SteamVR_Section) {
-		if (key == kk::k_pch_SteamVR_SupersampleScale_Float) {
+		if (key == kk::k_pch_SteamVR_SupersampleScale_Float || key == kk1::k_pch_SteamVR_RenderTargetMultiplier_Float) {
 			return oovr_global_configuration.SupersampleRatio();
 		}
 	}
