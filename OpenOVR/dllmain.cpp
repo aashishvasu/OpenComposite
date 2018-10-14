@@ -61,7 +61,7 @@ static map<string, unique_ptr<CVRCorrectLayout>> interfaces;
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
 	if (!running) {
-		OOVR_LOG("[INFO] VR_GetGenericInterface called while OOVR not running, setting error=NotInitialized");
+		OOVR_LOGF("[INFO] VR_GetGenericInterface called while OOVR not running, setting error=NotInitialized, for interfaceVersion=%s", interfaceVersion);
 		*error = VRInitError_Init_NotInitialized;
 		return NULL;
 	}
