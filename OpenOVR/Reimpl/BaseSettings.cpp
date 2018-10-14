@@ -140,6 +140,9 @@ bool  BaseSettings::GetBool(const char * pchSection, const char * pchSettingsKey
 			// What? (Used in The Lab btw)
 			return false;
 		}
+		else if (key == kk::k_pch_SteamVR_AllowReprojection_Bool) {
+			return true;
+		}
 	}
 
 	STUBBED();
