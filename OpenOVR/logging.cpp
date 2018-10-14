@@ -17,6 +17,18 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 	// Do we need to close the stream or something? What about multiple threads?
 }
 
+void oovr_log_raw_format(const char *file, long line, const char *func, const char *msg, ...) {
+	va_list args;
+	va_start(args, msg);
+
+	char buff[2048];
+	vsnprintf(buff, sizeof(buff), msg, args);
+
+	OOVR_LOG(buff);
+
+	va_end(args);
+}
+
 void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title) {
 	if (title == NULL) {
 		title = "OpenComposite Error - info in log";
