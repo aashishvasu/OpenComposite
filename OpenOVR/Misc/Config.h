@@ -27,7 +27,7 @@ private:
 	bool haptics = true;
 	bool admitUnknownProps = false;
 	bool threePartSubmit = true;
-	bool useViewportStencil = true;
+	bool useViewportStencil = false;
 
 };
 
