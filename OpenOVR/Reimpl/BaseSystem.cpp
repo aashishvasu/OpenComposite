@@ -301,6 +301,8 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 			// SteamVR reports it as unknown
 			*pErrorL = TrackedProp_UnknownProperty;
 			return 0;
+		case Prop_UserIpdMeters_Float:
+			return SGetIpd();
 		}
 	}
 
@@ -531,6 +533,13 @@ void BaseSystem::_OnPostFrame() {
 	// Note this isn't called if handle_event is called, preventing one
 	//  event from firing despite another event also being changed in the same poll call
 	lastStatus = status;
+}
+
+float BaseSystem::SGetIpd() {
+	ovrPosef &left = ovr::hmdToEyeViewPose[ovrEye_Left];
+	ovrPosef &right = ovr::hmdToEyeViewPose[ovrEye_Right];
+
+	return abs(left.Position.x - right.Position.x);
 }
 
 void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerState_t &last) {
