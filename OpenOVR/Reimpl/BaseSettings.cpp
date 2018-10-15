@@ -4,6 +4,7 @@
 #include "OpenVR/interfaces/IVRSettings_001.h"
 #include "OpenVR/interfaces/IVRSettings_002.h"
 #include "Misc/Config.h"
+#include "BaseSystem.h"
 #include <string>
 
 #define STUBBED_BASIC() { \
@@ -165,11 +166,7 @@ float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsK
 			return oovr_global_configuration.SupersampleRatio();
 		}
 		else if (key == kk::k_pch_SteamVR_IPD_Float) {
-			// TODO use the real values, but they're a bit of a pain to get
-			//  for now, hope that no software actually uses this for rendering (it certainly shouldn't).
-			// Set it to 10 meters, so that if something *does* use it then it's immediately apparent
-			//  that something isn't right.
-			return 10;
+			return BaseSystem::SGetIpd();
 		}
 	}
 
