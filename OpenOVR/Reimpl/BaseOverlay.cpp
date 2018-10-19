@@ -30,7 +30,7 @@ public:
 #define OVL (*((OverlayData**)pOverlayHandle))
 #define USEH() \
 OverlayData *overlay = (OverlayData*)ulOverlayHandle; \
-if (!overlay || !overlays.count(overlay->name)) { \
+if (!overlay || !overlays.count(overlay->key)) { \
 	return VROverlayError_InvalidHandle; \
 }
 
