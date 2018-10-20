@@ -15,6 +15,8 @@ namespace RuntimeSwitcher
 {
     public partial class MainWindow : Form
     {
+        private static readonly Func<string, bool> STEAMVR_TEST = s => s.Contains("SteamVR");
+
         private ConfigReader config;
         private string ocRuntimePath;
         private string ocBinPath;
@@ -59,7 +61,7 @@ namespace RuntimeSwitcher
             {
                 statusLabel.Text = "None";
             }
-            else if (runtime.Contains("SteamVR"))
+            else if (STEAMVR_TEST.Invoke(runtime))
             {
                 statusLabel.Text = "SteamVR";
             }
