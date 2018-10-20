@@ -120,6 +120,25 @@ namespace RuntimeSwitcher
             config.Runtimes = rts;
 
             UpdateStatus();
+
+            // Copy the 'version.txt' file from SteamVR's bin directory to OpenComposite's bin directory
+            //  this stops the Steam client from automatically changing this
+            //  credit to ArtyDidNothingWrong for finding this:
+            //  see https://www.reddit.com/r/oculus/comments/9nxixe/systemwide_installation_for_opencomposite_released/e7qg27q/
+
+            // Check SteamVR is installed, otherwise we don't need to bother with this
+            string svrPath = rts.FirstOrDefault(STEAMVR_TEST);
+            if (string.IsNullOrEmpty(svrPath))
+                return;
+
+            string svrVersionFile = Path.Combine(svrPath, "bin", "version.txt");
+            string ocVersionFile = Path.Combine(ocBinPath, "version.txt");
+
+            // If the SteamVR version file is missing (eg a corrupted SteamVR installation), stop here.
+            if(!File.Exists(svrVersionFile))
+                return;
+
+            File.Copy(svrVersionFile, ocVersionFile, true);
         }
 
         private async Task<bool> UpdateDLLs()
