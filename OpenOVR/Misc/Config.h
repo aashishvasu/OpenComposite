@@ -13,6 +13,7 @@ public:
 	float AdmitUnknownProps() const { return admitUnknownProps; }
 	inline bool ThreePartSubmit() const { return threePartSubmit; }
 	inline bool UseViewportStencil() const { return useViewportStencil; }
+	inline bool ForceConnectedTouch() const { return forceConnectedTouch; }
 
 private:
 	static int ini_handler(
@@ -28,6 +29,7 @@ private:
 	bool admitUnknownProps = false;
 	bool threePartSubmit = true;
 	bool useViewportStencil = false;
+	bool forceConnectedTouch = true;
 
 };
 

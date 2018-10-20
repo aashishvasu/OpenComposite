@@ -98,6 +98,9 @@ graphics, at a major performance cost.
 set that as an error and let the game continue. Enabling this may cause severe and hard-to-detect side-effects, and as such if a property
 is missing, please report it and let it get fixed like that. However, some (very few) games (namely Vivecraft) will query every property
 they know about, even if never using all but a few of them. In these cases, you should enable it.
+* `forceConnectedTouch` - boolean, default `enabled`. If this is enabled, games are always told that the Touch controllers are connected,
+even if they are not. This ensures controllers will work if they were asleep when the game was started. If you use a gamepad and don't want
+the game to think controllers are connected, disable this option. See issue #25.
 
 The possible types are as follows:
 

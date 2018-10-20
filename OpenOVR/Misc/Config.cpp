@@ -106,6 +106,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, admitUnknownProps);
 		CFGOPT(bool, threePartSubmit);
 		CFGOPT(bool, useViewportStencil);
+		CFGOPT(bool, forceConnectedTouch);
 	}
 
 #undef CFGOPT

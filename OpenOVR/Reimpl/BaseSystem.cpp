@@ -236,6 +236,11 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) 
 	}
 
 	unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
+
+	if (oovr_global_configuration.ForceConnectedTouch()) {
+		connected |= ovrControllerType_LTouch | ovrControllerType_RTouch;
+	}
+
 	if (deviceIndex == leftHandIndex) {
 		return connected && ovrControllerType_LTouch != 0;
 	}
