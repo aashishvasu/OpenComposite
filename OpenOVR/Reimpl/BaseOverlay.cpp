@@ -35,6 +35,11 @@ if (!overlay || !overlays.count(overlay->key)) { \
 }
 
 BaseOverlay::~BaseOverlay() {
+	for (const auto &kv : overlays) {
+		if (kv.second) {
+			delete kv.second;
+		}
+	}
 }
 
 EVROverlayError BaseOverlay::FindOverlay(const char *pchOverlayKey, VROverlayHandle_t * pOverlayHandle) {
