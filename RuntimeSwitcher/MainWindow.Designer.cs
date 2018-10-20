@@ -35,6 +35,7 @@ namespace RuntimeSwitcher
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.updatesLabel = new System.Windows.Forms.Label();
             this.doUpdate = new System.Windows.Forms.Button();
+            this.useSteamVR = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -68,7 +69,7 @@ namespace RuntimeSwitcher
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(16, 60);
+            this.label2.Location = new System.Drawing.Point(16, 85);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(334, 13);
             this.label2.TabIndex = 3;
@@ -76,16 +77,16 @@ namespace RuntimeSwitcher
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(19, 77);
+            this.progressBar.Location = new System.Drawing.Point(16, 101);
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(331, 23);
+            this.progressBar.Size = new System.Drawing.Size(334, 23);
             this.progressBar.TabIndex = 4;
             this.progressBar.Visible = false;
             // 
             // updatesLabel
             // 
             this.updatesLabel.AutoSize = true;
-            this.updatesLabel.Location = new System.Drawing.Point(16, 103);
+            this.updatesLabel.Location = new System.Drawing.Point(16, 127);
             this.updatesLabel.Name = "updatesLabel";
             this.updatesLabel.Size = new System.Drawing.Size(73, 13);
             this.updatesLabel.TabIndex = 5;
@@ -94,20 +95,31 @@ namespace RuntimeSwitcher
             // 
             // doUpdate
             // 
-            this.doUpdate.Location = new System.Drawing.Point(19, 120);
+            this.doUpdate.Location = new System.Drawing.Point(16, 143);
             this.doUpdate.Name = "doUpdate";
-            this.doUpdate.Size = new System.Drawing.Size(331, 23);
+            this.doUpdate.Size = new System.Drawing.Size(334, 23);
             this.doUpdate.TabIndex = 6;
             this.doUpdate.Text = "Update Now";
             this.doUpdate.UseVisualStyleBackColor = true;
             this.doUpdate.Visible = false;
             this.doUpdate.Click += new System.EventHandler(this.doUpdate_Click);
             // 
+            // useSteamVR
+            // 
+            this.useSteamVR.Location = new System.Drawing.Point(16, 59);
+            this.useSteamVR.Name = "useSteamVR";
+            this.useSteamVR.Size = new System.Drawing.Size(334, 23);
+            this.useSteamVR.TabIndex = 7;
+            this.useSteamVR.Text = "Switch to SteamVR";
+            this.useSteamVR.UseVisualStyleBackColor = true;
+            this.useSteamVR.Click += new System.EventHandler(this.useSteamVR_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(398, 153);
+            this.ClientSize = new System.Drawing.Size(398, 183);
+            this.Controls.Add(this.useSteamVR);
             this.Controls.Add(this.doUpdate);
             this.Controls.Add(this.updatesLabel);
             this.Controls.Add(this.progressBar);
@@ -133,6 +145,7 @@ namespace RuntimeSwitcher
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label updatesLabel;
         private System.Windows.Forms.Button doUpdate;
+        private System.Windows.Forms.Button useSteamVR;
     }
 }
 

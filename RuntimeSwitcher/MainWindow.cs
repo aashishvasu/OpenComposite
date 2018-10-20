@@ -57,6 +57,8 @@ namespace RuntimeSwitcher
             string runtime = config.Runtimes.Count == 0 ? null : config.Runtimes.First();
             useOpenComposite.Enabled = true;
 
+            useSteamVR.Enabled = config.Runtimes.Where(STEAMVR_TEST).Count() > 0;
+
             if (runtime == null)
             {
                 statusLabel.Text = "None";
@@ -64,6 +66,7 @@ namespace RuntimeSwitcher
             else if (STEAMVR_TEST.Invoke(runtime))
             {
                 statusLabel.Text = "SteamVR";
+                useSteamVR.Enabled = false;
             }
             else if (runtime == ocRuntimePath)
             {
@@ -188,6 +191,26 @@ namespace RuntimeSwitcher
                 progressBar.Value = 0;
                 progressBar.Visible = false;
             }
+        }
+
+        private void useSteamVR_Click(object sender, EventArgs e)
+        {
+            List<string> rts = new List<string>(config.Runtimes);
+
+            // Remove OpenComposite
+            rts.RemoveAll(s => s == ocRuntimePath);
+
+            // Move SteamVR to the top of the list
+            string svrPath = rts.FirstOrDefault(STEAMVR_TEST);
+            if (!string.IsNullOrEmpty(svrPath))
+            {
+                rts.RemoveAll(s => s == svrPath);
+                rts.Insert(0, svrPath);
+            }
+
+            // Apply the changes and update the UI
+            config.Runtimes = rts;
+            UpdateStatus();
         }
     }
 }
