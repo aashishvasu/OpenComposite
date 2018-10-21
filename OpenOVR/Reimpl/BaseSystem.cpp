@@ -438,9 +438,9 @@ if(prop == in) { \
 	return (uint32_t) strlen(out) + 1; \
 }
 
-	char str[1024];
-	snprintf(str, sizeof(str), "(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
-	OOVR_LOG(str);
+	if (oovr_global_configuration.LogGetTrackedProperty()) {
+		OOVR_LOGF("(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
+	}
 
 	if (unDeviceIndex == leftHandIndex) {
 		PROP(Prop_RenderModelName_String, "renderLeftHand");

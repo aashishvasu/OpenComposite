@@ -101,6 +101,10 @@ they know about, even if never using all but a few of them. In these cases, you 
 * `forceConnectedTouch` - boolean, default `enabled`. If this is enabled, games are always told that the Touch controllers are connected,
 even if they are not. This ensures controllers will work if they were asleep when the game was started. If you use a gamepad and don't want
 the game to think controllers are connected, disable this option. See issue #25.
+* `logGetTrackedProperty` - boolean, default `disabled`. Print logging information when the app requests information about tracked devices,
+such as the HMD or the Touch controllers. On some games, this causes a log entry to be generated every frame, which isn't great for performance
+and clutters up the log. This is potentially useful for troubleshooting, and was enabled by default before the config option existed. In general,
+unless you've been told to enable this (or you know what you're doing while troubleshooting) you don't need to enable this.
 
 The possible types are as follows:
 

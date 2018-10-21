@@ -14,6 +14,7 @@ public:
 	inline bool ThreePartSubmit() const { return threePartSubmit; }
 	inline bool UseViewportStencil() const { return useViewportStencil; }
 	inline bool ForceConnectedTouch() const { return forceConnectedTouch; }
+	inline bool LogGetTrackedProperty() const { return logGetTrackedProperty; }
 
 private:
 	static int ini_handler(
@@ -30,6 +31,7 @@ private:
 	bool threePartSubmit = true;
 	bool useViewportStencil = false;
 	bool forceConnectedTouch = true;
+	bool logGetTrackedProperty = false;
 
 };
 
