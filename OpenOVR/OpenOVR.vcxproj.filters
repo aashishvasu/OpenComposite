@@ -40,6 +40,12 @@
     <Filter Include="Source Files\Reimpl\StubDefs">
       <UniqueIdentifier>{ff4b942f-ed6d-486e-8e49-293acef3e718}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\API">
+      <UniqueIdentifier>{b004aa96-4481-40b7-b959-4d8cd958bcaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\API">
+      <UniqueIdentifier>{2d53b4d6-7cb2-43ff-af84-a81b5dc75d9b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
