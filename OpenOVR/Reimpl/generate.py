@@ -167,8 +167,8 @@ for filename in glob.glob("GVR*.gen.h"):
 # Keep track of all the interfaces we define
 all_interfaces = []
 
-for interface in interfaces_list:
-    filename = "CVR" + interface + ".cpp"
+for base_interface in interfaces_list:
+    filename = "CVR" + base_interface + ".cpp"
     todo_interfaces = []
     implemented_functions = []
 
@@ -198,7 +198,7 @@ for interface in interfaces_list:
     if not todo_interfaces:
         continue
 
-    header_filename = "GVR%s.gen.h" % interface
+    header_filename = "GVR%s.gen.h" % base_interface
     header = open(header_filename, "w")
     header.write("#pragma once\n")
     header.write("#include \"BaseCommon.h\"\n")
