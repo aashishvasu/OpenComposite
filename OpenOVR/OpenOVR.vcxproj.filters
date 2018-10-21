@@ -37,6 +37,9 @@
     <Filter Include="Header Files\OpenVR\Custom">
       <UniqueIdentifier>{1f5ccf47-7833-433f-8759-5d7c216a6d33}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Reimpl\StubDefs">
+      <UniqueIdentifier>{ff4b942f-ed6d-486e-8e49-293acef3e718}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -327,31 +330,31 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRSystem.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRCompositor.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRChaperone.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVROverlay.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRChaperoneSetup.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseRenderModels.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRRenderModels.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRScreenshots.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRSettings.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Misc\audio_override.cpp">
       <Filter>Source Files\Misc</Filter>
@@ -363,7 +366,7 @@
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRExtendedDisplay.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseExtendedDisplay.cpp">
       <Filter>Source Files\Reimpl</Filter>
@@ -372,19 +375,19 @@
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRApplications.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseInput.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRInput.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\BaseClientCore.cpp">
       <Filter>Source Files\Reimpl</Filter>
     </ClCompile>
     <ClCompile Include="Reimpl\CVRClientCore.cpp">
-      <Filter>Source Files\Reimpl</Filter>
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
