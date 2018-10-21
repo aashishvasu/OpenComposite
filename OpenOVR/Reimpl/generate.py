@@ -34,11 +34,10 @@ bases_header.write("#pragma once\n")
 bases_header.write("#include <memory>\n")
 
 base_class_getters = []
-def check_base_class_inst(interface, impl):
+def check_base_class_inst(interface, impl, cls):
     if interface in base_class_getters:
         return
 
-    cls = "Base%s" % interface
     var = "_single_inst_%s" % interface
 
     base_class_getters.append(interface)
@@ -63,17 +62,20 @@ def check_base_class_inst(interface, impl):
     impl.write("\treturn ret;\n")
     impl.write("}\n")
 
-def gen_interface(interface, version, header, impl, basename):
-    check_base_class_inst(interface, impl)
+def gen_interface(interface, version, header, impl, basename, namespace="vr", basedir="", base=None):
+    if not base:
+        base = "Base" + interface
+
+    check_base_class_inst(interface, impl, base)
 
     iv = "VR%s_%s" % (interface, version)
-    namespace = "vr::I%s" % iv
+    namespace = "%s::I%s" % (namespace, iv)
     cname = "C" + iv
 
-    header.write("#include \"Base%s.h\"\n" % interface)
+    header.write("#include \"%s%s.h\"\n" % (basedir, base))
     header.write("class %s : public %s::IVR%s, public CVRCommon {\n" % (cname, namespace, interface))
     header.write("private:\n")
-    header.write("\tconst std::shared_ptr<Base%s> base;\n" % interface)
+    header.write("\tconst std::shared_ptr<%s> base;\n" % base)
     header.write("public:\n")
     header.write("\tvirtual void** _GetStatFuncList() override;\n");
     header.write("\t%s();\n" % cname);
@@ -148,6 +150,10 @@ def gen_fntable(interface, version, funcs, out):
     # Generate the getter
     out.write("void** %s::_GetStatFuncList() { %s = this; return %s; }\n" % (cname, ivarname, arrvarname))
 
+def gen_api_interface(plain_name, version, header, impl, header_name):
+    interface = "OC" + plain_name
+    funcs = gen_interface(interface, version, header, impl, header_name, namespace="ocapi", basedir="API/", base="OCBase"+plain_name)
+
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
 baseflag = re.compile("BASE_FLAG\(\s*(?P<flags>.*)\s*\)")
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
@@ -190,6 +196,8 @@ for base_interface in interfaces_list:
                     flags = [e.strip() for e in flags.split(",")]
                     if "CUSTOM" in flags:
                         header_name = "OpenVR/custom_interfaces/IVR%s_%s.h" % (interface, version)
+                    elif "API" in flags:
+                        header_name = "API/I%s_%s.h" % (interface, version)
                 todo_interfaces.append((interface, version, flags, header_name))
             elif basematch:
                 flags = basematch.group("flags")
@@ -216,7 +224,10 @@ for base_interface in interfaces_list:
     impl.write("#include \"%s\"\n" % header_filename)
 
     for i in todo_interfaces:
-        gen_interface(i[0], i[1], header, impl, i[3])
+        if i[2] and "API" in i[2]:
+            gen_api_interface(i[0], i[1], header, impl, i[3])
+        else:
+            gen_interface(i[0], i[1], header, impl, i[3])
 
     all_interfaces += todo_interfaces
 
@@ -229,8 +240,15 @@ impl.write("// Get interface by name\n")
 impl.write("void *CreateInterfaceByName(const char *name) {\n")
 
 for i in all_interfaces:
-    name = "CVR%s_%s" % (i[0], i[1])
-    var = "vr::IVR%s_%s::IVR%s_Version" % (i[0], i[1], i[0])
+    interface = i[0]
+    ns = "vr"
+
+    if i[2] and "API" in i[2]:
+        interface = "OC" + interface
+        ns = "ocapi"
+
+    name = "CVR%s_%s" % (interface, i[1])
+    var = "%s::IVR%s_%s::IVR%s_Version" % (ns, interface, i[1], interface)
 
     impl.write("\tif(strcmp(%s, name) == 0) return new %s();\n" % (var, name))
 
