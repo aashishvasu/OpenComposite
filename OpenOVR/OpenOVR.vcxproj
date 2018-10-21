@@ -167,6 +167,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="API\ISystem_001.h" />
+    <ClInclude Include="API\OCBaseSystem.h" />
     <ClInclude Include="BaseCommon.h" />
     <ClInclude Include="Compositor\compositor.h" />
     <ClInclude Include="convert.h" />
@@ -245,6 +247,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="API\OCBaseSystem.cpp" />
     <ClCompile Include="Compositor\dx11compositor.cpp" />
     <ClCompile Include="Compositor\dx12compositor.cpp" />
     <ClCompile Include="Compositor\glcompositor.cpp" />
@@ -282,6 +285,7 @@
     <ClCompile Include="Reimpl\CVRCompositor.cpp" />
     <ClCompile Include="Reimpl\CVRExtendedDisplay.cpp" />
     <ClCompile Include="Reimpl\CVRInput.cpp" />
+    <ClCompile Include="Reimpl\CVROCSystem.cpp" />
     <ClCompile Include="Reimpl\CVROverlay.cpp" />
     <ClCompile Include="Reimpl\CVRRenderModels.cpp" />
     <ClCompile Include="Reimpl\CVRScreenshots.cpp" />

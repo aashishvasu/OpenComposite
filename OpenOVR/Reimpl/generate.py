@@ -16,6 +16,9 @@ interfaces_list = [
     "Applications",
     "Input",
     "ClientCore",
+
+    # OpenComposite-specific interfaces
+    "OCSystem",
 ]
 
 import sys, os, glob, re

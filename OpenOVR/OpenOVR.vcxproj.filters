@@ -276,6 +276,12 @@
     <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_002.h">
       <Filter>Header Files\OpenVR\Custom</Filter>
     </ClInclude>
+    <ClInclude Include="API\ISystem_001.h">
+      <Filter>Header Files\API</Filter>
+    </ClInclude>
+    <ClInclude Include="API\OCBaseSystem.h">
+      <Filter>Header Files\API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -394,6 +400,12 @@
     </ClCompile>
     <ClCompile Include="Reimpl\CVRClientCore.cpp">
       <Filter>Source Files\Reimpl\StubDefs</Filter>
+    </ClCompile>
+    <ClCompile Include="Reimpl\CVROCSystem.cpp">
+      <Filter>Source Files\Reimpl\StubDefs</Filter>
+    </ClCompile>
+    <ClCompile Include="API\OCBaseSystem.cpp">
+      <Filter>Source Files\API</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
