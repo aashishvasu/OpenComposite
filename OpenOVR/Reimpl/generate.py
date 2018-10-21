@@ -149,6 +149,7 @@ def gen_fntable(interface, version, funcs, out):
     out.write("void** %s::_GetStatFuncList() { %s = this; return %s; }\n" % (cname, ivarname, arrvarname))
 
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
+baseflag = re.compile("BASE_FLAG\(\s*(?P<flags>.*)\s*\)")
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
 
 impl = open("stubs.gen.cpp", "w")
@@ -172,10 +173,13 @@ for base_interface in interfaces_list:
     todo_interfaces = []
     implemented_functions = []
 
+    base_flags = []
+
     with open(filename) as f:
         for line in libparse.nice_lines(f):
             line = line.strip()
             match = geniface.match(line)
+            basematch = baseflag.match(line)
             implmatch = impldef.match(line)
             if match:
                 version = match.group("version")
@@ -187,6 +191,9 @@ for base_interface in interfaces_list:
                     if "CUSTOM" in flags:
                         header_name = "OpenVR/custom_interfaces/IVR%s_%s.h" % (interface, version)
                 todo_interfaces.append((interface, version, flags, header_name))
+            elif basematch:
+                flags = basematch.group("flags")
+                base_flags += [e.strip() for e in flags.split(",")]
             elif "GEN_INTERFACE" in line and not "#define" in line and not line.startswith("//"):
                 print(line)
                 raise RuntimeError("GEN_INTERFACE syntax error!")
