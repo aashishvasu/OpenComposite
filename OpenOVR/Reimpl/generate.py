@@ -174,6 +174,14 @@ def write_api_class(data, cxxapi, capi, csapi):
     cxxapi.write("\tstatic const char * const %s_Version = \"%s_%s\";\n" % (interface, interface, version))
     cxxapi.write("};\n")
 
+    # Generate the struct in the plain-C API for the FnTable
+    capi.write("static const char * %s_Version = \"%s_%s\";\n" % (interface, interface, version))
+    capi.write("struct VR_%s_FnTable\n{\n" % interface)
+    for func in funcs:
+        args = ", ".join([a.str for a in func.args])
+        capi.write("\t%s (OPENVR_FNTABLE_CALLTYPE* %s)(%s);\n" % (func.return_type, func.name, args))
+    capi.write("};\n")
+
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
 baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=\s]*))?\s*\)")
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
