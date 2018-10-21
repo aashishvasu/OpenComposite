@@ -155,7 +155,7 @@ def gen_api_interface(plain_name, version, header, impl, header_name):
     funcs = gen_interface(interface, version, header, impl, header_name, namespace="ocapi", basedir="API/", base="OCBase"+plain_name)
 
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
-baseflag = re.compile("BASE_FLAG\(\s*(?P<flags>.*)\s*\)")
+baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=\s]*))?\s*\)")
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
 
 impl = open("stubs.gen.cpp", "w")
@@ -179,7 +179,7 @@ for base_interface in interfaces_list:
     todo_interfaces = []
     implemented_functions = []
 
-    base_flags = []
+    base_flags = dict()
 
     with open(filename) as f:
         for line in libparse.nice_lines(f):
@@ -200,8 +200,9 @@ for base_interface in interfaces_list:
                         header_name = "API/I%s_%s.h" % (interface, version)
                 todo_interfaces.append((interface, version, flags, header_name))
             elif basematch:
-                flags = basematch.group("flags")
-                base_flags += [e.strip() for e in flags.split(",")]
+                flag = basematch.group("flag")
+                value = basematch.group("value")
+                base_flags[flag] = value or True
             elif "GEN_INTERFACE" in line and not "#define" in line and not line.startswith("//"):
                 print(line)
                 raise RuntimeError("GEN_INTERFACE syntax error!")
