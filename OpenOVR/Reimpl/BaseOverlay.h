@@ -2,6 +2,7 @@
 #include "BaseCommon.h"
 #include <map>
 #include <queue>
+#include <vector>
 
 using namespace vr; // TODO eliminate this
 
@@ -137,6 +138,9 @@ struct OOVR_VROverlayIntersectionMaskPrimitive_t {
 	OOVR_VROverlayIntersectionMaskPrimitive_Data_t m_Primitive;
 };
 
+// Avoid importing LibOVR just for this
+struct ovrLayerHeader_;
+
 class BaseOverlay {
 private:
 	// These enums are ints
@@ -159,9 +163,15 @@ private:
 	// This doesn't do a whole lot, since OOVR does this for every overlay
 	VROverlayHandle_t highQualityOverlay;
 
+	// List of layers, with the first being reserved for the main scene
+	std::vector<ovrLayerHeader_*> layerHeaders;
+
 public:
 	// Destructor, since we have a map of pointers
 	~BaseOverlay();
+
+	// Builds the collection of layers to be submitted to LibOVR
+	int _BuildLayers(ovrLayerHeader_ *sceneLayer, ovrLayerHeader_ const* const*& result);
 
 	// ---------------------------------------------
 	// Overlay management methods

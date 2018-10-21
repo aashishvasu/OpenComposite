@@ -13,6 +13,7 @@ using namespace OVR;
 using namespace std;
 
 #include "BaseCompositor.h"
+#include "BaseOverlay.h"
 
 // For the left and right hand constants - TODO move them to their own file
 #include "BaseSystem.h"
@@ -95,14 +96,33 @@ void BaseCompositor::SubmitFrames() {
 		layer.SensorSampleTime = sensorSampleTime;
 	}
 
-	ovrLayerHeader* layers = &layer.Header;
-	ovrResult result;
-	if (oovr_global_configuration.ThreePartSubmit()) {
-		result = ovr_EndFrame(session, frameIndex, nullptr, &layers, 1);
+	// If the overlay system is currently active, ask it for the list of layers
+	//  we should send to LibOVR. That way, it can add in layers from overlays,
+	//  the virtual keyboard, etc.
+	int layer_count;
+	ovrLayerHeader const* const* layers;
+	ovrLayerHeader* app_layer = &layer.Header;
+
+	BaseOverlay *overlay = GetUnsafeBaseOverlay();
+	if (overlay) {
+		// Let the overlay system add in it's layers
+		layer_count = overlay->_BuildLayers(app_layer, layers);
 	}
 	else {
-		result = ovr_SubmitFrame(session, frameIndex, nullptr, &layers, 1);
+		// Use the single layer, since the overlay system isn't in use
+		layer_count = 1;
+		layers = &app_layer;
 	}
+
+	// Submit the layers
+	ovrResult result;
+	if (oovr_global_configuration.ThreePartSubmit()) {
+		result = ovr_EndFrame(session, frameIndex, nullptr, layers, layer_count);
+	}
+	else {
+		result = ovr_SubmitFrame(session, frameIndex, nullptr, layers, layer_count);
+	}
+
 	// exit the rendering loop if submit returns an error, will retry on ovrError_DisplayLost
 	if (!OVR_SUCCESS(result)) {
 		string err = "ovr_EndFrame: " + to_string(result);

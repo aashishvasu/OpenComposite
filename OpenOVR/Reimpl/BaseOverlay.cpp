@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseOverlay.h"
+#include "OVR_CAPI.h"
 #include <string>
 
 using namespace std;
@@ -40,6 +41,19 @@ BaseOverlay::~BaseOverlay() {
 			delete kv.second;
 		}
 	}
+}
+
+int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ const* const*& result) {
+	// Note that at least on MSVC, this shouldn't be doing any memory allocations
+	//  unless the list is expanding from new layers.
+	layerHeaders.clear();
+	layerHeaders.push_back(sceneLayer);
+
+	// TODO add all layers here
+	// eg layerHeaders.push_back(&someOverlayData->layer.Header);
+
+	result = layerHeaders.data();
+	return layerHeaders.size();
 }
 
 EVROverlayError BaseOverlay::FindOverlay(const char *pchOverlayKey, VROverlayHandle_t * pOverlayHandle) {
