@@ -184,7 +184,8 @@ for interface in interfaces_list:
                 header_name = "OpenVR/interfaces/IVR%s_%s.h" % (interface, version)
                 if flags:
                     flags = [e.strip() for e in flags.split(",")]
-                    header_name = "OpenVR/custom_interfaces/IVR%s_%s.h" % (interface, version)
+                    if "CUSTOM" in flags:
+                        header_name = "OpenVR/custom_interfaces/IVR%s_%s.h" % (interface, version)
                 todo_interfaces.append((interface, version, flags, header_name))
             elif "GEN_INTERFACE" in line and not "#define" in line and not line.startswith("//"):
                 print(line)
