@@ -24,7 +24,7 @@ void oovr_log_raw_format(const char *file, long line, const char *func, const ch
 	char buff[2048];
 	vsnprintf(buff, sizeof(buff), msg, args);
 
-	OOVR_LOG(buff);
+	oovr_log_raw(file, line, func, buff);
 
 	va_end(args);
 }
