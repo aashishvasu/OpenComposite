@@ -18,6 +18,9 @@ class Compositor {
 public:
 	virtual ~Compositor();
 
+	// Only copy a texture - this can be used for overlays and such
+	virtual void Invoke(const vr::Texture_t * texture) = 0;
+
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;
 
@@ -65,6 +68,8 @@ public:
 	virtual ~DX11Compositor() override;
 
 	// Override
+	virtual void Invoke(const vr::Texture_t * texture) override;
+
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 
@@ -90,6 +95,8 @@ public:
 	unsigned int GetFlags() override;
 
 	// Override
+	virtual void Invoke(const vr::Texture_t * texture) override;
+
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 

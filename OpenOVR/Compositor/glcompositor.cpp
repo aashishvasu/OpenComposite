@@ -41,9 +41,7 @@ unsigned int GLCompositor::GetFlags() {
 	return ovrLayerFlag_TextureOriginAtBottomLeft;
 }
 
-void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
-
+void GLCompositor::Invoke(const vr::Texture_t * texture) {
 	int currentIndex = 0;
 	ovr_GetTextureSwapChainCurrentIndex(*ovr::session, chain, &currentIndex);
 
@@ -78,4 +76,11 @@ void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 	);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
+
+	// Copy the texture over
+	Invoke(texture);
 }

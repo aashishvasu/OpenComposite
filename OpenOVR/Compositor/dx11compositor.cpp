@@ -78,9 +78,7 @@ DX11Compositor::~DX11Compositor() {
 	device->Release();
 }
 
-void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
-	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
-
+void DX11Compositor::Invoke(const vr::Texture_t * texture) {
 	ovrTextureSwapChainDesc &desc = chainDesc;
 
 	int currentIndex = 0;
@@ -122,6 +120,13 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 	ID3D11Texture2D* tex = nullptr;
 	ovr_GetTextureSwapChainBufferDX(OVSS, chain, currentIndex, IID_PPV_ARGS(&tex));
 	context->CopyResource(tex, src);
+}
+
+void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
+	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
+
+	// Copy the texture across
+	Invoke(texture);
 
 	// Set the viewport up
 	ovrRecti &viewport = layer.Viewport[eye];
@@ -138,15 +143,15 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 			submitVerticallyFlipped = false;
 		}
 
-		viewport.Pos.x = (int)(bounds.uMin * srcDesc.Width);
-		viewport.Pos.y = (int)(bounds.vMin * srcDesc.Height);
-		viewport.Size.w = (int)((bounds.uMax - bounds.uMin) * srcDesc.Width);
-		viewport.Size.h = (int)((bounds.vMax - bounds.vMin) * srcDesc.Height);
+		viewport.Pos.x = (int)(bounds.uMin * chainDesc.Width);
+		viewport.Pos.y = (int)(bounds.vMin * chainDesc.Height);
+		viewport.Size.w = (int)((bounds.uMax - bounds.uMin) * chainDesc.Width);
+		viewport.Size.h = (int)((bounds.vMax - bounds.vMin) * chainDesc.Height);
 	}
 	else {
 		viewport.Pos.x = viewport.Pos.y = 0;
-		viewport.Size.w = srcDesc.Width;
-		viewport.Size.h = srcDesc.Height;
+		viewport.Size.w = chainDesc.Width;
+		viewport.Size.h = chainDesc.Height;
 
 		submitVerticallyFlipped = false;
 	}
