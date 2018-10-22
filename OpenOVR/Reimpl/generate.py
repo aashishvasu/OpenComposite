@@ -456,9 +456,9 @@ for i in api_interfaces:
     api_cs.write("\t\tif(m_%s_done) return m_%s;\n" % (i,i))
 
     # Check the interface is available, and if so look up the interface
-    api_cs.write("\t\tif(OpenVRInterop.IsInterfaceVersionValid(%s.Version)) {\n" % cls)
+    api_cs.write("\t\tif(OpenVR.IsInterfaceVersionValid(%s.Version)) {\n" % cls)
     api_cs.write("\t\t\tvar eError = EVRInitError.None;\n")
-    api_cs.write("\t\t\tIntPtr ptr = OpenVRInterop.GetGenericInterface(FnTable_Prefix+%s.Version, ref eError);\n" % cls)
+    api_cs.write("\t\t\tIntPtr ptr = OpenVR.GetGenericInterface(FnTable_Prefix+%s.Version, ref eError);\n" % cls)
 
     # If the call was successful and didn't return null, create the wrapper object
     api_cs.write("\t\t\tif(ptr != IntPtr.Zero && eError == EVRInitError.None)\n")
