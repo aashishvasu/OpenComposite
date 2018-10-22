@@ -102,10 +102,9 @@ private:
 	void SubmitFrames();
 	long long frameIndex = 0;
 
-	ovrTextureSwapChain chains[2];
 	OVR::Sizei size;
 
-	Compositor * compositor = NULL;
+	Compositor * compositors[2] = { NULL, NULL };
 
 	ovrLayerEyeFov layer;
 	vr::HmdColor_t fadeColour = { 0, 0, 0, 0 };

@@ -87,10 +87,10 @@ void BaseCompositor::SubmitFrames() {
 	// Do distortion rendering, Present and flush/sync
 
 	layer.Header.Type = ovrLayerType_EyeFov;
-	layer.Header.Flags = compositor->GetFlags();
+	layer.Header.Flags = compositors[0]->GetFlags();
 
 	for (int eye = 0; eye < 2; ++eye) {
-		layer.ColorTexture[eye] = chains[eye];
+		layer.ColorTexture[eye] = compositors[eye]->GetSwapChain();
 		layer.Fov[eye] = hmdDesc.DefaultEyeFov[eye];
 		layer.RenderPose[eye] = EyeRenderPose[eye];
 		layer.SensorSampleTime = sensorSampleTime;
@@ -141,13 +141,13 @@ void BaseCompositor::SubmitFrames() {
 
 BaseCompositor::BaseCompositor() {
 	memset(&trackingState, 0, sizeof(ovrTrackingState));
-	chains[0] = NULL;
-	chains[1] = NULL;
 }
 
 BaseCompositor::~BaseCompositor() {
-	if (compositor)
-		delete compositor;
+	for (int eye = 0; eye < 2; eye++) {
+		if (compositors[eye])
+			delete compositors[eye];
+	}
 }
 
 void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
@@ -340,19 +340,20 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 }
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
-	if (chains[0] == NULL) {
+	Compositor* &comp = compositors[S2O_eye(eye)];
+	if (comp == NULL) {
 		size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
 
 		switch (texture->eType) {
 #ifdef SUPPORT_GL
 		case TextureType_OpenGL: {
-			compositor = new GLCompositor(chains, size);
+			comp = new GLCompositor(size);
 			break;
 		}
 #endif
 #ifdef SUPPORT_DX
 		case TextureType_DirectX: {
-			compositor = new DX11Compositor((ID3D11Texture2D*)texture->handle, size, chains);
+			comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
 			break;
 		}
 #endif
@@ -368,7 +369,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		}
 
 		for (int ieye = 0; ieye < 2; ++ieye) {
-			if (!chains[ieye] && texture->eType != TextureType_DirectX) {
+			if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX) {
 				OOVR_ABORT("Failed to create texture.");
 			}
 		}
@@ -386,7 +387,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 	layer.Viewport[S2O_eye(eye)] = Recti(size);
 
 	try {
-		compositor->Invoke(S2O_eye(eye), texture, bounds, submitFlags, layer);
+		comp->Invoke(S2O_eye(eye), texture, bounds, submitFlags, layer);
 	}
 	catch (const string& ex) {
 		string err = "Comp exception: " + ex;
@@ -400,12 +401,11 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		OOVR_ABORT("Unknown compositor exception (catch r1)");
 	}
 
-	ovrTextureSwapChain tex = chains[S2O_eye(eye)];
-	if (!tex) {
+	if (!comp->GetSwapChain()) {
 		OOVR_ABORT("Missing swapchain");
 	}
 
-	ovr_CommitTextureSwapChain(SESS, tex);
+	ovr_CommitTextureSwapChain(SESS, comp->GetSwapChain());
 
 	//{
 	//	int oeye = S2O_eye(eye);

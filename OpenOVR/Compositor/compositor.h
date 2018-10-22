@@ -21,9 +21,11 @@ public:
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;
 
+	virtual ovrTextureSwapChain GetSwapChain() { return chain; };
+
 	virtual unsigned int GetFlags() { return 0; }
 protected:
-	ovrTextureSwapChain *chains;
+	ovrTextureSwapChain chain;
 	OVR::Sizei singleScreenSize;
 };
 
@@ -58,7 +60,7 @@ private:
 
 class DX11Compositor : public Compositor {
 public:
-	DX11Compositor(ID3D11Texture2D* td, OVR::Sizei bufferSize, ovrTextureSwapChain *chains);
+	DX11Compositor(ID3D11Texture2D* td);
 
 	virtual ~DX11Compositor() override;
 
@@ -76,14 +78,14 @@ private:
 	ID3D11Device *device;
 	ID3D11DeviceContext *context;
 
-	ovrTextureSwapChainDesc chainDescs[2];
+	ovrTextureSwapChainDesc chainDesc;
 
 	bool submitVerticallyFlipped;
 };
 
 class GLCompositor : public Compositor {
 public:
-	GLCompositor(ovrTextureSwapChain *chains, OVR::Sizei size);
+	GLCompositor(OVR::Sizei size);
 
 	unsigned int GetFlags() override;
 

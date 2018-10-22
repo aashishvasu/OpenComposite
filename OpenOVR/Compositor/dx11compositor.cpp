@@ -68,28 +68,23 @@ void DX11Compositor::ThrowIfFailed(HRESULT test) {
 	}
 }
 
-DX11Compositor::DX11Compositor(ID3D11Texture2D *initial, OVR::Sizei size, ovrTextureSwapChain *chains) {
-	this->chains = chains;
-
+DX11Compositor::DX11Compositor(ID3D11Texture2D *initial) {
 	initial->GetDevice(&device);
-	device->GetImmediateContext(&context); // TODO cleanup - copyContext->Release()
+	device->GetImmediateContext(&context);
 }
 
 DX11Compositor::~DX11Compositor() {
 	context->Release();
 	device->Release();
 
-	for (int i = 0; i < 2; i++) {
-		if (chains[i])
-			ovr_DestroyTextureSwapChain(OVSS, chains[i]);
-	}
+	if (chain)
+		ovr_DestroyTextureSwapChain(OVSS, chain);
 }
 
 void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
 	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
 
-	ovrTextureSwapChain &chain = chains[eye];
-	ovrTextureSwapChainDesc &desc = chainDescs[eye];
+	ovrTextureSwapChainDesc &desc = chainDesc;
 
 	int currentIndex = 0;
 	ovr_GetTextureSwapChainCurrentIndex(OVSS, chain, &currentIndex);

@@ -12,9 +12,7 @@ using namespace std;
 
 OVR::GLEContext CustomGLEContext;
 
-GLCompositor::GLCompositor(ovrTextureSwapChain *chains, OVR::Sizei size) {
-	this->chains = chains;
-
+GLCompositor::GLCompositor(OVR::Sizei size) {
 	// TODO does this interfere with the host application?
 	// TODO move somewhere more permenent
 	OVR::GLEContext::SetCurrentContext(&CustomGLEContext);
@@ -23,22 +21,20 @@ GLCompositor::GLCompositor(ovrTextureSwapChain *chains, OVR::Sizei size) {
 	// Create the framebuffer we use when copying across textures
 	glGenFramebuffers(1, &fboId);
 
-	// Make eye render buffers
-	for (int ieye = 0; ieye < 2; ++ieye) {
-		ovrTextureSwapChainDesc desc = {};
-		desc.Type = ovrTexture_2D;
-		desc.ArraySize = 1;
-		desc.Width = size.w;
-		desc.Height = size.h;
-		desc.MipLevels = 1;
-		desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-		desc.SampleCount = 1;
-		desc.StaticImage = ovrFalse;
+	// Make eye render buffer
+	ovrTextureSwapChainDesc desc = {};
+	desc.Type = ovrTexture_2D;
+	desc.ArraySize = 1;
+	desc.Width = size.w;
+	desc.Height = size.h;
+	desc.MipLevels = 1;
+	desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+	desc.SampleCount = 1;
+	desc.StaticImage = ovrFalse;
 
-		ovrResult result = ovr_CreateTextureSwapChainGL(*ovr::session, &desc, &chains[ieye]);
-		if (!OVR_SUCCESS(result))
-			throw string("Cannot create GL texture swap chain");
-	}
+	ovrResult result = ovr_CreateTextureSwapChainGL(*ovr::session, &desc, &chain);
+	if (!OVR_SUCCESS(result))
+		throw string("Cannot create GL texture swap chain");
 }
 
 unsigned int GLCompositor::GetFlags() {
@@ -48,17 +44,15 @@ unsigned int GLCompositor::GetFlags() {
 void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
 
-	ovrTextureSwapChain tex = chains[eye];
-
 	int currentIndex = 0;
-	ovr_GetTextureSwapChainCurrentIndex(*ovr::session, tex, &currentIndex);
+	ovr_GetTextureSwapChainCurrentIndex(*ovr::session, chain, &currentIndex);
 
 	// Why TF does OpenVR pass GLuints as pointers?!? That's really unsafe, although it's
 	// very unlikely GLuint is suddenly going to grow.
 	GLuint src = (GLuint)texture->handle;
 
 	GLuint texId;
-	ovr_GetTextureSwapChainBufferGL(*ovr::session, tex, currentIndex, &texId);
+	ovr_GetTextureSwapChainBufferGL(*ovr::session, chain, currentIndex, &texId);
 
 	//glClearColor(1, 0, 0, 1);
 	//glClear(GL_COLOR_BUFFER_BIT);
