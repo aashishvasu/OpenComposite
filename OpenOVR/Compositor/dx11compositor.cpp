@@ -158,9 +158,6 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 
 		submitVerticallyFlipped = false;
 	}
-
-	// Update the flags in case something has changed
-	layer.Header.Flags = GetFlags();
 }
 
 unsigned int DX11Compositor::GetFlags() {
