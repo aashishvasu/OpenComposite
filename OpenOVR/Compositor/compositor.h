@@ -103,3 +103,25 @@ public:
 private:
 	GLuint fboId;
 };
+
+class VkCompositor : public Compositor {
+public:
+	VkCompositor(const vr::Texture_t *initialTexture);
+
+	virtual ~VkCompositor() override;
+
+	// Override
+	virtual void Invoke(const vr::Texture_t * texture) override;
+
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
+
+private:
+	bool CheckChainCompatible(const vr::VRVulkanTextureData_t &tex, const ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace);
+
+	bool submitVerticallyFlipped;
+	ovrTextureSwapChainDesc chainDesc;
+	uint64_t /*VkCommandPool*/ commandPool;
+
+	uint32_t graphicsQueueFamilyId;
+};

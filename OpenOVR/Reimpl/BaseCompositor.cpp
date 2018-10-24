@@ -349,6 +349,12 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 			break;
 		}
 #endif
+#if defined(SUPPORT_VK)
+		case TextureType_Vulkan: {
+			comp = new VkCompositor(texture);
+			break;
+		}
+#endif
 #if defined(SUPPORT_DX12)
 		case TextureType_DirectX12: {
 			compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, size, chains);
@@ -361,7 +367,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		}
 
 		for (int ieye = 0; ieye < 2; ++ieye) {
-			if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX) {
+			if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX && texture->eType != TextureType_Vulkan) {
 				OOVR_ABORT("Failed to create texture.");
 			}
 		}

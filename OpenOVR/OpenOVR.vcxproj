@@ -252,6 +252,7 @@
     <ClCompile Include="Compositor\dx11compositor.cpp" />
     <ClCompile Include="Compositor\dx12compositor.cpp" />
     <ClCompile Include="Compositor\glcompositor.cpp" />
+    <ClCompile Include="Compositor\vkcompositor.cpp" />
     <ClCompile Include="convert.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="libovr_wrapper.cpp" />
