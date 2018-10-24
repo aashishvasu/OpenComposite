@@ -234,6 +234,11 @@ at any time.
 After cloning this repository, you must download [LibOVR](https://developer.oculus.com/downloads/package/oculus-sdk-for-windows/).
 The archive should contain a single folder, named `OculusSDK`. Place this into the `libs/libovr` folder in the repository root.
 
+Next, if you want to use Vulkan support (enabled by default, remove `SUPPORT_VK` from the preprocessor definitions to compile without it), then
+download a [slimmed down copy of the Vulkan SDK with only `.lib` files and the headers](http://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z),
+and extract it to your `libs` directory (you can copy in the full SDK if you want, but it's far larger and probably better to install it
+by itself).
+
 This is how the resulting file structure should look:
 
 ```
@@ -246,6 +251,13 @@ OpenOVR: (or whatever folder you cloned/downloaded the repo into)
 				LibOVRKernel:
 				LICENSE.txt
 				... etc
+		vulkan:
+			Include:
+			Lib:
+			Lib32:
+			LICENSE.txt
+			SDK_LICENSE.rtf
+			Vulkan.ico
 
 	configure.cmd
 	OpenOVR.sln
