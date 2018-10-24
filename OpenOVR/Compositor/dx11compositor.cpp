@@ -76,9 +76,6 @@ DX11Compositor::DX11Compositor(ID3D11Texture2D *initial) {
 DX11Compositor::~DX11Compositor() {
 	context->Release();
 	device->Release();
-
-	if (chain)
-		ovr_DestroyTextureSwapChain(OVSS, chain);
 }
 
 void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,

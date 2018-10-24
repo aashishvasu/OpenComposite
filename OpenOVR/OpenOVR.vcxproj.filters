@@ -407,6 +407,9 @@
     <ClCompile Include="API\OCBaseSystem.cpp">
       <Filter>Source Files\API</Filter>
     </ClCompile>
+    <ClCompile Include="Compositor\compositor.cpp">
+      <Filter>Source Files\Compositor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc">

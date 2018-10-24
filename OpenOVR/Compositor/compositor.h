@@ -16,7 +16,7 @@ typedef unsigned int GLuint;
 
 class Compositor {
 public:
-	virtual ~Compositor() {};
+	virtual ~Compositor();
 
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;

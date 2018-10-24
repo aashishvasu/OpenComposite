@@ -248,6 +248,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="API\OCBaseSystem.cpp" />
+    <ClCompile Include="Compositor\compositor.cpp" />
     <ClCompile Include="Compositor\dx11compositor.cpp" />
     <ClCompile Include="Compositor\dx12compositor.cpp" />
     <ClCompile Include="Compositor\glcompositor.cpp" />
