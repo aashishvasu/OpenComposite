@@ -19,6 +19,11 @@ using namespace std;
 #include "BaseSystem.h"
 #include "static_bases.gen.h"
 
+// Need the LibOVR Vulkan headers for the GetVulkan[Device|Instance]ExtensionsRequired methods
+#if defined(SUPPORT_VK)
+#include "OVR_CAPI_Vk.h"
+#endif
+
 using namespace vr;
 using namespace IVRCompositor_022;
 
@@ -26,19 +31,6 @@ typedef int ovr_enum_t;
 
 #define SESS (*ovr::session)
 #define DESC (ovr::hmdDesc)
-
-#include "GL/CAPI_GLE.h"
-#include "Extras/OVR_Math.h"
-#include "OVR_CAPI_GL.h"
-
-// API-specific includes
-#ifdef SUPPORT_GL
-#include "OVR_CAPI_GL.h"
-#endif
-// DirectX included in the header
-#ifdef SUPPORT_VK
-#include "OVR_CAPI_Vk.h"
-#endif
 
 void BaseCompositor::SubmitFrames() {
 	if (state == RS_RENDERING || !oovr_global_configuration.ThreePartSubmit()) {
@@ -686,11 +678,23 @@ void BaseCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSh
 }
 
 uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char * pchValue, uint32_t unBufferSize) {
+#if defined(SUPPORT_VK)
+	// Whaddya know, the Oculus and Valve methods work almost identically...
+	ovr_GetInstanceExtensionsVk(*ovr::luid, pchValue, &unBufferSize);
+	return unBufferSize;
+#else
 	STUBBED();
+#endif
 }
 
 uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T * pPhysicalDevice, char * pchValue, uint32_t unBufferSize) {
+#if defined(SUPPORT_VK)
+	// Use the default LUID, even if another physical device is passed in. TODO.
+	ovr_GetDeviceExtensionsVk(*ovr::luid, pchValue, &unBufferSize);
+	return unBufferSize;
+#else
 	STUBBED();
+#endif
 }
 
 void BaseCompositor::SetExplicitTimingMode(ovr_enum_t eTimingMode) {

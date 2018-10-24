@@ -16,6 +16,11 @@
 #pragma comment(lib, "dxgi.lib")
 #endif
 
+// Needed for GetOutputDevice if Vulkan is enabled
+#if defined(SUPPORT_VK)
+#include "OVR_CAPI_Vk.h"
+#endif
+
 using namespace std;
 
 BaseSystem::BaseSystem() {
@@ -138,7 +143,22 @@ void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 }
 
 void BaseSystem::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, VkInstance_T * pInstance) {
-	STUBBED();
+
+	switch (textureType) {
+	case TextureType_Vulkan: {
+#if defined(SUPPORT_VK)
+		ovrResult res = ovr_GetSessionPhysicalDeviceVk(*ovr::session, *ovr::luid, pInstance, (VkPhysicalDevice*)pnDevice);
+		if (res) {
+			OOVR_ABORT("Cannot get Vulkan session physical device!");
+		}
+#else
+		OOVR_ABORT("OpenComposite was compiled with Vulkan support disabled, and app attempted to use Vulkan!");
+#endif
+	}
+	default:
+		OOVR_LOGF("Unsupported texture type for GetOutputDevice %d", textureType);
+	}
+
 }
 
 bool BaseSystem::IsDisplayOnDesktop() {
