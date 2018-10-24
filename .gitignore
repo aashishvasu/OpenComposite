@@ -9,8 +9,8 @@
 # Visual Studio
 /.vs
 
-# LibOVR
-/libovr/OculusSDK
+# Libraries
+/libs/libovr/OculusSDK
 
 # Split headers
 /OpenOVR/OpenVR/interfaces

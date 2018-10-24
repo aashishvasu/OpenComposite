@@ -232,19 +232,20 @@ Download Visual Studio 2017 and it's C++ package. This may work on older version
 at any time.
 
 After cloning this repository, you must download [LibOVR](https://developer.oculus.com/downloads/package/oculus-sdk-for-windows/).
-The archive should contain a single folder, named `OculusSDK`. Place this into the `libovr` folder in the repository root.
+The archive should contain a single folder, named `OculusSDK`. Place this into the `libs/libovr` folder in the repository root.
 
 This is how the resulting file structure should look:
 
 ```
 OpenOVR: (or whatever folder you cloned/downloaded the repo into)
-	libovr:
-		Place LibOVR Here.txt
-		OculusSDK:
-			LibOVR:
-			LibOVRKernel:
-			LICENSE.txt
-			... etc
+	libs:
+		libovr:
+			Place LibOVR Here.txt
+			OculusSDK:
+				LibOVR:
+				LibOVRKernel:
+				LICENSE.txt
+				... etc
 
 	configure.cmd
 	OpenOVR.sln
