@@ -191,6 +191,7 @@
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_012.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_013.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_014.h" />
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_015.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_016.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_018.h" />
     <ClInclude Include="OpenVR\interfaces\IVRCompositor_019.h" />
@@ -204,6 +205,7 @@
     <ClInclude Include="OpenVR\interfaces\IVRNotifications_002.h" />
     <ClInclude Include="OpenVR\interfaces\IVROverlay_010.h" />
     <ClInclude Include="OpenVR\interfaces\IVROverlay_011.h" />
+    <ClInclude Include="OpenVR\interfaces\IVROverlay_012.h" />
     <ClInclude Include="OpenVR\interfaces\IVROverlay_013.h" />
     <ClInclude Include="OpenVR\interfaces\IVROverlay_014.h" />
     <ClInclude Include="OpenVR\interfaces\IVROverlay_016.h" />
