@@ -282,6 +282,9 @@
     <ClInclude Include="API\OCBaseSystem.h">
       <Filter>Header Files\API</Filter>
     </ClInclude>
+    <ClInclude Include="OpenVR\interfaces\IVRCompositor_014.h">
+      <Filter>Header Files\OpenVR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
