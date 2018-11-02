@@ -57,7 +57,7 @@ bool BaseChaperoneSetup::GetWorkingStandingZeroPoseToRawTrackingPose(HmdMatrix34
 	STUBBED();
 }
 void BaseChaperoneSetup::SetWorkingPlayAreaSize(float sizeX, float sizeZ) {
-	STUBBED();
+	// Called by VRGIN (a VR mod framework), to hide Chaperone during seated play. Noop here.
 }
 void BaseChaperoneSetup::SetWorkingCollisionBoundsInfo(VR_ARRAY_COUNT(unQuadsCount) HmdQuad_t *pQuadsBuffer, uint32_t unQuadsCount) {
 	STUBBED();
