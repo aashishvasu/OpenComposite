@@ -112,6 +112,9 @@ void DX11Compositor::Invoke(const vr::Texture_t * texture) {
 		desc.MiscFlags = ovrTextureMisc_DX_Typeless | ovrTextureMisc_AutoGenerateMips;
 		desc.BindFlags = ovrTextureBind_None; // ovrTextureBind_DX_RenderTarget;
 
+		srcSize.w = srcDesc.Width;
+		srcSize.h = srcDesc.Height;
+
 		ovrResult result = ovr_CreateTextureSwapChainDX(OVSS, device, &desc, &chain);
 		if (!OVR_SUCCESS(result))
 			ERR("Cannot create DX texture swap chain " + to_string(result));

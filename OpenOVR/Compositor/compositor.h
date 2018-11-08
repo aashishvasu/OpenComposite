@@ -27,9 +27,15 @@ public:
 	virtual ovrTextureSwapChain GetSwapChain() { return chain; };
 
 	virtual unsigned int GetFlags() { return 0; }
+
+	virtual OVR::Sizei GetSrcSize() { return srcSize; };
+
 protected:
 	ovrTextureSwapChain chain;
 	OVR::Sizei singleScreenSize;
+
+	// TODO set in the Vulkan and DX12 compositors
+	OVR::Sizei srcSize;
 };
 
 class DX12Compositor : public Compositor {

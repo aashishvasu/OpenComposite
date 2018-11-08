@@ -32,6 +32,8 @@ GLCompositor::GLCompositor(OVR::Sizei size) {
 	desc.SampleCount = 1;
 	desc.StaticImage = ovrFalse;
 
+	srcSize = size;
+
 	ovrResult result = ovr_CreateTextureSwapChainGL(*ovr::session, &desc, &chain);
 	if (!OVR_SUCCESS(result))
 		throw string("Cannot create GL texture swap chain");
