@@ -189,7 +189,6 @@ HRESULT find_basic_rift_output_device(std::wstring &output) {
 	if (hr)
 		return hr;
 
-	bool endpoint_found = false;
 	for (ULONG i = 0; i < count; i++) {
 		CComPtr<IMMDevice> dev;
 		group->Item(i, &dev);
@@ -212,7 +211,7 @@ HRESULT find_basic_rift_output_device(std::wstring &output) {
 		PropVariantClear(&varName);
 
 		for (std::wstring::iterator it = friendlyName.begin(); it != friendlyName.end(); ++it)
-			*it = tolower(*it);
+			*it = towlower(*it);
 
 		// IDK if the friendly name is localised, so search for just 'rift'
 		//  which should hopefully work
@@ -291,7 +290,6 @@ static HRESULT is_device_in_group(IMMDevice *dev, IMMDeviceCollection *group, bo
 	if (!dev_id)
 		return 0;
 
-	bool endpoint_found = false;
 	for (ULONG i = 0; i < count; i++) {
 		CComPtr<IMMDevice> pEndpoint;
 		LPWSTR pwszID;
