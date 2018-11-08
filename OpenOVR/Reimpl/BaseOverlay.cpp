@@ -17,7 +17,9 @@ public:
 	const string key;
 	string name;
 	HmdColor_t colour;
+
 	float widthMeters = 1; // default 1 meter
+
 	float autoCurveDistanceRangeMin, autoCurveDistanceRangeMax; // WTF does this do?
 	EColorSpace colourSpace = ColorSpace_Auto;
 	bool visible = false; // TODO check against SteamVR
@@ -139,7 +141,7 @@ EVROverlayError BaseOverlay::CreateOverlay(const char *pchOverlayKey, const char
 	data->layerQuad.QuadPoseCenter.Orientation.y = 0;
 	data->layerQuad.QuadPoseCenter.Orientation.z = 0;
 	data->layerQuad.QuadPoseCenter.Orientation.w = 1;
-	
+
 	// Note we don't need to set the layer QuadSize, as this is set before the frame is submitted
 
 	// Contents texture starts at 0,0 - this is not overridden
