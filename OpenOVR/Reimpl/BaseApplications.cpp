@@ -106,7 +106,7 @@ EVRApplicationError BaseApplications::LaunchInternalProcess(const char *pchBinar
 	OOVR_LOG(pchWorkingDirectory);
 
 	string cmd = "\""  + string(pchBinaryPath) + "\" " + string(pchArguments);
-	int buff_len = cmd.length() + 1;
+	size_t buff_len = cmd.length() + 1;
 	char *cmd_c = new char[buff_len];
 	strcpy_s(cmd_c, buff_len, cmd.c_str());
 

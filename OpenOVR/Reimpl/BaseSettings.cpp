@@ -12,6 +12,7 @@
 	OOVR_ABORT_T(str.c_str(), "Stubbed func!"); \
 }
 
+#undef STUBBED
 #define STUBBED() { \
 	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
 	str += "via " + string(pchSection) + "." + string(pchSettingsKey); \

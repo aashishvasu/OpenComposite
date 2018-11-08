@@ -48,7 +48,6 @@ void BaseCompositor::SubmitFrames() {
 	}
 
 	ovrSession &session = *ovr::session;
-	ovrGraphicsLuid &luid = *ovr::luid;
 	ovrHmdDesc &hmdDesc = ovr::hmdDesc;
 
 	// Call ovr_GetRenderDesc each frame to get the ovrEyeRenderDesc, as the returned values (e.g. HmdToEyePose) may change at runtime.
@@ -281,7 +280,7 @@ Matrix4f BaseCompositor::GetHandTransform() {
 	// Controller offset
 	// Note this is about right, found by playing around in Unity until everything
 	//  roughly lines up. If you want to contribute better numbers, please go ahead!
-	transform.SetTranslation(Vector3f(0, 0.0353, -0.0451));
+	transform.SetTranslation(Vector3f(0.0f, 0.0353f, -0.0451f));
 
 	return transform;
 }
@@ -289,7 +288,7 @@ Matrix4f BaseCompositor::GetHandTransform() {
 ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
 	TrackedDevicePose_t * gamePoseArray, uint32_t gamePoseArrayCount) {
 
-	for (size_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
+	for (uint32_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
 		TrackedDevicePose_t *renderPose = i < renderPoseArrayCount ? renderPoseArray + i : NULL;
 		TrackedDevicePose_t *gamePose = i < gamePoseArrayCount ? gamePoseArray + i : NULL;
 
@@ -423,13 +422,13 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 	//	ovr_CommitTextureSwapChain(SESS, chains[oeye]);
 	//}
 
-	bool state;
+	bool eyeState = false;
 	if (eye == Eye_Left)
-		state = leftEyeSubmitted;
+		eyeState = leftEyeSubmitted;
 	else
-		state = rightEyeSubmitted;
+		eyeState = rightEyeSubmitted;
 
-	if (state) {
+	if (eyeState) {
 		OOVR_ABORT("Eye already submitted!");
 	}
 
