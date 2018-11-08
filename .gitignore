@@ -11,6 +11,7 @@
 
 # Libraries
 /libs/libovr/OculusSDK
+/libs/vulkan
 
 # Split headers
 /OpenOVR/OpenVR/interfaces
