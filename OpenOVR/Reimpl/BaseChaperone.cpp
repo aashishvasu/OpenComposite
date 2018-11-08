@@ -21,6 +21,9 @@ bool BaseChaperone::GetPlayAreaSize(float *pSizeX, float *pSizeZ) {
 		&pointsCount
 	);
 
+	// TODO handle ovrSuccess_BoundaryInvalid
+	OOVR_FAILED_OVR_ABORT(status);
+
 	float xmin = points[0].x, xmax = points[0].x;
 	float zmin = points[0].z, zmax = points[0].z;
 
@@ -55,6 +58,9 @@ bool BaseChaperone::GetPlayAreaRect(HmdQuad_t *rect) {
 		&pointsCount
 	);
 
+	// TODO handle ovrSuccess_BoundaryInvalid
+	OOVR_FAILED_OVR_ABORT(status);
+
 	// Lifted from ReVive
 	// TODO add ReVive (MIT) licence to repo
 	// TODO make it go counter-clockwise
@@ -77,8 +83,13 @@ void BaseChaperone::GetBoundsColor(HmdColor_t *pOutputColorArray, int nNumOutput
 bool BaseChaperone::AreBoundsVisible() {
 	ovrBool out;
 
-	// Ignore the result, which could tell us the boundraries are not set up.
 	ovrResult res = ovr_GetBoundaryVisible(*ovr::session, &out);
+	OOVR_FAILED_OVR_ABORT(res);
+
+	// If the boundaries are invalid, they're surely not visible
+	if (res == ovrSuccess_BoundaryInvalid) {
+		return false;
+	}
 
 	return out;
 }
