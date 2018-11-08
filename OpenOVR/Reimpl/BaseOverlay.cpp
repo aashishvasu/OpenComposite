@@ -59,7 +59,7 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 	// eg layerHeaders.push_back(&someOverlayData->layer.Header);
 
 	result = layerHeaders.data();
-	return layerHeaders.size();
+	return static_cast<int>(layerHeaders.size());
 }
 
 EVROverlayError BaseOverlay::FindOverlay(const char *pchOverlayKey, VROverlayHandle_t * pOverlayHandle) {
@@ -129,7 +129,7 @@ uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char *pch
 
 	// Is this supposed to include the NULL or not?
 	// TODO test, this could cause some very nasty bugs
-	return strlen(pchValue) + 1;
+	return static_cast<uint32_t>(strlen(pchValue) + 1);
 }
 uint32_t BaseOverlay::GetOverlayName(VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, EVROverlayError *pError) {
 	if (pError)
@@ -153,7 +153,7 @@ uint32_t BaseOverlay::GetOverlayName(VROverlayHandle_t ulOverlayHandle, VR_OUT_S
 
 	// Is this supposed to include the NULL or not?
 	// TODO test, this could cause some very nasty bugs
-	return strlen(pchValue) + 1;
+	return static_cast<uint32_t>(strlen(pchValue) + 1);
 }
 EVROverlayError BaseOverlay::SetOverlayName(VROverlayHandle_t ulOverlayHandle, const char *pchName) {
 	USEH();
@@ -207,10 +207,10 @@ EVROverlayError BaseOverlay::SetOverlayFlag(VROverlayHandle_t ulOverlayHandle, V
 	USEH();
 
 	if (bEnabled) {
-		overlay->flags |= 1 << eOverlayFlag;
+		overlay->flags |= 1uLL << eOverlayFlag;
 	}
 	else {
-		overlay->flags &= ~(1 << eOverlayFlag);
+		overlay->flags &= ~(1uLL << eOverlayFlag);
 	}
 
 	return VROverlayError_None;
@@ -218,7 +218,7 @@ EVROverlayError BaseOverlay::SetOverlayFlag(VROverlayHandle_t ulOverlayHandle, V
 EVROverlayError BaseOverlay::GetOverlayFlag(VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool *pbEnabled) {
 	USEH();
 
-	*pbEnabled = (overlay->flags & (1 << eOverlayFlag)) != 0;
+	*pbEnabled = (overlay->flags & (1uLL << eOverlayFlag)) != 0uLL;
 
 	return VROverlayError_None;
 }
@@ -400,16 +400,23 @@ EVROverlayError BaseOverlay::GetOverlayInputMethod(VROverlayHandle_t ulOverlayHa
 
 	if (peInputMethod)
 		*peInputMethod = overlay->inputMethod;
+
+	return VROverlayError_None;
 }
+
 EVROverlayError BaseOverlay::SetOverlayInputMethod(VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod eInputMethod) {
 	USEH();
 
 	overlay->inputMethod = eInputMethod;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvecMouseScale) {
 	USEH();
 
 	*pvecMouseScale = overlay->mouseScale;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, const HmdVector2_t *pvecMouseScale) {
 	USEH();
@@ -418,6 +425,8 @@ EVROverlayError BaseOverlay::SetOverlayMouseScale(VROverlayHandle_t ulOverlayHan
 		overlay->mouseScale = *pvecMouseScale;
 	else
 		overlay->mouseScale = HmdVector2_t{ 1.0f, 1.0f };
+
+	return VROverlayError_None;
 }
 bool BaseOverlay::ComputeOverlayIntersection(VROverlayHandle_t ulOverlayHandle, const OOVR_VROverlayIntersectionParams_t *pParams, OOVR_VROverlayIntersectionResults_t *pResults) {
 	STUBBED();
