@@ -106,18 +106,11 @@ void BaseCompositor::SubmitFrames() {
 	}
 
 	// Submit the layers
-	ovrResult result;
 	if (oovr_global_configuration.ThreePartSubmit()) {
-		result = ovr_EndFrame(session, frameIndex, nullptr, layers, layer_count);
+		OOVR_FAILED_OVR_ABORT(ovr_EndFrame(session, frameIndex, nullptr, layers, layer_count));
 	}
 	else {
-		result = ovr_SubmitFrame(session, frameIndex, nullptr, layers, layer_count);
-	}
-
-	// exit the rendering loop if submit returns an error, will retry on ovrError_DisplayLost
-	if (!OVR_SUCCESS(result)) {
-		string err = "ovr_EndFrame: " + to_string(result);
-		OOVR_ABORT(err.c_str());
+		OOVR_FAILED_OVR_ABORT(ovr_SubmitFrame(session, frameIndex, nullptr, layers, layer_count));
 	}
 
 	state = RS_WAIT_BEGIN;
@@ -147,7 +140,7 @@ void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin) {
 		origin = ovrTrackingOrigin_EyeLevel;
 	}
 
-	ovr_SetTrackingOriginType(SESS, origin);
+	OOVR_FAILED_OVR_ABORT(ovr_SetTrackingOriginType(SESS, origin));
 }
 
 ETrackingUniverseOrigin BaseCompositor::GetTrackingSpace() {
@@ -170,19 +163,9 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 		// Do nothing at this stage
 	}
 	else if (state == RS_WAIT_BEGIN) {
-		ovrResult result = ovr_WaitToBeginFrame(SESS, frameIndex);
-		if (!OVR_SUCCESS(result)) {
-			string msg = "ovr_WaitToBeginFrame: " + to_string(result);
-			OOVR_ABORT(msg.c_str());
-		}
+		OOVR_FAILED_OVR_ABORT(ovr_WaitToBeginFrame(SESS, frameIndex));
 
-		result = ovr_BeginFrame(SESS, frameIndex);
-		if (!OVR_SUCCESS(result)) {
-			ovrErrorInfo err;
-			ovr_GetLastErrorInfo(&err);
-			string msg = "ovr_BeginFrame: " + to_string(result) + ": " + err.ErrorString;
-			OOVR_ABORT(msg.c_str());
-		}
+		OOVR_FAILED_OVR_ABORT(ovr_BeginFrame(SESS, frameIndex));
 
 		state = RS_RENDERING;
 	}
@@ -381,7 +364,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 	if (!leftEyeSubmitted && !rightEyeSubmitted) {
 		// TODO call frame-start method
 
-		ovr_GetSessionStatus(SESS, &sessionStatus);
+		OOVR_FAILED_OVR_ABORT(ovr_GetSessionStatus(SESS, &sessionStatus));
 	}
 
 	// TODO make sure we don't start on the second eye.
@@ -408,7 +391,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		OOVR_ABORT("Missing swapchain");
 	}
 
-	ovr_CommitTextureSwapChain(SESS, comp->GetSwapChain());
+	OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(SESS, comp->GetSwapChain()));
 
 	//{
 	//	int oeye = S2O_eye(eye);
@@ -472,7 +455,7 @@ bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint3
 	// TODO implement unFramesAgo
 
 	ovrPerfStats stats;
-	ovr_GetPerfStats(*ovr::session, &stats);
+	OOVR_FAILED_OVR_ABORT(ovr_GetPerfStats(*ovr::session, &stats));
 	const ovrPerfStatsPerCompositorFrame &frame = stats.FrameStats[0];
 
 	memset(pTiming, 0, sizeof(OOVR_Compositor_FrameTiming));
@@ -691,7 +674,7 @@ void BaseCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSh
 uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char * pchValue, uint32_t unBufferSize) {
 #if defined(SUPPORT_VK)
 	// Whaddya know, the Oculus and Valve methods work almost identically...
-	ovr_GetInstanceExtensionsVk(*ovr::luid, pchValue, &unBufferSize);
+	OOVR_FAILED_OVR_ABORT(ovr_GetInstanceExtensionsVk(*ovr::luid, pchValue, &unBufferSize));
 	return unBufferSize;
 #else
 	STUBBED();
@@ -701,7 +684,7 @@ uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() cha
 uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T * pPhysicalDevice, char * pchValue, uint32_t unBufferSize) {
 #if defined(SUPPORT_VK)
 	// Use the default LUID, even if another physical device is passed in. TODO.
-	ovr_GetDeviceExtensionsVk(*ovr::luid, pchValue, &unBufferSize);
+	OOVR_FAILED_OVR_ABORT(ovr_GetDeviceExtensionsVk(*ovr::luid, pchValue, &unBufferSize));
 	return unBufferSize;
 #else
 	STUBBED();
