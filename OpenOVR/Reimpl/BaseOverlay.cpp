@@ -3,6 +3,11 @@
 #include "BaseOverlay.h"
 #include "OVR_CAPI.h"
 #include <string>
+#include "Compositor/compositor.h"
+#include "libovr_wrapper.h"
+#include "convert.h"
+#include "BaseCompositor.h"
+#include "static_bases.gen.h"
 
 using namespace std;
 
@@ -22,6 +27,8 @@ public:
 	bool highQuality = false;
 	uint64_t flags = 0;
 	Texture_t texture = {};
+	ovrLayerQuad layerQuad = {};
+	std::unique_ptr<Compositor> compositor;
 
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
@@ -50,16 +57,52 @@ BaseOverlay::~BaseOverlay() {
 	}
 }
 
-int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ const* const*& result) {
+int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ const* const*& layers) {
 	// Note that at least on MSVC, this shouldn't be doing any memory allocations
 	//  unless the list is expanding from new layers.
 	layerHeaders.clear();
 	layerHeaders.push_back(sceneLayer);
 
-	// TODO add all layers here
-	// eg layerHeaders.push_back(&someOverlayData->layer.Header);
+	for (const auto &kv : overlays) {
+		if (kv.second) {
+			OverlayData &overlay = *kv.second;
 
-	result = layerHeaders.data();
+			// Skip hiddden overlays, and those without a valid texture (eg, after calling ClearOverlayTexture).
+			if (!overlay.visible || overlay.texture.handle == nullptr)
+				continue;
+
+			if (overlay.compositor) {
+				// TODO this is certainly the wrong size, but use it for now until we remove
+				//  the size paremeter from the GL and DX12 compositor constructors
+				const OVR::Sizei size = ovr_GetFovTextureSize(*ovr::session, ovrEye_Left, ovr::hmdDesc.DefaultEyeFov[ovrEye_Left], 1);
+				overlay.compositor.reset(GetUnsafeBaseCompositor()->CreateCompositorAPI(&overlay.texture, size));
+			}
+
+			// Copy over the texture
+			overlay.compositor->Invoke(&overlay.texture);
+
+			// Tell LibOVR how large our texture is
+			const OVR::Sizei srcSize = overlay.compositor->GetSrcSize();
+			overlay.layerQuad.Viewport.Size.w = srcSize.w;
+			overlay.layerQuad.Viewport.Size.h = srcSize.h;
+
+			// Calculate the texture's aspect ratio
+			const float aspect = srcSize.h > 0 ? static_cast<float>(srcSize.w) / srcSize.h : 1.0f;
+
+			// ... and use that to set the size of the overlay, as it will appear to the user
+			overlay.layerQuad.QuadSize.x = overlay.widthMeters;
+			overlay.layerQuad.QuadSize.y = overlay.widthMeters / aspect;
+
+			// Set the overlay's texture, and tell LibOVR we're done using it
+			overlay.layerQuad.ColorTexture = overlay.compositor->GetSwapChain();
+			OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(*ovr::session, overlay.layerQuad.ColorTexture));
+
+			// Finally, add it to the list of layers to be sent to LibOVR
+			layerHeaders.push_back(&overlay.layerQuad.Header);
+		}
+	}
+
+	layers = layerHeaders.data();
 	return static_cast<int>(layerHeaders.size());
 }
 
@@ -81,6 +124,27 @@ EVROverlayError BaseOverlay::CreateOverlay(const char *pchOverlayKey, const char
 	OVL = data;
 
 	overlays[pchOverlayKey] = data;
+
+	// Set up the LibOVR layer
+	OOVR_LOGF(R"(New texture overlay created "%s" "%s")", pchOverlayKey, pchOverlayName);
+	data->layerQuad.Header.Type = ovrLayerType_Quad;
+	data->layerQuad.Header.Flags = ovrLayerFlag_HighQuality;
+
+	// 50cm in front from the player's nose by default, in case the game does not set the position
+	//  before it first uses it.
+	data->layerQuad.QuadPoseCenter.Position.x = 0.00f;
+	data->layerQuad.QuadPoseCenter.Position.y = 0.00f;
+	data->layerQuad.QuadPoseCenter.Position.z = -0.50f;
+	data->layerQuad.QuadPoseCenter.Orientation.x = 0;
+	data->layerQuad.QuadPoseCenter.Orientation.y = 0;
+	data->layerQuad.QuadPoseCenter.Orientation.z = 0;
+	data->layerQuad.QuadPoseCenter.Orientation.w = 1;
+	
+	// Note we don't need to set the layer QuadSize, as this is set before the frame is submitted
+
+	// Contents texture starts at 0,0 - this is not overridden
+	data->layerQuad.Viewport.Pos.x = 0;
+	data->layerQuad.Viewport.Pos.y = 0;
 
 	return VROverlayError_None;
 }
@@ -342,7 +406,19 @@ EVROverlayError BaseOverlay::GetOverlayTransformType(VROverlayHandle_t ulOverlay
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToOverlayTransform) {
-	return VROverlayError_None; // TODO
+	USEH();
+
+	// TODO account for the universe origin, and if it doesn't match that currently in use then add or
+	//  subtract the floor position to match it. This shouldn't usually be an issue though, as I can't
+	//  imagine many apps will use a different origin for their overlays.
+
+	OVR::Matrix4f otm;
+	S2O_om44(*pmatTrackingOriginToOverlayTransform, otm);
+
+	overlay->layerQuad.QuadPoseCenter.Position = otm.GetTranslation();
+	overlay->layerQuad.QuadPoseCenter.Orientation = OVR::Quatf(otm);
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin *peTrackingOrigin, HmdMatrix34_t *pmatTrackingOriginToOverlayTransform) {
 	STUBBED();
@@ -466,6 +542,7 @@ EVROverlayError BaseOverlay::ClearOverlayTexture(VROverlayHandle_t ulOverlayHand
 	USEH();
 	overlay->texture = {};
 
+	overlay->compositor.reset();
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayRaw(VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unWidth, uint32_t unHeight, uint32_t unDepth) {
