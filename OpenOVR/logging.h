@@ -9,6 +9,22 @@ void oovr_abort_raw(const char *file, long line, const char *func, const char *m
 #define OOVR_ABORT(msg) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg); throw msg; }
 #define OOVR_ABORT_T(msg, title) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, title); throw msg; }
 
+// OVR API validation helpers
+#define OOVR_FAILED_OVR_LOG(expression) \
+if (!OVR_SUCCESS(expression)) { \
+	ovrErrorInfo e = {}; \
+	ovr_GetLastErrorInfo(&e); \
+	OOVR_LOGF("OVR Call failed.  Error code: %d  Descr: %s", e.Result, e.ErrorString); \
+}
+
+#define OOVR_FAILED_OVR_ABORT(expression) \
+if (!OVR_SUCCESS(expression)) { \
+	ovrErrorInfo e = {}; \
+	ovr_GetLastErrorInfo(&e); \
+	std::string err = "OVR Call failed, aborting.  Error code: " + std::to_string(e.Result) + "  Descr: " + std::string(e.ErrorString); \
+	OOVR_ABORT(err.c_str()); \
+}
+
 // Yay for there not being a PI constant in the standard
 // (technically it has absolutely nothing to do with logging but this is a convenient place to put it)
 const extern float math_pi;
