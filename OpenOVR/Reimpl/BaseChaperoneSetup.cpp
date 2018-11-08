@@ -36,6 +36,9 @@ bool BaseChaperoneSetup::GetLiveCollisionBoundsInfo(VR_OUT_ARRAY_COUNT(punQuadsC
 		&pointsCount
 	);
 
+	// TODO handle ovrSuccess_BoundaryInvalid
+	OOVR_FAILED_OVR_ABORT(status);
+
 	// Lifted from ReVive
 	// TODO add ReVive (MIT) licence to repo
 	// TODO make it go counter-clockwise
