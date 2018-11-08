@@ -21,6 +21,7 @@ public:
 	HmdVector2_t mouseScale = { 1.0f, 1.0f };
 	bool highQuality = false;
 	uint64_t flags = 0;
+	Texture_t texture = {};
 
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
@@ -456,11 +457,16 @@ EVROverlayError BaseOverlay::GetOverlayDualAnalogTransform(VROverlayHandle_t ulO
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle, const Texture_t *pTexture) {
-	// TODO
+	USEH();
+	overlay->texture = *pTexture;
+
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::ClearOverlayTexture(VROverlayHandle_t ulOverlayHandle) {
-	STUBBED();
+	USEH();
+	overlay->texture = {};
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayRaw(VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unWidth, uint32_t unHeight, uint32_t unDepth) {
 	STUBBED();
