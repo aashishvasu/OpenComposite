@@ -129,6 +129,12 @@ public:
 
 	static OVR::Matrix4f GetHandTransform();
 
+	/** Creates API specific Compositor */
+	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize);
+
+public:
+	// OpenVR interface methods from here on:
+
 	/** Sets tracking space returned by WaitGetPoses */
 	virtual void SetTrackingSpace(vr::ETrackingUniverseOrigin eOrigin);
 

@@ -331,44 +331,52 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 	return VRCompositorError_None;
 }
 
-ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
-	Compositor* &comp = compositors[S2O_eye(eye)];
-	if (comp == NULL) {
-		size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
+Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize)
+{
+	Compositor* comp = nullptr;
 
-		switch (texture->eType) {
+	switch (texture->eType) {
 #ifdef SUPPORT_GL
-		case TextureType_OpenGL: {
-			comp = new GLCompositor(size);
-			break;
-		}
+	case TextureType_OpenGL: {
+		comp = new GLCompositor(fovTextureSize);
+		break;
+	}
 #endif
 #ifdef SUPPORT_DX
-		case TextureType_DirectX: {
-			comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
-			break;
-		}
+	case TextureType_DirectX: {
+		comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
+		break;
+	}
 #endif
 #if defined(SUPPORT_VK)
-		case TextureType_Vulkan: {
-			comp = new VkCompositor(texture);
-			break;
-		}
+	case TextureType_Vulkan: {
+		comp = new VkCompositor(texture);
+		break;
+	}
 #endif
 #if defined(SUPPORT_DX12)
-		case TextureType_DirectX12: {
-			compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, size, chains);
-			break;
-		}
+	case TextureType_DirectX12: {
+		compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, fovTextureSize, chains);
+		break;
+	}
 #endif
-		default:
-			string err = "[BaseCompositor::Submit] Unsupported texture type: " + to_string(texture->eType);
-			OOVR_ABORT(err.c_str());
-		}
+	default:
+		string err = "[BaseCompositor::Submit] Unsupported texture type: " + to_string(texture->eType);
+		OOVR_ABORT(err.c_str());
+	}
 
-		if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX && texture->eType != TextureType_Vulkan) {
-			OOVR_ABORT("Failed to create texture.");
-		}
+	if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX && texture->eType != TextureType_Vulkan) {
+		OOVR_ABORT("Failed to create texture.");
+	}
+
+	return comp;
+}
+
+ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
+	Compositor* &comp = compositors[S2O_eye(eye)];
+	if (comp == nullptr) {
+		size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
+		comp = CreateCompositorAPI(texture, size);
 	}
 
 	if (!leftEyeSubmitted && !rightEyeSubmitted) {
