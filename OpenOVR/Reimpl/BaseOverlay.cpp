@@ -35,6 +35,12 @@ if (!overlay || !overlays.count(overlay->key)) { \
 	return VROverlayError_InvalidHandle; \
 }
 
+#define USEHB() \
+OverlayData *overlay = (OverlayData*)ulOverlayHandle; \
+if (!overlay || !overlays.count(overlay->key)) { \
+	return false; \
+}
+
 BaseOverlay::~BaseOverlay() {
 	for (const auto &kv : overlays) {
 		if (kv.second) {
@@ -370,7 +376,7 @@ EVROverlayError BaseOverlay::HideOverlay(VROverlayHandle_t ulOverlayHandle) {
 	return VROverlayError_None;
 }
 bool BaseOverlay::IsOverlayVisible(VROverlayHandle_t ulOverlayHandle) {
-	USEH();
+	USEHB();
 	return overlay->visible;
 }
 EVROverlayError BaseOverlay::GetTransformForOverlayCoordinates(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, HmdVector2_t coordinatesInOverlay, HmdMatrix34_t *pmatTransform) {
