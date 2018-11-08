@@ -366,10 +366,8 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 			OOVR_ABORT(err.c_str());
 		}
 
-		for (int ieye = 0; ieye < 2; ++ieye) {
-			if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX && texture->eType != TextureType_Vulkan) {
-				OOVR_ABORT("Failed to create texture.");
-			}
+		if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX && texture->eType != TextureType_Vulkan) {
+			OOVR_ABORT("Failed to create texture.");
 		}
 	}
 
