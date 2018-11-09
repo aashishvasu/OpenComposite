@@ -63,7 +63,7 @@ ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi, vr::EColorSpace colourSpace) 
 
 void DX11Compositor::ThrowIfFailed(HRESULT test) {
 	if ((test) != S_OK) {
-		HRESULT remReason = device->GetDeviceRemovedReason();
+		OOVR_FAILED_DX_ABORT(device->GetDeviceRemovedReason());
 		throw "ThrowIfFailed err";
 	}
 }

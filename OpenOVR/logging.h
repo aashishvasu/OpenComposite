@@ -9,6 +9,16 @@ void oovr_abort_raw(const char *file, long line, const char *func, const char *m
 #define OOVR_ABORT(msg) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg); throw msg; }
 #define OOVR_ABORT_T(msg, title) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, title); throw msg; }
 
+// DirectX API validation helpers
+#define OOVR_FAILED_DX_ABORT(expression) \
+{ \
+HRESULT res = (expression); \
+if (FAILED(res)) { \
+	OOVR_LOGF("DX Call failed with: 0x%08x", res); \
+	OOVR_ABORT_T("OOVR_FAILED_DX_ABORT failed on: " #expression, "OpenComposite DirectX error - see log for details") \
+} \
+}
+
 // OVR API validation helpers
 #define OOVR_FAILED_OVR_LOG(expression) \
 if (!OVR_SUCCESS(expression)) { \

@@ -316,7 +316,7 @@ EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t tex
 	}
 
 	ID3D11Texture2D *tempTex;
-	HRESULT hr = device->CreateTexture2D(&desc, init, &tempTex);
+	OOVR_FAILED_DX_ABORT(device->CreateTexture2D(&desc, init, &tempTex));
 
 	// Copy over the texture
 	context->CopyResource(output, tempTex);
