@@ -73,7 +73,7 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 			if (!overlay.visible || overlay.texture.handle == nullptr)
 				continue;
 
-			if (overlay.compositor) {
+			if (!overlay.compositor) {
 				// TODO this is certainly the wrong size, but use it for now until we remove
 				//  the size paremeter from the GL and DX12 compositor constructors
 				const OVR::Sizei size = ovr_GetFovTextureSize(*ovr::session, ovrEye_Left, ovr::hmdDesc.DefaultEyeFov[ovrEye_Left], 1);
