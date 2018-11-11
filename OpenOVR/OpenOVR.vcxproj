@@ -180,6 +180,7 @@
     <ClInclude Include="Misc\debug_helper.h" />
     <ClInclude Include="Misc\Haptics.h" />
     <ClInclude Include="Misc\ini.h" />
+    <ClInclude Include="Misc\ScopeGuard.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_002.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_003.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRCompositor_017.h" />

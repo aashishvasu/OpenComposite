@@ -291,6 +291,9 @@
     <ClInclude Include="OpenVR\interfaces\IVROverlay_012.h">
       <Filter>Header Files\OpenVR</Filter>
     </ClInclude>
+    <ClInclude Include="Misc\ScopeGuard.h">
+      <Filter>Source Files\Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
