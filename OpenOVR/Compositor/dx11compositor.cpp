@@ -123,6 +123,7 @@ void DX11Compositor::Invoke(const vr::Texture_t * texture) {
 	ID3D11Texture2D* tex = nullptr;
 	ovr_GetTextureSwapChainBufferDX(OVSS, chain, currentIndex, IID_PPV_ARGS(&tex));
 	context->CopyResource(tex, src);
+	tex->Release();
 }
 
 void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
