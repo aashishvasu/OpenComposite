@@ -9,6 +9,7 @@
 #include "BaseCompositor.h"
 #include "static_bases.gen.h"
 #include "Misc/Config.h"
+#include "Misc/ScopeGuard.h"
 
 using namespace std;
 
@@ -79,31 +80,15 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 			if (!overlay.visible || overlay.texture.handle == nullptr)
 				continue;
 
-			if (!overlay.compositor) {
-				// TODO this is certainly the wrong size, but use it for now until we remove
-				//  the size paremeter from the GL and DX12 compositor constructors
-				const OVR::Sizei size = ovr_GetFovTextureSize(*ovr::session, ovrEye_Left, ovr::hmdDesc.DefaultEyeFov[ovrEye_Left], 1);
-				overlay.compositor.reset(GetUnsafeBaseCompositor()->CreateCompositorAPI(&overlay.texture, size));
-			}
-
-			// Copy over the texture
-			overlay.compositor->Invoke(&overlay.texture);
-
-			// Tell LibOVR how large our texture is
-			const OVR::Sizei srcSize = overlay.compositor->GetSrcSize();
-			overlay.layerQuad.Viewport.Size.w = srcSize.w;
-			overlay.layerQuad.Viewport.Size.h = srcSize.h;
-
 			// Calculate the texture's aspect ratio
+			const ovrSizei &srcSize = overlay.layerQuad.Viewport.Size;
 			const float aspect = srcSize.h > 0 ? static_cast<float>(srcSize.w) / srcSize.h : 1.0f;
 
 			// ... and use that to set the size of the overlay, as it will appear to the user
+			// Note we shouldn't do this when setting the texture, as the user may change the width of
+			//  the overlay without changing the texture.
 			overlay.layerQuad.QuadSize.x = overlay.widthMeters;
 			overlay.layerQuad.QuadSize.y = overlay.widthMeters / aspect;
-
-			// Set the overlay's texture, and tell LibOVR we're done using it
-			overlay.layerQuad.ColorTexture = overlay.compositor->GetSwapChain();
-			OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(*ovr::session, overlay.layerQuad.ColorTexture));
 
 			// Finally, add it to the list of layers to be sent to LibOVR
 			layerHeaders.push_back(&overlay.layerQuad.Header);
@@ -543,6 +528,23 @@ EVROverlayError BaseOverlay::GetOverlayDualAnalogTransform(VROverlayHandle_t ulO
 EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle, const Texture_t *pTexture) {
 	USEH();
 	overlay->texture = *pTexture;
+
+	if (!overlay->compositor) {
+		const auto size = ovr_GetFovTextureSize(*ovr::session, ovrEye_Left, ovr::hmdDesc.DefaultEyeFov[ovrEye_Left], 1);
+		overlay->compositor.reset(GetUnsafeBaseCompositor()->CreateCompositorAPI(pTexture, size));
+	}
+
+	overlay->compositor->LoadSubmitContext();
+	auto revertToCallerContext = MakeScopeGuard([&]() {
+		overlay->compositor->ResetSubmitContext();
+	});
+
+	overlay->compositor->Invoke(&overlay->texture);
+
+	overlay->layerQuad.Viewport.Size = overlay->compositor->GetSrcSize();
+	overlay->layerQuad.ColorTexture = overlay->compositor->GetSwapChain();
+
+	OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(*ovr::session, overlay->layerQuad.ColorTexture));
 
 	return VROverlayError_None;
 }
