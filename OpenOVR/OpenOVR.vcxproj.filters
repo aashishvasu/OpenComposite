@@ -425,6 +425,9 @@
     <ClCompile Include="Compositor\vkcompositor.cpp">
       <Filter>Source Files\Compositor</Filter>
     </ClCompile>
+    <ClCompile Include="Compositor\dx10compositor.cpp">
+      <Filter>Source Files\Compositor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc">

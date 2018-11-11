@@ -3,7 +3,9 @@
 #include "OpenVR/interfaces/vrtypes.h"
 #include "d3dx12.h"
 #include <d3d11.h>
+#include <d3d11_1.h>
 #include <wrl/client.h>
+#include <atlbase.h>
 
 #include <Extras/OVR_Math.h>
 
@@ -89,7 +91,7 @@ public:
 
 	unsigned int GetFlags() override;
 
-private:
+protected:
 	void ThrowIfFailed(HRESULT test);
 
 	bool CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc & chainDesc, vr::EColorSpace colourSpace);
@@ -100,6 +102,22 @@ private:
 	ovrTextureSwapChainDesc chainDesc;
 
 	bool submitVerticallyFlipped;
+};
+
+class DX10Compositor : public DX11Compositor {
+public:
+	DX10Compositor(ID3D10Texture2D* td);
+
+	virtual void Invoke(const vr::Texture_t * texture) override;
+
+	virtual void LoadSubmitContext() override;
+	virtual void ResetSubmitContext() override;
+
+private:
+	CComQIPtr<ID3D11Device1> device1;
+	CComQIPtr<ID3D11DeviceContext1> context1;
+	CComPtr<ID3DDeviceContextState> customContextState;
+	CComPtr<ID3DDeviceContextState> originalContextState;
 };
 
 class GLCompositor : public Compositor {
