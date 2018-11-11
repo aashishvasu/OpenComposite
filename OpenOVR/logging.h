@@ -19,6 +19,9 @@ if (FAILED(res)) { \
 } \
 }
 
+// General validation helpers
+#define OOVR_FALSE_ABORT(expression) if (!(expression)) { OOVR_ABORT("Expression is false unexpectedly: " #expression); }
+
 // OVR API validation helpers
 #define OOVR_FAILED_OVR_LOG(expression) \
 if (!OVR_SUCCESS(expression)) { \
