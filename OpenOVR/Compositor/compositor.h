@@ -30,6 +30,14 @@ public:
 
 	virtual OVR::Sizei GetSrcSize() { return srcSize; };
 
+	/**
+	 * Loads and unloads some context required for submitting textures to LibOVR. LoadSubmitContext is
+	 *  called before calling either Invoke or ovr_CommitTextureSwapChain, and ResetSubmitContext after
+	 *  calling both of them.
+	 */
+	virtual void LoadSubmitContext() {};
+	virtual void ResetSubmitContext() {};
+
 protected:
 	ovrTextureSwapChain chain;
 	OVR::Sizei singleScreenSize;

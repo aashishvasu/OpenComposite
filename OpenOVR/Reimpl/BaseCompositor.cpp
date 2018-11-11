@@ -24,6 +24,8 @@ using namespace std;
 #include "OVR_CAPI_Vk.h"
 #endif
 
+#include "Misc/ScopeGuard.h"
+
 using namespace vr;
 using namespace IVRCompositor_022;
 
@@ -360,6 +362,12 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 		size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
 		comp = CreateCompositorAPI(texture, size);
 	}
+
+	comp->LoadSubmitContext();
+
+	auto revertToCallerContext = MakeScopeGuard([&]() {
+		comp->ResetSubmitContext();
+	});
 
 	if (!leftEyeSubmitted && !rightEyeSubmitted) {
 		// TODO call frame-start method
