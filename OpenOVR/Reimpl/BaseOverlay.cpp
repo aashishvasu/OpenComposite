@@ -8,6 +8,7 @@
 #include "convert.h"
 #include "BaseCompositor.h"
 #include "static_bases.gen.h"
+#include "Misc/Config.h"
 
 using namespace std;
 
@@ -64,6 +65,11 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 	//  unless the list is expanding from new layers.
 	layerHeaders.clear();
 	layerHeaders.push_back(sceneLayer);
+
+	if (!oovr_global_configuration.EnableLayers()) {
+		layers = layerHeaders.data();
+		return static_cast<int>(layerHeaders.size());
+	}
 
 	for (const auto &kv : overlays) {
 		if (kv.second) {
