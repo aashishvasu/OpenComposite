@@ -329,9 +329,7 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, co
 #ifdef SUPPORT_DX
 	case TextureType_DirectX: {
 		// Check if this texture implements ID3D10Texture2D, in which case we should use the DX10 compositor
-		IUnknown *tex = static_cast<IUnknown*>(texture->handle);
-		ID3D10Texture2D *tex10;
-		tex->QueryInterface(IID_PPV_ARGS(&tex10));
+		CComQIPtr<ID3D10Texture2D> tex10 = static_cast<IUnknown*>(texture->handle);
 
 		if (tex10)
 			comp = new DX10Compositor(tex10);
