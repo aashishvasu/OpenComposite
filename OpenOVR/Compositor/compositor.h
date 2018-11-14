@@ -92,6 +92,8 @@ public:
 	unsigned int GetFlags() override;
 
 protected:
+	void CheckCreateSwapChain(const vr::Texture_t * texture);
+
 	void ThrowIfFailed(HRESULT test);
 
 	bool CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc & chainDesc, vr::EColorSpace colourSpace);

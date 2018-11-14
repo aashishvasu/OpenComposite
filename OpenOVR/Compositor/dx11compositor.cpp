@@ -78,7 +78,7 @@ DX11Compositor::~DX11Compositor() {
 	device->Release();
 }
 
-void DX11Compositor::Invoke(const vr::Texture_t * texture) {
+void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t *texture) {
 	ovrTextureSwapChainDesc &desc = chainDesc;
 
 	ID3D11Texture2D *src = (ID3D11Texture2D*)texture->handle;
@@ -116,13 +116,17 @@ void DX11Compositor::Invoke(const vr::Texture_t * texture) {
 		if (!OVR_SUCCESS(result))
 			ERR("Cannot create DX texture swap chain " + to_string(result));
 	}
+}
+
+void DX11Compositor::Invoke(const vr::Texture_t * texture) {
+	CheckCreateSwapChain(texture);
 
 	int currentIndex = 0;
 	ovr_GetTextureSwapChainCurrentIndex(OVSS, chain, &currentIndex);
 
 	ID3D11Texture2D* tex = nullptr;
 	ovr_GetTextureSwapChainBufferDX(OVSS, chain, currentIndex, IID_PPV_ARGS(&tex));
-	context->CopyResource(tex, src);
+	context->CopyResource(tex, (ID3D11Texture2D*)texture->handle);
 	tex->Release();
 }
 
