@@ -38,7 +38,7 @@ void BaseCompositor::SubmitFrames() {
 	// If the game has told OpenVR to render a skybox, and has indeed submitted a skybox, then render
 	//  that instead.
 	// TODO config option to disable this
-	if (isInSkybox && skyboxCompositor) {
+	if (isInSkybox && oovr_global_configuration.EnableAppRequestedCubemap() && skyboxCompositor) {
 		SubmitSkyboxFrames();
 		return;
 	}

@@ -17,6 +17,7 @@ public:
 	inline bool LogGetTrackedProperty() const { return logGetTrackedProperty; }
 	inline bool EnableLayers() const { return enableLayers; }
 	inline bool DX10Mode() const { return dx10Mode; }
+	inline bool EnableAppRequestedCubemap() const { return enableAppRequestedCubemap; }
 
 private:
 	static int ini_handler(
@@ -40,6 +41,7 @@ private:
 	bool enableLayers = false;
 
 	bool dx10Mode = false;
+	bool enableAppRequestedCubemap = true;
 };
 
 extern Config oovr_global_configuration;
