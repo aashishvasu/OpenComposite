@@ -35,6 +35,14 @@ typedef int ovr_enum_t;
 #define DESC (ovr::hmdDesc)
 
 void BaseCompositor::SubmitFrames() {
+	// If the game has told OpenVR to render a skybox, and has indeed submitted a skybox, then render
+	//  that instead.
+	// TODO config option to disable this
+	if (isInSkybox && skyboxCompositor) {
+		SubmitSkyboxFrames();
+		return;
+	}
+
 	if (state == RS_RENDERING || !oovr_global_configuration.ThreePartSubmit()) {
 		// We're in the correct state to submit frames
 	}
@@ -123,6 +131,58 @@ void BaseCompositor::SubmitFrames() {
 	if (sys) {
 		sys->_OnPostFrame();
 	}
+}
+
+void BaseCompositor::SubmitSkyboxFrames() {
+	if (state == RS_RENDERING || !oovr_global_configuration.ThreePartSubmit()) {
+		// We're in the correct state to submit frames
+	}
+	else if (state == RS_NOT_STARTED) {
+		// This is our first frame, skip it as the swap chains won't have been created yet
+		// However, the swap chains should be available now, ready for the next frame.
+		state = RS_WAIT_BEGIN;
+		return;
+	}
+	else if (state == RS_WAIT_BEGIN) {
+		// Not a problem for skyboxes - this may be called many frames in a row, and that's fine
+		WaitGetPoses(NULL, 0, NULL, 0);
+	}
+
+	ovrSession &session = *ovr::session;
+
+	// If the overlay system is currently active, ask it for the list of layers
+	//  we should send to LibOVR. That way, it can add in layers from overlays,
+	//  the virtual keyboard, etc.
+	//
+	// Note we need to do this even when waiting, as it seems some apps add overlays with progress bars, etc.
+	// TODO confirm this matches SteamVR behaviour
+	int layer_count;
+	ovrLayerHeader const* const* layers;
+	ovrLayerHeader* app_layer = &skyboxLayer.Header;
+
+	BaseOverlay *overlay = GetUnsafeBaseOverlay();
+	if (overlay) {
+		// Let the overlay system add in it's layers
+		layer_count = overlay->_BuildLayers(app_layer, layers);
+	}
+	else {
+		// Use the single layer, since the overlay system isn't in use
+		layer_count = 1;
+		layers = &app_layer;
+	}
+
+	if (oovr_global_configuration.ThreePartSubmit()) {
+		OOVR_FAILED_OVR_ABORT(ovr_EndFrame(session, frameIndex, nullptr, layers, layer_count));
+	}
+	else {
+		OOVR_FAILED_OVR_ABORT(ovr_SubmitFrame(session, frameIndex, nullptr, layers, layer_count));
+	}
+
+	state = RS_WAIT_BEGIN;
+
+	frameIndex++;
+
+	// Don't call BaseSystem::_OnPostFrame here, as we don't want to get input events while waiting
 }
 
 BaseCompositor::BaseCompositor() {
@@ -577,7 +637,13 @@ HmdColor_t BaseCompositor::GetCurrentFadeColor(bool bBackground) {
 }
 
 void BaseCompositor::FadeGrid(float fSeconds, bool bFadeIn) {
-	// What is this supposed to do?
+	// This is the app telling SteamVR to fade from the rendered scene into the skybox, eg before the
+	//  app loads a new level (this is how the default SteamVR Unity plugin works).
+	//
+	// Let's not bother implementing the fade (that would be a LOT of work), and just skip straight over.
+	isInSkybox = bFadeIn;
+
+	// TODO suppress input while in this mode
 }
 
 float BaseCompositor::GetCurrentGridAlpha() {

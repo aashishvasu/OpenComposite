@@ -100,6 +100,7 @@ private:
 
 	bool leftEyeSubmitted = false, rightEyeSubmitted = false;
 	void SubmitFrames();
+	void SubmitSkyboxFrames();
 	long long frameIndex = 0;
 
 	OVR::Sizei size;
@@ -110,6 +111,8 @@ private:
 	ovrLayerCube skyboxLayer;
 	vr::HmdColor_t fadeColour = { 0, 0, 0, 0 };
 	float fadeTime = 0;
+
+	bool isInSkybox = false;
 
 	ovrTrackingState trackingState;
 	double sensorSampleTime;
