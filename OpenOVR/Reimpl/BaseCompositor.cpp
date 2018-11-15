@@ -602,6 +602,11 @@ ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t * pTextures, uint32
 		skyboxLayer.Header.Flags = ovrLayerFlag_HighQuality;
 	}
 
+	if (!skyboxCompositor->SupportsCubemap()) {
+		// Compositor doesn't support cubemaps, nothing we can do
+		return VRCompositorError_None;
+	}
+
 	skyboxCompositor->InvokeCubemap(pTextures);
 	skyboxLayer.CubeMapTexture = skyboxCompositor->GetSwapChain();
 

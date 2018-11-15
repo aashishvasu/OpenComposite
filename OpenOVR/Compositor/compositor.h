@@ -27,6 +27,7 @@ public:
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;
 
 	virtual void InvokeCubemap(const vr::Texture_t * textures) = 0;
+	virtual bool SupportsCubemap() { return false; }
 
 	virtual ovrTextureSwapChain GetSwapChain() { return chain; };
 
@@ -89,6 +90,7 @@ public:
 	virtual void Invoke(const vr::Texture_t * texture) override;
 
 	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
+	virtual bool SupportsCubemap() override { return true; }
 
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
