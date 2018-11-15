@@ -287,6 +287,10 @@ void VkCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 	}
 }
 
+void VkCompositor::InvokeCubemap(const vr::Texture_t * textures) {
+	OOVR_ABORT("VkCompositor::InvokeCubemap: Not yet supported!");
+}
+
 bool VkCompositor::CheckChainCompatible(const vr::VRVulkanTextureData_t &tex, const ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace) {
 	bool usable = true;
 #define FAIL(name) { \

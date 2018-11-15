@@ -26,6 +26,8 @@ public:
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;
 
+	virtual void InvokeCubemap(const vr::Texture_t * textures) = 0;
+
 	virtual ovrTextureSwapChain GetSwapChain() { return chain; };
 
 	virtual unsigned int GetFlags() { return 0; }
@@ -86,13 +88,15 @@ public:
 	// Override
 	virtual void Invoke(const vr::Texture_t * texture) override;
 
+	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
+
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 
 	unsigned int GetFlags() override;
 
 protected:
-	void CheckCreateSwapChain(const vr::Texture_t * texture);
+	void CheckCreateSwapChain(const vr::Texture_t * texture, bool cube);
 
 	void ThrowIfFailed(HRESULT test);
 
@@ -134,6 +138,8 @@ public:
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
 
+	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
+
 private:
 	GLuint fboId;
 };
@@ -149,6 +155,8 @@ public:
 
 	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
 		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
+
+	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
 
 private:
 	bool CheckChainCompatible(const vr::VRVulkanTextureData_t &tex, const ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace);

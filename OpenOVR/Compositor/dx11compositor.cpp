@@ -78,13 +78,19 @@ DX11Compositor::~DX11Compositor() {
 	device->Release();
 }
 
-void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t *texture) {
+void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t *texture, bool cube) {
 	ovrTextureSwapChainDesc &desc = chainDesc;
 
 	ID3D11Texture2D *src = (ID3D11Texture2D*)texture->handle;
 
 	D3D11_TEXTURE2D_DESC srcDesc;
 	src->GetDesc(&srcDesc);
+
+	if (cube) {
+		// LibOVR can only use square cubemaps, while SteamVR can use any shape
+		// Note we use CopySubresourceRegion later on, so this won't cause problems with that
+		srcDesc.Height = srcDesc.Width = min(srcDesc.Height, srcDesc.Width);
+	}
 
 	bool usable = chain == NULL ? false : CheckChainCompatible(srcDesc, desc, texture->eColorSpace);
 
@@ -97,8 +103,8 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t *texture) {
 
 		// Make eye render buffer
 		desc = {};
-		desc.Type = ovrTexture_2D;
-		desc.ArraySize = 1;
+		desc.Type = cube ? ovrTexture_Cube : ovrTexture_2D;
+		desc.ArraySize = cube ? 6 : 1;
 		desc.Width = srcDesc.Width;
 		desc.Height = srcDesc.Height;
 		desc.Format = dxgiToOvrFormat(srcDesc.Format, texture->eColorSpace);
@@ -119,7 +125,7 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t *texture) {
 }
 
 void DX11Compositor::Invoke(const vr::Texture_t * texture) {
-	CheckCreateSwapChain(texture);
+	CheckCreateSwapChain(texture, false);
 
 	int currentIndex = 0;
 	ovr_GetTextureSwapChainCurrentIndex(OVSS, chain, &currentIndex);
@@ -127,6 +133,44 @@ void DX11Compositor::Invoke(const vr::Texture_t * texture) {
 	ID3D11Texture2D* tex = nullptr;
 	ovr_GetTextureSwapChainBufferDX(OVSS, chain, currentIndex, IID_PPV_ARGS(&tex));
 	context->CopyResource(tex, (ID3D11Texture2D*)texture->handle);
+	tex->Release();
+}
+
+void DX11Compositor::InvokeCubemap(const vr::Texture_t * textures) {
+	CheckCreateSwapChain(&textures[0], true);
+
+	int currentIndex = 0;
+	OOVR_FAILED_OVR_ABORT(ovr_GetTextureSwapChainCurrentIndex(OVSS, chain, &currentIndex));
+
+	ID3D11Texture2D* tex = nullptr;
+	OOVR_FAILED_OVR_ABORT(ovr_GetTextureSwapChainBufferDX(OVSS, chain, currentIndex, IID_PPV_ARGS(&tex)));
+
+	ID3D11Texture2D *faceSrc;
+
+	// Front
+	faceSrc = (ID3D11Texture2D*)textures[0].handle;
+	context->CopySubresourceRegion(tex, 5, 0, 0, 0, faceSrc, 0, nullptr);
+
+	// Back
+	faceSrc = (ID3D11Texture2D*)textures[1].handle;
+	context->CopySubresourceRegion(tex, 4, 0, 0, 0, faceSrc, 0, nullptr);
+
+	// Left
+	faceSrc = (ID3D11Texture2D*)textures[2].handle;
+	context->CopySubresourceRegion(tex, 0, 0, 0, 0, faceSrc, 0, nullptr);
+
+	// Right
+	faceSrc = (ID3D11Texture2D*)textures[3].handle;
+	context->CopySubresourceRegion(tex, 1, 0, 0, 0, faceSrc, 0, nullptr);
+
+	// Top
+	faceSrc = (ID3D11Texture2D*)textures[4].handle;
+	context->CopySubresourceRegion(tex, 2, 0, 0, 0, faceSrc, 0, nullptr);
+
+	// Bottom
+	faceSrc = (ID3D11Texture2D*)textures[5].handle;
+	context->CopySubresourceRegion(tex, 3, 0, 0, 0, faceSrc, 0, nullptr);
+
 	tex->Release();
 }
 

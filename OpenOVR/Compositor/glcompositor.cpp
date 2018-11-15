@@ -86,3 +86,7 @@ void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 	// Copy the texture over
 	Invoke(texture);
 }
+
+void GLCompositor::InvokeCubemap(const vr::Texture_t * textures) {
+	OOVR_ABORT("GLCompositor::InvokeCubemap: Not yet supported!");
+}
