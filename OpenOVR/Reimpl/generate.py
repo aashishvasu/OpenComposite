@@ -236,7 +236,7 @@ def write_api_class(data, cxxapi, capi, csapi):
     csapi.write("}\n")
 
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
-baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=\s]*))?\s*\)")
+baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=]*))?\s*\)")
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
 
 impl = open("stubs.gen.cpp", "w")
@@ -300,7 +300,7 @@ for base_interface in interfaces_list:
                 todo_interfaces.append((interface, version, flags, header_name))
             elif basematch:
                 flag = basematch.group("flag")
-                value = basematch.group("value")
+                value = basematch.group("value").strip()
                 base_flags[flag] = value or True
             elif "GEN_INTERFACE" in line and not "#define" in line and not line.startswith("//"):
                 print(line)
