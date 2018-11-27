@@ -12,17 +12,21 @@ static const uint32_t k_unMaxApplicationKeyLength = 128;
 // So I can easily use it for return types
 typedef OOVR_EVRApplicationError EVRApplicationError;
 
+// Used by Viveport
 EVRApplicationError BaseApplications::AddApplicationManifest(const char *pchApplicationManifestFullPath, bool bTemporary) {
-	STUBBED();
+	OOVR_LOGF("NOOP: Attempting to add manifest %s, temporary=%d", pchApplicationManifestFullPath, bTemporary);
+	return VRApplicationError_None;
 }
 EVRApplicationError BaseApplications::RemoveApplicationManifest(const char *pchApplicationManifestFullPath) {
-	STUBBED();
+	OOVR_LOGF("NOOP: Attempting to remove manifest %s", pchApplicationManifestFullPath);
+	return VRApplicationError_None;
 }
+
 bool BaseApplications::IsApplicationInstalled(const char *pchAppKey) {
 	STUBBED();
 }
 uint32_t BaseApplications::GetApplicationCount() {
-	STUBBED();
+	return 0;
 }
 EVRApplicationError BaseApplications::GetApplicationKeyByIndex(uint32_t unApplicationIndex, VR_OUT_STRING() char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen) {
 	STUBBED();
