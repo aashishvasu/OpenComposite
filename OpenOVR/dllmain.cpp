@@ -46,7 +46,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 // Binary-compatible openvr_api.dll implementation
 static bool running;
+static bool running_ovr; // are we in an apptype which uses LibOVR?
 static uint32_t current_init_token = 1;
+static EVRApplicationType current_apptype;
 
 void ERR(string msg) {
 	char buff[4096];
@@ -93,6 +95,18 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 		return interfaces[interfaceVersion].get();
 	}
 
+	bool valid_apptypes_success;
+	uint64_t valid_apptypes = GetInterfaceFlagsByName(interfaceVersion, "APPTYPE", &valid_apptypes_success);
+
+	if (!valid_apptypes_success) {
+		valid_apptypes = 1ull << VRApplication_Scene;
+	}
+
+	if ((valid_apptypes & (1ull << current_apptype)) == 0) {
+		OOVR_LOGF("Invalid interface %s for apptype %d", interfaceVersion, current_apptype);
+		OOVR_ABORT("Illegal interface for apptype - see log");
+	}
+
 	CVRCorrectLayout *impl = (CVRCorrectLayout*) CreateInterfaceByName(interfaceVersion);
 	if (impl) {
 		unique_ptr<CVRCorrectLayout> ptr(impl);
@@ -133,6 +147,10 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError * peError, EVRApp
 VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRApplicationType eApplicationType, const char * pStartupInfo) {
 	// TODO use peError
 
+	if (eApplicationType == VRApplication_Utility) {
+		goto success;
+	}
+
 	if (eApplicationType != VRApplication_Scene)
 		ERR("Cannot init VR: unsuported apptype " + to_string(eApplicationType));
 
@@ -140,12 +158,13 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 		ERR("Cannot init VR: Already running!");
 
 	ovr::Setup();
-	running = true;
 
 	setup_audio();
 
+success:
+	current_apptype = eApplicationType;
+	running = true;
 	*peError = VRInitError_None;
-
 	return current_init_token;
 }
 
@@ -173,7 +192,9 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 	interfaces.clear();
 
 	// Shut down LibOVR
-	ovr::Shutdown();
+	if(running_ovr)
+		ovr::Shutdown();
+
 	running = false;
 }
 
