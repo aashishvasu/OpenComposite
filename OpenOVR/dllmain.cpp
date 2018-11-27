@@ -152,7 +152,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 	}
 
 	if (eApplicationType != VRApplication_Scene)
-		ERR("Cannot init VR: unsuported apptype " + to_string(eApplicationType));
+		ERR("Cannot init VR: unsupported apptype " + to_string(eApplicationType));
 
 	if (running)
 		ERR("Cannot init VR: Already running!");
