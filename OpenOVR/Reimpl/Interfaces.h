@@ -6,6 +6,9 @@
 // would return a reference to the CVRCommon part of the object.
 void *CreateInterfaceByName(const char *name);
 
+// Get information about a given interface
+uint64_t GetInterfaceFlagsByName(const char *name, const char *flag, bool *success = nullptr);
+
 // Use stdcall on Windows, see openvr_capi.h
 // Note that VC++ (and most other compilers) ignore calltype definitions on 64-bit, using fastcall instead. Not that it's
 // relevant for 99% of this, but if you're getting mysterious bugs in 64-bit software don't think it's caused by this.

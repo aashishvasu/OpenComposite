@@ -238,6 +238,7 @@ def write_api_class(data, cxxapi, capi, csapi):
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
 baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=]*))?\s*\)")
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
+cflag_spec = re.compile(r"\[(?P<name>\w+)\]\s*=\s*(?P<value>.*)")
 
 impl = open("stubs.gen.cpp", "w")
 impl.write("#include \"stdafx.h\"\n")
@@ -297,7 +298,7 @@ for base_interface in interfaces_list:
                         header_name = "OpenVR/custom_interfaces/IVR%s_%s.h" % (interface, version)
                     elif "API" in flags:
                         header_name = "API/I%s_%s.h" % (interface, version)
-                todo_interfaces.append((interface, version, flags, header_name))
+                todo_interfaces.append((interface, version, flags, header_name, base_flags))
             elif basematch:
                 flag = basematch.group("flag")
                 value = basematch.group("value").strip()
@@ -353,6 +354,8 @@ bases_header.close()
 impl.write("// Get interface by name\n")
 impl.write("void *CreateInterfaceByName(const char *name) {\n")
 
+iname_vars = dict()
+
 for i in all_interfaces:
     interface = i[0]
     ns = "vr"
@@ -363,11 +366,56 @@ for i in all_interfaces:
 
     name = "CVR%s_%s" % (interface, i[1])
     var = "%s::IVR%s_%s::IVR%s_Version" % (ns, interface, i[1], interface)
+    iname_vars[name] = var
 
     impl.write("\tif(strcmp(%s, name) == 0) return new %s();\n" % (var, name))
 
 impl.write("\treturn NULL;\n")
 impl.write("}\n")
+
+# Generate the flag stuff
+
+impl.write("// Get flags by name\n")
+impl.write("uint64_t GetInterfaceFlagsByName(const char *name, const char *flag, bool *success) {\n")
+impl.write("\tif(success) *success = true;\n")
+
+for i in all_interfaces:
+    flags = i[2]
+
+    cflags = dict()
+
+    base_flags = i[4]
+    if base_flags:
+        for key in base_flags:
+            if key[0] == "[" and key[-1] == "]":
+                cflags[key[1:-1]] = base_flags[key]
+
+    if flags:
+        for flag in flags:
+            match = cflag_spec.match(flag)
+            if not match:
+                continue
+
+            name = match.group("name")
+            value = match.group("value")
+            if value:
+                cflags[name] = value
+            else:
+                del cflags[name]
+
+    if not cflags:
+        continue
+
+    impl.write("\tif(strcmp(%s, name) == 0) {\n" % iname_vars["CVR%s_%s" % (i[0], i[1])])
+    for name in cflags:
+        val = cflags[name]
+        impl.write("\t\tif(strcmp(\"%s\", flag) == 0) return (%s);\n" % (name, val))
+    impl.write("\t}\n")
+
+impl.write("\tif(success) *success = false;\n")
+impl.write("\treturn 0;\n")
+impl.write("}\n")
+
 
 impl.close()
 
