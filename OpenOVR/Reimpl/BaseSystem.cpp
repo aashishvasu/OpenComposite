@@ -328,6 +328,9 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 			return 0;
 		case Prop_UserIpdMeters_Float:
 			return SGetIpd();
+		case Prop_SecondsFromVsyncToPhotons_Float:
+			// Seems to be used by croteam games, IDK what the real value is, 100µs should do
+			return 0.0001;
 		}
 	}
 
