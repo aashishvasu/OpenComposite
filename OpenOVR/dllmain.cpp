@@ -158,6 +158,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 		ERR("Cannot init VR: Already running!");
 
 	ovr::Setup();
+	running_ovr = true;
 
 	setup_audio();
 
