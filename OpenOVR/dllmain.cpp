@@ -147,6 +147,23 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError * peError, EVRApp
 VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRApplicationType eApplicationType, const char * pStartupInfo) {
 	// TODO use peError
 
+	if (eApplicationType == VRApplication_Bootstrapper) {
+		char szFileName[MAX_PATH];
+		GetModuleFileNameA(NULL, szFileName, MAX_PATH);
+		string filename = szFileName;
+
+		filename.erase(0, filename.find_last_of('\\') + 1);
+
+		if (filename == "vrstartup.exe") {
+			// AFAIK vrstartup is the only program that uses this mode, and returning an
+			// error makes it exit immediately.
+			*peError = VRInitError_Unknown;
+			return 0;
+		}
+
+		OOVR_ABORT("VRApplication_Bootstrapper currently only supported for vrstartup.exe");
+	}
+
 	if (eApplicationType == VRApplication_Utility) {
 		goto success;
 	}
