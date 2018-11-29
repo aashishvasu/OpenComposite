@@ -499,8 +499,10 @@ if(prop == in) { \
 
 #undef PROP
 
-	if(!oovr_global_configuration.AdmitUnknownProps())
+	if (!oovr_global_configuration.AdmitUnknownProps()) {
+		OOVR_LOGF("Missing tracked property: dev=%d, ETrackedDeviceProperty=%d", unDeviceIndex, prop);
 		OOVR_ABORT("This string property (in log) was not found");
+	}
 
 	*pErrorL = TrackedProp_UnknownProperty;
 	return 0; // There are tonnes, and we're not implementing all of them.
