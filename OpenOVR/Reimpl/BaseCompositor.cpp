@@ -661,6 +661,14 @@ ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t * pTextures, uint32
 		return VRCompositorError_None;
 	}
 
+	// Apparently it's permissable to pass in a texture with a null handle! (The Forest does this)
+	for (size_t i = 0; i < unTextureCount; i++) {
+		if (pTextures[i].handle == nullptr) {
+			ClearSkyboxOverride();
+			return VRCompositorError_None;
+		}
+	}
+
 	// See if this is the first time we're invoked.
 	if (!skyboxCompositor) {
 		const auto size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
