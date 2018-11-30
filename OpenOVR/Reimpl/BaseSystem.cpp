@@ -501,6 +501,10 @@ if(prop == in) { \
 	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
 	PROP(Prop_RenderModelName_String, "<unknown>"); // It appears this just gets passed into IVRRenderModels as the render model name
 
+	// Used by Firebird The Unfinished - see #58
+	// Copied from SteamVR
+	PROP(Prop_DriverVersion_String, "1.32.0");
+
 #undef PROP
 
 	if (!oovr_global_configuration.AdmitUnknownProps()) {
