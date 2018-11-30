@@ -651,6 +651,10 @@ float BaseCompositor::GetCurrentGridAlpha() {
 }
 
 ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t * pTextures, uint32_t unTextureCount) {
+	if (!oovr_global_configuration.EnableAppRequestedCubemap()) {
+		return VRCompositorError_None;
+	}
+
 	// For now, only support cubemaps, as that's what LibOVR supports
 	if (unTextureCount != 6u) {
 		OOVR_LOGF("Only cubemap skyboxes are supported - lat/long and stereo pair skyboxes are not supported. Supplied texture count: %d", unTextureCount);
