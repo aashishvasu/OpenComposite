@@ -169,9 +169,26 @@ bool BaseSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop) {
 	return false; // Always render in direct mode
 }
 
-void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin eOrigin, float fPredictedSecondsToPhotonsFromNow,
-	TrackedDevicePose_t * pTrackedDevicePoseArray, uint32_t unTrackedDevicePoseArrayCount) {
-	STUBBED();
+void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin origin, float predictedSecondsToPhotonsFromNow,
+	TrackedDevicePose_t * poseArray, uint32_t poseArrayCount) {
+
+	ETrackingUniverseOrigin current = ovr_GetTrackingOriginType(*ovr::session) == ovrTrackingOrigin_EyeLevel ?
+		TrackingUniverseSeated : TrackingUniverseStanding;
+
+	if (current != origin)
+		OOVR_ABORT("Origin mismatch - current %d, passed %d", current, origin);
+
+	ovrTrackingState trackingState = { 0 };
+
+	if (predictedSecondsToPhotonsFromNow == 0) {
+		trackingState = ovr_GetTrackingState(*ovr::session, 0 /* Most recent */, ovrFalse);
+	} else {
+		trackingState = ovr_GetTrackingState(*ovr::session, ovr_GetTimeInSeconds() + predictedSecondsToPhotonsFromNow, ovrFalse);
+	}
+
+	for (uint32_t i = 0; i < poseArrayCount; i++) {
+		BaseCompositor::GetSinglePose(i, &poseArray[i], trackingState);
+	}
 }
 
 void BaseSystem::ResetSeatedZeroPose() {
