@@ -30,6 +30,9 @@ public:
 	HmdVector2_t mouseScale = { 1.0f, 1.0f };
 	bool highQuality = false;
 	uint64_t flags = 0;
+	float texelAspect = 1;
+
+	// Rendering
 	Texture_t texture = {};
 	ovrLayerQuad layerQuad = {};
 	std::unique_ptr<Compositor> compositor;
@@ -313,10 +316,17 @@ EVROverlayError BaseOverlay::GetOverlayAlpha(VROverlayHandle_t ulOverlayHandle, 
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayTexelAspect(VROverlayHandle_t ulOverlayHandle, float fTexelAspect) {
-	STUBBED();
+	USEH();
+
+	overlay->texelAspect = fTexelAspect;
 }
 EVROverlayError BaseOverlay::GetOverlayTexelAspect(VROverlayHandle_t ulOverlayHandle, float *pfTexelAspect) {
-	STUBBED();
+	USEH();
+
+	if (!pfTexelAspect)
+		OOVR_ABORT("pfTexelAspect == nullptr");
+
+	*pfTexelAspect = overlay->texelAspect;
 }
 EVROverlayError BaseOverlay::SetOverlaySortOrder(VROverlayHandle_t ulOverlayHandle, uint32_t unSortOrder) {
 	// TODO
