@@ -321,6 +321,8 @@ EVROverlayError BaseOverlay::SetOverlayTexelAspect(VROverlayHandle_t ulOverlayHa
 	USEH();
 
 	overlay->texelAspect = fTexelAspect;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayTexelAspect(VROverlayHandle_t ulOverlayHandle, float *pfTexelAspect) {
 	USEH();
@@ -329,6 +331,8 @@ EVROverlayError BaseOverlay::GetOverlayTexelAspect(VROverlayHandle_t ulOverlayHa
 		OOVR_ABORT("pfTexelAspect == nullptr");
 
 	*pfTexelAspect = overlay->texelAspect;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlaySortOrder(VROverlayHandle_t ulOverlayHandle, uint32_t unSortOrder) {
 	// TODO
