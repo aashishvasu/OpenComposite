@@ -50,6 +50,8 @@ ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi, vr::EColorSpace colourSpace) 
 #undef MAPPING
 	}
 
+	OOVR_LOGF("Unknown DXGI_FORMAT %d for colourspace %d", dxgi, colourSpace);
+	OOVR_ABORT("Unknown DXGI format in log");
 	return OVR_FORMAT_UNKNOWN;
 }
 
