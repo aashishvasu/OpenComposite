@@ -28,6 +28,7 @@ namespace RuntimeSwitcher
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.label1 = new System.Windows.Forms.Label();
             this.statusLabel = new System.Windows.Forms.Label();
             this.useOpenComposite = new System.Windows.Forms.Button();
@@ -128,6 +129,7 @@ namespace RuntimeSwitcher
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "OpenComposite Runtime Switcher";
