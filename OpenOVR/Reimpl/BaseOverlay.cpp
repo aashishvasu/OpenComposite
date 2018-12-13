@@ -72,19 +72,21 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 	layerHeaders.clear();
 	layerHeaders.push_back(sceneLayer);
 
-	usingInput = false;
+	// For performance reasons, this indicates that something is using input
+	// Don't write it directly to usingInput, as that could cause race conditions between
+	//  when it's initially set to false, and when it's reset to true.
+	bool checkUsingInput = false;
 
 	if (keyboard) {
 		layerHeaders.push_back(keyboard->Update());
-		usingInput = true;
+		checkUsingInput = true;
 
 		if (keyboard->IsClosed())
 			HideKeyboard();
 	}
 
 	if (!oovr_global_configuration.EnableLayers()) {
-		layers = layerHeaders.data();
-		return static_cast<int>(layerHeaders.size());
+		goto done;
 	}
 
 	for (const auto &kv : overlays) {
@@ -110,6 +112,8 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 		}
 	}
 
+done:
+	usingInput = checkUsingInput;
 	layers = layerHeaders.data();
 	return static_cast<int>(layerHeaders.size());
 }
