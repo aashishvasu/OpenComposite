@@ -46,6 +46,9 @@
     <Filter Include="Source Files\API">
       <UniqueIdentifier>{2d53b4d6-7cb2-43ff-af84-a81b5dc75d9b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Misc\JSON">
+      <UniqueIdentifier>{be34a601-0214-4875-9d41-64ae1dccb28f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -294,6 +297,12 @@
     <ClInclude Include="Misc\ScopeGuard.h">
       <Filter>Source Files\Misc</Filter>
     </ClInclude>
+    <ClInclude Include="Misc\json\json.h">
+      <Filter>Header Files\Misc\JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\json\json-forwards.h">
+      <Filter>Header Files\Misc\JSON</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -427,6 +436,9 @@
     </ClCompile>
     <ClCompile Include="Compositor\dx10compositor.cpp">
       <Filter>Source Files\Compositor</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\jsoncpp.cpp">
+      <Filter>Source Files\Misc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

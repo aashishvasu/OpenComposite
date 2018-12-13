@@ -180,6 +180,8 @@
     <ClInclude Include="Misc\debug_helper.h" />
     <ClInclude Include="Misc\Haptics.h" />
     <ClInclude Include="Misc\ini.h" />
+    <ClInclude Include="Misc\json\json-forwards.h" />
+    <ClInclude Include="Misc\json\json.h" />
     <ClInclude Include="Misc\ScopeGuard.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_002.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_003.h" />
@@ -267,6 +269,12 @@
     <ClCompile Include="Misc\debug_helper.cpp" />
     <ClCompile Include="Misc\Haptics.cpp" />
     <ClCompile Include="Misc\ini.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Misc\jsoncpp.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

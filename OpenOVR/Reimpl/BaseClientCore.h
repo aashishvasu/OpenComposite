@@ -3,6 +3,8 @@
 
 class BaseClientCore {
 public:
+	static bool CheckAppEnabled();
+public:
 	/** Initializes the system */
 	virtual vr::EVRInitError Init(vr::EVRApplicationType eApplicationType, const char *pStartupInfo);
 

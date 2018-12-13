@@ -217,6 +217,10 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 }
 
 VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pReturnCode) {
+	bool shouldUseOC = BaseClientCore::CheckAppEnabled();
+	if (!shouldUseOC)
+		OOVR_ABORT("TODO swap to SteamVR");
+
 	*pReturnCode = VRInitError_None;
 
 	string name = pInterfaceName;
