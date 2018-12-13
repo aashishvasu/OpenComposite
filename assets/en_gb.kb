@@ -44,3 +44,6 @@ key \z \z
 key \s \z 3.5 4 6 1
 .label
 
+key \q \q 11.5 4
+.label done
+.spans_to_right true

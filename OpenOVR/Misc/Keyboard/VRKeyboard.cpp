@@ -134,6 +134,10 @@ ovrLayerHeader * VRKeyboard::Update() {
 void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t state, float time) {
 	using namespace vr;
 
+	// In case this is somehow called after the keyboard is closed, ignore it
+	if (IsClosed())
+		return;
+
 	uint64_t lastButtons = lastButtonState[side];
 	lastButtonState[side] = state.ulButtonPressed;
 
@@ -163,6 +167,10 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 			if (!text.empty()) {
 				text.erase(text.end() - 1);
 			}
+		}
+		else if (ch == '\x03') {
+			// done
+			closed = true;
 		}
 		else {
 			text += ch;

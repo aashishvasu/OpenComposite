@@ -51,13 +51,15 @@ static wchar_t escapeChar(const wstring &str) {
 	case 'n':
 		return '\n';
 	case 'b':
-		return '\b';
+		return '\b'; // Backspace
 	case 's':
 		return ' '; // For whitespace-deliminated stuff
 	case 'z':
 		return '\x01'; // Shift
 	case 'c':
 		return '\x02'; // Caps lock
+	case 'q':
+		return '\x03'; // Done
 	}
 
 	string utf = VRKeyboard::CHAR_CONV.to_bytes(str);

@@ -31,11 +31,14 @@ public:
 
 	static std::wstring_convert<std::codecvt_utf8<wchar_t>> CHAR_CONV;
 
+	bool IsClosed() { return closed; }
+
 private:
 	ID3D11Device * const dev;
 	ID3D11DeviceContext *ctx;
 
 	bool dirty = true;
+	bool closed = false;
 
 	std::wstring text;
 	ECaseMode caseMode = LOWER;

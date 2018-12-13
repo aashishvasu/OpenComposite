@@ -77,6 +77,9 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 	if (keyboard) {
 		layerHeaders.push_back(keyboard->Update());
 		usingInput = true;
+
+		if (keyboard->IsClosed())
+			HideKeyboard();
 	}
 
 	if (!oovr_global_configuration.EnableLayers()) {
