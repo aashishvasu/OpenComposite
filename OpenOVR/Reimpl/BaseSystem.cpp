@@ -348,7 +348,7 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 			return SGetIpd();
 		case Prop_SecondsFromVsyncToPhotons_Float:
 			// Seems to be used by croteam games, IDK what the real value is, 100µs should do
-			return 0.0001;
+			return 0.0001f;
 		case Prop_UserHeadToEyeDepthMeters_Float:
 			// TODO ensure this has the correct sign, though it seems to always be zero anyway
 			// In any case, see: https://github.com/ValveSoftware/openvr/issues/398
