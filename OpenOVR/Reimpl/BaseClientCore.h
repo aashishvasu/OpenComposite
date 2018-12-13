@@ -1,9 +1,12 @@
 #pragma once
 #include "BaseCommon.h"
 
+#include <string>
+
 class BaseClientCore {
 public:
 	static bool CheckAppEnabled();
+	static std::string GetAlternativeRuntimePath();
 public:
 	/** Initializes the system */
 	virtual vr::EVRInitError Init(vr::EVRApplicationType eApplicationType, const char *pStartupInfo);

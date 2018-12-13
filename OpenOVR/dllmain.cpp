@@ -22,6 +22,7 @@ static void init_audio();
 static void setup_audio();
 
 HMODULE openovr_module_id;
+HMODULE chainedImplementation;
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -39,6 +40,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
+		if (chainedImplementation) {
+			FreeLibrary(chainedImplementation);
+		}
         break;
     }
     return TRUE;
@@ -50,6 +54,9 @@ static bool running_ovr; // are we in an apptype which uses LibOVR?
 static uint32_t current_init_token = 1;
 static EVRApplicationType current_apptype;
 
+typedef void* (*alternativeCoreFactory_t)(const char *, int *);
+static alternativeCoreFactory_t alternativeCoreFactory;
+
 void ERR(string msg) {
 	char buff[4096];
 	snprintf(buff, sizeof(buff), "OpenComposite DLLMain ERROR: %s", msg.c_str());
@@ -60,6 +67,25 @@ class _InheritCVRLayout { virtual void _ignore() = 0; };
 class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {};
 
 static map<string, unique_ptr<CVRCorrectLayout>> interfaces;
+
+//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+static string GetLastErrorAsString() {
+	//Get the error message, if any.
+	DWORD errorMessageID = ::GetLastError();
+	if (errorMessageID == 0)
+		return "<no error>"; //No error message has been recorded
+
+	LPSTR messageBuffer = nullptr;
+	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+	string message(messageBuffer, size);
+
+	//Free the buffer.
+	LocalFree(messageBuffer);
+
+	return message;
+}
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
 	if (!running) {
@@ -217,9 +243,41 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 }
 
 VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pReturnCode) {
+	if (alternativeCoreFactory) {
+	use_alt:
+		return alternativeCoreFactory(pInterfaceName, pReturnCode);
+	}
+
 	bool shouldUseOC = BaseClientCore::CheckAppEnabled();
-	if (!shouldUseOC)
-		OOVR_ABORT("TODO swap to SteamVR");
+	if (!shouldUseOC) {
+		string path = BaseClientCore::GetAlternativeRuntimePath();
+
+		string dll = path + "\\bin\\vrclient";
+#if defined( _WIN64 )
+		dll += "_x64";
+#endif
+		dll += ".dll";
+
+		// Make SteamVR load the rest of it's stuff from the correct place
+		bool success = SetEnvironmentVariableA("VR_OVERRIDE", path.c_str());
+		if (!success) {
+			string msg = "Failed to update SteamVR environment variable with error:\n" + GetLastErrorAsString();
+			OOVR_ABORT(msg.c_str());
+		}
+
+		chainedImplementation = LoadLibraryA(dll.c_str());
+		if (!chainedImplementation) {
+			string msg = "Failed to load SteamVR DLL '" + dll + "' with error:\n" + GetLastErrorAsString();
+			OOVR_ABORT(msg.c_str());
+		}
+
+		alternativeCoreFactory = (alternativeCoreFactory_t)GetProcAddress(chainedImplementation, "VRClientCoreFactory");
+
+		// TODO use a more descriptive error message
+		OOVR_FALSE_ABORT(alternativeCoreFactory);
+
+		goto use_alt;
+	}
 
 	*pReturnCode = VRInitError_None;
 

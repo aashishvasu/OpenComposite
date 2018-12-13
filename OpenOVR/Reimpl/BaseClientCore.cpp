@@ -9,6 +9,8 @@
 
 #include "Misc/json/json.h"
 
+#include <ShlObj.h>
+
 using namespace std;
 using namespace vr;
 
@@ -106,6 +108,84 @@ bool BaseClientCore::CheckAppEnabled() {
 
 	// TODO check a list of enabled apps, and return whether we should use OpenComposite based on that
 	return selected == Runtime::OpenComposite;
+}
+
+template<typename str_t>
+static void TrimPath(str_t &path) {
+	if (path.back() == '\\' || path.back() == '/') {
+		path.erase(path.end() - 1);
+	}
+}
+
+template<typename str_t>
+bool EndsWith(const str_t& a, const str_t& b) {
+	if (b.size() > a.size()) return false;
+	return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
+}
+
+// Derived from OpenVR
+static wstring GetAppSettingsPath() {
+	wstring path;
+#if defined( WIN32 )
+	WCHAR rwchPath[MAX_PATH];
+
+	if (!SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, 0, rwchPath))) {
+		OOVR_ABORT("Failed to find the appdata directory");
+	}
+
+	path = rwchPath;
+#elif defined( OSX )
+#error "Unsupported platform"
+#elif defined( LINUX )
+#error "Unsupported platform"
+#else
+#error "Unsupported platform"
+#endif
+
+	TrimPath(path);
+
+	return path;
+}
+
+static wstring GetOpenVRConfigPath() {
+	wstring sConfigPath = GetAppSettingsPath();
+
+#if defined( _WIN32 ) || defined( LINUX )
+	sConfigPath += L"/openvr";
+#elif defined ( OSX )
+	sConfigPath += L"/.openvr";
+#else
+#error "Unsupported platform"
+#endif
+	return sConfigPath;
+}
+
+string BaseClientCore::GetAlternativeRuntimePath() {
+	wstring regPath = GetOpenVRConfigPath();
+
+#if defined( _WIN32 ) || defined( POSIX )
+	regPath += L"/openvrpaths.vrpath";
+#else
+#error "Unsupported platform"
+#endif
+
+	Json::Value root;
+	bool success = ReadJson(regPath, root);
+	OOVR_FALSE_ABORT(success);
+
+	const Json::Value runtimes = root["runtime"];
+	if (!runtimes.isArray())
+		OOVR_ABORT("Cannot start SteamVR: malformateed runtime path");
+
+	for (unsigned int i = 0; i < runtimes.size(); i++) {
+		string path = runtimes[i].asString();
+		TrimPath(path);
+
+		if (EndsWith(path, string("\\SteamVR")))
+			return path;
+	}
+
+	OOVR_ABORT("Could not find a usable SteamVR intallation");
 }
 
 EVRInitError BaseClientCore::Init(vr::EVRApplicationType eApplicationType, const char * pStartupInfo) {
