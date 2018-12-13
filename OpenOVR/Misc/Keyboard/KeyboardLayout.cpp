@@ -75,11 +75,15 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data) {
 	Key *last = nullptr;
 
 	auto addKey = [&](wchar_t ch, wchar_t shift, float x, float y) -> Key& {
+		int id = (int)keys.size();
+
 		keys.push_back(Key());
 		Key &key = keys.back();
 		last = &key;
 
 		key = { 0 };
+
+		key.id = id;
 
 		key.ch = ch;
 		key.shift = shift;
@@ -195,6 +199,45 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data) {
 
 	if (width == 0)
 		OOVR_ABORT("Missing keyboard layout width specifier");
+
+	// Calculate the adjacent keys
+	for (Key &key : keys) {
+		int ids[4] = { -1, -1, -1, -1 };
+		float distances[4] = { 1000, 1000, 1000, 1000 };
+		// Find the nearest keys in each direction
+		for (Key &to : keys) {
+			if (&key == &to)
+				continue;
+
+			float dx = to.x - key.x;
+			float dy = to.y - key.y;
+
+			float lenSq = dx * dx + dy * dy;
+
+			int angle = (int)(atan2(-dy, dx) * 180 / math_pi);
+
+			// Spin everything back 45deg, so the borders between regions are diagonal
+			angle -= 45;
+
+			if (angle < 0)
+				angle += 360;
+
+			int index = angle / 90;
+
+			int deviation = abs(angle - (index * 90 + 45));
+			lenSq += deviation / 45.0f;
+
+			if (lenSq < distances[index]) {
+				distances[index] = lenSq;
+				ids[index] = to.id;
+			}
+		}
+
+		key.toRight = ids[0];
+		key.toDown = ids[1];
+		key.toLeft = ids[2];
+		key.toUp = ids[3];
+	}
 }
 
 KeyboardLayout::~KeyboardLayout() {

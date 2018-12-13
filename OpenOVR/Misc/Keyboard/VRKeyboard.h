@@ -44,6 +44,11 @@ private:
 	std::unique_ptr<SudoFontMeta> font;
 	std::unique_ptr<KeyboardLayout> layout;
 
+	// These use the OpenVR eye constants
+	float lastInputTime[2];
+	int repeatCount[2];
+	int selected[2];
+	uint64_t lastButtonState[2];
+
 	void Refresh();
 };
-

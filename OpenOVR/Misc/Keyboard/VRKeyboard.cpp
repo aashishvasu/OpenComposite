@@ -128,7 +128,79 @@ ovrLayerHeader * VRKeyboard::Update() {
 }
 
 void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t state, float time) {
-	// TODO: Implement
+	using namespace vr;
+
+	uint64_t lastButtons = lastButtonState[side];
+	lastButtonState[side] = state.ulButtonPressed;
+
+#define GET_BTTN(var, key) bool var = state.ulButtonPressed & ButtonMaskFromId(key)
+#define GET_BTTN_LAST(var, key) GET_BTTN(var, key); bool var ## _last = lastButtons & ButtonMaskFromId(key)
+	GET_BTTN(left, k_EButton_DPad_Left);
+	GET_BTTN(right, k_EButton_DPad_Right);
+	GET_BTTN(up, k_EButton_DPad_Up);
+	GET_BTTN(down, k_EButton_DPad_Down);
+	GET_BTTN_LAST(trigger, k_EButton_SteamVR_Trigger);
+	GET_BTTN_LAST(grip, k_EButton_Grip);
+#undef GET_BTTN
+#undef GET_BTTN_LAST
+
+	const KeyboardLayout::Key &key = layout->GetKeymap()[selected[side]];
+
+	if (trigger && !trigger_last) {
+		wchar_t ch = caseMode == ECaseMode::LOWER ? key.ch : key.shift;
+
+		if (ch == '\x01' || ch == '\x02') {
+			// Shift
+			ECaseMode target = ch == '\x02' ? ECaseMode::LOCK : ECaseMode::SHIFT;
+			caseMode = caseMode == target ? ECaseMode::LOWER : target;
+		}
+		else if (ch == '\b') {
+			// Backspace
+			if (!text.empty()) {
+				text.erase(text.end() - 1);
+			}
+		}
+		else {
+			text += ch;
+
+			if (caseMode == ECaseMode::SHIFT)
+				caseMode = ECaseMode::LOWER;
+		}
+
+		dirty = true;
+	}
+
+	// Movement:
+	bool any = left || right || up || down;
+	if (!any) {
+	cancel:
+		repeatCount[side] = 0;
+		lastInputTime[side] = 0;
+		return;
+	}
+
+	if (time - lastInputTime[side] < (repeatCount[side] <= 1 ? 0.3 : 0.1))
+		return;
+
+	lastInputTime[side] = time;
+	repeatCount[side]++;
+
+	int target = -1;
+	if (left)
+		target = key.toLeft;
+	else if (right)
+		target = key.toRight;
+	else if (up)
+		target = key.toUp;
+	else if (down)
+		target = key.toDown;
+
+	if (target == -1) {
+		goto cancel;
+	}
+
+	selected[side] = target;
+	dirty = true;
 }
 
 struct pix_t {
@@ -203,6 +275,22 @@ void VRKeyboard::Refresh() {
 			width, height,
 			80, 80, 80
 		);
+
+		if (selected[vr::Eye_Left] == key.id) {
+			fillArea(
+				x, y,
+				width / 2, height,
+				0, 100, 255
+			);
+		}
+
+		if (selected[vr::Eye_Right] == key.id) {
+			fillArea(
+				x + width / 2, y,
+				width / 2, height,
+				0, 255, 100
+			);
+		}
 
 		pix_t targetColour = { 255, 255, 255, 255 };
 
