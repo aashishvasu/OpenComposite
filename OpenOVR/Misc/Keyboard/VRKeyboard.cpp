@@ -51,7 +51,8 @@ static vector<char> loadResource(int rid, int type) {
 
 std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;
 
-VRKeyboard::VRKeyboard(ID3D11Device *dev) : dev(dev) {
+VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength) : dev(dev), userValue(userValue), maxLength(maxLength) {
+
 	std::shared_ptr<BaseCompositor> cmp = GetBaseCompositor();
 	if (!cmp)
 		OOVR_ABORT("Keyboard: Compositor must be active!");
