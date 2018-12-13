@@ -124,14 +124,6 @@ ovrLayerHeader * VRKeyboard::Update() {
 		Refresh();
 	}
 
-	static int i = 0;
-	if (i > 100) {
-		i = 0;
-		contents(contents() + L"z");
-		caseMode = caseMode == ECaseMode::LOWER ? ECaseMode::SHIFT : ECaseMode::LOWER;
-	}
-	i++;
-
 	return &layer.Header;
 }
 
