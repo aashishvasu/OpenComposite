@@ -657,17 +657,49 @@ void BaseOverlay::ShowDashboard(const char *pchOverlayToShow) {
 TrackedDeviceIndex_t BaseOverlay::GetPrimaryDashboardDevice() {
 	STUBBED();
 }
-EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
-	STUBBED();
+EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
+	const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
+
+	// Disabled until it's done:
+	OOVR_ABORT("Keyboard still in development");
+
+	if (!BaseCompositor::dxcomp)
+		OOVR_ABORT("Keyboard currently only available on DX11 and DX10 games");
+
+	if (eInputMode != k_EGamepadTextInputModeNormal)
+		OOVR_ABORTF("Only normal keyboard entry mode is currently supported (as opposed to ID=%d)", eInputMode);
+
+	if (eLineInputMode != k_EGamepadTextInputLineModeSingleLine)
+		OOVR_ABORTF("Only single-line keyboard entry mode is currently supported (as opposed to ID=%d)", eLineInputMode);
+
+	if (bUseMinimalMode)
+		OOVR_ABORT("Only full keyboard entry is currently supported - minimal mode is not yet implemented");
+
+	// TODO use description
+	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax);
+
+	keyboard->contents(VRKeyboard::CHAR_CONV.from_bytes(pchExistingText));
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
 	STUBBED();
 }
 uint32_t BaseOverlay::GetKeyboardText(char *pchText, uint32_t cchText) {
-	STUBBED();
+	string str = VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents());
+
+	// FFS, strncpy is secure.
+	strncpy_s(pchText, cchText, str.c_str(), cchText);
+
+	// Ensure the array always ends in a NULL
+	pchText[cchText - 1] = 0;
+
+	// TODO is this supposed to return the length of the string including or excluding the cchText limit?
+	return (uint32_t)strlen(pchText);
 }
 void BaseOverlay::HideKeyboard() {
-	STUBBED();
+	// Delete the keyboard instance
+	keyboard.reset();
 }
 void BaseOverlay::SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToKeyboardTransform) {
 	STUBBED();
