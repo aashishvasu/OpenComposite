@@ -61,4 +61,6 @@ private:
 	uint64_t lastButtonState[2];
 
 	void Refresh();
+
+	void SubmitEvent(vr::EVREventType ev, wchar_t ch);
 };

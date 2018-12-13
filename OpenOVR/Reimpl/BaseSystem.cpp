@@ -591,6 +591,10 @@ void BaseSystem::_OnPostFrame() {
 	lastStatus = status;
 }
 
+void BaseSystem::_EnqueueEvent(const VREvent_t &e) {
+	events.push(e);
+}
+
 float BaseSystem::SGetIpd() {
 	ovrPosef &left = ovr::hmdToEyeViewPose[ovrEye_Left];
 	ovrPosef &right = ovr::hmdToEyeViewPose[ovrEye_Right];

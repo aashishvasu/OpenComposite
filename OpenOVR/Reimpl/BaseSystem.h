@@ -29,6 +29,7 @@ private:
 public:
 	// To be called by other base classes
 	void _OnPostFrame();
+	void _EnqueueEvent(const VREvent_t &e);
 private:
 	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t &last);
 

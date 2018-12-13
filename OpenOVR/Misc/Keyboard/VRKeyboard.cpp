@@ -9,6 +9,7 @@
 
 #include "Reimpl/static_bases.gen.h"
 #include "Reimpl/BaseCompositor.h"
+#include "Reimpl/BaseSystem.h"
 
 #include "Misc/ScopeGuard.h"
 
@@ -157,6 +158,8 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 	if (trigger && !trigger_last) {
 		wchar_t ch = caseMode == ECaseMode::LOWER ? key.ch : key.shift;
 
+		bool submitKeyEvent = false;
+
 		if (ch == '\x01' || ch == '\x02') {
 			// Shift
 			ECaseMode target = ch == '\x02' ? ECaseMode::LOCK : ECaseMode::SHIFT;
@@ -167,16 +170,29 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 			if (!text.empty()) {
 				text.erase(text.end() - 1);
 			}
+
+			submitKeyEvent = true;
 		}
 		else if (ch == '\x03') {
 			// done
 			closed = true;
+
+			if(!minimal)
+				SubmitEvent(VREvent_KeyboardCharInput, 0);
+
+			SubmitEvent(VREvent_KeyboardDone, 0);
 		}
 		else {
 			text += ch;
 
+			submitKeyEvent = true;
+
 			if (caseMode == ECaseMode::SHIFT)
 				caseMode = ECaseMode::LOWER;
+		}
+
+		if (submitKeyEvent) {
+			SubmitEvent(VREvent_KeyboardCharInput, minimal ? ch : 0);
 		}
 
 		dirty = true;
@@ -364,4 +380,44 @@ void VRKeyboard::Refresh() {
 
 	// Commit the texture to LibOVR
 	OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(*ovr::session, chain));
+}
+
+void VRKeyboard::SubmitEvent(vr::EVREventType ev, wchar_t ch) {
+	// Here's how (from some basic experimentation) the SteamVR keyboard appears to submit events:
+	// In minimal mode:
+	// * Pressing a key submits a KeyboardCharInput event, with the character stored in cNewInput
+	//    TODO find out how this is encoeded with unicode characters
+	// * Clicking of the keyboard submits a KeyboardClosed event, with cNewInput empty (all zeros)
+	// * Clicking 'done' submits a KeyboardDone event, with cNewInput empty
+	// In standard mode:
+	// * cNewInput is always empty
+	// * Pressing a key submits a KeyboardCharInput event (the app must read
+	//    the text via GetKeyboardText if it wants to know the keyboard contents, since cNewInput is empty)
+	// * Clicking of the keyboard submits a KeyboardClosed event
+	// * Clicking 'done' submits a KeyboardCharInput event, followed by a KeyboardDone event
+
+	VREvent_Keyboard_t data = { 0 };
+	data.uUserValue = userValue;
+
+	memset(data.cNewInput, 0, sizeof(data.cNewInput));
+
+	if (ch != 0) {
+		string utf8 = CHAR_CONV.to_bytes(ch);
+
+		if (utf8.length() > sizeof(data.cNewInput)) {
+			OOVR_ABORTF("Cannot write symbol '%s' with too many bytes (%d bytes UTF8)", utf8.c_str(), (int)utf8.length());
+		}
+
+		memcpy(data.cNewInput, utf8.c_str(), utf8.length());
+	}
+
+	VREvent_t evt = { 0 };
+	evt.eventType = ev;
+	evt.trackedDeviceIndex = 0; // This is accurate to SteamVR
+	evt.data.keyboard = data;
+
+	BaseSystem *sys = GetUnsafeBaseSystem();
+	if (sys) {
+		sys->_EnqueueEvent(evt);
+	}
 }
