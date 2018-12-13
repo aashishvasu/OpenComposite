@@ -97,6 +97,8 @@ public:
 
 	unsigned int GetFlags() override;
 
+	ID3D11Device *GetDevice() { return device; }
+
 protected:
 	void CheckCreateSwapChain(const vr::Texture_t * texture, bool cube);
 

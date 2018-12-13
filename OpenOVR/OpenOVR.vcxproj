@@ -182,6 +182,10 @@
     <ClInclude Include="Misc\ini.h" />
     <ClInclude Include="Misc\json\json-forwards.h" />
     <ClInclude Include="Misc\json\json.h" />
+    <ClInclude Include="Misc\Keyboard\KeyboardLayout.h" />
+    <ClInclude Include="Misc\Keyboard\SudoFontMeta.h" />
+    <ClInclude Include="Misc\Keyboard\VRKeyboard.h" />
+    <ClInclude Include="Misc\lodepng.h" />
     <ClInclude Include="Misc\ScopeGuard.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_002.h" />
     <ClInclude Include="OpenVR\custom_interfaces\IVRClientCore_003.h" />
@@ -275,6 +279,15 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Misc\jsoncpp.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Misc\Keyboard\KeyboardLayout.cpp" />
+    <ClCompile Include="Misc\Keyboard\SudoFontMeta.cpp" />
+    <ClCompile Include="Misc\Keyboard\VRKeyboard.cpp" />
+    <ClCompile Include="Misc\lodepng.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

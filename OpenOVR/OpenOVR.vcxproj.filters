@@ -46,6 +46,12 @@
     <Filter Include="Source Files\API">
       <UniqueIdentifier>{2d53b4d6-7cb2-43ff-af84-a81b5dc75d9b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Misc\Keyboard">
+      <UniqueIdentifier>{be25f652-0d16-40ed-ad75-f1f5c10140fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Misc\Keyboard">
+      <UniqueIdentifier>{0db7de1e-f45f-4ccf-a75f-73ce30cbc007}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\Misc\JSON">
       <UniqueIdentifier>{be34a601-0214-4875-9d41-64ae1dccb28f}</UniqueIdentifier>
     </Filter>
@@ -297,6 +303,18 @@
     <ClInclude Include="Misc\ScopeGuard.h">
       <Filter>Source Files\Misc</Filter>
     </ClInclude>
+    <ClInclude Include="Misc\lodepng.h">
+      <Filter>Header Files\Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\Keyboard\VRKeyboard.h">
+      <Filter>Header Files\Misc\Keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\Keyboard\SudoFontMeta.h">
+      <Filter>Header Files\Misc\Keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\Keyboard\KeyboardLayout.h">
+      <Filter>Header Files\Misc\Keyboard</Filter>
+    </ClInclude>
     <ClInclude Include="Misc\json\json.h">
       <Filter>Header Files\Misc\JSON</Filter>
     </ClInclude>
@@ -436,6 +454,18 @@
     </ClCompile>
     <ClCompile Include="Compositor\dx10compositor.cpp">
       <Filter>Source Files\Compositor</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\lodepng.cpp">
+      <Filter>Source Files\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\Keyboard\VRKeyboard.cpp">
+      <Filter>Source Files\Misc\Keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\Keyboard\SudoFontMeta.cpp">
+      <Filter>Source Files\Misc\Keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\Keyboard\KeyboardLayout.cpp">
+      <Filter>Source Files\Misc\Keyboard</Filter>
     </ClCompile>
     <ClCompile Include="Misc\jsoncpp.cpp">
       <Filter>Source Files\Misc</Filter>

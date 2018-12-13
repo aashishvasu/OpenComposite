@@ -72,6 +72,10 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 	layerHeaders.clear();
 	layerHeaders.push_back(sceneLayer);
 
+	if (keyboard) {
+		layerHeaders.push_back(keyboard->Update());
+	}
+
 	if (!oovr_global_configuration.EnableLayers()) {
 		layers = layerHeaders.data();
 		return static_cast<int>(layerHeaders.size());

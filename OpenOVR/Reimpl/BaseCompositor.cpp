@@ -375,6 +375,8 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 	return VRCompositorError_None;
 }
 
+DX11Compositor *BaseCompositor::dxcomp;
+
 Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize)
 {
 	Compositor* comp = nullptr;
@@ -392,6 +394,8 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, co
 			comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
 		else
 			comp = new DX10Compositor((ID3D10Texture2D*)texture->handle);
+
+		dxcomp = (DX11Compositor*) comp;
 
 		break;
 	}

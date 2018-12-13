@@ -1,8 +1,10 @@
 #pragma once
 #include "BaseCommon.h"
+#include "Misc/Keyboard/VRKeyboard.h"
 #include <map>
 #include <queue>
 #include <vector>
+#include <memory>
 
 using namespace vr; // TODO eliminate this
 
@@ -165,6 +167,9 @@ private:
 
 	// List of layers, with the first being reserved for the main scene
 	std::vector<ovrLayerHeader_*> layerHeaders;
+
+	// Virtual Keyboard
+	std::unique_ptr<VRKeyboard> keyboard;
 
 public:
 	// Destructor, since we have a map of pointers

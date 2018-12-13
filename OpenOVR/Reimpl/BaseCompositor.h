@@ -138,6 +138,9 @@ public:
 	/** Creates API specific Compositor */
 	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize);
 
+	// TODO clean this up, and make the keyboard work with OpenGL and Vulkan too
+	static DX11Compositor *dxcomp;
+
 public:
 	// OpenVR interface methods from here on:
 
