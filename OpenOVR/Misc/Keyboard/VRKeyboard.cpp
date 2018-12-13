@@ -336,13 +336,7 @@ void VRKeyboard::Refresh() {
 		print(x + (width - textWidth) / 2, y + padding, targetColour, label, false);
 	};
 
-	fillArea(
-		padding, padding,
-		desc.Width - padding * 2, keySize,
-		255, 255, 255
-	);
-
-	int keyAreaBaseY = padding + keySize + padding;
+	int keyAreaBaseY = minimal ? padding : padding + keySize + padding;
 	for (const KeyboardLayout::Key &key : layout->GetKeymap()) {
 		int x = padding + (int)((keySize + padding) * key.x);
 		int y = keyAreaBaseY + (int)((keySize + padding) * key.y);
@@ -350,13 +344,17 @@ void VRKeyboard::Refresh() {
 		drawKey(x, y, key);
 	}
 
-	pix_t targetColour = { 0 };
-	targetColour.r = 0;
-	targetColour.g = 0;
-	targetColour.b = 0;
-	targetColour.a = 255;
+	if (!minimal) {
+		fillArea(
+			padding, padding,
+			desc.Width - padding * 2, keySize,
+			255, 255, 255
+		);
 
-	print(padding * 2, padding * 2, targetColour, text);
+		pix_t targetColour = { 0, 0, 0, 255 };
+
+		print(padding * 2, padding * 2, targetColour, text);
+	}
 
 	D3D11_SUBRESOURCE_DATA init[] = {
 		{ pixels, sizeof(pix_t) * desc.Width, sizeof(pix_t) * desc.Width * desc.Height }

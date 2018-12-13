@@ -675,9 +675,6 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 	if (eLineInputMode != k_EGamepadTextInputLineModeSingleLine)
 		OOVR_ABORTF("Only single-line keyboard entry mode is currently supported (as opposed to ID=%d)", eLineInputMode);
 
-	if (bUseMinimalMode)
-		OOVR_ABORT("Only full keyboard entry is currently supported - minimal mode is not yet implemented");
-
 	// TODO use description
 	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax, bUseMinimalMode);
 
