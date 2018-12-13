@@ -49,6 +49,8 @@ static vector<char> loadResource(int rid, int type) {
 	return vector<char>(cstr, cstr + len);
 }
 
+std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;
+
 VRKeyboard::VRKeyboard(ID3D11Device *dev) : dev(dev) {
 	std::shared_ptr<BaseCompositor> cmp = GetBaseCompositor();
 	if (!cmp)

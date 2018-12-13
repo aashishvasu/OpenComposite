@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "KeyboardLayout.h"
+#include "VRKeyboard.h"
 
-#include <locale>
-#include <codecvt>
 #include <algorithm>
 #include <cwctype>
 
@@ -61,16 +60,14 @@ static wchar_t escapeChar(const wstring &str) {
 		return '\x02'; // Caps lock
 	}
 
-	wstring_convert<codecvt_utf8<wchar_t>> conv;
-	string utf = conv.to_bytes(str);
+	string utf = VRKeyboard::CHAR_CONV.to_bytes(str);
 
 	string msg = "Unknown escape sequence '" + utf + "'";
 	OOVR_ABORT(msg.c_str());
 }
 
 KeyboardLayout::KeyboardLayout(std::vector<char> data) {
-	wstring_convert<codecvt_utf8<wchar_t>> conv;
-	wstring contents = conv.from_bytes(string(data.data(), data.size()));
+	wstring contents = VRKeyboard::CHAR_CONV.from_bytes(string(data.data(), data.size()));
 
 	Key *last = nullptr;
 
@@ -142,7 +139,7 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data) {
 
 		if (op[0] == '.') {
 			wstring prop = op.substr(1);
-			string utfProp = conv.to_bytes(prop);
+			string utfProp = VRKeyboard::CHAR_CONV.to_bytes(prop);
 
 			if (!last) {
 				string msg = "Cannot set property '" + utfProp + "' without a prior key!";
@@ -158,7 +155,7 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data) {
 				continue;
 			}
 
-			string msg = "Unknown property property '" + utfProp + "' for key '" + conv.to_bytes(last->label) + "'";
+			string msg = "Unknown property property '" + utfProp + "' for key '" + VRKeyboard::CHAR_CONV.to_bytes(last->label) + "'";
 			OOVR_ABORT(msg.c_str());
 
 			continue;

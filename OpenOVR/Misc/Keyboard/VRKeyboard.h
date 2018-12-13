@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <codecvt>
 
 #include "SudoFontMeta.h"
 #include "KeyboardLayout.h"
@@ -27,6 +28,8 @@ public:
 		SHIFT,
 		LOCK,
 	};
+
+	static std::wstring_convert<std::codecvt_utf8<wchar_t>> CHAR_CONV;
 
 private:
 	ID3D11Device * const dev;
