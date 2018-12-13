@@ -39,7 +39,7 @@ context = dict()
 libparse.read_context(context, "../OpenVR/interfaces/vrtypes.h", "vr")
 
 bases_header_fn = "static_bases.gen.h"
-bases_header = open(bases_header_fn, "w")
+bases_header = open(bases_header_fn, "w", newline='\n')
 bases_header.write("#pragma once\n")
 bases_header.write("#include <memory>\n")
 
@@ -240,7 +240,7 @@ baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=]*))?
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
 cflag_spec = re.compile(r"\[(?P<name>\w+)\]\s*=\s*(?P<value>.*)")
 
-impl = open("stubs.gen.cpp", "w")
+impl = open("stubs.gen.cpp", "w", newline='\n')
 impl.write("#include \"stdafx.h\"\n")
 
 # The interfaces header contains OPENVR_FNTABLE_CALLTYPE, along with declarations
@@ -250,9 +250,9 @@ impl.write("#include \"%s\"\n" % bases_header_fn)
 
 # The resulting API headers, to be used in 3rd-party applications
 # Consider these CC-0 (public domain)
-api_cxx = open("../API/opencomposite.gen.h", "w")
-api_c = open("../API/opencomposite_capi.gen.h", "w")
-api_cs = open("../API/opencomposite_api.gen.cs", "w")
+api_cxx = open("../API/opencomposite.gen.h", "w", newline='\n')
+api_c = open("../API/opencomposite_capi.gen.h", "w", newline='\n')
+api_cs = open("../API/opencomposite_api.gen.cs", "w", newline='\n')
 api_interfaces = []
 
 api_cxx.write("#pragma once\n")
@@ -315,7 +315,7 @@ for base_interface in interfaces_list:
         continue
 
     header_filename = "GVR%s.gen.h" % base_interface
-    header = open(header_filename, "w")
+    header = open(header_filename, "w", newline='\n')
     header.write("#pragma once\n")
     header.write("#include \"BaseCommon.h\"\n")
 
