@@ -13,7 +13,7 @@
 
 class VRKeyboard {
 public:
-	VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength);
+	VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal);
 	~VRKeyboard();
 
 	std::wstring contents();
@@ -42,6 +42,7 @@ private:
 
 	uint64_t userValue; // Arbitary user data, to be passed into the SteamVR events
 	uint32_t maxLength;
+	bool minimal;
 
 	ovrTextureSwapChain chain;
 	ovrTextureSwapChainDesc chainDesc;

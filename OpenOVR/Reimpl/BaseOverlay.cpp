@@ -676,7 +676,7 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 		OOVR_ABORT("Only full keyboard entry is currently supported - minimal mode is not yet implemented");
 
 	// TODO use description
-	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax);
+	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax, bUseMinimalMode);
 
 	keyboard->contents(VRKeyboard::CHAR_CONV.from_bytes(pchExistingText));
 
