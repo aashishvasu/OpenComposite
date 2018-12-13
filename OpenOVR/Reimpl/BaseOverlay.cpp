@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseOverlay.h"
+#include "BaseSystem.h"
 #include "OVR_CAPI.h"
 #include <string>
 #include "Compositor/compositor.h"
@@ -684,6 +685,11 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 
 	keyboard->contents(VRKeyboard::CHAR_CONV.from_bytes(pchExistingText));
 
+	BaseSystem *system = GetUnsafeBaseSystem();
+	if (system) {
+		system->_BlockInputsUntilReleased();
+	}
+
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
@@ -709,6 +715,11 @@ void BaseOverlay::HideKeyboard() {
 
 	// Delete the keyboard instance
 	keyboard.reset();
+
+	BaseSystem *system = GetUnsafeBaseSystem();
+	if (system) {
+		system->_BlockInputsUntilReleased();
+	}
 }
 void BaseOverlay::SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToKeyboardTransform) {
 	STUBBED();

@@ -26,10 +26,13 @@ private:
 
 	HiddenAreaMesh_t hiddenAreaMeshes[2] = { 0 };
 
+	bool blockingInputsUntilRelease[2] = { false, false };
+
 public:
 	// To be called by other base classes
 	void _OnPostFrame();
 	void _EnqueueEvent(const VREvent_t &e);
+	void _BlockInputsUntilReleased();
 private:
 	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t &last);
 

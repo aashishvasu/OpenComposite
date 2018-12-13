@@ -595,6 +595,11 @@ void BaseSystem::_EnqueueEvent(const VREvent_t &e) {
 	events.push(e);
 }
 
+void BaseSystem::_BlockInputsUntilReleased() {
+	blockingInputsUntilRelease[0] = true;
+	blockingInputsUntilRelease[1] = true;
+}
+
 float BaseSystem::SGetIpd() {
 	ovrPosef &left = ovr::hmdToEyeViewPose[ovrEye_Left];
 	ovrPosef &right = ovr::hmdToEyeViewPose[ovrEye_Right];
@@ -870,19 +875,33 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 	static uint32_t unPacketNum = 0;
 	controllerState->unPacketNum = unPacketNum++;
 
+	if (blockingInputsUntilRelease[id]) {
+		if (Buttons)
+			goto blockInput;
+
+		// Inputs released, permit input again
+		blockingInputsUntilRelease[id] = false;
+	}
+
 	BaseOverlay *overlay = GetUnsafeBaseOverlay();
 	if (overlay) {
 		EVREye side = id == ovrHand_Left ? Eye_Left : Eye_Right;
 		bool passToApp = overlay->_HandleOverlayInput(side, controllerDeviceIndex, *controllerState);
 
 		if (!passToApp) {
-			uint32_t packet = controllerState->unPacketNum;
-			memset(controllerState, 0, controllerStateSize);
-			controllerState->unPacketNum = packet;
+			goto blockInput;
 
 			// TODO pass this to IsInputFocusCapturedByAnotherProcess
 		}
 	}
+
+	return true;
+
+blockInput:
+
+	uint32_t packet = controllerState->unPacketNum;
+	memset(controllerState, 0, controllerStateSize);
+	controllerState->unPacketNum = packet;
 
 	return true;
 }
