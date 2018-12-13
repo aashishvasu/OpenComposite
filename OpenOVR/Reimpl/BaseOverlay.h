@@ -171,6 +171,9 @@ private:
 	// Virtual Keyboard
 	std::unique_ptr<VRKeyboard> keyboard;
 
+	// Cached copy of the keyboard contents, available after it is closed
+	std::string keyboardCache;
+
 	// True if we're modifying the input in any way
 	bool usingInput;
 

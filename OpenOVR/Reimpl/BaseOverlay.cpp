@@ -686,7 +686,7 @@ EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayH
 	STUBBED();
 }
 uint32_t BaseOverlay::GetKeyboardText(char *pchText, uint32_t cchText) {
-	string str = VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents());
+	string str = keyboard ? VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents()) : keyboardCache;
 
 	// FFS, strncpy is secure.
 	strncpy_s(pchText, cchText, str.c_str(), cchText);
@@ -698,6 +698,11 @@ uint32_t BaseOverlay::GetKeyboardText(char *pchText, uint32_t cchText) {
 	return (uint32_t)strlen(pchText);
 }
 void BaseOverlay::HideKeyboard() {
+	// First, if the keyboard is currently open, cache it's contents
+	if (keyboard) {
+		keyboardCache = VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents());
+	}
+
 	// Delete the keyboard instance
 	keyboard.reset();
 }
