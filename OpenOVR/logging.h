@@ -5,9 +5,10 @@ void oovr_log_raw_format(const char *file, long line, const char *func, const ch
 #define OOVR_LOG(msg) oovr_log_raw(__FILE__, __LINE__, __FUNCTION__, msg);
 #define OOVR_LOGF(...) oovr_log_raw_format(__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
 
-void oovr_abort_raw(const char *file, long line, const char *func, const char *msg, const char *title = nullptr);
+void oovr_abort_raw(const char *file, long line, const char *func, const char *msg, const char *title = nullptr, ...);
 #define OOVR_ABORT(msg) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg); throw msg; }
 #define OOVR_ABORT_T(msg, title) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, title); throw msg; }
+#define OOVR_ABORTF(msg, ...) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, __VA_ARGS__); throw msg; }
 
 // DirectX API validation helpers
 #define OOVR_FAILED_DX_ABORT(expression) \

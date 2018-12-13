@@ -29,7 +29,7 @@ void oovr_log_raw_format(const char *file, long line, const char *func, const ch
 	va_end(args);
 }
 
-void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title) {
+void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title, ...) {
 	if (title == nullptr) {
 		title = "OpenComposite Error - info in log";
 		OOVR_LOG("Abort!");
@@ -38,12 +38,18 @@ void oovr_abort_raw(const char * file, long line, const char * func, const char 
 		OOVR_LOG(title);
 	}
 
-	oovr_log_raw(file, line, func, msg);
+	va_list args;
+	va_start(args, title);
+	char buff[2048];
+	vsnprintf(buff, sizeof(buff), msg, args);
+	buff[sizeof(buff) - 1] = 0;
+
+	oovr_log_raw(file, line, func, buff);
 
 	// Ensure everything gets written
 	stream << flush;
 
-	MessageBoxA(NULL, msg, title, MB_OK);
+	MessageBoxA(NULL, buff, title, MB_OK);
 	exit(1);
 }
 
