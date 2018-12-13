@@ -270,10 +270,14 @@ void VRKeyboard::Refresh() {
 			width = desc.Width - padding - x;
 		}
 
+		bool highlighted = (key.ch == '\x01' && caseMode == ECaseMode::SHIFT)
+			|| (key.ch == '\x02' && caseMode == ECaseMode::LOCK);
+		int bkg_c = highlighted ? 255 : 80;
+
 		fillArea(
 			x, y,
 			width, height,
-			80, 80, 80
+			bkg_c, bkg_c, bkg_c
 		);
 
 		if (selected[vr::Eye_Left] == key.id) {
@@ -293,6 +297,10 @@ void VRKeyboard::Refresh() {
 		}
 
 		pix_t targetColour = { 255, 255, 255, 255 };
+
+		if (highlighted) {
+			targetColour = { 0, 0, 0, 255 };
+		}
 
 		wstring label = caseMode == ECaseMode::LOWER ? key.label : key.labelShift;
 		int textWidth = font->Width(label);
