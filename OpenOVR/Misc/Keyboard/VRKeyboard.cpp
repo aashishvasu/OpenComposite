@@ -135,6 +135,10 @@ ovrLayerHeader * VRKeyboard::Update() {
 	return &layer.Header;
 }
 
+void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t state, float time) {
+	// TODO: Implement
+}
+
 struct pix_t {
 	uint8_t r, g, b, a;
 };

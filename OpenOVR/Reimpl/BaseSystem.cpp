@@ -5,6 +5,7 @@
 #include "libovr_wrapper.h"
 #include "convert.h"
 #include "BaseCompositor.h"
+#include "BaseOverlay.h"
 #include "Misc/Haptics.h"
 #include "Misc/Config.h"
 #include "static_bases.gen.h"
@@ -864,6 +865,20 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 	// TODO do this properly
 	static uint32_t unPacketNum = 0;
 	controllerState->unPacketNum = unPacketNum++;
+
+	BaseOverlay *overlay = GetUnsafeBaseOverlay();
+	if (overlay) {
+		EVREye side = id == ovrHand_Left ? Eye_Left : Eye_Right;
+		bool passToApp = overlay->_HandleOverlayInput(side, controllerDeviceIndex, *controllerState);
+
+		if (!passToApp) {
+			uint32_t packet = controllerState->unPacketNum;
+			memset(controllerState, 0, controllerStateSize);
+			controllerState->unPacketNum = packet;
+
+			// TODO pass this to IsInputFocusCapturedByAnotherProcess
+		}
+	}
 
 	return true;
 }

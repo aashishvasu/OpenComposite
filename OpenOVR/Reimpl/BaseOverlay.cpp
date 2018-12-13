@@ -72,8 +72,11 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 	layerHeaders.clear();
 	layerHeaders.push_back(sceneLayer);
 
+	usingInput = false;
+
 	if (keyboard) {
 		layerHeaders.push_back(keyboard->Update());
+		usingInput = true;
 	}
 
 	if (!oovr_global_configuration.EnableLayers()) {
@@ -106,6 +109,17 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 
 	layers = layerHeaders.data();
 	return static_cast<int>(layerHeaders.size());
+}
+
+bool BaseOverlay::_HandleOverlayInput(EVREye side, TrackedDeviceIndex_t index, VRControllerState_t state) {
+	if (!usingInput)
+		return true;
+
+	if (!keyboard)
+		return true;
+
+	keyboard->HandleOverlayInput(side, state, (float)ovr_GetTimeInSeconds());
+	return false;
 }
 
 EVROverlayError BaseOverlay::FindOverlay(const char *pchOverlayKey, VROverlayHandle_t * pOverlayHandle) {

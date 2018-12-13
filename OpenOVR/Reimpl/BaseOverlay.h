@@ -171,12 +171,18 @@ private:
 	// Virtual Keyboard
 	std::unique_ptr<VRKeyboard> keyboard;
 
+	// True if we're modifying the input in any way
+	bool usingInput;
+
 public:
 	// Destructor, since we have a map of pointers
 	~BaseOverlay();
 
 	// Builds the collection of layers to be submitted to LibOVR
 	int _BuildLayers(ovrLayerHeader_ *sceneLayer, ovrLayerHeader_ const* const*& result);
+
+	// If an overlay needs input, this grabs the input and returns whether the input should preceed to the application
+	bool _HandleOverlayInput(vr::EVREye role, vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t state);
 
 	// ---------------------------------------------
 	// Overlay management methods

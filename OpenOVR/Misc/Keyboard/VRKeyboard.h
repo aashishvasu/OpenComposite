@@ -20,6 +20,8 @@ public:
 
 	ovrLayerHeader * Update();
 
+	void HandleOverlayInput(vr::EVREye controllerDeviceIndex, vr::VRControllerState_t state, float time);
+
 	enum ECaseMode {
 		LOWER,
 		SHIFT,
