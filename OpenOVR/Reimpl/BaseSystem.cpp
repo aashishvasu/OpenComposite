@@ -177,7 +177,7 @@ void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin origin,
 		TrackingUniverseSeated : TrackingUniverseStanding;
 
 	if (current != origin)
-		OOVR_ABORT("Origin mismatch - current %d, passed %d", current, origin);
+		OOVR_ABORTF("Origin mismatch - current %d, passed %d", current, origin);
 
 	ovrTrackingState trackingState = { 0 };
 
