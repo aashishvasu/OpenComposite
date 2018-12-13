@@ -182,6 +182,12 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 
 			SubmitEvent(VREvent_KeyboardDone, 0);
 		}
+		else if (!minimal && ch == '\t') {
+			// Silently soak up tabs for now
+		}
+		else if (!minimal && ch == '\n') {
+			// Silently soak up newlines for now
+		}
 		else {
 			text += ch;
 
