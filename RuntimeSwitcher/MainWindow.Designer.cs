@@ -37,6 +37,7 @@ namespace RuntimeSwitcher
             this.updatesLabel = new System.Windows.Forms.Label();
             this.doUpdate = new System.Windows.Forms.Button();
             this.useSteamVR = new System.Windows.Forms.Button();
+            this.configureApps = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -61,7 +62,7 @@ namespace RuntimeSwitcher
             // 
             this.useOpenComposite.Location = new System.Drawing.Point(16, 30);
             this.useOpenComposite.Name = "useOpenComposite";
-            this.useOpenComposite.Size = new System.Drawing.Size(334, 23);
+            this.useOpenComposite.Size = new System.Drawing.Size(253, 23);
             this.useOpenComposite.TabIndex = 2;
             this.useOpenComposite.Text = "Switch to OpenComposite";
             this.useOpenComposite.UseVisualStyleBackColor = true;
@@ -115,11 +116,23 @@ namespace RuntimeSwitcher
             this.useSteamVR.UseVisualStyleBackColor = true;
             this.useSteamVR.Click += new System.EventHandler(this.useSteamVR_Click);
             // 
+            // configureApps
+            // 
+            this.configureApps.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.configureApps.Location = new System.Drawing.Point(275, 30);
+            this.configureApps.Name = "configureApps";
+            this.configureApps.Size = new System.Drawing.Size(75, 23);
+            this.configureApps.TabIndex = 8;
+            this.configureApps.Text = "Configure";
+            this.configureApps.UseVisualStyleBackColor = true;
+            this.configureApps.Click += new System.EventHandler(this.configureApps_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(398, 183);
+            this.ClientSize = new System.Drawing.Size(369, 183);
+            this.Controls.Add(this.configureApps);
             this.Controls.Add(this.useSteamVR);
             this.Controls.Add(this.doUpdate);
             this.Controls.Add(this.updatesLabel);
@@ -148,6 +161,7 @@ namespace RuntimeSwitcher
         private System.Windows.Forms.Label updatesLabel;
         private System.Windows.Forms.Button doUpdate;
         private System.Windows.Forms.Button useSteamVR;
+        private System.Windows.Forms.Button configureApps;
     }
 }
 

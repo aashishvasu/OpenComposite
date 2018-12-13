@@ -21,8 +21,12 @@ namespace RuntimeSwitcher
         private string ocRuntimePath;
         private string ocBinPath;
         private string revisionFilePath;
+        private string appListPath;
+        private string appConfigPath;
 
         private SemaphoreSlim dllDownloadMutex = new SemaphoreSlim(1);
+
+        private AppListForm appList;
 
         public MainWindow()
         {
@@ -30,6 +34,8 @@ namespace RuntimeSwitcher
             ocRuntimePath += Path.DirectorySeparatorChar + "Runtime";
             ocBinPath = ocRuntimePath + Path.DirectorySeparatorChar + "bin";
             revisionFilePath = ocRuntimePath + Path.DirectorySeparatorChar + "revision.txt";
+            appListPath = ocBinPath + Path.DirectorySeparatorChar + "applist.json";
+            appConfigPath = ocBinPath + Path.DirectorySeparatorChar + "apps-config.json";
 
             if (!Directory.Exists(ocRuntimePath)) {
                 Directory.CreateDirectory(ocRuntimePath);
@@ -230,6 +236,18 @@ namespace RuntimeSwitcher
             // Apply the changes and update the UI
             config.Runtimes = rts;
             UpdateStatus();
+        }
+
+        private void configureApps_Click(object sender, EventArgs e)
+        {
+            if (appList != null && !appList.IsDisposed)
+            {
+                appList.Focus();
+                return;
+            }
+
+            appList = new AppListForm(appListPath, appConfigPath);
+            appList.Show(this);
         }
     }
 }
