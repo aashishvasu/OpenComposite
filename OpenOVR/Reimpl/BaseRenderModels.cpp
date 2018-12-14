@@ -286,8 +286,14 @@ EVRRenderModelError BaseRenderModels::LoadTextureD3D11_Async(TextureID_t texture
 EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t textureId, void * pDstTexture) {
 	ID3D11Texture2D *output = (ID3D11Texture2D*)pDstTexture;
 
+	struct pix_t {
+		uint8_t r, g, b, a;
+	};
+
 	// Grab the desired colour
 	vr::HmdColor_t colour = oovr_global_configuration.HandColour();
+
+	pix_t pixColour = { colour.r * 255, colour.g * 255, colour.b * 255, 255 };
 
 	// Since we don't know what the map flags are, make an identical texture and copy across
 
@@ -303,16 +309,16 @@ EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t tex
 
 	// Quite conveniently, HmdColor_t happens to have the perfect layout for this
 	int px_count = desc.Width * desc.Height;
-	vr::HmdColor_t *pixels = new vr::HmdColor_t[px_count];
+	pix_t *pixels = new pix_t[px_count];
 	for (int i = 0; i < px_count; i++) {
-		pixels[i] = colour;
+		pixels[i] = pixColour;
 	}
 
 	// Cross our fingers it's a four-byte RGBA format.
 	int count = desc.MipLevels * desc.ArraySize;
 	D3D11_SUBRESOURCE_DATA *init = new D3D11_SUBRESOURCE_DATA[count];
 	for (int i = 0; i < count; i++) {
-		init[i] = { &pixels, sizeof(uint32_t), 0 };
+		init[i] = { pixels, sizeof(uint32_t), 0 };
 	}
 
 	ID3D11Texture2D *tempTex;
