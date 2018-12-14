@@ -93,7 +93,7 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 	// 50cm in front and 20cm down from the player's nose,
 	// fixed relative to their torso.
 	layer.QuadPoseCenter.Position.x = 0.00f;
-	layer.QuadPoseCenter.Position.y = 0; // -0.20f;
+	layer.QuadPoseCenter.Position.y = 0.00f; // -0.20f;
 	layer.QuadPoseCenter.Position.z = -0.50f;
 	layer.QuadPoseCenter.Orientation.x = 0;
 	layer.QuadPoseCenter.Orientation.y = 0;
@@ -111,6 +111,16 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 
 	font = make_unique<SudoFontMeta>(loadResource(RES_O_FNT_UBUNTU, RES_T_FNTMETA), loadResource(RES_O_FNT_UBUNTU, RES_T_PNG));
 	layout = make_unique<KeyboardLayout>(loadResource(RES_O_KB_EN_GB, RES_T_KBLAYOUT));
+
+	if (!DBG_STUCK_TO_FACE) {
+		BaseCompositor *comp = GetUnsafeBaseCompositor();
+		vr::TrackedDevicePose_t spose = { 0 };
+		comp->GetLastPoses(&spose, 1, nullptr, 0);
+
+		OVR::Posef offset(OVR::Quatf::Identity(), OVR::Vector3f(0.0f, 0.0f, -1.0f));
+		OVR::Posef headPose = S2O_om34_pose(spose.mDeviceToAbsoluteTracking);
+		layer.QuadPoseCenter = headPose * offset;
+	}
 }
 
 VRKeyboard::~VRKeyboard() {
