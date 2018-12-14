@@ -56,8 +56,8 @@ static vector<char> loadResource(int rid, int type) {
 
 std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;
 
-VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal)
-	: dev(dev), userValue(userValue), maxLength(maxLength), minimal(minimal) {
+VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t eventDispatch)
+	: dev(dev), userValue(userValue), maxLength(maxLength), minimal(minimal), eventDispatch(eventDispatch) {
 
 	std::shared_ptr<BaseCompositor> cmp = GetBaseCompositor();
 	if (!cmp)
@@ -440,8 +440,5 @@ void VRKeyboard::SubmitEvent(vr::EVREventType ev, wchar_t ch) {
 	evt.trackedDeviceIndex = 0; // This is accurate to SteamVR
 	evt.data.keyboard = data;
 
-	BaseSystem *sys = GetUnsafeBaseSystem();
-	if (sys) {
-		sys->_EnqueueEvent(evt);
-	}
+	eventDispatch(evt);
 }

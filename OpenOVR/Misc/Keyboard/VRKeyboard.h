@@ -7,13 +7,16 @@
 #include <string>
 #include <memory>
 #include <codecvt>
+#include <functional>
 
 #include "SudoFontMeta.h"
 #include "KeyboardLayout.h"
 
 class VRKeyboard {
 public:
-	VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal);
+	typedef std::function<void(vr::VREvent_t)> eventDispatch_t;
+
+	VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t dispatch);
 	~VRKeyboard();
 
 	std::wstring contents();
@@ -48,6 +51,7 @@ private:
 	uint64_t userValue; // Arbitary user data, to be passed into the SteamVR events
 	uint32_t maxLength;
 	bool minimal;
+	eventDispatch_t eventDispatch;
 
 	ovrTextureSwapChain chain;
 	ovrTextureSwapChainDesc chainDesc;

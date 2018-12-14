@@ -634,8 +634,9 @@ void BaseOverlay::ShowDashboard(const char *pchOverlayToShow) {
 TrackedDeviceIndex_t BaseOverlay::GetPrimaryDashboardDevice() {
 	STUBBED();
 }
-EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
-	const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
+EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
+	const char * pchDescription, uint32_t unCharMax, const char * pchExistingText, bool bUseMinimalMode, uint64_t uUserValue,
+	VRKeyboard::eventDispatch_t eventDispatch) {
 
 	if (!BaseCompositor::dxcomp)
 		OOVR_ABORT("Keyboard currently only available on DX11 and DX10 games");
@@ -647,7 +648,7 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 		OOVR_ABORTF("Only single-line keyboard entry mode is currently supported (as opposed to ID=%d)", eLineInputMode);
 
 	// TODO use description
-	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax, bUseMinimalMode);
+	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax, bUseMinimalMode, eventDispatch);
 
 	keyboard->contents(VRKeyboard::CHAR_CONV.from_bytes(pchExistingText));
 
@@ -657,6 +658,18 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 	}
 
 	return VROverlayError_None;
+}
+EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
+	const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
+
+	VRKeyboard::eventDispatch_t dispatch = [](VREvent_t ev) {
+		BaseSystem *sys = GetUnsafeBaseSystem();
+		if (sys) {
+			sys->_EnqueueEvent(ev);
+		}
+	};
+
+	return ShowKeyboardWithDispatch(eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText, bUseMinimalMode, uUserValue, dispatch);
 }
 EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
 	STUBBED();

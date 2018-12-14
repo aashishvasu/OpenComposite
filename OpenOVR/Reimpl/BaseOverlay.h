@@ -177,6 +177,12 @@ private:
 	// True if we're modifying the input in any way
 	bool usingInput;
 
+	virtual EVROverlayError ShowKeyboardWithDispatch(
+		EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
+		const char *pchDescription, uint32_t unCharMax, const char *pchExistingText,
+		bool bUseMinimalMode, uint64_t uUserValue,
+		VRKeyboard::eventDispatch_t eventDispatch);
+
 public:
 	// Destructor, since we have a map of pointers
 	~BaseOverlay();
