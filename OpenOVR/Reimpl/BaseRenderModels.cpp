@@ -324,6 +324,7 @@ EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t tex
 	// Cleanup
 	tempTex->Release();
 	delete init;
+	delete[] pixels;
 	context->Release();
 	device->Release();
 
