@@ -674,8 +674,18 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 
 	return ShowKeyboardWithDispatch(eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText, bUseMinimalMode, uUserValue, dispatch);
 }
-EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
-	STUBBED();
+EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle,
+	EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
+	const char *pchDescription, uint32_t unCharMax, const char *pchExistingText,
+	bool bUseMinimalMode, uint64_t uUserValue) {
+
+	USEH();
+
+	VRKeyboard::eventDispatch_t dispatch = [overlay](VREvent_t ev) {
+		overlay->eventQueue.push(ev);
+	};
+
+	return ShowKeyboardWithDispatch(eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText, bUseMinimalMode, uUserValue, dispatch);
 }
 uint32_t BaseOverlay::GetKeyboardText(char *pchText, uint32_t cchText) {
 	string str = keyboard ? VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents()) : keyboardCache;
