@@ -159,9 +159,6 @@ private:
 	// Name-to-overlay mapping
 	std::map<std::string, OverlayData*> overlays;
 
-	// Events
-	std::queue<vr::VREvent_t> eventQueue;
-
 	// This doesn't do a whole lot, since OOVR does this for every overlay
 	VROverlayHandle_t highQualityOverlay;
 

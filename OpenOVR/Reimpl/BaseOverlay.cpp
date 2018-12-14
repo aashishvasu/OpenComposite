@@ -34,6 +34,7 @@ public:
 	bool highQuality = false;
 	uint64_t flags = 0;
 	float texelAspect = 1;
+	std::queue<VREvent_t> eventQueue;
 
 	// Rendering
 	Texture_t texture = {};
@@ -491,13 +492,15 @@ EVROverlayError BaseOverlay::GetTransformForOverlayCoordinates(VROverlayHandle_t
 	STUBBED();
 }
 bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREvent_t *pEvent, uint32_t eventSize) {
+	USEHB();
+
 	memset(pEvent, 0, eventSize);
 
-	if (eventQueue.empty())
+	if (overlay->eventQueue.empty())
 		return false;
 
-	VREvent_t e = eventQueue.front();
-	eventQueue.pop();
+	VREvent_t e = overlay->eventQueue.front();
+	overlay->eventQueue.pop();
 
 	memcpy(pEvent, &e, min(sizeof(e), eventSize));
 
