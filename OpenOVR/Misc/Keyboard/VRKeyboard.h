@@ -33,6 +33,8 @@ public:
 
 	bool IsClosed() { return closed; }
 
+	void SetTransform(vr::HmdMatrix34_t transform);
+
 private:
 	ID3D11Device * const dev;
 	ID3D11DeviceContext *ctx;

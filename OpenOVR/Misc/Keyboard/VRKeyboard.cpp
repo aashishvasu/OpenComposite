@@ -12,6 +12,7 @@
 #include "Reimpl/BaseSystem.h"
 
 #include "Misc/ScopeGuard.h"
+#include "convert.h"
 
 #include "resources.h"
 
@@ -24,6 +25,9 @@
 
 using namespace std;
 using namespace OVR;
+
+// If you're working on the keyboard, it may be useful to have it headlocked so you can easily see it in the Oculus mirror
+static const bool DBG_STUCK_TO_FACE = false;
 
 static vector<char> loadResource(int rid, int type) {
 	// Open our OBJ file
@@ -84,7 +88,7 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 	// Create HUD layer, fixed to the player's torso
 	memset(&layer, 0, sizeof(layer));
 	layer.Header.Type = ovrLayerType_Quad;
-	layer.Header.Flags = ovrLayerFlag_HeadLocked; // | ovrLayerFlag_HighQuality;;
+	layer.Header.Flags = DBG_STUCK_TO_FACE ? ovrLayerFlag_HeadLocked : 0; // | ovrLayerFlag_HighQuality;;
 	layer.ColorTexture = chain;
 	// 50cm in front and 20cm down from the player's nose,
 	// fixed relative to their torso.
@@ -235,6 +239,12 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 
 	selected[side] = target;
 	dirty = true;
+}
+
+void VRKeyboard::SetTransform(HmdMatrix34_t transform) {
+	ovrPosef pose = S2O_om34_pose(transform);
+
+	layer.QuadPoseCenter = pose;
 }
 
 struct pix_t {

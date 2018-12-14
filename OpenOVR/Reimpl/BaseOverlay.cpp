@@ -691,7 +691,15 @@ void BaseOverlay::HideKeyboard() {
 	}
 }
 void BaseOverlay::SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToKeyboardTransform) {
-	STUBBED();
+	if (!keyboard)
+		OOVR_ABORT("Cannot set keyboard position when the keyboard is closed!");
+
+	BaseCompositor *compositor = GetUnsafeBaseCompositor();
+	if (compositor && eTrackingOrigin != compositor->GetTrackingSpace()) {
+		OOVR_ABORTF("Origin mismatch - current %d, requested %d", compositor->GetTrackingSpace(), eTrackingOrigin);
+	}
+
+	keyboard->SetTransform(*pmatTrackingOriginToKeyboardTransform);
 }
 void BaseOverlay::SetKeyboardPositionForOverlay(VROverlayHandle_t ulOverlayHandle, HmdRect2_t avoidRect) {
 	STUBBED();
