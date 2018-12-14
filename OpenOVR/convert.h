@@ -8,3 +8,4 @@ void O2S_v3f(const ovrVector3f &in, vr::HmdVector3_t &out);
 void O2S_om34(const OVR::Matrix4f &in, vr::HmdMatrix34_t &out);
 
 void S2O_om44(const vr::HmdMatrix34_t & in, OVR::Matrix4f & out);
+ovrPosef S2O_om34_pose(const vr::HmdMatrix34_t & in);

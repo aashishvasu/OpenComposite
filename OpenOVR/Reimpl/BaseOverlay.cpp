@@ -447,38 +447,7 @@ EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOve
 	//  subtract the floor position to match it. This shouldn't usually be an issue though, as I can't
 	//  imagine many apps will use a different origin for their overlays.
 
-	Mat4 otm;
-	S2O_om44(*pmatTrackingOriginToOverlayTransform, otm);
-
-	// Extract scaling from the matrix
-	// If a scaled quaternion is passed into the Quatf constructor, it explodes
-	// Thus we need to remove the scaling
-	// See https://math.stackexchange.com/a/1463487 for how this works
-	// Translation is (M[0][3], M[1][3], M[2][3])
-
-	auto getScaleForCol = [](const Mat4 &m, int col) -> float {
-		return Vec3(m.M[0][col], m.M[1][col], m.M[2][col]).Length();
-	};
-
-	auto multScaleForCol = [](Mat4 &m, int col, float mul) {
-		m.M[0][col] *= mul;
-		m.M[1][col] *= mul;
-		m.M[2][col] *= mul;
-	};
-
-	float scaleX = getScaleForCol(otm, 0);
-	float scaleY = getScaleForCol(otm, 1);
-	float scaleZ = getScaleForCol(otm, 2);
-
-	multScaleForCol(otm, 0, 1 / scaleX);
-	multScaleForCol(otm, 1, 1 / scaleY);
-	multScaleForCol(otm, 2, 1 / scaleZ);
-
-	// TODO use this to modify the scaling for the panel in the world?
-	// More testing is needed to see how this works
-
-	overlay->layerQuad.QuadPoseCenter.Position = otm.GetTranslation();
-	overlay->layerQuad.QuadPoseCenter.Orientation = OVR::Quatf(otm);
+	overlay->layerQuad.QuadPoseCenter = S2O_om34_pose(*pmatTrackingOriginToOverlayTransform);
 
 	return VROverlayError_None;
 }
