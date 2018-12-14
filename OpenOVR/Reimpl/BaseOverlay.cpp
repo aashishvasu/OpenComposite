@@ -637,9 +637,6 @@ TrackedDeviceIndex_t BaseOverlay::GetPrimaryDashboardDevice() {
 EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
 	const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue) {
 
-	// Disabled until it's done:
-	OOVR_ABORT("Keyboard still in development");
-
 	if (!BaseCompositor::dxcomp)
 		OOVR_ABORT("Keyboard currently only available on DX11 and DX10 games");
 
