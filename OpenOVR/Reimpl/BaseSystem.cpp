@@ -420,6 +420,7 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t dev
 		return
 			ButtonMaskFromId(k_EButton_ApplicationMenu) |
 			ButtonMaskFromId(k_EButton_Grip) |
+			ButtonMaskFromId(k_EButton_Axis2) |
 			ButtonMaskFromId(k_EButton_DPad_Left) |
 			ButtonMaskFromId(k_EButton_DPad_Up) |
 			ButtonMaskFromId(k_EButton_DPad_Down) |
@@ -814,6 +815,7 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 	// TODO what should the cutoff be?
 	if (inputState.HandTrigger[id] >= 0.4) {
 		Buttons |= ButtonMaskFromId(k_EButton_Grip);
+		Buttons |= ButtonMaskFromId(k_EButton_Axis2);
 	}
 	if (inputState.IndexTrigger[id] >= 0.4) {
 		Buttons |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
