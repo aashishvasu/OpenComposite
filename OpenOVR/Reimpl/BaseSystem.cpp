@@ -25,6 +25,8 @@
 using namespace std;
 
 BaseSystem::BaseSystem() {
+	// Set the default origin
+	_SetTrackingOrigin(origin);
 }
 
 void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
@@ -192,14 +194,8 @@ bool BaseSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop) {
 	return false; // Always render in direct mode
 }
 
-void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin origin, float predictedSecondsToPhotonsFromNow,
+void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigin, float predictedSecondsToPhotonsFromNow,
 	TrackedDevicePose_t * poseArray, uint32_t poseArrayCount) {
-
-	ETrackingUniverseOrigin current = ovr_GetTrackingOriginType(*ovr::session) == ovrTrackingOrigin_EyeLevel ?
-		TrackingUniverseSeated : TrackingUniverseStanding;
-
-	if (current != origin)
-		OOVR_ABORTF("Origin mismatch - current %d, passed %d", current, origin);
 
 	ovrTrackingState trackingState = { 0 };
 
@@ -210,7 +206,7 @@ void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin origin,
 	}
 
 	for (uint32_t i = 0; i < poseArrayCount; i++) {
-		BaseCompositor::GetSinglePose(i, &poseArray[i], trackingState);
+		BaseCompositor::GetSinglePose(toOrigin, i, &poseArray[i], trackingState);
 	}
 }
 
@@ -650,7 +646,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 	TrackedDevicePose_t pose = { 0 };
 	BaseCompositor *compositor = GetUnsafeBaseCompositor();
 	if (compositor) {
-		compositor->GetSinglePoseRendering(hand, &pose);
+		compositor->GetSinglePoseRendering(origin, hand, &pose);
 	}
 
 	// Check each possible button, and fire an event if it changed
@@ -934,9 +930,7 @@ bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr:
 	vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t * pTrackedDevicePose) {
 
 	ovrTrackingState trackingState = ovr_GetTrackingState(*ovr::session, 0 /* Most recent */, ovrTrue);
-	BaseCompositor::GetSinglePose(unControllerDeviceIndex, pTrackedDevicePose, trackingState);
-
-	// TODO handle eOrigin
+	BaseCompositor::GetSinglePose(eOrigin, unControllerDeviceIndex, pTrackedDevicePose, trackingState);
 
 	return GetControllerState(unControllerDeviceIndex, pControllerState, unControllerStateSize);
 }
@@ -1015,4 +1009,33 @@ void BaseSystem::PerformanceTestEnableCapture(bool bEnable) {
 
 void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel) {
 	STUBBED();
+}
+
+// Tracking origin stuff
+void BaseSystem::_SetTrackingOrigin(ETrackingUniverseOrigin eOrigin) {
+	origin = eOrigin;
+
+	ovrTrackingOrigin ovrOrigin = ovrTrackingOrigin_FloorLevel;
+	if (eOrigin == TrackingUniverseSeated) {
+		ovrOrigin = ovrTrackingOrigin_EyeLevel;
+	}
+
+	OOVR_FAILED_OVR_ABORT(ovr_SetTrackingOriginType(*ovr::session, ovrOrigin));
+}
+
+ETrackingUniverseOrigin BaseSystem::_GetTrackingOrigin() {
+	return origin;
+}
+
+HmdMatrix34_t BaseSystem::_PoseToTrackingSpace(ETrackingUniverseOrigin toOrigin, ovrPosef pose) {
+	if (toOrigin == origin) {
+		OVR::Posef thePose(pose);
+		OVR::Matrix4f hmdTransform(thePose);
+
+		HmdMatrix34_t result;
+		O2S_om34(hmdTransform, result);
+		return result;
+	}
+
+	OOVR_ABORTF("Origin mismatch - current %d, passed %d", origin, toOrigin);
 }

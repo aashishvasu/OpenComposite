@@ -245,8 +245,12 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 	return GetLastPoses(renderPoseArray, renderPoseArrayCount, gamePoseArray, gamePoseArrayCount);
 }
 
-void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose,
+void BaseCompositor::GetSinglePose(
+	vr::ETrackingUniverseOrigin origin,
+	vr::TrackedDeviceIndex_t index,
+	vr::TrackedDevicePose_t* pose,
 	ovrTrackingState &state) {
+
 	memset(pose, 0, sizeof(TrackedDevicePose_t));
 
 	ovrPoseStatef ovrPose;
@@ -296,14 +300,11 @@ void BaseCompositor::GetSinglePose(vr::TrackedDeviceIndex_t index, vr::TrackedDe
 	O2S_v3f(ovrPose.LinearVelocity, pose->vVelocity);
 	O2S_v3f(ovrPose.AngularVelocity, pose->vAngularVelocity);
 
-	Posef thePose(ovrPose.ThePose);
-	Matrix4f hmdTransform(thePose);
-
-	O2S_om34(hmdTransform, pose->mDeviceToAbsoluteTracking);
+	pose->mDeviceToAbsoluteTracking = GetUnsafeBaseSystem()->_PoseToTrackingSpace(origin, ovrPose.ThePose);
 }
 
-void BaseCompositor::GetSinglePoseRendering(TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose) {
-	GetSinglePose(unDeviceIndex, pOutputPose, trackingState);
+void BaseCompositor::GetSinglePoseRendering(ETrackingUniverseOrigin origin, TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose) {
+	GetSinglePose(origin, unDeviceIndex, pOutputPose, trackingState);
 }
 
 Matrix4f BaseCompositor::GetHandTransform() {
@@ -333,12 +334,14 @@ Matrix4f BaseCompositor::GetHandTransform() {
 ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, uint32_t renderPoseArrayCount,
 	TrackedDevicePose_t * gamePoseArray, uint32_t gamePoseArrayCount) {
 
+	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
+
 	for (uint32_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
 		TrackedDevicePose_t *renderPose = i < renderPoseArrayCount ? renderPoseArray + i : NULL;
 		TrackedDevicePose_t *gamePose = i < gamePoseArrayCount ? gamePoseArray + i : NULL;
 
 		if (renderPose) {
-			GetSinglePose(i, renderPose, trackingState);
+			GetSinglePose(origin, i, renderPose, trackingState);
 		}
 
 		if (gamePose) {
@@ -346,7 +349,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 				*gamePose = *renderPose;
 			}
 			else {
-				GetSinglePose(i, gamePose, trackingState);
+				GetSinglePose(origin, i, gamePose, trackingState);
 			}
 		}
 	}
@@ -361,8 +364,10 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 		return VRCompositorError_IndexOutOfRange;
 	}
 
+	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
+
 	TrackedDevicePose_t pose;
-	GetSinglePose(unDeviceIndex, &pose, trackingState);
+	GetSinglePose(origin, unDeviceIndex, &pose, trackingState);
 
 	if (pOutputPose) {
 		*pOutputPose = pose;
@@ -609,7 +614,8 @@ bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint3
 	*/
 
 	// pose used by app to render this frame
-	GetSinglePose(k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose, trackingState);
+	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
+	GetSinglePose(origin, k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose, trackingState);
 
 	return true;
 }
