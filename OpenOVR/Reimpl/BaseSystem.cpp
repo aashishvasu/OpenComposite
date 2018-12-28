@@ -360,7 +360,8 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 		case Prop_LensCenterRightU_Float:
 		case Prop_LensCenterRightV_Float:
 			// SteamVR reports it as unknown
-			*pErrorL = TrackedProp_UnknownProperty;
+			if (pErrorL)
+				*pErrorL = TrackedProp_UnknownProperty;
 			return 0;
 		case Prop_UserIpdMeters_Float:
 			return SGetIpd();
@@ -375,7 +376,8 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 	}
 
 	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = TrackedProp_UnknownProperty;
+		if (pErrorL)
+			*pErrorL = TrackedProp_UnknownProperty;
 		return 0;
 	}
 	
