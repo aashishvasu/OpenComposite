@@ -167,6 +167,12 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 #undef GET_BTTN
 #undef GET_BTTN_LAST
 
+	if (grip && !grip_last) {
+		closed = true;
+		SubmitEvent(VREvent_KeyboardClosed, 0);
+		return;
+	}
+
 	const KeyboardLayout::Key &key = layout->GetKeymap()[selected[side]];
 
 	if (trigger && !trigger_last) {
