@@ -644,14 +644,12 @@ EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInp
 	if (!BaseCompositor::dxcomp)
 		OOVR_ABORT("Keyboard currently only available on DX11 and DX10 games");
 
-	if (eInputMode != k_EGamepadTextInputModeNormal)
-		OOVR_ABORTF("Only normal keyboard entry mode is currently supported (as opposed to ID=%d)", eInputMode);
-
 	if (eLineInputMode != k_EGamepadTextInputLineModeSingleLine)
 		OOVR_ABORTF("Only single-line keyboard entry mode is currently supported (as opposed to ID=%d)", eLineInputMode);
 
 	// TODO use description
-	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax, bUseMinimalMode, eventDispatch);
+	keyboard = make_unique<VRKeyboard>(BaseCompositor::dxcomp->GetDevice(), uUserValue, unCharMax, bUseMinimalMode, eventDispatch,
+		(VRKeyboard::EGamepadTextInputMode)eInputMode);
 
 	keyboard->contents(VRKeyboard::CHAR_CONV.from_bytes(pchExistingText));
 

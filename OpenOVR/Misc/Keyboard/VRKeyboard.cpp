@@ -56,8 +56,9 @@ static vector<char> loadResource(int rid, int type) {
 
 std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;
 
-VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t eventDispatch)
-	: dev(dev), userValue(userValue), maxLength(maxLength), minimal(minimal), eventDispatch(eventDispatch) {
+VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t eventDispatch,
+	EGamepadTextInputMode inputMode)
+	: dev(dev), userValue(userValue), maxLength(maxLength), minimal(minimal), eventDispatch(eventDispatch), inputMode(inputMode) {
 
 	std::shared_ptr<BaseCompositor> cmp = GetBaseCompositor();
 	if (!cmp)
@@ -65,6 +66,9 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 
 	if(!dev)
 		OOVR_ABORT("Keyboard currently only works on DX11, and game must have submitted at least a single frame");
+
+	if (inputMode == EGamepadTextInputMode::k_EGamepadTextInputModePassword)
+		OOVR_ABORT("Password input mode not yet supported!");
 
 	dev->GetImmediateContext(&ctx);
 
@@ -195,7 +199,10 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 		}
 		else if (ch == '\x03') {
 			// done
-			closed = true;
+
+			// Submit mode is for stuff like chat, where the keyboard stays open
+			if(inputMode != EGamepadTextInputMode::k_EGamepadTextInputModeSubmit)
+				closed = true;
 
 			if(!minimal)
 				SubmitEvent(VREvent_KeyboardCharInput, 0);

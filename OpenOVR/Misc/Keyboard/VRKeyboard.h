@@ -16,7 +16,15 @@ class VRKeyboard {
 public:
 	typedef std::function<void(vr::VREvent_t)> eventDispatch_t;
 
-	VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t dispatch);
+	// Yay this isn't in vrtypes.h
+	// Maybe we should make the header splitter put enums somewhere else?
+	enum EGamepadTextInputMode {
+		k_EGamepadTextInputModeNormal = 0,
+		k_EGamepadTextInputModePassword = 1,
+		k_EGamepadTextInputModeSubmit = 2,
+	};
+
+	VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t dispatch, EGamepadTextInputMode inputMode);
 	~VRKeyboard();
 
 	std::wstring contents();
@@ -52,6 +60,7 @@ private:
 	uint32_t maxLength;
 	bool minimal;
 	eventDispatch_t eventDispatch;
+	EGamepadTextInputMode inputMode;
 
 	ovrTextureSwapChain chain;
 	ovrTextureSwapChainDesc chainDesc;
