@@ -123,6 +123,10 @@ private:
 
 	std::unique_ptr<Compositor> skyboxCompositor;
 
+	ovrMirrorTexture mirrorTexture = nullptr;
+	int mirrorTexturesCount = 0;
+	void DestroyOculusMirrorTexture();
+
 public:
 	typedef int ovr_enum_t;
 
