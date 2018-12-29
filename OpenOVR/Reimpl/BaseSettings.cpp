@@ -6,6 +6,9 @@
 #include "Misc/Config.h"
 #include "BaseSystem.h"
 #include <string>
+#include <codecvt>
+
+#include "OVR_CAPI_Audio.h"
 
 #define STUBBED_BASIC() { \
 	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
@@ -188,6 +191,26 @@ void  BaseSettings::GetString(const char * pchSection, const char * pchSettingsK
 		if (key == kk::k_pch_SteamVR_GridColor_String) {
 			// When I tested it under SteamVR, it did actually just return an empty string
 			result = "";
+			goto found;
+		}
+	}
+	else if (section == kk::k_pch_audio_Section) {
+		// Sansar, and hopefully other games (since this very nicely solves the audio device problem), uses the
+		//  auto-switching SteamVR audio devices.
+		// See https://gitlab.com/znixian/OpenOVR/issues/65
+
+		wstring_convert<codecvt_utf8<wchar_t>> conv;
+
+		if (key == kk::k_pch_audio_OnPlaybackDevice_String) {
+			wchar_t buff[OVR_AUDIO_MAX_DEVICE_STR_SIZE];
+			ovr_GetAudioDeviceOutGuidStr(buff);
+			result = conv.to_bytes(buff);
+			goto found;
+		}
+		else if (key == kk::k_pch_audio_OnRecordDevice_String) {
+			wchar_t buff[OVR_AUDIO_MAX_DEVICE_STR_SIZE];
+			ovr_GetAudioDeviceInGuidStr(buff);
+			result = conv.to_bytes(buff);
 			goto found;
 		}
 	}
