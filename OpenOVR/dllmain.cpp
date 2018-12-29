@@ -39,6 +39,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		init_audio();
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
+		break;
     case DLL_PROCESS_DETACH:
 		if (chainedImplementation) {
 			FreeLibrary(chainedImplementation);
