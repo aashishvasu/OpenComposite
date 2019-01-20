@@ -23,6 +23,9 @@ using namespace std;
 #if defined(SUPPORT_VK)
 #include "OVR_CAPI_Vk.h"
 #endif
+#if defined(SUPPORT_DX)
+#include "OVR_CAPI_D3D.h"
+#endif
 
 #include "Misc/ScopeGuard.h"
 
@@ -778,6 +781,7 @@ void BaseCompositor::SuspendRendering(bool bSuspend) {
 	//STUBBED();
 }
 
+#if defined(SUPPORT_DX)
 ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
 	IUnknown *ukn = (IUnknown*)pD3D11DeviceOrResource;
 	CComQIPtr<ID3D11Device> dev = ukn;
@@ -824,6 +828,11 @@ ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11Devic
 
 	return VRCompositorError_None;
 }
+#else
+ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
+	OOVR_ABORT("Cannot get D3D mirror texture - D3D support disabled");
+}
+#endif
 
 void BaseCompositor::ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) {
 	ID3D11ShaderResourceView *srv = (ID3D11ShaderResourceView*)pD3D11ShaderResourceView;
