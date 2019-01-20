@@ -1,0 +1,219 @@
+cmake_minimum_required(VERSION 3.12)
+project(OpenComposite)
+
+# === LibOVR ===
+set(OVRDIR libs/libovr/OculusSDK/LibOVR)
+add_library(ovr STATIC
+	${OVRDIR}/Shim/OVR_CAPI_Prototypes.h
+	${OVRDIR}/Shim/OVR_CAPI_Util.cpp
+	${OVRDIR}/Shim/OVR_CAPIShim.c
+	${OVRDIR}/Shim/OVR_StereoProjection.cpp
+)
+target_include_directories(ovr PUBLIC ${OVRDIR}/Include)
+
+# === LibOVRKernel ===
+set(OVRKDIR libs/libovr/OculusSDK/LibOVRKernel)
+add_library(ovrkernel STATIC
+	${OVRKDIR}/../Logging/src/internal/Logging_Tools.cpp
+	${OVRKDIR}/../Logging/src/Logging_Library.cpp
+	${OVRKDIR}/../Logging/src/Logging_OutputPlugins.cpp
+	${OVRKDIR}/Src/GL/CAPI_GLE.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Alg.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Allocator.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Atomic.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Callbacks.cpp
+	${OVRKDIR}/Src/Kernel/OVR_CRC32.cpp
+	${OVRKDIR}/Src/Kernel/OVR_DebugHelp.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Error.cpp
+	${OVRKDIR}/Src/Kernel/OVR_File.cpp
+	${OVRKDIR}/Src/Kernel/OVR_FileFILE.cpp
+	${OVRKDIR}/Src/Kernel/OVR_JSON.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Log.cpp
+	${OVRKDIR}/Src/Kernel/OVR_mach_exc_OSX.c
+	${OVRKDIR}/Src/Kernel/OVR_Rand.cpp
+	${OVRKDIR}/Src/Kernel/OVR_RefCount.cpp
+	${OVRKDIR}/Src/Kernel/OVR_SharedMemory.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Std.cpp
+	${OVRKDIR}/Src/Kernel/OVR_String.cpp
+	${OVRKDIR}/Src/Kernel/OVR_String_FormatUtil.cpp
+	${OVRKDIR}/Src/Kernel/OVR_String_PathUtil.cpp
+	${OVRKDIR}/Src/Kernel/OVR_SysFile.cpp
+	${OVRKDIR}/Src/Kernel/OVR_System.cpp
+	${OVRKDIR}/Src/Kernel/OVR_ThreadsPthread.cpp
+	${OVRKDIR}/Src/Kernel/OVR_ThreadsWinAPI.cpp
+	${OVRKDIR}/Src/Kernel/OVR_Timer.cpp
+	${OVRKDIR}/Src/Kernel/OVR_UTF8Util.cpp
+	${OVRKDIR}/Src/Util/Util_D3D11_Blitter.cpp
+	${OVRKDIR}/Src/Util/Util_Direct3D.cpp
+	${OVRKDIR}/Src/Util/Util_GL_Blitter.cpp
+	${OVRKDIR}/Src/Util/Util_ImageWindow.cpp
+	${OVRKDIR}/Src/Util/Util_LongPollThread.cpp
+	${OVRKDIR}/Src/Util/Util_SystemGUI.cpp
+	${OVRKDIR}/Src/Util/Util_SystemInfo.cpp
+	${OVRKDIR}/Src/Util/Util_Watchdog.cpp
+)
+target_include_directories(ovrkernel PUBLIC ${OVRKDIR}/Src)
+target_include_directories(ovrkernel PRIVATE ${OVRKDIR}/../Logging/include)
+target_link_libraries(ovrkernel ovr)
+
+# === OCCore ===
+# TODO: precompiled headers
+add_library(OCCore STATIC
+	OpenOVR/API/OCBaseSystem.cpp
+	OpenOVR/Compositor/compositor.cpp
+	OpenOVR/Compositor/dx11compositor.cpp
+	OpenOVR/Compositor/dx10compositor.cpp
+	OpenOVR/Compositor/dx12compositor.cpp
+	OpenOVR/Compositor/glcompositor.cpp
+	OpenOVR/Compositor/vkcompositor.cpp
+	OpenOVR/convert.cpp
+	OpenOVR/libovr_wrapper.cpp
+	OpenOVR/logging.cpp
+	OpenOVR/Misc/audio_override.cpp
+	OpenOVR/Misc/Config.cpp
+	OpenOVR/Misc/debug_helper.cpp
+	OpenOVR/Misc/Haptics.cpp
+	OpenOVR/Misc/Keyboard/KeyboardLayout.cpp
+	OpenOVR/Misc/Keyboard/SudoFontMeta.cpp
+	OpenOVR/Misc/Keyboard/VRKeyboard.cpp
+	OpenOVR/OpenOVR.cpp
+	OpenOVR/Reimpl/BaseApplications.cpp
+	OpenOVR/Reimpl/BaseChaperone.cpp
+	OpenOVR/Reimpl/BaseChaperoneSetup.cpp
+	OpenOVR/Reimpl/BaseClientCore.cpp
+	OpenOVR/Reimpl/BaseCompositor.cpp
+	OpenOVR/Reimpl/BaseExtendedDisplay.cpp
+	OpenOVR/Reimpl/BaseInput.cpp
+	OpenOVR/Reimpl/BaseOverlay.cpp
+	OpenOVR/Reimpl/BaseRenderModels.cpp
+	OpenOVR/Reimpl/BaseScreenshots.cpp
+	OpenOVR/Reimpl/BaseSettings.cpp
+	OpenOVR/Reimpl/BaseSystem.cpp
+	OpenOVR/Reimpl/CVRApplications.cpp
+	OpenOVR/Reimpl/CVRChaperone.cpp
+	OpenOVR/Reimpl/CVRChaperoneSetup.cpp
+	OpenOVR/Reimpl/CVRClientCore.cpp
+	OpenOVR/Reimpl/CVRCompositor.cpp
+	OpenOVR/Reimpl/CVRExtendedDisplay.cpp
+	OpenOVR/Reimpl/CVRInput.cpp
+	OpenOVR/Reimpl/CVROCSystem.cpp
+	OpenOVR/Reimpl/CVROverlay.cpp
+	OpenOVR/Reimpl/CVRRenderModels.cpp
+	OpenOVR/Reimpl/CVRScreenshots.cpp
+	OpenOVR/Reimpl/CVRSettings.cpp
+	OpenOVR/Reimpl/CVRSystem.cpp
+	OpenOVR/Reimpl/stubs.gen.cpp
+
+	# Use when doing PCH
+	OpenOVR/stdafx.cpp
+
+	# Exclude from the PCH requirement
+	OpenOVR/Misc/ini.c
+	OpenOVR/Misc/jsoncpp.cpp
+	OpenOVR/Misc/lodepng.cpp
+
+	# Headers
+	OpenOVR/API/ISystem_001.h
+	OpenOVR/API/OCBaseSystem.h
+	OpenOVR/BaseCommon.h
+	OpenOVR/Compositor/compositor.h
+	OpenOVR/convert.h
+	OpenOVR/custom_types.h
+	OpenOVR/libovr_wrapper.h
+	OpenOVR/logging.h
+	OpenOVR/Misc/audio_override.h
+	OpenOVR/Misc/Config.h
+	OpenOVR/Misc/debug_helper.h
+	OpenOVR/Misc/Haptics.h
+	OpenOVR/Misc/ini.h
+	OpenOVR/Misc/json/json-forwards.h
+	OpenOVR/Misc/json/json.h
+	OpenOVR/Misc/Keyboard/KeyboardLayout.h
+	OpenOVR/Misc/Keyboard/SudoFontMeta.h
+	OpenOVR/Misc/Keyboard/VRKeyboard.h
+	OpenOVR/Misc/lodepng.h
+	OpenOVR/Misc/ScopeGuard.h
+	OpenOVR/OpenVR/custom_interfaces/IVRClientCore_002.h
+	OpenOVR/OpenVR/custom_interfaces/IVRClientCore_003.h
+	OpenOVR/OpenVR/custom_interfaces/IVRCompositor_017.h
+	OpenOVR/OpenVR/interfaces/IVRApplications_004.h
+	OpenOVR/OpenVR/interfaces/IVRApplications_005.h
+	OpenOVR/OpenVR/interfaces/IVRApplications_006.h
+	OpenOVR/OpenVR/interfaces/IVRChaperoneSetup_005.h
+	OpenOVR/OpenVR/interfaces/IVRChaperone_003.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_012.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_013.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_014.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_015.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_016.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_018.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_019.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_020.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_021.h
+	OpenOVR/OpenVR/interfaces/IVRCompositor_022.h
+	OpenOVR/OpenVR/interfaces/IVRDriverManager_001.h
+	OpenOVR/OpenVR/interfaces/IVRExtendedDisplay_001.h
+	OpenOVR/OpenVR/interfaces/IVRInput_004.h
+	OpenOVR/OpenVR/interfaces/IVRIOBuffer_001.h
+	OpenOVR/OpenVR/interfaces/IVRNotifications_002.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_010.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_011.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_012.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_013.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_014.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_016.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_017.h
+	OpenOVR/OpenVR/interfaces/IVROverlay_018.h
+	OpenOVR/OpenVR/interfaces/IVRRenderModels_004.h
+	OpenOVR/OpenVR/interfaces/IVRRenderModels_005.h
+	OpenOVR/OpenVR/interfaces/IVRRenderModels_006.h
+	OpenOVR/OpenVR/interfaces/IVRResources_001.h
+	OpenOVR/OpenVR/interfaces/IVRScreenshots_001.h
+	OpenOVR/OpenVR/interfaces/IVRSettings_001.h
+	OpenOVR/OpenVR/interfaces/IVRSettings_002.h
+	OpenOVR/OpenVR/interfaces/IVRSpatialAnchors_001.h
+	OpenOVR/OpenVR/interfaces/IVRSystem_011.h
+	OpenOVR/OpenVR/interfaces/IVRSystem_012.h
+	OpenOVR/OpenVR/interfaces/IVRSystem_014.h
+	OpenOVR/OpenVR/interfaces/IVRSystem_015.h
+	OpenOVR/OpenVR/interfaces/IVRSystem_016.h
+	OpenOVR/OpenVR/interfaces/IVRSystem_017.h
+	OpenOVR/OpenVR/interfaces/IVRSystem_019.h
+	OpenOVR/OpenVR/interfaces/IVRTrackedCamera_003.h
+	OpenOVR/OpenVR/interfaces/openvr.h
+	OpenOVR/OpenVR/interfaces/vrannotation.h
+	OpenOVR/OpenVR/interfaces/vrtypes.h
+	OpenOVR/Reimpl/BaseApplications.h
+	OpenOVR/Reimpl/BaseChaperone.h
+	OpenOVR/Reimpl/BaseChaperoneSetup.h
+	OpenOVR/Reimpl/BaseClientCore.h
+	OpenOVR/Reimpl/BaseCompositor.h
+	OpenOVR/Reimpl/BaseExtendedDisplay.h
+	OpenOVR/Reimpl/BaseInput.h
+	OpenOVR/Reimpl/BaseOverlay.h
+	OpenOVR/Reimpl/BaseRenderModels.h
+	OpenOVR/Reimpl/BaseScreenshots.h
+	OpenOVR/Reimpl/BaseSettings.h
+	OpenOVR/Reimpl/BaseSystem.h
+	OpenOVR/Reimpl/Interfaces.h
+	OpenOVR/Reimpl/static_bases.gen.h
+	OpenOVR/resources.h
+	OpenOVR/stdafx.h
+	OpenOVR/steamvr_abi.h
+	OpenOVR/targetver.h
+)
+target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
+target_include_directories(OCCore PRIVATE BundledLibs)
+target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
+target_link_libraries(OCCore ovr ovrkernel)
+
+source_group(OpenVR REGULAR_EXPRESSION OpenOVR/OpenVR/interfaces/*)
+source_group(OpenVR\\Custom REGULAR_EXPRESSION OpenOVR/OpenVR/custom_interfaces/*)
+source_group(Interfaces REGULAR_EXPRESSION OpenOVR/Reimpl/Base*)
+source_group(Interfaces\\Declarations REGULAR_EXPRESSION OpenOVR/Reimpl/CVR*)
+
+# === OCOVR ===
+add_library(OCOVR SHARED
+	OCOVR/dllmain.cpp
+)
+target_link_libraries(OCOVR OCCore)

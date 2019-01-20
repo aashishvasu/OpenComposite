@@ -6,6 +6,9 @@
 /OpenOVR/Win32
 /OpenOVR/x64
 
+# CMake files
+/build
+
 # Visual Studio
 /.vs
 
