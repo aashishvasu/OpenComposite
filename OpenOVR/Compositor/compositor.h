@@ -44,10 +44,10 @@ public:
 	virtual void ResetSubmitContext() {};
 
 protected:
-	ovrTextureSwapChain chain;
+	ovrTextureSwapChain chain = nullptr;
 
 	// TODO set in the Vulkan and DX12 compositors
-	OVR::Sizei srcSize;
+	OVR::Sizei srcSize = OVR::Sizei(0, 0);
 };
 
 class DX12Compositor : public Compositor {
@@ -106,12 +106,12 @@ protected:
 
 	bool CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc & chainDesc, vr::EColorSpace colourSpace);
 
-	ID3D11Device *device;
-	ID3D11DeviceContext *context;
+	ID3D11Device *device = nullptr;
+	ID3D11DeviceContext *context = nullptr;
 
 	ovrTextureSwapChainDesc chainDesc;
 
-	bool submitVerticallyFlipped;
+	bool submitVerticallyFlipped = false;
 };
 
 class DX10Compositor : public DX11Compositor {
@@ -124,10 +124,10 @@ public:
 	virtual void ResetSubmitContext() override;
 
 private:
-	CComQIPtr<ID3D11Device1> device1;
-	CComQIPtr<ID3D11DeviceContext1> context1;
-	CComPtr<ID3DDeviceContextState> customContextState;
-	CComPtr<ID3DDeviceContextState> originalContextState;
+	CComQIPtr<ID3D11Device1> device1 = nullptr;
+	CComQIPtr<ID3D11DeviceContext1> context1 = nullptr;
+	CComPtr<ID3DDeviceContextState> customContextState = nullptr;
+	CComPtr<ID3DDeviceContextState> originalContextState = nullptr;
 };
 
 class GLCompositor : public Compositor {
@@ -145,7 +145,7 @@ public:
 	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
 
 private:
-	GLuint fboId;
+	GLuint fboId = 0;
 };
 
 class VkCompositor : public Compositor {
@@ -165,9 +165,9 @@ public:
 private:
 	bool CheckChainCompatible(const vr::VRVulkanTextureData_t &tex, const ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace);
 
-	bool submitVerticallyFlipped;
+	bool submitVerticallyFlipped = false;
 	ovrTextureSwapChainDesc chainDesc;
-	uint64_t /*VkCommandPool*/ commandPool;
+	uint64_t /*VkCommandPool*/ commandPool = 0;
 
-	uint32_t graphicsQueueFamilyId;
+	uint32_t graphicsQueueFamilyId = 0;
 };
