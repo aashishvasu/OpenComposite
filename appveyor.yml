@@ -27,7 +27,7 @@ before_build:
 
       cd ..
 build:
-  project: OpenOVR.sln
+  project: build/OpenComposite.sln
   verbosity: minimal
 on_success:
 - ps: >-
