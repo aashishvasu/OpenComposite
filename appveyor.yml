@@ -31,7 +31,7 @@ build:
   verbosity: minimal
 on_success:
 - ps: >-
-    Push-AppveyorArtifact "$build/$env:Configuration/OCOVR.dll" -FileName "$env:Platform/openvr_api.dll"
+    Push-AppveyorArtifact "build/$env:Configuration/OCOVR.dll" -FileName "$env:Platform/openvr_api.dll"
 
     7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
 
