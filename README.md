@@ -55,8 +55,8 @@ if so an update button will appear. Click it and OpenComposite will be updated.
 ### Per-game installation
 
 Download the DLLs:
-[32-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x86/openvr_api.dll?branch=master&job=Platform%3A+x86&pr=false)
-[64-bit](https://ci.appveyor.com/api/projects/ZNix/openovr/artifacts/x64/openvr_api.dll?branch=master&job=Platform%3A+x64&pr=false)
+[32-bit](https://znix.xyz/OpenComposite/download.php?arch=x86)
+[64-bit](https://znix.xyz/OpenComposite/download.php?arch=x64)
 
 These come from [AppVeyor](https://ci.appveyor.com/project/ZNix/openovr) - whenever I push some new code, it will be compiled
 and uploaded to those links automatically.
