@@ -25,15 +25,15 @@ that use versions of interfaces that I have yet to implement - this will result 
 you find a game that does this, please let me know (see below).
 
 There are several things missing though:
-- Most notably, the virtual keyboard (games that try to open it will crash). I do plan to implement this, however.
 - Oculus Touch models are not present. Some games (eg, *Skyrim*) will use their own models in this case. For other games, you
 might not see a controller model at all. Most games use their own hand models though, rather than displaying a model
 of your controller.
+- The virtual keyboard does not yet work in OpenGL-, DirectX12- or Vulkan-based games. This should only affect DOOM BFG and older
+versions of Vivecraft however.
 
 The games that I can confirm it works with are as follows:
-- Skyrim VR (though note you'll crash while naming your character due to the aforementioned lack of a keyboard, so you
-must start new saves in SteamVR)
-- VTOL VR (again, you can't name your pilot)
+- Skyrim VR
+- VTOL VR
 - PAYDAY 2 VR
 
 It probably works in quite a few other games, but I have not tried them.
