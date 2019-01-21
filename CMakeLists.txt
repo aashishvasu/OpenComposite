@@ -13,6 +13,12 @@ target_include_directories(ovr PUBLIC ${OVRDIR}/Include)
 
 # === LibOVRKernel ===
 set(OVRKDIR libs/libovr/OculusSDK/LibOVRKernel)
+set(OVRKSDIR ${OVRKDIR}/Src/Util/Shaders)
+set(OVR_SHADERS
+	${OVRKSDIR}/Blt_ps.hlsl
+	${OVRKSDIR}/Blt_ps_ms2.hlsl
+	${OVRKSDIR}/Blt_vs.hlsl
+)
 add_library(ovrkernel STATIC
 	${OVRKDIR}/../Logging/src/internal/Logging_Tools.cpp
 	${OVRKDIR}/../Logging/src/Logging_Library.cpp
@@ -51,10 +57,28 @@ add_library(ovrkernel STATIC
 	${OVRKDIR}/Src/Util/Util_SystemGUI.cpp
 	${OVRKDIR}/Src/Util/Util_SystemInfo.cpp
 	${OVRKDIR}/Src/Util/Util_Watchdog.cpp
+
+	${OVR_SHADERS}
 )
 target_include_directories(ovrkernel PUBLIC ${OVRKDIR}/Src)
 target_include_directories(ovrkernel PRIVATE ${OVRKDIR}/../Logging/include)
 target_link_libraries(ovrkernel ovr)
+
+# Shader configuration
+set(OVR_SHADER_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen_shaders")
+set(OVR_SHADER_FN "${OVR_SHADER_DIR}/Shaders/%(Filename).h")
+target_include_directories(ovrkernel PRIVATE ${OVR_SHADER_DIR})
+
+set_property(SOURCE ${OVR_SHADERS} PROPERTY VS_SHADER_VARIABLE_NAME "%(Filename)")
+set_property(SOURCE ${OVR_SHADERS} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE ${OVR_SHADER_FN})
+
+set_property(SOURCE ${OVRKSDIR}/Blt_ps.hlsl PROPERTY VS_SHADER_MODEL 4.0)
+set_property(SOURCE ${OVRKSDIR}/Blt_ps_ms2.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+set_property(SOURCE ${OVRKSDIR}/Blt_ps_vs.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+
+set_property(SOURCE ${OVRKSDIR}/Blt_ps.hlsl PROPERTY VS_SHADER_TYPE Pixel)
+set_property(SOURCE ${OVRKSDIR}/Blt_ps_ms2.hlsl PROPERTY VS_SHADER_TYPE Pixel)
+set_property(SOURCE ${OVRKSDIR}/Blt_vs.hlsl PROPERTY VS_SHADER_TYPE Vertex)
 
 # === OCCore ===
 # TODO: precompiled headers
