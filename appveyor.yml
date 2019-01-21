@@ -5,27 +5,33 @@ branches:
 image: Visual Studio 2017
 configuration: Release
 platform:
-  - x86
+  - Win32
   - x64
 install:
-  - ps: appveyor DownloadFile http://znix.xyz/random/ovr_sdk_win_1.26.0_public_nosamples.7z
+  - ps: appveyor DownloadFile https://znix.xyz/random/ovr_sdk_win_1.26.0_public_nosamples.7z
   - ps: appveyor DownloadFile https://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z
   - ps: 7z x -olibs/libovr ovr_sdk_win_1.26.0_public_nosamples.7z
   - ps: 7z x -olibs vulkan-1.1.85.0-minisdk.7z
   - ps: ./configure.cmd
 before_build:
   - nuget restore
+  - ps: >-
+      mkdir build;
+      cd build
+
+      If ($env:Platform -Match "x64") {
+        cmake .. -G "Visual Studio 15 2017 Win64"
+      } Else {
+        cmake .. -G "Visual Studio 15 2017"
+      }
+
+      cd ..
 build:
   project: OpenOVR.sln
   verbosity: minimal
 on_success:
 - ps: >-
-    If ($env:Platform -Match "x86") {
-        $effective_plat = "Win32"
-    } Else {
-        $effective_plat = $env:Platform
-    }
-    Push-AppveyorArtifact "$effective_plat/$env:Configuration/openvr_api.dll" -FileName "$env:Platform/openvr_api.dll"
+    Push-AppveyorArtifact "$build/$env:Configuration/OCOVR.dll" -FileName "$env:Platform/openvr_api.dll"
 
     7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
 
