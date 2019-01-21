@@ -210,11 +210,6 @@ void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigi
 	}
 }
 
-void BaseSystem::ResetSeatedZeroPose() {
-	// TODO should this only work when seated or whatever?
-	ovr_RecenterTrackingOrigin(*ovr::session);
-}
-
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
 	// TODO can we discover the player's seated height somehow?
 	// For now just add 0.5 meters
@@ -1022,6 +1017,11 @@ void BaseSystem::_SetTrackingOrigin(ETrackingUniverseOrigin eOrigin) {
 		ovrOrigin = ovrTrackingOrigin_EyeLevel;
 	}
 
+	// When in dual-origin mode, always use the floor level as a base
+	if (usingDualOriginMode) {
+		ovrOrigin = ovrTrackingOrigin_FloorLevel;
+	}
+
 	OOVR_FAILED_OVR_ABORT(ovr_SetTrackingOriginType(*ovr::session, ovrOrigin));
 }
 
@@ -1030,14 +1030,48 @@ ETrackingUniverseOrigin BaseSystem::_GetTrackingOrigin() {
 }
 
 HmdMatrix34_t BaseSystem::_PoseToTrackingSpace(ETrackingUniverseOrigin toOrigin, ovrPosef pose) {
-	if (toOrigin == origin) {
-		OVR::Posef thePose(pose);
-		OVR::Matrix4f hmdTransform(thePose);
-
-		HmdMatrix34_t result;
-		O2S_om34(hmdTransform, result);
-		return result;
+	// Standard path, most games only use the origin they have selected
+	if (toOrigin == origin && !usingDualOriginMode) {
+		goto result;
 	}
 
-	OOVR_ABORTF("Origin mismatch - current %d, passed %d", origin, toOrigin);
+	if (!usingDualOriginMode) {
+		// TODO if usingDualOriginMode is false, then do the initial stuff
+		// otherwise the head position will jump around the first time this is used
+
+		// Enable the dual origin mode
+		usingDualOriginMode = true;
+
+		// Reset the origin, so LibOVR is now working relative to the floor
+		_SetTrackingOrigin(origin);
+
+		// Use the current height as the zero for the seated height
+		_ResetFakeSeatedHeight();
+	}
+
+	if (toOrigin == TrackingUniverseSeated) {
+		pose.Position.y -= fakeOriginHeight;
+	}
+
+result:
+	OVR::Posef thePose(pose);
+	OVR::Matrix4f hmdTransform(thePose);
+
+	HmdMatrix34_t result;
+	O2S_om34(hmdTransform, result);
+	return result;
+}
+
+void BaseSystem::_ResetFakeSeatedHeight() {
+	ovrTrackingState state = ovr_GetTrackingState(*ovr::session, ovr_GetTimeInSeconds(), false);
+
+	fakeOriginHeight = state.HeadPose.ThePose.Position.y;
+}
+
+void BaseSystem::ResetSeatedZeroPose() {
+	// TODO should this only work when seated or whatever?
+	ovr_RecenterTrackingOrigin(*ovr::session);
+
+	if (usingDualOriginMode)
+		_ResetFakeSeatedHeight();
 }
