@@ -12,6 +12,7 @@ project(OpenComposite)
 include_external_msproject(
 	RuntimeSwitcher ${CMAKE_SOURCE_DIR}/RuntimeSwitcher/RuntimeSwitcher.csproj
 	TYPE FAE04EC0-301F-11D3-BF4B-00C04F79EFBC
+	PLATFORM "AnyCPU"
 )
 
 # === LibOVR ===
