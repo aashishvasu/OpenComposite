@@ -8,6 +8,12 @@ endif()
 cmake_minimum_required(VERSION 3.12)
 project(OpenComposite)
 
+# === Runtime Switcher ===
+include_external_msproject(
+	RuntimeSwitcher ${CMAKE_SOURCE_DIR}/RuntimeSwitcher/RuntimeSwitcher.csproj
+	TYPE FAE04EC0-301F-11D3-BF4B-00C04F79EFBC
+)
+
 # === LibOVR ===
 set(OVRDIR libs/libovr/OculusSDK/LibOVR)
 add_library(ovr STATIC
