@@ -12,11 +12,6 @@
 # Visual Studio
 /.vs
 
-# User-specific files
-*.suo
-*.user
-*.sln.docstates
-
 # Libraries
 /libs/libovr/OculusSDK
 /libs/vulkan
