@@ -1,3 +1,10 @@
+# Set the Windows kit if using MSVC
+# CMake will look for the newest kit that isn't newer than this
+# Required to find modern D3D12 header
+if(MSVC)
+	set(CMAKE_SYSTEM_VERSION 10.0.17134.0)
+endif()
+
 cmake_minimum_required(VERSION 3.12)
 project(OpenComposite)
 
