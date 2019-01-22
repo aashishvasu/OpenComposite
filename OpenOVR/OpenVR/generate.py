@@ -120,6 +120,7 @@ def split_header(headerfile):
 			targetfile = match.group(1)
 
 		if vmatch:
+			assert not usingiface, "Cannot have multiple interfaces in one file"
 			targetfile = vmatch.group(1)
 			usingiface = True
 
