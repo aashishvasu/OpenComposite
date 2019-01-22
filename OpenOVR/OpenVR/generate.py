@@ -21,6 +21,17 @@ versions = [
     "1.0.16",
 ]
 
+driver_versions = [
+	"1.1.3b",
+]
+
+driver_files = [
+]
+
+interface_exceptions = [
+	"itrackeddevicedriverprovider",
+]
+
 #####################################################
 
 import sys, re, io, os, glob
@@ -48,9 +59,12 @@ files_written = []
 matcher = re.compile(r"^\/\/ ([\w_-]+)\.h$")
 versionmatcher = re.compile(r"_Version = \"([\w-]*)\";")
 
-def write(target, result, usingiface):
+def write(target, result, usingiface, interface_checker, out_dir):
+	if interface_checker and not interface_checker(target, usingiface):
+		return
+
 	filename = target + ".h"
-	outfile = "interfaces/" + filename
+	outfile = out_dir + filename
 
 	# Don't delete this file, since it gets overwritten
 	if filename in files_to_delete:
@@ -89,10 +103,11 @@ def write(target, result, usingiface):
 	with open(outfile, "wb") as outfile:
 		outfile.write(result.encode())
 
-def split_header(headerfile):
+def split_header(headerfile, interface_checker=None, out_dir="interfaces/"):
 	outbuff = io.StringIO()
 	targetfile = None
 	usingiface = False
+	iface_excluded = False
 
 	imports = io.StringIO()
 	imports.write("#pragma once\n")
@@ -106,10 +121,10 @@ def split_header(headerfile):
 
 			# Write out the previous interface file, unless this was the first one
 			if targetfile:
-				write(targetfile, outbuff.getvalue(), usingiface)
+				write(targetfile, outbuff.getvalue(), usingiface, interface_checker, out_dir)
 
 				# Add the import, unless it's a versioned interface
-				if not usingiface:
+				if not usingiface and not iface_excluded:
 					imports.write("#include \"" + targetfile + ".h\"\n")
 
 				outbuff = io.StringIO()
@@ -118,8 +133,9 @@ def split_header(headerfile):
 
 			# Grab the name of the next interface
 			targetfile = match.group(1)
+			iface_excluded = targetfile in interface_exceptions
 
-		if vmatch:
+		if vmatch and not iface_excluded:
 			assert not usingiface, "Cannot have multiple interfaces in one file"
 			targetfile = vmatch.group(1)
 			usingiface = True
@@ -132,7 +148,7 @@ def split_header(headerfile):
 
 	# Write the last interface
 	if targetfile:
-		write(targetfile, outbuff.getvalue(), usingiface)
+		write(targetfile, outbuff.getvalue(), usingiface, interface_checker, out_dir)
 
 # Go through the list backwards, and not overwriting interfaces which
 #  ensures we have the latest version of every file
@@ -143,6 +159,24 @@ for version in versions[::-1]:
     with open(feed, "r") as headerfile:
         split_header(headerfile)
 
+# Do the same for the drivers, but filter them
+def driver_filter(fi, iface):
+	# Chop off the _xxx version suffix from interfaces for the purposes of comparing them
+	if re.match(r".*_\d\d\d", fi):
+		fi = fi[:-4]
+	# print(fi)
+	return fi in driver_files
+
+for version in driver_versions[::-1]:
+	feed = "openvr-%s-driver.h" % version
+	print("Reading: " + feed)
+
+	# Note we have to use Latin-1, since EVRSkeletalTrackingLevel's first comment includes a character outside of the plain ASCII range
+	with open(feed, "r", encoding="latin-1") as headerfile:
+		split_header(headerfile, driver_filter, "interfaces/driver-")
+
 for fi in files_to_delete:
     fi = "interfaces/" + fi
     os.remove(fi)
+
+# vim: set ts=4 softtabstop=0 sw=4 noexpandtab:
