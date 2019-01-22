@@ -245,6 +245,10 @@ add_library(OCCore STATIC
 	OpenOVR/stdafx.h
 	OpenOVR/steamvr_abi.h
 	OpenOVR/targetver.h
+
+	# OpenVR Driver headers
+	OpenOVR/OpenVR/interfaces/driver_itrackeddevicedriverprovider.h
+	OpenOVR/OpenVR/interfaces/driver_IVRServerDriverHost_005.h
 )
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
@@ -252,6 +256,7 @@ target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
 target_link_libraries(OCCore ovr ovrkernel)
 
 source_group(OpenVR REGULAR_EXPRESSION OpenOVR/OpenVR/interfaces/*)
+source_group(OpenVR\\Drivers REGULAR_EXPRESSION OpenOVR/OpenVR/interfaces/driver_*)
 source_group(OpenVR\\Custom REGULAR_EXPRESSION OpenOVR/OpenVR/custom_interfaces/*)
 source_group(Interfaces REGULAR_EXPRESSION OpenOVR/Reimpl/Base*)
 source_group(Interfaces\\Declarations REGULAR_EXPRESSION OpenOVR/Reimpl/CVR*)

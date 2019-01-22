@@ -26,6 +26,8 @@ driver_versions = [
 ]
 
 driver_files = [
+	"itrackeddevicedriverprovider",
+	"IVRServerDriverHost",
 ]
 
 interface_exceptions = [
@@ -168,10 +170,12 @@ for version in versions[::-1]:
 def driver_filter(fi, iface):
 	# Chop off the _xxx version suffix from interfaces for the purposes of comparing them
 	if re.match(r".*_\d\d\d", fi):
-		fi = fi[:-4]
+		name = fi[:-4]
+	else:
+		name = fi
 	# print(fi)
-	if fi in driver_files:
-		return "driver-" + fi
+	if name in driver_files:
+		return "driver_" + fi
 	
 	return False
 
