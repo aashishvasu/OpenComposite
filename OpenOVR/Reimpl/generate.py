@@ -38,31 +38,106 @@ context = dict()
 
 libparse.read_context(context, "../OpenVR/interfaces/vrtypes.h", "vr")
 
+class InterfaceDef:
+    def __init__(self, version, name, flags, interface_context):
+        self._version = version
+        self._name = name
+        self._flags = flags
+        self._context = interface_context
+        print(version, name, flags)
+        super().__init__()
+        pass
+
+    def version(self):
+        return self._version
+
+    def name(self):
+        return self._name
+
+    def varname(self):
+        return self._name
+
+    def flags(self):
+        return self._flags
+
+    def has_flag(self, flag):
+        return flag in self._flags
+
+    def header_filename(self):
+        return "OpenVR/interfaces/IVR%s_%s.h" % (self.name(), self.version())
+
+    def basename(self):
+        return "Base" + self.name()
+
+    def getter_name(self):
+        return self.basename()
+
+    def context(self):
+        return self._context
+
+    def proxy_class_name(self):
+        return "CVR%s_%s" % (self.name(), self.version())
+
+    def interface(self):
+        return "IVR%s" % (self.name())
+
+    def interface_v(self):
+        return "%s_%s" % (self.interface(), self.version())
+
+    def __str__(self):
+        raise Exception("repl")
+
+class CustomInterface(InterfaceDef):
+    def header_filename(self):
+        return "OpenVR/custom_interfaces/%s.h" % (self.interface_v())
+
+class APIInterface(InterfaceDef):
+    def header_filename(self):
+        return "API/I%s_%s.h" % (self.name(), self.version())
+
+    def proxy_class_name(self):
+        return "CVROC%s_%s" % (self.name(), self.version())
+
+    def basename(self):
+        return "OCBase" + self.name()
+
+    def interface(self):
+        return "IVROC%s" % self.name()
+
+    def getter_name(self):
+        return "BaseOC" + self.name()
+
+    def varname(self):
+        return "OC" + self.name()
+
 bases_header_fn = "static_bases.gen.h"
 bases_header = open(bases_header_fn, "w", newline='\n')
 bases_header.write("#pragma once\n")
 bases_header.write("#include <memory>\n")
 
 base_class_getters = []
-def check_base_class_inst(interface, impl, cls):
-    if interface in base_class_getters:
+def check_base_class_inst(interface, impl):
+    if interface.basename() in base_class_getters:
         return
 
-    var = "_single_inst_%s" % interface
+    var = "_single_inst_%s" % interface.varname()
 
-    base_class_getters.append(interface)
+    base_class_getters.append(interface.basename())
+
+    getter_name = interface.getter_name()
+    cls = interface.basename()
 
     bases_header.write("class %s;\n" % cls)
-    bases_header.write("std::shared_ptr<%s> GetBase%s();\n" % (cls, interface))
-    bases_header.write("%s* GetUnsafeBase%s();\n" % (cls, interface))
-    bases_header.write("std::shared_ptr<%s> GetCreateBase%s();\n" % (cls, interface))
+    bases_header.write("std::shared_ptr<%s> Get%s();\n" % (cls, getter_name))
+    bases_header.write("%s* GetUnsafe%s();\n" % (cls, getter_name))
+    bases_header.write("std::shared_ptr<%s> GetCreate%s();\n" % (cls, getter_name))
 
     impl.write("// Single inst of %s\n" % cls)
     impl.write("static std::weak_ptr<%s> %s;\n" % (cls, var))
     impl.write("static %s *%s_unsafe = NULL;\n" % (cls, var))
-    impl.write("std::shared_ptr<%s> GetBase%s() { return %s.lock(); };\n" % (cls, interface, var))
-    impl.write("%s* GetUnsafeBase%s() { return %s_unsafe; };\n" % (cls, interface, var))
-    impl.write("std::shared_ptr<%s> GetCreateBase%s() {\n" % (cls, interface))
+    impl.write("std::shared_ptr<%s> Get%s() { return %s.lock(); };\n" % (cls, getter_name, var))
+    impl.write("%s* GetUnsafe%s() { return %s_unsafe; };\n" % (cls, getter_name, var))
+    impl.write("std::shared_ptr<%s> GetCreate%s() {\n" % (cls, getter_name))
     impl.write("\tstd::shared_ptr<%s> ret = %s.lock();\n" % (cls, var))
     impl.write("\tif(!ret) {\n")
     impl.write("\t\tret = std::shared_ptr<%s>(new %s(), [](%s *obj){ %s_unsafe = NULL; delete obj; });\n" % (cls, cls, cls, var))
@@ -72,18 +147,16 @@ def check_base_class_inst(interface, impl, cls):
     impl.write("\treturn ret;\n")
     impl.write("}\n")
 
-def gen_interface(interface, version, header, impl, basename, namespace="vr", basedir="", base=None):
-    if not base:
-        base = "Base" + interface
+def gen_interface(interface, header, impl, namespace="vr", basedir=""):
+    base = interface.basename()
 
-    check_base_class_inst(interface, impl, base)
+    check_base_class_inst(interface, impl)
 
-    iv = "VR%s_%s" % (interface, version)
-    namespace = "%s::I%s" % (namespace, iv)
-    cname = "C" + iv
+    namespace = "%s::%s" % (namespace, interface.interface_v())
+    cname = interface.proxy_class_name()
 
     header.write("#include \"%s%s.h\"\n" % (basedir, base))
-    header.write("class %s : public %s::IVR%s, public CVRCommon {\n" % (cname, namespace, interface))
+    header.write("class %s : public %s::%s, public CVRCommon {\n" % (cname, namespace, interface.interface()))
     header.write("private:\n")
     header.write("\tconst std::shared_ptr<%s> base;\n" % base)
     header.write("public:\n")
@@ -91,9 +164,9 @@ def gen_interface(interface, version, header, impl, basename, namespace="vr", ba
     header.write("\t%s();\n" % cname);
     header.write("\t// Interface methods:\n")
     impl.write("// Misc for %s:\n" % cname)
-    impl.write("%s::%s() : base(GetCreateBase%s()) {}\n" % (cname, cname, interface))
+    impl.write("%s::%s() : base(GetCreate%s()) {}\n" % (cname, cname, interface.getter_name()))
     impl.write("// Interface methods for %s:\n" % cname)
-    filename = "../" + basename
+    filename = "../" + interface.header_filename()
     icontext = dict(context)
     libparse.read_context(icontext, filename, namespace)
 
@@ -130,12 +203,12 @@ def gen_interface(interface, version, header, impl, basename, namespace="vr", ba
 
     header.write("};\n")
 
-    gen_fntable(interface, version, funcs, impl)
+    gen_fntable(interface, funcs, impl)
     return funcs
 
-def gen_fntable(interface, version, funcs, out):
-    cname = "CVR%s_%s" % (interface, version)
-    prefix = "fntable_%s_%s" % (interface, version)
+def gen_fntable(interface, funcs, out):
+    cname = interface.proxy_class_name()
+    prefix = "fntable_%s_%s" % (interface.varname(), interface.version())
     ivarname = "%s_instance" % prefix
     arrvarname = "%s_funcs" % prefix
     fnametemplate = "%s_impl_%%s" % prefix
@@ -161,15 +234,12 @@ def gen_fntable(interface, version, funcs, out):
     # Generate the getter
     out.write("void** %s::_GetStatFuncList() { %s = this; return %s; }\n" % (cname, ivarname, arrvarname))
 
-def gen_api_interface(plain_name, version, header, impl, header_name):
-    interface = "OC" + plain_name
-    return gen_interface(interface, version, header, impl, header_name, namespace="ocapi", basedir="API/", base="OCBase"+plain_name)
+def gen_api_interface(interface, header, impl):
+    return gen_interface(interface, header, impl, namespace="ocapi", basedir="API/")
 
-def write_api_class(data, cxxapi, capi, csapi):
-    name = data[0][0]
-    interface = "IVROC" + name
-    version = data[0][1]
-    funcs = data[1]
+def write_api_class(iface, funcs, cxxapi, capi, csapi):
+    interface = iface.interface()
+    interface_v = iface.interface_v()
 
     cxxapi.write("namespace ocapi {\n")
     cxxapi.write("\tclass %s {\n" % interface)
@@ -178,11 +248,11 @@ def write_api_class(data, cxxapi, capi, csapi):
         args = ", ".join([a.str for a in func.args])
         cxxapi.write("\t\tvirtual %s %s(%s) = 0;\n" % (func.return_type, func.name, args))
     cxxapi.write("\t};\n")
-    cxxapi.write("\tstatic const char * const %s_Version = \"%s_%s\";\n" % (interface, interface, version))
+    cxxapi.write("\tstatic const char * const %s_Version = \"%s\";\n" % (interface, interface_v))
     cxxapi.write("};\n")
 
     # Generate the struct in the plain-C API for the FnTable
-    capi.write("static const char * %s_Version = \"%s_%s\";\n" % (interface, interface, version))
+    capi.write("static const char * %s_Version = \"%s\";\n" % (interface, interface_v))
     capi.write("struct VR_%s_FnTable\n{\n" % interface)
     for func in funcs:
         args = ", ".join([a.str for a in func.args])
@@ -192,7 +262,7 @@ def write_api_class(data, cxxapi, capi, csapi):
     # Generate the C# FnTable struct
     csapi.write("[StructLayout(LayoutKind.Sequential)]\n")
     csapi.write("public struct %s\n{\n" % interface)
-    csapi.write("\tpublic const string Version = \"%s_%s\";\n\n" % (interface, version))
+    csapi.write("\tpublic const string Version = \"%s\";\n\n" % interface_v)
 
     for func in funcs:
         if func.args:
@@ -213,7 +283,7 @@ def write_api_class(data, cxxapi, capi, csapi):
 
     # Generate the stub class
     # This is so we can have references to it, since the struct is, well, a struct
-    cvr = "CVROC" + name
+    cvr = "CVROC" + i.name()
     csapi.write("public class %s\n{\n" % cvr)
     csapi.write("\tprivate %s fn;\n" % interface)
     csapi.write("\tinternal %s(IntPtr ptr) {\n" % cvr)
@@ -291,14 +361,19 @@ for base_interface in interfaces_list:
                 version = match.group("version")
                 interface = match.group("interface")
                 flags = match.group("flags")
-                header_name = "OpenVR/interfaces/IVR%s_%s.h" % (interface, version)
-                if flags:
-                    flags = [e.strip() for e in flags.split(",")]
-                    if "CUSTOM" in flags:
-                        header_name = "OpenVR/custom_interfaces/IVR%s_%s.h" % (interface, version)
-                    elif "API" in flags:
-                        header_name = "API/I%s_%s.h" % (interface, version)
-                todo_interfaces.append((interface, version, flags, header_name, base_flags))
+                flags = flags and [e.strip() for e in flags.split(",")] or []
+
+                icontext = (base_flags, None)
+
+                if "CUSTOM" in flags:
+                    interface_def = CustomInterface(version, interface, flags, icontext)
+                elif "API" in flags:
+                    interface_def = APIInterface(version, interface, flags, icontext)
+                else:
+                    interface_def = InterfaceDef(version, interface, flags, icontext)
+
+                header_name = interface_def.header_filename()
+                todo_interfaces.append(interface_def)
             elif basematch:
                 flag = basematch.group("flag")
                 value = basematch.group("value").strip()
@@ -320,19 +395,19 @@ for base_interface in interfaces_list:
     header.write("#include \"BaseCommon.h\"\n")
 
     for i in todo_interfaces:
-        header.write("#include \"%s\"\n" % i[3])
+        header.write("#include \"%s\"\n" % i.header_filename())
 
     impl.write("#include \"%s\"\n" % header_filename)
 
     exports = dict()
 
     for i in todo_interfaces:
-        if i[2] and "API" in i[2]:
-            name = "%s_%s" % (i[0], i[1])
-            funcs = gen_api_interface(i[0], i[1], header, impl, i[3])
+        if i.has_flag("API"):
+            name = "%s_%s" % (i.name(), i.version())
+            funcs = gen_api_interface(i, header, impl)
             exports[name] = (i, funcs)
         else:
-            gen_interface(i[0], i[1], header, impl, i[3])
+            gen_interface(i, header, impl)
 
     if "API_EXPORT" in base_flags:
         export_ver = base_flags["API_EXPORT"]
@@ -341,8 +416,8 @@ for base_interface in interfaces_list:
             raise RuntimeError("API_EXPORT: Interface '%s' not in file" % export_ver)
 
         data = exports[export_ver]
-        write_api_class(data, api_cxx, api_c, api_cs)
-        api_interfaces.append(data[0][0])
+        write_api_class(data[0], data[1], api_cxx, api_c, api_cs)
+        api_interfaces.append(data[0])
 
     all_interfaces += todo_interfaces
 
@@ -357,15 +432,15 @@ impl.write("void *CreateInterfaceByName(const char *name) {\n")
 iname_vars = dict()
 
 for i in all_interfaces:
-    interface = i[0]
+    interface = i.name()
     ns = "vr"
 
-    if i[2] and "API" in i[2]:
+    if i.has_flag("API"):
         interface = "OC" + interface
         ns = "ocapi"
 
-    name = "CVR%s_%s" % (interface, i[1])
-    var = "%s::IVR%s_%s::IVR%s_Version" % (ns, interface, i[1], interface)
+    name = "CVR%s_%s" % (interface, i.version())
+    var = "%s::%s::%s_Version" % (ns, i.interface_v(), i.interface())
     iname_vars[name] = var
 
     impl.write("\tif(strcmp(%s, name) == 0) return new %s();\n" % (var, name))
@@ -380,33 +455,30 @@ impl.write("uint64_t GetInterfaceFlagsByName(const char *name, const char *flag,
 impl.write("\tif(success) *success = true;\n")
 
 for i in all_interfaces:
-    flags = i[2]
-
     cflags = dict()
 
-    base_flags = i[4]
+    base_flags = i.context()[0]
     if base_flags:
         for key in base_flags:
             if key[0] == "[" and key[-1] == "]":
                 cflags[key[1:-1]] = base_flags[key]
 
-    if flags:
-        for flag in flags:
-            match = cflag_spec.match(flag)
-            if not match:
-                continue
+    for flag in i.flags():
+        match = cflag_spec.match(flag)
+        if not match:
+            continue
 
-            name = match.group("name")
-            value = match.group("value")
-            if value:
-                cflags[name] = value
-            else:
-                del cflags[name]
+        name = match.group("name")
+        value = match.group("value")
+        if value:
+            cflags[name] = value
+        else:
+            del cflags[name]
 
     if not cflags:
         continue
 
-    impl.write("\tif(strcmp(%s, name) == 0) {\n" % iname_vars["CVR%s_%s" % (i[0], i[1])])
+    impl.write("\tif(strcmp(%s, name) == 0) {\n" % iname_vars[i.proxy_class_name()])
     for name in cflags:
         val = cflags[name]
         impl.write("\t\tif(strcmp(\"%s\", flag) == 0) return (%s);\n" % (name, val))
@@ -426,8 +498,9 @@ api_cxx.write("\tclass OCAPIContext {\n")
 # Write out the field/getter for each interface
 api_cxx.write("\tpublic:\n")
 for i in api_interfaces:
-    cls = "IVROC" + i
-    api_cxx.write("\t\t%s* %s() {\n" % (cls,i))
+    cls = i.interface()
+    name = i.name()
+    api_cxx.write("\t\t%s* %s() {\n" % (cls, name))
 
     # If the session has changed, this nulls out all the cached instances
     api_cxx.write("\t\t\tCheckClear();\n")
@@ -436,24 +509,24 @@ for i in api_interfaces:
     #  value 0x1 (which isn't exactly going to get allocated) to represent the value has been checked
     #  and came back as a null
     # Check for it here, and if appropriate return NULL
-    api_cxx.write("\t\t\tif(m_%s == (void*)0x1)\n\t\t\t\treturn NULL;\n" % i)
+    api_cxx.write("\t\t\tif(m_%s == (void*)0x1)\n\t\t\t\treturn NULL;\n" % name)
 
     # If we haven't used this interface yet, check if it's available and if so get it
-    api_cxx.write("\t\t\tif(!m_%s && vr::VR_IsInterfaceVersionValid(%s_Version)) {\n" % (i, cls))
+    api_cxx.write("\t\t\tif(!m_%s && vr::VR_IsInterfaceVersionValid(%s_Version)) {\n" % (name, cls))
     api_cxx.write("\t\t\t\tvr::EVRInitError eError;\n")
-    api_cxx.write("\t\t\t\tm_%s = (%s*) vr::VR_GetGenericInterface(%s_Version, &eError);\n" % (i, cls, cls))
+    api_cxx.write("\t\t\t\tm_%s = (%s*) vr::VR_GetGenericInterface(%s_Version, &eError);\n" % (name, cls, cls))
     api_cxx.write("\t\t\t}\n")
 
     # If we're here and the interface variable is NULL, then it means either the interface isn't available, eg
     #  maybe we're using SteamVR, or we tried to get the interface but it returned NULL. In either case, set the
     #  magic value so we don't bother looking it up again, in case this is called in a loop/in the render method.
-    api_cxx.write("\t\t\tif(!m_%s) {\n" % i)
-    api_cxx.write("\t\t\t\tm_%s = (%s*)0x1;\n" % (i, cls))
+    api_cxx.write("\t\t\tif(!m_%s) {\n" % name)
+    api_cxx.write("\t\t\t\tm_%s = (%s*)0x1;\n" % (name, cls))
     api_cxx.write("\t\t\t\treturn NULL;\n")
     api_cxx.write("\t\t\t}\n")
 
     # Return the interface
-    api_cxx.write("\t\t\treturn m_%s;\n" % i)
+    api_cxx.write("\t\t\treturn m_%s;\n" % name)
     api_cxx.write("\t\t};\n")
 
 # CheckClear method
@@ -463,13 +536,12 @@ api_cxx.write("\t\t\tstatic uint32_t token;\n")
 api_cxx.write("\t\t\tif(token == vr::VR_GetInitToken()) return;\n")
 api_cxx.write("\t\t\ttoken = vr::VR_GetInitToken();\n")
 for i in api_interfaces:
-    api_cxx.write("\t\t\tm_%s = nullptr;\n" % i)
+    api_cxx.write("\t\t\tm_%s = nullptr;\n" % i.name())
 api_cxx.write("\t\t}\n")
 
 # Write out the field for each interface
 for i in api_interfaces:
-    cls = "IVROC" + i
-    api_cxx.write("\t\t%s* m_%s = nullptr;\n" % (cls,i))
+    api_cxx.write("\t\t%s* m_%s = nullptr;\n" % (i.interface(), i.name()))
 
 api_cxx.write("\t};\n")
 
@@ -478,8 +550,7 @@ api_cxx.write("\tinline OCAPIContext& _Context() { static OCAPIContext oc; retur
 
 # Easy interface getters
 for i in api_interfaces:
-    cls = "IVROC" + i
-    api_cxx.write("\tinline %s* OC%s() { return _Context().%s(); }\n" % (cls, i, i))
+    api_cxx.write("\tinline %s* OC%s() { return _Context().%s(); }\n" % (i.interface(), i.name(), i.name()))
 
 api_cxx.write("};\n")
 
@@ -491,9 +562,10 @@ api_cs.write("\npublic static class OpenComposite\n{\n")
 
 # Generate the interface getters
 for i in api_interfaces:
-    cls = "IVROC" + i
-    cvr = "CVROC" + i
-    api_cs.write("\tpublic static %s %s { get {\n" % (cvr, i))
+    cls = i.interface()
+    cvr = "CVROC" + i.name()
+    name = i.name()
+    api_cs.write("\tpublic static %s %s { get {\n" % (cvr, name))
 
     # Check if the session has been closed and reopened, and if so reset the cache fields
     api_cs.write("\t\tCheckClear();\n")
@@ -501,7 +573,7 @@ for i in api_interfaces:
     # If we've already tried to get the interface, return it
     # Note it might be unsuccessful and we don't want to try over and over, so that's why
     #  we don't use `!=null` here.
-    api_cs.write("\t\tif(m_%s_done) return m_%s;\n" % (i,i))
+    api_cs.write("\t\tif(m_%s_done) return m_%s;\n" % (name,name))
 
     # Check the interface is available, and if so look up the interface
     api_cs.write("\t\tif(OpenVR.IsInterfaceVersionValid(%s.Version)) {\n" % cls)
@@ -510,12 +582,12 @@ for i in api_interfaces:
 
     # If the call was successful and didn't return null, create the wrapper object
     api_cs.write("\t\t\tif(ptr != IntPtr.Zero && eError == EVRInitError.None)\n")
-    api_cs.write("\t\t\t\tm_%s = new %s(ptr);\n" % (i,cvr))
+    api_cs.write("\t\t\t\tm_%s = new %s(ptr);\n" % (name,cvr))
     api_cs.write("\t\t}\n")
 
     # Mark the lookup as done so we don't try this again (unless there's a new VR session, see CheckClear).
-    api_cs.write("\t\tm_%s_done = true;\n" % i)
-    api_cs.write("\t\treturn m_%s;\n" % i)
+    api_cs.write("\t\tm_%s_done = true;\n" % name)
+    api_cs.write("\t\treturn m_%s;\n" % name)
     api_cs.write("\t}}\n\n")
 
 api_cs.write("\tconst string FnTable_Prefix = \"FnTable:\";\n")
@@ -524,14 +596,14 @@ api_cs.write("\tprivate static void CheckClear() {\n")
 api_cs.write("\t\tif(VRToken == OpenVR.GetInitToken())\n\t\t\treturn;\n")
 api_cs.write("\t\tVRToken = OpenVR.GetInitToken();\n")
 for i in api_interfaces:
-    api_cs.write("\t\tm_%s = null;\n" % i)
-    api_cs.write("\t\tm_%s_done = false;\n" % i)
+    api_cs.write("\t\tm_%s = null;\n" % i.name())
+    api_cs.write("\t\tm_%s_done = false;\n" % i.name())
 api_cs.write("\t}\n\n")
 
 for i in api_interfaces:
-    cls = "CVROC" + i
-    api_cs.write("\tprivate static %s m_%s;\n" % (cvr, i))
-    api_cs.write("\tprivate static bool m_%s_done;\n" % i)
+    cls = "CVROC" + i.name()
+    api_cs.write("\tprivate static %s m_%s;\n" % (cvr, i.name()))
+    api_cs.write("\tprivate static bool m_%s_done;\n" % i.name())
 
 api_cs.write("}\n")
 
