@@ -60,8 +60,10 @@ matcher = re.compile(r"^\/\/ ([\w_-]+)\.h$")
 versionmatcher = re.compile(r"_Version = \"([\w-]*)\";")
 
 def write(target, result, usingiface, interface_checker, out_dir):
-	if interface_checker and not interface_checker(target, usingiface):
-		return
+	if interface_checker:
+		target = interface_checker(target, usingiface)
+		if not target:
+			return True
 
 	filename = target + ".h"
 	outfile = out_dir + filename
@@ -103,14 +105,15 @@ def write(target, result, usingiface, interface_checker, out_dir):
 	with open(outfile, "wb") as outfile:
 		outfile.write(result.encode())
 
-def split_header(headerfile, interface_checker=None, out_dir="interfaces/"):
+def split_header(headerfile, interface_checker=None, out_dir="interfaces/", imports=None):
 	outbuff = io.StringIO()
 	targetfile = None
 	usingiface = False
 	iface_excluded = False
 
-	imports = io.StringIO()
-	imports.write("#pragma once\n")
+	if not imports:
+		imports = io.StringIO()
+		imports.write("#pragma once\n")
 
 	for line in headerfile:
 		niceline = line.rstrip("\n")
@@ -121,10 +124,10 @@ def split_header(headerfile, interface_checker=None, out_dir="interfaces/"):
 
 			# Write out the previous interface file, unless this was the first one
 			if targetfile:
-				write(targetfile, outbuff.getvalue(), usingiface, interface_checker, out_dir)
+				rejected = write(targetfile, outbuff.getvalue(), usingiface, interface_checker, out_dir)
 
 				# Add the import, unless it's a versioned interface
-				if not usingiface and not iface_excluded:
+				if not usingiface and not iface_excluded and not rejected:
 					imports.write("#include \"" + targetfile + ".h\"\n")
 
 				outbuff = io.StringIO()
@@ -149,6 +152,8 @@ def split_header(headerfile, interface_checker=None, out_dir="interfaces/"):
 	# Write the last interface
 	if targetfile:
 		write(targetfile, outbuff.getvalue(), usingiface, interface_checker, out_dir)
+	
+	return imports
 
 # Go through the list backwards, and not overwriting interfaces which
 #  ensures we have the latest version of every file
@@ -157,7 +162,7 @@ for version in versions[::-1]:
     print("Reading: " + feed)
 
     with open(feed, "r") as headerfile:
-        split_header(headerfile)
+        appapi_imports = split_header(headerfile)
 
 # Do the same for the drivers, but filter them
 def driver_filter(fi, iface):
@@ -165,7 +170,10 @@ def driver_filter(fi, iface):
 	if re.match(r".*_\d\d\d", fi):
 		fi = fi[:-4]
 	# print(fi)
-	return fi in driver_files
+	if fi in driver_files:
+		return "driver-" + fi
+	
+	return False
 
 for version in driver_versions[::-1]:
 	feed = "openvr-%s-driver.h" % version
@@ -173,7 +181,7 @@ for version in driver_versions[::-1]:
 
 	# Note we have to use Latin-1, since EVRSkeletalTrackingLevel's first comment includes a character outside of the plain ASCII range
 	with open(feed, "r", encoding="latin-1") as headerfile:
-		split_header(headerfile, driver_filter, "interfaces/driver-")
+		split_header(headerfile, driver_filter, imports=appapi_imports)
 
 for fi in files_to_delete:
     fi = "interfaces/" + fi
