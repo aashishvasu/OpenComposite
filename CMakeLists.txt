@@ -96,6 +96,9 @@ set_property(SOURCE ${OVRKSDIR}/Blt_vs.hlsl PROPERTY VS_SHADER_TYPE Vertex)
 
 # === OCCore ===
 # TODO: precompiled headers
+set(OVR_RESOURCES
+	OpenOVR/resources.rc
+)
 add_library(OCCore STATIC
 	OpenOVR/API/OCBaseSystem.cpp
 	OpenOVR/Compositor/compositor.cpp
@@ -149,6 +152,9 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/ini.c
 	OpenOVR/Misc/jsoncpp.cpp
 	OpenOVR/Misc/lodepng.cpp
+
+	# Resources
+	${OVR_RESOURCES}
 
 	# Headers
 	OpenOVR/API/ISystem_001.h
@@ -253,5 +259,8 @@ source_group(Interfaces\\Declarations REGULAR_EXPRESSION OpenOVR/Reimpl/CVR*)
 # === OCOVR ===
 add_library(OCOVR SHARED
 	OCOVR/dllmain.cpp
+
+	# Resources don't get nicely included in a library file
+	${OVR_RESOURCES}
 )
 target_link_libraries(OCOVR OCCore)
