@@ -70,6 +70,13 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 	if (inputMode == EGamepadTextInputMode::k_EGamepadTextInputModePassword)
 		OOVR_ABORT("Password input mode not yet supported!");
 
+	// zero stuff out
+	memset(lastInputTime, 0, sizeof(lastInputTime));
+	memset(repeatCount, 0, sizeof(repeatCount));
+	memset(selected, 0, sizeof(selected));
+	memset(lastButtonState, 0, sizeof(lastButtonState));
+
+	// D3D setup
 	dev->GetImmediateContext(&ctx);
 
 	Sizei bufferSize(1024, 512);
