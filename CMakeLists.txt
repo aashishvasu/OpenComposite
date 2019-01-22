@@ -145,6 +145,12 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/CVRSystem.cpp
 	OpenOVR/Reimpl/stubs.gen.cpp
 
+	# Base classes
+	OpenOVR/Reimpl/BaseServerDriverHost.cpp OpenOVR/Reimpl/BaseServerDriverHost.h
+
+	# Definitions
+	OpenOVR/Reimpl/CVRServerDriverHost.cpp
+
 	# Use when doing PCH
 	OpenOVR/stdafx.cpp
 

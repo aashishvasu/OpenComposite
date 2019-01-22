@@ -12,6 +12,8 @@ argr = re.compile(arg_src)
 typedecl = re.compile(r"^(?:enum|struct)\s+(?P<name>\w+)$")
 
 typedef = re.compile(r"^typedef\s+(?P<def>[\w\s\d_\*&]+)\s+(?P<name>\w+);$")
+typedef_struct = re.compile(r"^typedef\s+(?:struct|union)$")
+typedef_struct_end = re.compile(r"^}\s+(?P<name>\w+);$")
 
 def nice_lines(fi):
     lines = []
@@ -40,14 +42,30 @@ def read_context(context, filename, namespace):
         raise RuntimeError("Automatic namespace detection not yet implemented! Please specify a namespace!")
 
     with open(filename) as fi:
+        tdstruct_start = None
         for line in nice_lines(fi):
             line = line.strip()
             match = typedecl.match(line)
             if not match:
                 match = typedef.match(line)
+
+            if tdstruct_start:
+                match = typedef_struct_end.match(line)
+                if match:
+                    tdstruct_start = None
+                else:
+                    continue
+
             if match:
                 name = match.group("name")
                 context[name] = namespace + "::" + name # TODO
+            else:
+                match = typedef_struct.match(line)
+                if match:
+                    tdstruct_start = line
+
+        if tdstruct_start:
+            raise Exception("Cound not find closing for structure '%s'" % tdstruct_start)
 
 def convert_type(t, context):
     # First, remove any spaces and pointer/reference symbols, setting them aside
