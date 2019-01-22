@@ -19,6 +19,9 @@ interfaces_list = [
 
     # OpenComposite-specific interfaces
     "OCSystem",
+
+    # Driver interfaces
+    "ServerDriverHost",
 ]
 
 # Mappings between C and C# types
@@ -64,7 +67,7 @@ class InterfaceDef:
         return flag in self._flags
 
     def header_filename(self):
-        return "OpenVR/interfaces/IVR%s_%s.h" % (self.name(), self.version())
+        return "OpenVR/interfaces/%s.h" % self.interface_v()
 
     def basename(self):
         return "Base" + self.name()
@@ -90,6 +93,10 @@ class InterfaceDef:
 class CustomInterface(InterfaceDef):
     def header_filename(self):
         return "OpenVR/custom_interfaces/%s.h" % (self.interface_v())
+
+class DriverInterface(InterfaceDef):
+    def interface_v(self):
+        return "driver_%s_%s" % (self.interface(), self.version())
 
 class APIInterface(InterfaceDef):
     def header_filename(self):
@@ -369,6 +376,8 @@ for base_interface in interfaces_list:
                     interface_def = CustomInterface(version, interface, flags, icontext)
                 elif "API" in flags:
                     interface_def = APIInterface(version, interface, flags, icontext)
+                elif "DRIVER" in flags:
+                    interface_def = DriverInterface(version, interface, flags, icontext)
                 else:
                     interface_def = InterfaceDef(version, interface, flags, icontext)
 
