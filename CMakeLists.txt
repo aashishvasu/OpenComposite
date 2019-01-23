@@ -206,6 +206,10 @@ add_library(OCCore STATIC
 	OpenOVR/steamvr_abi.h
 	OpenOVR/targetver.h
 
+	# Newly-added classes
+	OpenOVR/Drivers/DriverManager.cpp
+	OpenOVR/Drivers/DriverManager.h
+
 	# While not actually part of OCCore, list all the OpenVR interfaces here so they are easily accessable in IDE
 	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRClientCore_002.h
 	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRClientCore_003.h
