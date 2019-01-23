@@ -39,7 +39,7 @@ import libparse
 
 context = dict()
 
-libparse.read_context(context, "../OpenVR/interfaces/vrtypes.h", "vr")
+libparse.read_context(context, "../../SplitOpenVRHeaders/OpenVR/interfaces/vrtypes.h", "vr")
 
 class InterfaceDef:
     def __init__(self, version, name, flags, interface_context):
@@ -68,6 +68,9 @@ class InterfaceDef:
 
     def header_filename(self):
         return "OpenVR/interfaces/%s.h" % self.interface_v()
+
+    def header_prefix(self):
+        return "../../SplitOpenVRHeaders/"
 
     def basename(self):
         return "Base" + self.name()
@@ -101,6 +104,9 @@ class DriverInterface(InterfaceDef):
 class APIInterface(InterfaceDef):
     def header_filename(self):
         return "API/I%s_%s.h" % (self.name(), self.version())
+
+    def header_prefix(self):
+        return "../"
 
     def proxy_class_name(self):
         return "CVROC%s_%s" % (self.name(), self.version())
@@ -173,7 +179,7 @@ def gen_interface(interface, header, impl, namespace="vr", basedir=""):
     impl.write("// Misc for %s:\n" % cname)
     impl.write("%s::%s() : base(GetCreate%s()) {}\n" % (cname, cname, interface.getter_name()))
     impl.write("// Interface methods for %s:\n" % cname)
-    filename = "../" + interface.header_filename()
+    filename = interface.header_prefix() + interface.header_filename()
     icontext = dict(context)
     libparse.read_context(icontext, filename, namespace)
 
@@ -381,7 +387,6 @@ for base_interface in interfaces_list:
                 else:
                     interface_def = InterfaceDef(version, interface, flags, icontext)
 
-                header_name = interface_def.header_filename()
                 todo_interfaces.append(interface_def)
             elif basematch:
                 flag = basematch.group("flag")
