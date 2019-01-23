@@ -1,6 +1,6 @@
 #pragma once
-#include "BaseCommon.h"
-#include "Misc/Keyboard/VRKeyboard.h"
+#include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
+#include "../Misc/Keyboard/VRKeyboard.h" // TODO don't import from OCOVR, and remove the "../"
 #include <map>
 #include <queue>
 #include <vector>

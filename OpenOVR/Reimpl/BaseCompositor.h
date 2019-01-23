@@ -91,36 +91,12 @@ enum OOVR_EVRCompositorTimingMode {
 
 class BaseCompositor {
 private:
-	enum RenderState {
-		RS_NOT_STARTED,
-		RS_WAIT_BEGIN,
-		RS_RENDERING,
-	};
-
 	bool leftEyeSubmitted = false, rightEyeSubmitted = false;
-	void SubmitFrames();
-	void SubmitSkyboxFrames();
-	long long frameIndex = 0;
 
-	OVR::Sizei size;
-
-	Compositor * compositors[2] = { NULL, NULL };
-
-	ovrLayerEyeFov layer;
-	ovrLayerCube skyboxLayer;
 	vr::HmdColor_t fadeColour = { 0, 0, 0, 0 };
 	float fadeTime = 0;
 
 	bool isInSkybox = false;
-
-	ovrTrackingState trackingState;
-	double sensorSampleTime;
-
-	ovrSessionStatus sessionStatus;
-
-	RenderState state = RS_NOT_STARTED;
-
-	std::unique_ptr<Compositor> skyboxCompositor;
 
 	ovrMirrorTexture mirrorTexture = nullptr;
 	int mirrorTexturesCount = 0;
@@ -136,9 +112,6 @@ public:
 	void GetSinglePoseRendering(vr::ETrackingUniverseOrigin origin, vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
 
 	static OVR::Matrix4f GetHandTransform();
-
-	// Used during migration to OculusBackend
-	ovrTrackingState &GetOvrTrackingState() { return trackingState; }
 
 	/** Creates API specific Compositor */
 	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize);

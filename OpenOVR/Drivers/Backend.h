@@ -36,6 +36,21 @@ public:
 		float predictedSecondsToPhotonsFromNow,
 		vr::TrackedDevicePose_t * poseArray,
 		uint32_t poseArrayCount) = 0;
+
+	// Submitting Frames
+	virtual void WaitForTrackingData() = 0;
+
+	virtual void StoreEyeTexture(
+		vr::EVREye eye,
+		const vr::Texture_t * texture,
+		const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags,
+		bool isFirstEye) = 0;
+
+	virtual void SubmitFrames(bool showSkybox) = 0;
+
+	// Virtual Destructor
+	virtual ~IBackend();
 };
 
 class BackendManager {
@@ -57,6 +72,19 @@ public:
 		float predictedSecondsToPhotonsFromNow,
 		vr::TrackedDevicePose_t * poseArray,
 		uint32_t poseArrayCount);
+
+	// Submitting Frames
+
+	void WaitForTrackingData();
+
+	void StoreEyeTexture(
+		vr::EVREye eye,
+		const vr::Texture_t * texture,
+		const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags,
+		bool isFirstEye);
+
+	void SubmitFrames(bool showSkybox);
 
 private:
 	BackendManager();
