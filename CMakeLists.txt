@@ -272,9 +272,9 @@ target_include_directories(OCCore PRIVATE BundledLibs)
 target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
 target_link_libraries(OCCore OpenVR ovr ovrkernel)
 
-source_group(OpenVR REGULAR_EXPRESSION OpenOVR/OpenVR/interfaces/*)
-source_group(OpenVR\\Drivers REGULAR_EXPRESSION OpenOVR/OpenVR/interfaces/driver_*)
-source_group(OpenVR\\Custom REGULAR_EXPRESSION OpenOVR/OpenVR/custom_interfaces/*)
+source_group(OpenVR REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/*)
+source_group(OpenVR\\Drivers REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/driver_*)
+source_group(OpenVR\\Custom REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/custom_interfaces/*)
 source_group(Interfaces REGULAR_EXPRESSION OpenOVR/Reimpl/Base*)
 source_group(Interfaces\\Declarations REGULAR_EXPRESSION OpenOVR/Reimpl/CVR*)
 
