@@ -3,8 +3,8 @@
 
 // TODO get this to work properly
 #include "OpenVR/interfaces/driver_IVRServerDriverHost_005.h"
-using DriverPose_t = vr::driver_IVRServerDriverHost_005::DriverPose_t;
-using ITrackedDeviceServerDriver = vr::driver_IVRServerDriverHost_005::ITrackedDeviceServerDriver;
+
+#include "Drivers/DriverManager.h"
 
 class BaseServerDriverHost {
 public:
@@ -12,10 +12,10 @@ public:
 	/** Notifies the server that a tracked device has been added. If this function returns true
 	* the server will call Activate on the device. If it returns false some kind of error
 	* has occurred and the device will not be activated. */
-	virtual bool TrackedDeviceAdded(const char *pchDeviceSerialNumber, vr::ETrackedDeviceClass eDeviceClass, ::ITrackedDeviceServerDriver *pDriver);
+	virtual bool TrackedDeviceAdded(OCTrackedDeviceDriver *driver);
 
 	/** Notifies the server that a tracked device's pose has been updated */
-	virtual void TrackedDevicePoseUpdated(uint32_t unWhichDevice, const ::DriverPose_t & newPose, uint32_t unPoseStructSize);
+	virtual void TrackedDevicePoseUpdated(uint32_t unWhichDevice, const OCDriverPose_t & newPose, uint32_t unPoseStructSize);
 
 	/** Notifies the server that vsync has occurred on the the display attached to the device. This is
 	* only permitted on devices of the HMD class. */

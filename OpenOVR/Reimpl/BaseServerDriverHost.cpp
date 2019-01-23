@@ -2,10 +2,12 @@
 #define BASE_IMPL
 #include "BaseServerDriverHost.h"
 
-bool BaseServerDriverHost::TrackedDeviceAdded(const char *pchDeviceSerialNumber, vr::ETrackedDeviceClass eDeviceClass, ::ITrackedDeviceServerDriver *pDriver) {
-	STUBBED();
+#include "Drivers/DriverManager.h"
+
+bool BaseServerDriverHost::TrackedDeviceAdded(OCTrackedDeviceDriver *driver) {
+	return DriverManager::CheckInstance().TrackedDeviceAdded(driver);
 }
-void BaseServerDriverHost::TrackedDevicePoseUpdated(uint32_t unWhichDevice, const ::DriverPose_t & newPose, uint32_t unPoseStructSize) {
+void BaseServerDriverHost::TrackedDevicePoseUpdated(uint32_t unWhichDevice, const OCDriverPose_t & newPose, uint32_t unPoseStructSize) {
 	STUBBED();
 }
 void BaseServerDriverHost::VsyncEvent(double vsyncTimeOffsetSeconds) {
