@@ -62,3 +62,11 @@ void BackendManager::StoreEyeTexture(
 void BackendManager::SubmitFrames(bool showSkybox) {
 	return backend->SubmitFrames(showSkybox);
 }
+
+IBackend::openvr_enum_t BackendManager::SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount) {
+	return backend->SetSkyboxOverride(pTextures, unTextureCount);
+}
+
+void BackendManager::ClearSkyboxOverride() {
+	return backend->ClearSkyboxOverride();
+}

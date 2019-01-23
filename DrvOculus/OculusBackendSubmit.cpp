@@ -21,6 +21,7 @@
 #define DESC (ovr::hmdDesc)
 
 using std::string;
+using EVRCompositorError = vr::IVRCompositor_022::EVRCompositorError;
 
 void OculusBackend::SubmitFrames(
 	bool showSkybox
@@ -261,4 +262,55 @@ void OculusBackend::StoreEyeTexture(
 	//	// Commit changes to the textures so they get picked up frame
 	//	ovr_CommitTextureSwapChain(SESS, chains[oeye]);
 	//}
+}
+
+IBackend::openvr_enum_t OculusBackend::SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount) {
+	if (!oovr_global_configuration.EnableAppRequestedCubemap()) {
+		return EVRCompositorError::VRCompositorError_None;
+	}
+
+	// For now, only support cubemaps, as that's what LibOVR supports
+	if (unTextureCount != 6u) {
+		OOVR_LOGF("Only cubemap skyboxes are supported - lat/long and stereo pair skyboxes are not supported. Supplied texture count: %d", unTextureCount);
+		return EVRCompositorError::VRCompositorError_None;
+	}
+
+	// Apparently it's permissable to pass in a texture with a null handle! (The Forest does this)
+	for (size_t i = 0; i < unTextureCount; i++) {
+		if (pTextures[i].handle == nullptr) {
+			ClearSkyboxOverride();
+			return EVRCompositorError::VRCompositorError_None;
+		}
+	}
+
+	// See if this is the first time we're invoked.
+	if (!skyboxCompositor) {
+		const auto size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
+		skyboxCompositor.reset(GetUnsafeBaseCompositor()->CreateCompositorAPI(pTextures, size));
+
+		skyboxLayer.Orientation = OVR::Quatf::Identity();
+
+		skyboxLayer.Header.Type = ovrLayerType_Cube;
+		skyboxLayer.Header.Flags = ovrLayerFlag_HighQuality;
+	}
+
+	if (!skyboxCompositor->SupportsCubemap()) {
+		// Compositor doesn't support cubemaps, nothing we can do
+		return EVRCompositorError::VRCompositorError_None;
+	}
+
+	skyboxCompositor->InvokeCubemap(pTextures);
+	skyboxLayer.CubeMapTexture = skyboxCompositor->GetSwapChain();
+
+	OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(SESS, skyboxLayer.CubeMapTexture));
+
+	// TODO submit this texture when the app is not submitting frames, or when the app has called FadeGrid
+
+	return EVRCompositorError::VRCompositorError_None;
+}
+
+void OculusBackend::ClearSkyboxOverride(
+) {
+	// TODO
+	//STUBBED();
 }

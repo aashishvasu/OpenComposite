@@ -36,6 +36,14 @@ public:
 		bool showSkybox
 	) override;
 
+	virtual openvr_enum_t SetSkyboxOverride(
+		const vr::Texture_t * pTextures,
+		uint32_t unTextureCount
+	) override;
+
+	virtual void ClearSkyboxOverride(
+	) override;
+
 private:
 
 	// Rendering stuff

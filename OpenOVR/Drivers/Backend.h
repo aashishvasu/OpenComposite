@@ -25,6 +25,8 @@ enum ETrackingStateType {
  */
 class IBackend {
 public:
+	typedef int openvr_enum_t;
+
 	virtual void GetSinglePose(
 		vr::ETrackingUniverseOrigin origin,
 		vr::TrackedDeviceIndex_t index,
@@ -48,6 +50,10 @@ public:
 		bool isFirstEye) = 0;
 
 	virtual void SubmitFrames(bool showSkybox) = 0;
+
+	virtual openvr_enum_t SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount) = 0;
+
+	virtual void ClearSkyboxOverride() = 0;
 
 	// Virtual Destructor
 	virtual ~IBackend();
@@ -85,6 +91,10 @@ public:
 		bool isFirstEye);
 
 	void SubmitFrames(bool showSkybox);
+
+	IBackend::openvr_enum_t SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount);
+
+	void ClearSkyboxOverride();
 
 private:
 	BackendManager();

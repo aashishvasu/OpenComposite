@@ -381,58 +381,11 @@ float BaseCompositor::GetCurrentGridAlpha() {
 }
 
 ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t * pTextures, uint32_t unTextureCount) {
-	OOVR_ABORT("TODO move SetSkyboxOverride");
-
-	// TODO reenable
-	/*
-	if (!oovr_global_configuration.EnableAppRequestedCubemap()) {
-		return VRCompositorError_None;
-	}
-
-	// For now, only support cubemaps, as that's what LibOVR supports
-	if (unTextureCount != 6u) {
-		OOVR_LOGF("Only cubemap skyboxes are supported - lat/long and stereo pair skyboxes are not supported. Supplied texture count: %d", unTextureCount);
-		return VRCompositorError_None;
-	}
-
-	// Apparently it's permissable to pass in a texture with a null handle! (The Forest does this)
-	for (size_t i = 0; i < unTextureCount; i++) {
-		if (pTextures[i].handle == nullptr) {
-			ClearSkyboxOverride();
-			return VRCompositorError_None;
-		}
-	}
-
-	// See if this is the first time we're invoked.
-	if (!skyboxCompositor) {
-		const auto size = ovr_GetFovTextureSize(SESS, ovrEye_Left, DESC.DefaultEyeFov[ovrEye_Left], 1);
-		skyboxCompositor.reset(GetUnsafeBaseCompositor()->CreateCompositorAPI(pTextures, size));
-
-		skyboxLayer.Orientation = Quatf::Identity();
-
-		skyboxLayer.Header.Type = ovrLayerType_Cube;
-		skyboxLayer.Header.Flags = ovrLayerFlag_HighQuality;
-	}
-
-	if (!skyboxCompositor->SupportsCubemap()) {
-		// Compositor doesn't support cubemaps, nothing we can do
-		return VRCompositorError_None;
-	}
-
-	skyboxCompositor->InvokeCubemap(pTextures);
-	skyboxLayer.CubeMapTexture = skyboxCompositor->GetSwapChain();
-
-	OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(SESS, skyboxLayer.CubeMapTexture));
-
-	// TODO submit this texture when the app is not submitting frames, or when the app has called FadeGrid
-
-	return VRCompositorError_None;
-	*/
+	return BackendManager::Instance().SetSkyboxOverride(pTextures, unTextureCount);
 }
 
 void BaseCompositor::ClearSkyboxOverride() {
-	// TODO
-	//STUBBED();
+	BackendManager::Instance().ClearSkyboxOverride();
 }
 
 void BaseCompositor::CompositorBringToFront() {
