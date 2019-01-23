@@ -15,6 +15,10 @@ include_external_msproject(
 	PLATFORM "AnyCPU"
 )
 
+# === OpenVR Headers ===
+add_library(OpenVR INTERFACE)
+target_include_directories(OpenVR INTERFACE SplitOpenVRHeaders) # TODO make this private and put the public headers elsewhere
+
 # === LibOVR ===
 set(OVRDIR libs/libovr/OculusSDK/LibOVR)
 add_library(ovr STATIC
@@ -183,56 +187,6 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Keyboard/VRKeyboard.h
 	OpenOVR/Misc/lodepng.h
 	OpenOVR/Misc/ScopeGuard.h
-	OpenOVR/OpenVR/custom_interfaces/IVRClientCore_002.h
-	OpenOVR/OpenVR/custom_interfaces/IVRClientCore_003.h
-	OpenOVR/OpenVR/custom_interfaces/IVRCompositor_017.h
-	OpenOVR/OpenVR/interfaces/IVRApplications_004.h
-	OpenOVR/OpenVR/interfaces/IVRApplications_005.h
-	OpenOVR/OpenVR/interfaces/IVRApplications_006.h
-	OpenOVR/OpenVR/interfaces/IVRChaperoneSetup_005.h
-	OpenOVR/OpenVR/interfaces/IVRChaperone_003.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_012.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_013.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_014.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_015.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_016.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_018.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_019.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_020.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_021.h
-	OpenOVR/OpenVR/interfaces/IVRCompositor_022.h
-	OpenOVR/OpenVR/interfaces/IVRDriverManager_001.h
-	OpenOVR/OpenVR/interfaces/IVRExtendedDisplay_001.h
-	OpenOVR/OpenVR/interfaces/IVRInput_004.h
-	OpenOVR/OpenVR/interfaces/IVRIOBuffer_001.h
-	OpenOVR/OpenVR/interfaces/IVRNotifications_002.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_010.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_011.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_012.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_013.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_014.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_016.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_017.h
-	OpenOVR/OpenVR/interfaces/IVROverlay_018.h
-	OpenOVR/OpenVR/interfaces/IVRRenderModels_004.h
-	OpenOVR/OpenVR/interfaces/IVRRenderModels_005.h
-	OpenOVR/OpenVR/interfaces/IVRRenderModels_006.h
-	OpenOVR/OpenVR/interfaces/IVRResources_001.h
-	OpenOVR/OpenVR/interfaces/IVRScreenshots_001.h
-	OpenOVR/OpenVR/interfaces/IVRSettings_001.h
-	OpenOVR/OpenVR/interfaces/IVRSettings_002.h
-	OpenOVR/OpenVR/interfaces/IVRSpatialAnchors_001.h
-	OpenOVR/OpenVR/interfaces/IVRSystem_011.h
-	OpenOVR/OpenVR/interfaces/IVRSystem_012.h
-	OpenOVR/OpenVR/interfaces/IVRSystem_014.h
-	OpenOVR/OpenVR/interfaces/IVRSystem_015.h
-	OpenOVR/OpenVR/interfaces/IVRSystem_016.h
-	OpenOVR/OpenVR/interfaces/IVRSystem_017.h
-	OpenOVR/OpenVR/interfaces/IVRSystem_019.h
-	OpenOVR/OpenVR/interfaces/IVRTrackedCamera_003.h
-	OpenOVR/OpenVR/interfaces/openvr.h
-	OpenOVR/OpenVR/interfaces/vrannotation.h
-	OpenOVR/OpenVR/interfaces/vrtypes.h
 	OpenOVR/Reimpl/BaseApplications.h
 	OpenOVR/Reimpl/BaseChaperone.h
 	OpenOVR/Reimpl/BaseChaperoneSetup.h
@@ -252,14 +206,66 @@ add_library(OCCore STATIC
 	OpenOVR/steamvr_abi.h
 	OpenOVR/targetver.h
 
+	# While not actually part of OCCore, list all the OpenVR interfaces here so they are easily accessable in IDE
+	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRClientCore_002.h
+	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRClientCore_003.h
+	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRCompositor_017.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_004.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_005.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_006.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRChaperoneSetup_005.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRChaperone_003.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_012.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_013.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_014.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_015.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_016.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_018.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_019.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_020.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_021.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_022.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRDriverManager_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRExtendedDisplay_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRInput_004.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRIOBuffer_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRNotifications_002.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_010.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_011.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_012.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_013.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_014.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_016.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_017.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_018.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRRenderModels_004.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRRenderModels_005.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRRenderModels_006.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRResources_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRScreenshots_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSettings_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSettings_002.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSpatialAnchors_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_011.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_012.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_014.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_015.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_016.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_017.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_019.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRTrackedCamera_003.h
+	SplitOpenVRHeaders/OpenVR/interfaces/openvr.h
+	SplitOpenVRHeaders/OpenVR/interfaces/vrannotation.h
+	SplitOpenVRHeaders/OpenVR/interfaces/vrtypes.h
+
 	# OpenVR Driver headers
-	OpenOVR/OpenVR/interfaces/driver_itrackeddevicedriverprovider.h
-	OpenOVR/OpenVR/interfaces/driver_IVRServerDriverHost_005.h
+	SplitOpenVRHeaders/OpenVR/interfaces/driver_itrackeddevicedriverprovider.h
+	SplitOpenVRHeaders/OpenVR/interfaces/driver_IVRServerDriverHost_005.h
 )
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
 target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
-target_link_libraries(OCCore ovr ovrkernel)
+target_link_libraries(OCCore OpenVR ovr ovrkernel)
 
 source_group(OpenVR REGULAR_EXPRESSION OpenOVR/OpenVR/interfaces/*)
 source_group(OpenVR\\Drivers REGULAR_EXPRESSION OpenOVR/OpenVR/interfaces/driver_*)

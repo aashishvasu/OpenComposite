@@ -9,7 +9,7 @@ rem  - If you have added or removed a GEN_INTERFACE call inside an interface fil
 rem Then you either need to run the correct python script, or run this which runs all of them.
 
 if [%1] == [clean] (
-	cd "%~dp0/OpenOVR/OpenVR"
+	cd "%~dp0/SplitOpenVRHeaders/OpenVR"
 	if exist interfaces rmdir /q /s "interfaces"
 
 	cd "%~dp0/OpenOVR/FnTable"
@@ -27,7 +27,7 @@ if [%1] == [clean] (
 )
 
 echo Generating headers
-cd "%~dp0/OpenOVR/OpenVR"
+cd "%~dp0/SplitOpenVRHeaders/OpenVR"
 py -3 generate.py --nooverwrite
 
 echo Generating Interface Stubs
