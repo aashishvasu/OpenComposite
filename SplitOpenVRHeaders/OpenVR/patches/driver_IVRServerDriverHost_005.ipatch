@@ -1,0 +1,12 @@
+# Add an include for driver_ITrackedDeviceServerDriver_005.h just after the vrannotation.h include
+ins 5 1
+#include "driver_ITrackedDeviceServerDriver_005.h"
+
+# Delete the forward declarations
+del 12 4
+
+# Use the correct namespaces
+edit 22 1 1
+	virtual bool TrackedDeviceAdded( const char *pchDeviceSerialNumber, ETrackedDeviceClass eDeviceClass, vr::driver_ITrackedDeviceServerDriver_005::ITrackedDeviceServerDriver *pDriver ) = 0;
+edit 25 1 1
+	virtual void TrackedDevicePoseUpdated( uint32_t unWhichDevice, const vr::driver_ITrackedDeviceServerDriver_005::DriverPose_t & newPose, uint32_t unPoseStructSize ) = 0;

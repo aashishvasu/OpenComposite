@@ -28,11 +28,17 @@ driver_versions = [
 driver_files = [
 	"itrackeddevicedriverprovider",
 	"IVRServerDriverHost",
+	"ITrackedDeviceServerDriver",
 ]
 
 interface_exceptions = [
 	"itrackeddevicedriverprovider",
 ]
+
+patches = {
+	"driver_IVRServerDriverHost_005",
+	"driver_itrackeddevicedriverprovider",
+}
 
 #####################################################
 
@@ -61,6 +67,47 @@ files_written = []
 matcher = re.compile(r"^\/\/ ([\w_-]+)\.h$")
 versionmatcher = re.compile(r"_Version = \"([\w-]*)\";")
 
+def patch(text, patchfile):
+	lines = text.splitlines()
+
+	with open(patchfile, "r") as pat:
+		patchlines = pat.readlines()
+
+		linenum = 0
+		while linenum < len(patchlines):
+			line = patchlines[linenum]
+			linenum += 1
+			line = line.strip()
+			if not line:
+				continue
+
+			if line[0] == "#":
+				continue
+
+			parts = line.split()
+			mode = parts[0]
+			if mode == "ins":
+				start = int(parts[1]) - 1 # start at line 1
+				rlen = int(parts[2])
+				cpy_section = patchlines[linenum:linenum+rlen]
+				linenum += rlen
+				lines[start:start] = [s.rstrip('\n') for s in cpy_section]
+			elif mode == "del":
+				start = int(parts[1]) - 1 # start at line 1
+				rlen = int(parts[2])
+				del lines[start:start+rlen]
+			elif mode == "edit":
+				start = int(parts[1]) - 1 # start at line 1
+				olen = int(parts[2])
+				nlen = int(parts[3])
+				cpy_section = patchlines[linenum:linenum+nlen]
+				linenum += nlen
+				lines[start:start+olen] = [s.rstrip('\n') for s in cpy_section]
+			else:
+				raise Exception("Unknown patch mode '%s'" % mode)
+
+	return "\n".join(lines)
+
 def write(target, result, usingiface, interface_checker, out_dir):
 	if interface_checker:
 		target = interface_checker(target, usingiface)
@@ -87,6 +134,10 @@ def write(target, result, usingiface, interface_checker, out_dir):
 		result = result.replace("vr::", "")
 	else:
 		result = result.replace("%%REPLACE%NS%START%%", "namespace vr")
+
+	# Apply any manual patches
+	if target in patches:
+		result = patch(result, "patches/%s.ipatch" % target)
 
 	if nooverwrite and os.path.isfile(outfile):
 		# Check the hashes of the files, in case the headers have been modified, a new
