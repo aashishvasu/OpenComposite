@@ -265,6 +265,7 @@ add_library(OCCore STATIC
 	# OpenVR Driver headers
 	SplitOpenVRHeaders/OpenVR/interfaces/driver_itrackeddevicedriverprovider.h
 	SplitOpenVRHeaders/OpenVR/interfaces/driver_IVRServerDriverHost_005.h
+	SplitOpenVRHeaders/OpenVR/interfaces/driver_ITrackedDeviceServerDriver_005.h
 )
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
