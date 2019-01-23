@@ -9,6 +9,7 @@
 #include "Misc/Haptics.h"
 #include "Misc/Config.h"
 #include "static_bases.gen.h"
+#include "Drivers/Backend.h"
 
 #include <string>
 
@@ -197,17 +198,7 @@ bool BaseSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop) {
 void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigin, float predictedSecondsToPhotonsFromNow,
 	TrackedDevicePose_t * poseArray, uint32_t poseArrayCount) {
 
-	ovrTrackingState trackingState = { 0 };
-
-	if (predictedSecondsToPhotonsFromNow == 0) {
-		trackingState = ovr_GetTrackingState(*ovr::session, 0 /* Most recent */, ovrFalse);
-	} else {
-		trackingState = ovr_GetTrackingState(*ovr::session, ovr_GetTimeInSeconds() + predictedSecondsToPhotonsFromNow, ovrFalse);
-	}
-
-	for (uint32_t i = 0; i < poseArrayCount; i++) {
-		BaseCompositor::GetSinglePose(toOrigin, i, &poseArray[i], trackingState);
-	}
+	BackendManager::Instance().GetDeviceToAbsoluteTrackingPose(toOrigin, predictedSecondsToPhotonsFromNow, poseArray, poseArrayCount);
 }
 
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
@@ -926,8 +917,7 @@ blockInput:
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
 	vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t * pTrackedDevicePose) {
 
-	ovrTrackingState trackingState = ovr_GetTrackingState(*ovr::session, 0 /* Most recent */, ovrTrue);
-	BaseCompositor::GetSinglePose(eOrigin, unControllerDeviceIndex, pTrackedDevicePose, trackingState);
+	BackendManager::Instance().GetSinglePose(eOrigin, unControllerDeviceIndex, pTrackedDevicePose, ETrackingStateType::TrackingStateType_Now);
 
 	return GetControllerState(unControllerDeviceIndex, pControllerState, unControllerStateSize);
 }

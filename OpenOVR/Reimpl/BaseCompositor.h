@@ -1,10 +1,10 @@
 #pragma once
-#include "BaseCommon.h"
+#include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
 #include "OpenVR/interfaces/IVRCompositor_022.h"
 
 #include "Extras/OVR_Math.h"
 
-#include "Compositor/compositor.h"
+#include "../Compositor/compositor.h" // TODO don't import from OCOVR, and remove the "../"
 
 #include <vector>
 
@@ -133,10 +133,12 @@ public:
 	~BaseCompositor();
 
 	// Used in CVRSystem
-	static void GetSinglePose(vr::ETrackingUniverseOrigin origin, vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose, ovrTrackingState &state);
 	void GetSinglePoseRendering(vr::ETrackingUniverseOrigin origin, vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
 
 	static OVR::Matrix4f GetHandTransform();
+
+	// Used during migration to OculusBackend
+	ovrTrackingState &GetOvrTrackingState() { return trackingState; }
 
 	/** Creates API specific Compositor */
 	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize);

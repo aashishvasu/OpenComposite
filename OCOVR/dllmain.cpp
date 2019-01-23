@@ -16,6 +16,11 @@
 
 #include "OVR_CAPI_Audio.h"
 
+// Specific to OCOVR
+#include "Drivers/Backend.h"
+#include "Drivers/DriverManager.h"
+#include "DrvOculus.h"
+
 using namespace std;
 
 static void init_audio();
@@ -210,6 +215,11 @@ success:
 	current_apptype = eApplicationType;
 	running = true;
 	*peError = VRInitError_None;
+
+	// TODO seperate this from the rest of dllmain
+	BackendManager::Create(DrvOculus::CreateOculusBackend());
+	// DriverManager::Instance().Register(DrvOculus::CreateOculusDriver());
+
 	return current_init_token;
 }
 

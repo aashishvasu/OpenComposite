@@ -1,5 +1,5 @@
 #pragma once
-#include "BaseCommon.h"
+#include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
 #include "OpenVR/interfaces/IVRSystem_017.h"
 #include <OVR_CAPI.h>
 #include <queue>

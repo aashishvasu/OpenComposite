@@ -28,6 +28,7 @@ using namespace std;
 #endif
 
 #include "Misc/ScopeGuard.h"
+#include "Drivers/Backend.h"
 
 using namespace vr;
 using namespace IVRCompositor_022;
@@ -252,66 +253,8 @@ ovr_enum_t BaseCompositor::WaitGetPoses(TrackedDevicePose_t * renderPoseArray, u
 	return GetLastPoses(renderPoseArray, renderPoseArrayCount, gamePoseArray, gamePoseArrayCount);
 }
 
-void BaseCompositor::GetSinglePose(
-	vr::ETrackingUniverseOrigin origin,
-	vr::TrackedDeviceIndex_t index,
-	vr::TrackedDevicePose_t* pose,
-	ovrTrackingState &state) {
-
-	memset(pose, 0, sizeof(TrackedDevicePose_t));
-
-	ovrPoseStatef ovrPose;
-
-	if (index == k_unTrackedDeviceIndex_Hmd) {
-		ovrPose = state.HeadPose;
-	}
-	else if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
-		ovrPose = state.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
-	}
-	else if (index == BaseSystem::thirdTouchIndex) {
-		ovrTrackedDeviceType type = ovrTrackedDevice_Object0;
-		ovr_GetDevicePoses(*ovr::session, &type, 1, 0, &ovrPose);
-	}
-	else {
-		pose->bPoseIsValid = false;
-		pose->bDeviceIsConnected = false;
-		return;
-	}
-
-	// If we haven't yet got a frame, mark the controller as having
-	// an invalid pose to avoid errors from unnormalised 0,0,0,0 quaternions
-	if (!ovrPose.TimeInSeconds) {
-		pose->bPoseIsValid = false;
-		return;
-	}
-
-	if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
-		static Posef transform = Posef(Quatf(GetHandTransform()), GetHandTransform().GetTranslation());
-
-		ovrPose.ThePose = Posef(ovrPose.ThePose) * transform;
-	}
-
-	// AFAIK we don't need to do anything like the above for the third Touch controller, since it
-	//  isn't used as a controller anyway but rather a tracking device.
-
-	// Configure the pose
-
-	pose->bPoseIsValid = true;
-
-	// TODO deal with the HMD not being connected
-	pose->bDeviceIsConnected = true;
-
-	// TODO
-	pose->eTrackingResult = TrackingResult_Running_OK;
-
-	O2S_v3f(ovrPose.LinearVelocity, pose->vVelocity);
-	O2S_v3f(ovrPose.AngularVelocity, pose->vAngularVelocity);
-
-	pose->mDeviceToAbsoluteTracking = GetUnsafeBaseSystem()->_PoseToTrackingSpace(origin, ovrPose.ThePose);
-}
-
 void BaseCompositor::GetSinglePoseRendering(ETrackingUniverseOrigin origin, TrackedDeviceIndex_t unDeviceIndex, TrackedDevicePose_t * pOutputPose) {
-	GetSinglePose(origin, unDeviceIndex, pOutputPose, trackingState);
+	BackendManager::Instance().GetSinglePose(origin, unDeviceIndex, pOutputPose, ETrackingStateType::TrackingStateType_Rendering);
 }
 
 Matrix4f BaseCompositor::GetHandTransform() {
@@ -348,7 +291,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 		TrackedDevicePose_t *gamePose = i < gamePoseArrayCount ? gamePoseArray + i : NULL;
 
 		if (renderPose) {
-			GetSinglePose(origin, i, renderPose, trackingState);
+			GetSinglePoseRendering(origin, i, renderPose);
 		}
 
 		if (gamePose) {
@@ -356,7 +299,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 				*gamePose = *renderPose;
 			}
 			else {
-				GetSinglePose(origin, i, gamePose, trackingState);
+				GetSinglePoseRendering(origin, i, gamePose);
 			}
 		}
 	}
@@ -374,7 +317,7 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
 
 	TrackedDevicePose_t pose;
-	GetSinglePose(origin, unDeviceIndex, &pose, trackingState);
+	GetSinglePoseRendering(origin, unDeviceIndex, &pose);
 
 	if (pOutputPose) {
 		*pOutputPose = pose;
@@ -622,7 +565,7 @@ bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint3
 
 	// pose used by app to render this frame
 	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
-	GetSinglePose(origin, k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose, trackingState);
+	GetSinglePoseRendering(origin, k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose);
 
 	return true;
 }

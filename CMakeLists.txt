@@ -98,6 +98,22 @@ set_property(SOURCE ${OVRKSDIR}/Blt_ps.hlsl PROPERTY VS_SHADER_TYPE Pixel)
 set_property(SOURCE ${OVRKSDIR}/Blt_ps_ms2.hlsl PROPERTY VS_SHADER_TYPE Pixel)
 set_property(SOURCE ${OVRKSDIR}/Blt_vs.hlsl PROPERTY VS_SHADER_TYPE Vertex)
 
+# === DrvOculus ===
+add_library(DrvOculus STATIC
+	DrvOculus/DrvOculus.cpp
+
+	DrvOculus/DrvOculusCommon.h
+
+	DrvOculus/OculusBackend.cpp
+	DrvOculus/OculusBackend.h
+
+	DrvOculus/pub/DrvOculus.h
+)
+target_include_directories(DrvOculus PUBLIC DrvOculus/pub)
+target_include_directories(DrvOculus PRIVATE DrvOculus)
+target_link_libraries(DrvOculus OpenVR ovr ovrkernel)
+source_group(Public REGULAR_EXPRESSION DrvOculus/pub/*)
+
 # === OCCore ===
 # TODO: precompiled headers
 set(OVR_RESOURCES
@@ -287,4 +303,4 @@ add_library(OCOVR SHARED
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
 )
-target_link_libraries(OCOVR OCCore)
+target_link_libraries(OCOVR OCCore DrvOculus)
