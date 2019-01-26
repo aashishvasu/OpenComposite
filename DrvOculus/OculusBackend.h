@@ -8,6 +8,7 @@ public:
 	OculusBackend();
 	virtual ~OculusBackend() override;
 
+	/*
 	virtual void GetSinglePose(
 		vr::ETrackingUniverseOrigin origin,
 		vr::TrackedDeviceIndex_t index,
@@ -43,6 +44,9 @@ public:
 
 	virtual void ClearSkyboxOverride(
 	) override;
+	*/
+
+	DECLARE_BACKEND_FUNCS(virtual, override)
 
 private:
 

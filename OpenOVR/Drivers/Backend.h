@@ -14,6 +14,36 @@ enum ETrackingStateType {
 	TrackingStateType_Rendering,
 };
 
+#define DECLARE_BACKEND_FUNCS(PREPEND, APPEND) \
+PREPEND void GetSinglePose( \
+	vr::ETrackingUniverseOrigin origin, \
+	vr::TrackedDeviceIndex_t index, \
+	vr::TrackedDevicePose_t* pose, \
+	ETrackingStateType trackingState) APPEND; \
+\
+PREPEND void GetDeviceToAbsoluteTrackingPose( \
+	vr::ETrackingUniverseOrigin toOrigin, \
+	float predictedSecondsToPhotonsFromNow, \
+	vr::TrackedDevicePose_t * poseArray, \
+	uint32_t poseArrayCount) APPEND; \
+ \
+/* Submitting Frames */ \
+PREPEND void WaitForTrackingData() APPEND; \
+\
+PREPEND void StoreEyeTexture( \
+	vr::EVREye eye, \
+	const vr::Texture_t * texture, \
+	const vr::VRTextureBounds_t * bounds, \
+	vr::EVRSubmitFlags submitFlags, \
+	bool isFirstEye) APPEND; \
+\
+PREPEND void SubmitFrames(bool showSkybox) APPEND; \
+\
+PREPEND IBackend::openvr_enum_t SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount) APPEND; \
+\
+PREPEND void ClearSkyboxOverride() APPEND; \
+
+
 /**
  * Backend is similar in concept to the OpenVR driver API, however it is
  * much closer to the application-facing API, and thus can avoid quite a bit of
@@ -27,33 +57,7 @@ class IBackend {
 public:
 	typedef int openvr_enum_t;
 
-	virtual void GetSinglePose(
-		vr::ETrackingUniverseOrigin origin,
-		vr::TrackedDeviceIndex_t index,
-		vr::TrackedDevicePose_t* pose,
-		ETrackingStateType trackingState) = 0;
-
-	virtual void GetDeviceToAbsoluteTrackingPose(
-		vr::ETrackingUniverseOrigin toOrigin,
-		float predictedSecondsToPhotonsFromNow,
-		vr::TrackedDevicePose_t * poseArray,
-		uint32_t poseArrayCount) = 0;
-
-	// Submitting Frames
-	virtual void WaitForTrackingData() = 0;
-
-	virtual void StoreEyeTexture(
-		vr::EVREye eye,
-		const vr::Texture_t * texture,
-		const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags,
-		bool isFirstEye) = 0;
-
-	virtual void SubmitFrames(bool showSkybox) = 0;
-
-	virtual openvr_enum_t SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount) = 0;
-
-	virtual void ClearSkyboxOverride() = 0;
+	DECLARE_BACKEND_FUNCS(virtual, =0)
 
 	// Virtual Destructor
 	virtual ~IBackend();
@@ -67,34 +71,7 @@ public:
 
 	// main methods
 
-	void GetSinglePose(
-		vr::ETrackingUniverseOrigin origin,
-		vr::TrackedDeviceIndex_t index,
-		vr::TrackedDevicePose_t* pose,
-		ETrackingStateType trackingState);
-
-	void GetDeviceToAbsoluteTrackingPose(
-		vr::ETrackingUniverseOrigin toOrigin,
-		float predictedSecondsToPhotonsFromNow,
-		vr::TrackedDevicePose_t * poseArray,
-		uint32_t poseArrayCount);
-
-	// Submitting Frames
-
-	void WaitForTrackingData();
-
-	void StoreEyeTexture(
-		vr::EVREye eye,
-		const vr::Texture_t * texture,
-		const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags,
-		bool isFirstEye);
-
-	void SubmitFrames(bool showSkybox);
-
-	IBackend::openvr_enum_t SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount);
-
-	void ClearSkyboxOverride();
+	DECLARE_BACKEND_FUNCS(,)
 
 private:
 	BackendManager();
