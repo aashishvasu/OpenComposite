@@ -74,4 +74,9 @@ private:
 	Compositor * compositors[2] = { NULL, NULL };
 	std::unique_ptr<Compositor> skyboxCompositor;
 
+	// Mirror
+	ovrMirrorTexture mirrorTexture = nullptr;
+	int mirrorTexturesCount = 0;
+	void DestroyOculusMirrorTexture();
+
 };

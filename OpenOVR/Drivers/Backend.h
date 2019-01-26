@@ -42,6 +42,12 @@ PREPEND void SubmitFrames(bool showSkybox) APPEND; \
 PREPEND IBackend::openvr_enum_t SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount) APPEND; \
 \
 PREPEND void ClearSkyboxOverride() APPEND; \
+\
+/* D3D Mirror textures */ \
+/* #if defined(SUPPORT_DX) */ \
+PREPEND IBackend::openvr_enum_t GetMirrorTextureD3D11(vr::EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) APPEND; \
+PREPEND void ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) APPEND; \
+/* #endif */ \
 
 
 /**

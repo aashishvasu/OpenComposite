@@ -23,6 +23,10 @@ OculusBackend::~OculusBackend() {
 		if (compositors[eye])
 			delete compositors[eye];
 	}
+
+	if (mirrorTexture) {
+		DestroyOculusMirrorTexture();
+	}
 }
 
 static void GetSingleTrackingPose(

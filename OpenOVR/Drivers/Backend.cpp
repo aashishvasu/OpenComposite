@@ -70,3 +70,13 @@ IBackend::openvr_enum_t BackendManager::SetSkyboxOverride(const vr::Texture_t * 
 void BackendManager::ClearSkyboxOverride() {
 	return backend->ClearSkyboxOverride();
 }
+
+#if defined(SUPPORT_DX)
+IBackend::openvr_enum_t BackendManager::GetMirrorTextureD3D11(vr::EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
+	return backend->GetMirrorTextureD3D11(eEye, pD3D11DeviceOrResource, ppD3D11ShaderResourceView);
+}
+
+void BackendManager::ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) {
+	return backend->ReleaseMirrorTextureD3D11(pD3D11ShaderResourceView);
+}
+#endif
