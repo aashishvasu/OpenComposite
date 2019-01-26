@@ -71,6 +71,10 @@ void BackendManager::ClearSkyboxOverride() {
 	return backend->ClearSkyboxOverride();
 }
 
+bool BackendManager::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
+	return backend->GetFrameTiming(pTiming, unFramesAgo);
+}
+
 #if defined(SUPPORT_DX)
 IBackend::openvr_enum_t BackendManager::GetMirrorTextureD3D11(vr::EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) {
 	return backend->GetMirrorTextureD3D11(eEye, pD3D11DeviceOrResource, ppD3D11ShaderResourceView);

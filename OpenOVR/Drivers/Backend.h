@@ -2,6 +2,9 @@
 #include <memory>
 #include "OpenVR/interfaces/vrtypes.h"
 
+// for OOVR_Compositor_FrameTiming
+#include "../OpenOVR/Reimpl/BaseCompositor.h"
+
 enum ETrackingStateType {
 	/**
 	* Use the latest available tracking data
@@ -42,6 +45,15 @@ PREPEND void SubmitFrames(bool showSkybox) APPEND; \
 PREPEND IBackend::openvr_enum_t SetSkyboxOverride(const vr::Texture_t * pTextures, uint32_t unTextureCount) APPEND; \
 \
 PREPEND void ClearSkyboxOverride() APPEND; \
+\
+/* Misc compositor */ \
+\
+/** \
+ * Get frame timing information to be passed to the application \
+ * \
+ * Returns true if successful \
+ */ \
+PREPEND bool GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) APPEND; \
 \
 /* D3D Mirror textures */ \
 /* #if defined(SUPPORT_DX) */ \
