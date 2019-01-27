@@ -8,6 +8,8 @@ endif()
 cmake_minimum_required(VERSION 3.12)
 project(OpenComposite)
 
+include(scripts/pch.cmake)
+
 # === Runtime Switcher ===
 include_external_msproject(
 	RuntimeSwitcher ${CMAKE_SOURCE_DIR}/RuntimeSwitcher/RuntimeSwitcher.csproj
@@ -129,6 +131,11 @@ source_group(Public REGULAR_EXPRESSION DrvOculus/pub/*)
 set(OVR_RESOURCES
 	OpenOVR/resources.rc
 )
+set(OVR_PCH_EXCLUDED
+	OpenOVR/Misc/ini.c
+	OpenOVR/Misc/jsoncpp.cpp
+	OpenOVR/Misc/lodepng.cpp
+)
 add_library(OCCore STATIC
 	OpenOVR/API/OCBaseSystem.cpp
 	OpenOVR/Compositor/compositor.cpp
@@ -185,9 +192,7 @@ add_library(OCCore STATIC
 	OpenOVR/stdafx.cpp
 
 	# Exclude from the PCH requirement
-	OpenOVR/Misc/ini.c
-	OpenOVR/Misc/jsoncpp.cpp
-	OpenOVR/Misc/lodepng.cpp
+	${OVR_PCH_EXCLUDED}
 
 	# Resources
 	${OVR_RESOURCES}
@@ -299,6 +304,11 @@ target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and p
 target_include_directories(OCCore PRIVATE BundledLibs)
 target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
 target_link_libraries(OCCore OpenVR ovr ovrkernel)
+
+# Set up precompiled headers for OCCore
+add_precompiled_header(OCCore OpenOVR/stdafx.h EXCLUDE
+	${OVR_PCH_EXCLUDED}
+)
 
 source_group(OpenVR REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/*)
 source_group(OpenVR\\Drivers REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/driver_*)
