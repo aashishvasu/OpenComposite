@@ -34,64 +34,6 @@ OculusBackend::~OculusBackend() {
 	}
 }
 
-static void GetSingleTrackingPose(
-	ETrackingUniverseOrigin origin,
-	TrackedDeviceIndex_t index,
-	TrackedDevicePose_t* pose,
-	ovrTrackingState &state) {
-
-	memset(pose, 0, sizeof(TrackedDevicePose_t));
-
-	ovrPoseStatef ovrPose;
-
-	if (index == k_unTrackedDeviceIndex_Hmd) {
-		ovrPose = state.HeadPose;
-	}
-	else if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
-		ovrPose = state.HandPoses[index == BaseSystem::leftHandIndex ? ovrHand_Left : ovrHand_Right];
-	}
-	else if (index == BaseSystem::thirdTouchIndex) {
-		ovrTrackedDeviceType type = ovrTrackedDevice_Object0;
-		ovr_GetDevicePoses(*ovr::session, &type, 1, 0, &ovrPose);
-	}
-	else {
-		pose->bPoseIsValid = false;
-		pose->bDeviceIsConnected = false;
-		return;
-	}
-
-	// If we haven't yet got a frame, mark the controller as having
-	// an invalid pose to avoid errors from unnormalised 0,0,0,0 quaternions
-	if (!ovrPose.TimeInSeconds) {
-		pose->bPoseIsValid = false;
-		return;
-	}
-
-	if (index == BaseSystem::leftHandIndex || index == BaseSystem::rightHandIndex) {
-		static Posef transform = Posef(Quatf(BaseCompositor::GetHandTransform()), BaseCompositor::GetHandTransform().GetTranslation());
-
-		ovrPose.ThePose = Posef(ovrPose.ThePose) * transform;
-	}
-
-	// AFAIK we don't need to do anything like the above for the third Touch controller, since it
-	//  isn't used as a controller anyway but rather a tracking device.
-
-	// Configure the pose
-
-	pose->bPoseIsValid = true;
-
-	// TODO deal with the HMD not being connected
-	pose->bDeviceIsConnected = true;
-
-	// TODO
-	pose->eTrackingResult = TrackingResult_Running_OK;
-
-	O2S_v3f(ovrPose.LinearVelocity, pose->vVelocity);
-	O2S_v3f(ovrPose.AngularVelocity, pose->vAngularVelocity);
-
-	pose->mDeviceToAbsoluteTracking = GetUnsafeBaseSystem()->_PoseToTrackingSpace(origin, ovrPose.ThePose);
-}
-
 void OculusBackend::GetDeviceToAbsoluteTrackingPose(
 	vr::ETrackingUniverseOrigin toOrigin,
 	float predictedSecondsToPhotonsFromNow,
@@ -108,7 +50,8 @@ void OculusBackend::GetDeviceToAbsoluteTrackingPose(
 	}
 
 	for (uint32_t i = 0; i < poseArrayCount; i++) {
-		GetSingleTrackingPose(toOrigin, i, &poseArray[i], trackingState);
+		OculusDevice* dev = GetDeviceOculus(i);
+		dev->GetPose(toOrigin, &poseArray[i], trackingState);
 	}
 
 }
@@ -206,6 +149,10 @@ bool OculusBackend::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32
 }
 
 ITrackedDevice* OculusBackend::GetDevice(vr::TrackedDeviceIndex_t index) {
+	return GetDeviceOculus(index);
+}
+
+OculusDevice* OculusBackend::GetDeviceOculus(vr::TrackedDeviceIndex_t index) {
 	OculusDevice *dev = nullptr;
 	switch (index) {
 	case 0:

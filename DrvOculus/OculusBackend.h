@@ -54,6 +54,8 @@ public:
 
 private:
 
+	OculusDevice* OculusBackend::GetDeviceOculus(vr::TrackedDeviceIndex_t index);
+
 	// Rendering stuff
 	enum RenderState {
 		RS_NOT_STARTED,
