@@ -1,5 +1,5 @@
 #include "DrvOculusCommon.h"
-#include "pub/drvoculus.h"
+#include "pub/DrvOculus.h"
 #include "OculusBackend.h"
 
 IBackend * DrvOculus::CreateOculusBackend() {
