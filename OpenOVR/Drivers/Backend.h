@@ -17,12 +17,31 @@ enum ETrackingStateType {
 	TrackingStateType_Rendering,
 };
 
+/**
+ * Represents a single physical device
+ */
+class ITrackedDevice {
+public:
+	virtual ~ITrackedDevice();
+
+	virtual void GetPose(
+		vr::ETrackingUniverseOrigin origin,
+		vr::TrackedDevicePose_t* pose,
+		ETrackingStateType trackingState) = 0;
+};
+
+/**
+ * Represents a head-mounted display
+ */
+class IHMD : public virtual ITrackedDevice {
+public:
+};
+
 #define DECLARE_BACKEND_FUNCS(PREPEND, APPEND) \
-PREPEND void GetSinglePose( \
-	vr::ETrackingUniverseOrigin origin, \
-	vr::TrackedDeviceIndex_t index, \
-	vr::TrackedDevicePose_t* pose, \
-	ETrackingStateType trackingState) APPEND; \
+PREPEND IHMD* GetPrimaryHMD() APPEND; \
+\
+PREPEND ITrackedDevice* GetDevice( \
+	vr::TrackedDeviceIndex_t index) APPEND; \
 \
 PREPEND void GetDeviceToAbsoluteTrackingPose( \
 	vr::ETrackingUniverseOrigin toOrigin, \
@@ -90,6 +109,15 @@ public:
 	// main methods
 
 	DECLARE_BACKEND_FUNCS(,)
+
+	// Legacy, replaced by GetDevice(index)->GetPose(...)
+	void BackendManager::GetSinglePose(
+		vr::ETrackingUniverseOrigin origin,
+		vr::TrackedDeviceIndex_t index,
+		vr::TrackedDevicePose_t * pose,
+		ETrackingStateType trackingState);
+
+	static vr::TrackedDevicePose_t InvalidPose();
 
 private:
 	BackendManager();

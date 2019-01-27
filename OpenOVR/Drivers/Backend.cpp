@@ -2,6 +2,7 @@
 #include "Backend.h"
 
 // virtual destructor
+ITrackedDevice::~ITrackedDevice() {}
 IBackend::~IBackend() {}
 
 std::unique_ptr<BackendManager> BackendManager::instance;
@@ -19,6 +20,14 @@ void BackendManager::Reset() {
 	instance.reset();
 }
 
+vr::TrackedDevicePose_t BackendManager::InvalidPose() {
+	vr::TrackedDevicePose_t pose = { 0 };
+	pose.bPoseIsValid = false;
+	pose.bDeviceIsConnected = false;
+
+	return pose;
+}
+
 BackendManager::BackendManager() {
 }
 
@@ -32,7 +41,13 @@ void BackendManager::GetSinglePose(
 	vr::TrackedDevicePose_t * pose,
 	ETrackingStateType trackingState) {
 
-	backend->GetSinglePose(origin, index, pose, trackingState);
+	ITrackedDevice *dev = backend->GetDevice(index);
+
+	if (dev) {
+		dev->GetPose(origin, pose, trackingState);
+	} else {
+		*pose = InvalidPose();
+	}
 }
 
 void BackendManager::GetDeviceToAbsoluteTrackingPose(

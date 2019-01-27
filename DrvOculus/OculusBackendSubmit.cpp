@@ -124,6 +124,10 @@ void OculusBackend::SubmitFrames(
 	}
 }
 
+ovrTrackingState OculusBackend::GetTrackingState() {
+	return trackingState;
+}
+
 void OculusBackend::SubmitSkyboxFrames() {
 	if (state == RS_RENDERING || !oovr_global_configuration.ThreePartSubmit()) {
 		// We're in the correct state to submit frames

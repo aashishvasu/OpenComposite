@@ -2,6 +2,8 @@
 #include "../OpenOVR/Drivers/Backend.h"
 #include "../OpenOVR/Compositor/compositor.h"
 
+#include "OculusDevice.h"
+
 class OculusBackend : public IBackend {
 public:
 
@@ -48,6 +50,8 @@ public:
 
 	DECLARE_BACKEND_FUNCS(virtual, override)
 
+	ovrTrackingState GetTrackingState();
+
 private:
 
 	// Rendering stuff
@@ -78,5 +82,9 @@ private:
 	ovrMirrorTexture mirrorTexture = nullptr;
 	int mirrorTexturesCount = 0;
 	void DestroyOculusMirrorTexture();
+
+	// Devices
+	OculusHMD *hmd;
+	OculusControllerDevice *leftHand, *rightHand, *trackedObject0;
 
 };

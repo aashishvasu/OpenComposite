@@ -16,6 +16,11 @@ using namespace vr;
 
 OculusBackend::OculusBackend() {
 	memset(&trackingState, 0, sizeof(ovrTrackingState));
+
+	hmd = new OculusHMD(this);
+	leftHand = new OculusControllerDevice(this, EOculusTrackedObject::LTouch);
+	rightHand = new OculusControllerDevice(this, EOculusTrackedObject::RTouch);
+	trackedObject0 = new OculusControllerDevice(this, EOculusTrackedObject::Object0);
 }
 
 OculusBackend::~OculusBackend() {
@@ -85,21 +90,6 @@ static void GetSingleTrackingPose(
 	O2S_v3f(ovrPose.AngularVelocity, pose->vAngularVelocity);
 
 	pose->mDeviceToAbsoluteTracking = GetUnsafeBaseSystem()->_PoseToTrackingSpace(origin, ovrPose.ThePose);
-}
-
-void OculusBackend::GetSinglePose(
-	ETrackingUniverseOrigin origin,
-	TrackedDeviceIndex_t index,
-	TrackedDevicePose_t* pose,
-	ETrackingStateType trackingState) {
-
-	if (trackingState == TrackingStateType_Now) {
-		ovrTrackingState state = ovr_GetTrackingState(*ovr::session, 0 /* Most recent */, ovrTrue);
-		GetSingleTrackingPose(origin, index, pose, state);
-	}
-	else {
-		GetSingleTrackingPose(origin, index, pose, this->trackingState);
-	}
 }
 
 void OculusBackend::GetDeviceToAbsoluteTrackingPose(
@@ -210,7 +200,34 @@ bool OculusBackend::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32
 
 	// pose used by app to render this frame
 	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
-	GetSinglePose(origin, k_unTrackedDeviceIndex_Hmd, &pTiming->m_HmdPose, ETrackingStateType::TrackingStateType_Rendering);
+	GetPrimaryHMD()->GetPose(origin, &pTiming->m_HmdPose, ETrackingStateType::TrackingStateType_Rendering);
 
 	return true;
+}
+
+ITrackedDevice* OculusBackend::GetDevice(vr::TrackedDeviceIndex_t index) {
+	OculusDevice *dev = nullptr;
+	switch (index) {
+	case 0:
+		dev = hmd;
+		break;
+	case 1:
+		dev = leftHand;
+		break;
+	case 2:
+		dev = rightHand;
+		break;
+	case 3:
+		dev = trackedObject0;
+		break;
+	}
+
+	if (dev && !dev->IsConnected())
+		return nullptr;
+
+	return dev;
+}
+
+IHMD* OculusBackend::GetPrimaryHMD() {
+	return hmd;
 }
