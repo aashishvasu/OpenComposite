@@ -84,6 +84,49 @@ void OculusDevice::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 	pose->mDeviceToAbsoluteTracking = GetUnsafeBaseSystem()->_PoseToTrackingSpace(origin, ovrPose.ThePose);
 }
 
+uint64_t OculusDevice::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
+	if (prop == vr::Prop_CurrentUniverseId_Uint64) {
+		if (pErrorL)
+			*pErrorL = vr::TrackedProp_Success;
+
+		return 1; // Oculus Rift's universe
+	}
+
+	return ITrackedDevice::GetUint64TrackedDeviceProperty(prop, pErrorL);
+}
+
+uint32_t OculusDevice::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
+	char * value, uint32_t bufferSize, vr::ETrackedPropertyError * pErrorL) {
+
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+#define PROP(in, out) \
+if(prop == in) { \
+	if (value != NULL && bufferSize > 0) { \
+		strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
+	} \
+	return (uint32_t) strlen(out) + 1; \
+}
+
+	// These have been validated against SteamVR
+	// TODO add an option to fake this out with 'lighthouse' and 'HTC' in case there is a compatibility issue
+	PROP(Prop_TrackingSystemName_String, "oculus");
+	PROP(Prop_ManufacturerName_String, "Oculus");
+
+	// TODO these?
+	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
+	PROP(Prop_RenderModelName_String, "<unknown>"); // It appears this just gets passed into IVRRenderModels as the render model name
+
+	// Used by Firebird The Unfinished - see #58
+	// Copied from SteamVR
+	PROP(Prop_DriverVersion_String, "1.32.0");
+
+#undef PROP
+
+	return ITrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
+}
+
 ovrPosef OculusDevice::GetOffset() {
 	return Posef::Identity();
 }
@@ -129,6 +172,10 @@ ovrPosef OculusControllerDevice::GetOffset() {
 	return transform;
 }
 
+bool OculusControllerDevice::IsTouchController() {
+	return device == EOculusTrackedObject::LTouch || device == EOculusTrackedObject::RTouch;
+}
+
 ovrControllerType OculusControllerDevice::GetControllerType() {
 	switch (device) {
 	case EOculusTrackedObject::LTouch:
@@ -140,4 +187,91 @@ ovrControllerType OculusControllerDevice::GetControllerType() {
 	default:
 		OOVR_ABORTF("Unknown controller device %d", device);
 	}
+}
+
+// properties
+bool OculusControllerDevice::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
+	if(pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	switch (prop) {
+	case Prop_DeviceProvidesBatteryStatus_Bool:
+		return true;
+	}
+
+	return OculusDevice::GetBoolTrackedDeviceProperty(prop, pErrorL);
+}
+
+int32_t OculusControllerDevice::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	// Don't apply the inputs to the tracking object
+	if (IsTouchController()) {
+		switch (prop) {
+		case Prop_Axis0Type_Int32:
+			// TODO find out which of these SteamVR returns and do likewise
+			//return k_eControllerAxis_TrackPad;
+			return k_eControllerAxis_Joystick;
+
+		case Prop_Axis1Type_Int32:
+			return k_eControllerAxis_Trigger;
+
+		case Prop_Axis2Type_Int32:
+			return k_eControllerAxis_Trigger;
+
+		case Prop_Axis3Type_Int32:
+		case Prop_Axis4Type_Int32:
+			return k_eControllerAxis_None;
+		}
+	}
+
+	return OculusDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
+}
+
+uint64_t OculusControllerDevice::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	if (IsTouchController() && prop == Prop_SupportedButtons_Uint64) {
+		return
+			ButtonMaskFromId(k_EButton_ApplicationMenu) |
+			ButtonMaskFromId(k_EButton_Grip) |
+			ButtonMaskFromId(k_EButton_Axis2) |
+			ButtonMaskFromId(k_EButton_DPad_Left) |
+			ButtonMaskFromId(k_EButton_DPad_Up) |
+			ButtonMaskFromId(k_EButton_DPad_Down) |
+			ButtonMaskFromId(k_EButton_DPad_Right) |
+			ButtonMaskFromId(k_EButton_A) |
+			ButtonMaskFromId(k_EButton_SteamVR_Touchpad) |
+			ButtonMaskFromId(k_EButton_SteamVR_Trigger);
+	}
+
+	return OculusDevice::GetUint64TrackedDeviceProperty(prop, pErrorL);
+}
+
+uint32_t OculusControllerDevice::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
+	char * value, uint32_t bufferSize, vr::ETrackedPropertyError * pErrorL) {
+
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+#define PROP(in, out) \
+if(prop == in) { \
+	if (value != NULL && bufferSize > 0) { \
+		strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
+	} \
+	return (uint32_t) strlen(out) + 1; \
+}
+
+	switch (device) {
+	case EOculusTrackedObject::LTouch:
+		PROP(Prop_RenderModelName_String, "renderLeftHand");
+		break;
+	case EOculusTrackedObject::RTouch:
+		PROP(Prop_RenderModelName_String, "renderRightHand");
+		break;
+	}
+
+	return OculusDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }

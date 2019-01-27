@@ -39,6 +39,13 @@ public:
 	*/
 	virtual vr::HmdMatrix34_t GetEyeToHeadTransform(vr::EVREye eEye) override;
 
+	// properties
+	virtual bool GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL) override;
+	virtual float GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL) override;
+	virtual uint64_t GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL) override;
+	virtual uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char *pchValue,
+		uint32_t unBufferSize, vr::ETrackedPropertyError *pErrorL) override;
+
 protected:
 	virtual ovrPoseStatef GetOculusPose(const ovrTrackingState &trackingState) override;
 

@@ -229,248 +229,82 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) 
 }
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	if (pErrorL)
-		*pErrorL = TrackedProp_Success;
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
-	switch (unDeviceIndex) {
-
-		// Motion controllers
-	case leftHandIndex:
-	case rightHandIndex:
-	case thirdTouchIndex:
-		switch (prop) {
-		case Prop_DeviceProvidesBatteryStatus_Bool:
-			return true;
-		}
-		break;
-
-		// HMD
-	case k_unTrackedDeviceIndex_Hmd:
-		switch (prop) {
-		case Prop_DeviceProvidesBatteryStatus_Bool:
-			return false;
-		}
-		break;
+	if (!dev) {
+		*pErrorL = TrackedProp_InvalidDevice;
+		return false;
 	}
 
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = TrackedProp_UnknownProperty;
-		return 0;
-	}
-
-	char msg[1024];
-	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
-	OOVR_LOG(msg);
-
-	STUBBED();
+	return dev->GetBoolTrackedDeviceProperty(prop, pErrorL);
 }
 
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	if (pErrorL)
-		*pErrorL = TrackedProp_Success;
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
-	if (unDeviceIndex == k_unTrackedDeviceIndex_Hmd) {
-		switch (prop) {
-		case Prop_DisplayFrequency_Float:
-			return 90.0; // TODO grab this from LibOVR
-		case Prop_LensCenterLeftU_Float:
-		case Prop_LensCenterLeftV_Float:
-		case Prop_LensCenterRightU_Float:
-		case Prop_LensCenterRightV_Float:
-			// SteamVR reports it as unknown
-			if (pErrorL)
-				*pErrorL = TrackedProp_UnknownProperty;
-			return 0;
-		case Prop_UserIpdMeters_Float:
-			return SGetIpd();
-		case Prop_SecondsFromVsyncToPhotons_Float:
-			// Seems to be used by croteam games, IDK what the real value is, 100µs should do
-			return 0.0001f;
-		case Prop_UserHeadToEyeDepthMeters_Float:
-			// TODO ensure this has the correct sign, though it seems to always be zero anyway
-			// In any case, see: https://github.com/ValveSoftware/openvr/issues/398
-			return ovr::hmdToEyeViewPose[ovrEye_Left].Position.z;
-		}
-	}
-
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		if (pErrorL)
-			*pErrorL = TrackedProp_UnknownProperty;
+	if (!dev) {
+		*pErrorL = TrackedProp_InvalidDevice;
 		return 0;
 	}
-	
-	char msg[1024];
-	snprintf(msg, sizeof(msg), "(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
-	OOVR_LOG(msg);
-	STUBBED();
+
+	return dev->GetFloatTrackedDeviceProperty(prop, pErrorL);
 }
 
 int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	if (pErrorL)
-		*pErrorL = TrackedProp_Success;
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
-	// For input mappings, see:
-	// https://github.com/jMonkeyEngine/jmonkeyengine/blob/826908b0422d96189ea9827b05ced50d77aadf09/jme3-vr/src/main/java/com/jme3/input/vr/openvr/OpenVRInput.java#L29
-	// The rest of the file also contains quite a bit of information about input.
-
-	if (unDeviceIndex == leftHandIndex || unDeviceIndex == rightHandIndex) {
-		switch (prop) {
-		case Prop_Axis0Type_Int32:
-			// TODO find out which of these SteamVR returns and do likewise
-			//return k_eControllerAxis_TrackPad;
-			return k_eControllerAxis_Joystick;
-
-		case Prop_Axis1Type_Int32:
-			return k_eControllerAxis_Trigger;
-
-		case Prop_Axis2Type_Int32:
-			return k_eControllerAxis_Trigger;
-
-		case Prop_Axis3Type_Int32:
-		case Prop_Axis4Type_Int32:
-			return k_eControllerAxis_None;
-		}
-	}
-
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = TrackedProp_UnknownProperty;
+	if (!dev) {
+		*pErrorL = TrackedProp_InvalidDevice;
 		return 0;
 	}
 
-	char msg[1024];
-	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", unDeviceIndex, prop);
-	OOVR_LOG(msg);
-
-	STUBBED();
+	return dev->GetInt32TrackedDeviceProperty(prop, pErrorL);
 }
 
-uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t dev, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	if(pErrorL)
-		*pErrorL = TrackedProp_Success;
+uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
-	if (prop == Prop_CurrentUniverseId_Uint64) {
-		return 1; // Oculus Rift's universe
-	}
-
-	bool is_ctrl = dev == leftHandIndex || dev == rightHandIndex;
-
-	if (is_ctrl && prop == Prop_SupportedButtons_Uint64) {
-		return
-			ButtonMaskFromId(k_EButton_ApplicationMenu) |
-			ButtonMaskFromId(k_EButton_Grip) |
-			ButtonMaskFromId(k_EButton_Axis2) |
-			ButtonMaskFromId(k_EButton_DPad_Left) |
-			ButtonMaskFromId(k_EButton_DPad_Up) |
-			ButtonMaskFromId(k_EButton_DPad_Down) |
-			ButtonMaskFromId(k_EButton_DPad_Right) |
-			ButtonMaskFromId(k_EButton_A) |
-			ButtonMaskFromId(k_EButton_SteamVR_Touchpad) |
-			ButtonMaskFromId(k_EButton_SteamVR_Trigger);
-	}
-
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = TrackedProp_UnknownProperty;
+	if (!dev) {
+		*pErrorL = TrackedProp_InvalidDevice;
 		return 0;
 	}
 
-	char msg[1024];
-	snprintf(msg, sizeof(msg), "dev: %d, prop: %d", dev, prop);
-	MessageBoxA(NULL, msg, "GetUint64TrackedDeviceProperty", MB_OK);
-	STUBBED();
+	return dev->GetUint64TrackedDeviceProperty(prop, pErrorL);
 }
 
 HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	if (pErrorL)
-		*pErrorL = TrackedProp_Success;
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = TrackedProp_UnknownProperty;
-
-		HmdMatrix34_t m = { 0 };
-		m.m[0][0] = 1;
-		m.m[1][1] = 1;
-		m.m[2][2] = 1;
-		return m;
+	if (!dev) {
+		*pErrorL = TrackedProp_InvalidDevice;
+		return { 0 };
 	}
 
-	STUBBED();
+	return dev->GetMatrix34TrackedDeviceProperty(prop, pErrorL);
 }
 
 uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void * pBuffer, uint32_t unBufferSize, ETrackedPropertyError * pError) {
-	if (pError)
-		*pError = TrackedProp_Success;
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pError = TrackedProp_UnknownProperty;
-		return 0;
+	if (!dev) {
+		*pError = TrackedProp_InvalidDevice;
+		return { 0 };
 	}
 
-	STUBBED();
+	return dev->GetArrayTrackedDeviceProperty(prop, propType, pBuffer, unBufferSize, pError);
 }
 
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
 	VR_OUT_STRING() char * value, uint32_t bufferSize, ETrackedPropertyError * pErrorL) {
 
-	if (pErrorL)
-		*pErrorL = TrackedProp_Success;
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
-#define PROP(in, out) \
-if(prop == in) { \
-	if (value != NULL && bufferSize > 0) { \
-		strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
-	} \
-	return (uint32_t) strlen(out) + 1; \
-}
-
-	if (oovr_global_configuration.LogGetTrackedProperty()) {
-		OOVR_LOGF("(dev %d): ETrackedDeviceProperty %d", unDeviceIndex, prop);
+	if (!dev) {
+		*pErrorL = TrackedProp_InvalidDevice;
+		return 0;
 	}
 
-	if (unDeviceIndex == leftHandIndex) {
-		PROP(Prop_RenderModelName_String, "renderLeftHand");
-	}
-	else if(unDeviceIndex == rightHandIndex) {
-		PROP(Prop_RenderModelName_String, "renderRightHand");
-	}
-
-	// These have been validated against SteamVR
-	// TODO add an option to fake this out with 'lighthouse' and 'HTC' in case there is a compatibility issue
-	PROP(Prop_TrackingSystemName_String, "oculus");
-	PROP(Prop_ManufacturerName_String, "Oculus");
-
-	// Only CV1 has been validated
-	switch (ovr::hmdDesc.Type) {
-	case ovrHmd_DK1:
-		PROP(Prop_ModelNumber_String, "Oculus Rift DK1");
-		break;
-	case ovrHmd_DK2:
-		PROP(Prop_ModelNumber_String, "Oculus Rift DK2");
-		break;
-	case ovrHmd_CV1:
-		PROP(Prop_ModelNumber_String, "Oculus Rift CV1");
-		break;
-	default:
-		PROP(Prop_ModelNumber_String, "<unknown>");
-		break;
-	}
-
-	// TODO these?
-	PROP(Prop_SerialNumber_String, "<unknown>"); // TODO
-	PROP(Prop_RenderModelName_String, "<unknown>"); // It appears this just gets passed into IVRRenderModels as the render model name
-
-	// Used by Firebird The Unfinished - see #58
-	// Copied from SteamVR
-	PROP(Prop_DriverVersion_String, "1.32.0");
-
-#undef PROP
-
-	if (!oovr_global_configuration.AdmitUnknownProps()) {
-		OOVR_LOGF("Missing tracked property: dev=%d, ETrackedDeviceProperty=%d", unDeviceIndex, prop);
-		OOVR_ABORT("This string property (in log) was not found");
-	}
-
-	*pErrorL = TrackedProp_UnknownProperty;
-	return 0; // There are tonnes, and we're not implementing all of them.
+	return dev->GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
 
 const char * BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {

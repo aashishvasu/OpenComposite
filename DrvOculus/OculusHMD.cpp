@@ -108,3 +108,89 @@ HmdMatrix34_t OculusHMD::GetEyeToHeadTransform(EVREye ovr_eye) {
 	O2S_om34(transform, result);
 	return result;
 }
+
+// Properties
+bool OculusHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	switch (prop) {
+	case Prop_DeviceProvidesBatteryStatus_Bool:
+		return false;
+	}
+
+	return OculusDevice::GetBoolTrackedDeviceProperty(prop, pErrorL);
+}
+
+float OculusHMD::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	switch (prop) {
+	case Prop_DisplayFrequency_Float:
+		return 90.0; // TODO grab this from LibOVR
+	case Prop_LensCenterLeftU_Float:
+	case Prop_LensCenterLeftV_Float:
+	case Prop_LensCenterRightU_Float:
+	case Prop_LensCenterRightV_Float:
+		// SteamVR reports it as unknown
+		if (pErrorL)
+			*pErrorL = TrackedProp_UnknownProperty;
+		return 0;
+	case Prop_UserIpdMeters_Float:
+		return BaseSystem::SGetIpd();
+	case Prop_SecondsFromVsyncToPhotons_Float:
+		// Seems to be used by croteam games, IDK what the real value is, 100s should do
+		return 0.0001f;
+	case Prop_UserHeadToEyeDepthMeters_Float:
+		// TODO ensure this has the correct sign, though it seems to always be zero anyway
+		// In any case, see: https://github.com/ValveSoftware/openvr/issues/398
+		return ovr::hmdToEyeViewPose[ovrEye_Left].Position.z;
+	}
+
+	return OculusDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
+}
+
+uint64_t OculusHMD::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	// no HMD properties here for now
+
+	return OculusDevice::GetUint64TrackedDeviceProperty(prop, pErrorL);
+}
+
+uint32_t OculusHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
+	char * value, uint32_t bufferSize, vr::ETrackedPropertyError * pErrorL) {
+
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+#define PROP(in, out) \
+if(prop == in) { \
+	if (value != NULL && bufferSize > 0) { \
+		strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
+	} \
+	return (uint32_t) strlen(out) + 1; \
+}
+
+	// Only CV1 has been validated
+	switch (ovr::hmdDesc.Type) {
+	case ovrHmd_DK1:
+		PROP(Prop_ModelNumber_String, "Oculus Rift DK1");
+		break;
+	case ovrHmd_DK2:
+		PROP(Prop_ModelNumber_String, "Oculus Rift DK2");
+		break;
+	case ovrHmd_CV1:
+		PROP(Prop_ModelNumber_String, "Oculus Rift CV1");
+		break;
+	default:
+		PROP(Prop_ModelNumber_String, "<unknown>");
+		break;
+	}
+
+	PROP(Prop_RenderModelName_String, "oculusHmdRenderModel");
+
+	return OculusDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
+}
