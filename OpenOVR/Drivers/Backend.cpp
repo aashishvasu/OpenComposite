@@ -37,6 +37,10 @@ BackendManager::~BackendManager() {
 }
 
 
+ITrackedDevice* BackendManager::GetDevice(vr::TrackedDeviceIndex_t index) {
+	return backend->GetDevice(index);
+}
+
 IHMD* BackendManager::GetPrimaryHMD() {
 	return backend->GetPrimaryHMD();
 }
