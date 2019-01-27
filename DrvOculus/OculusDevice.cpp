@@ -8,6 +8,7 @@
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "../OpenOVR/convert.h"
+#include "../OpenOVR/Misc/Config.h"
 
 #include "Extras/OVR_Math.h"
 using namespace OVR;
@@ -151,6 +152,18 @@ OculusHMD::OculusHMD(OculusBackend * backend) : OculusDevice(backend) {
 
 bool OculusHMD::IsConnected() {
 	return true;
+}
+
+void OculusHMD::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
+	ovrSizei size = ovr_GetFovTextureSize(
+		*ovr::session,
+		ovrEye_Left, // Resolutions are done per-eye in LibOVR, no particular reason for left eye
+		ovr::hmdDesc.DefaultEyeFov[ovrEye_Left],
+		oovr_global_configuration.SupersampleRatio()
+	);
+
+	*width = size.w;
+	*height = size.h;
 }
 
 ovrPoseStatef OculusHMD::GetOculusPose(const ovrTrackingState & trackingState) {

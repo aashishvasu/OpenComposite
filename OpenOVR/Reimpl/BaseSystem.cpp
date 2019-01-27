@@ -31,15 +31,7 @@ BaseSystem::BaseSystem() {
 }
 
 void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
-	ovrSizei size = ovr_GetFovTextureSize(
-		*ovr::session,
-		ovrEye_Left, // Resolutions are done per-eye in LibOVR, no particular reason for left eye
-		ovr::hmdDesc.DefaultEyeFov[ovrEye_Left],
-		oovr_global_configuration.SupersampleRatio()
-	);
-
-	*width = size.w;
-	*height = size.h;
+	BackendManager::Instance().GetPrimaryHMD()->GetRecommendedRenderTargetSize(width, height);
 }
 
 HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar) {

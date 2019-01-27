@@ -73,6 +73,8 @@ public:
 
 	using OculusDevice::GetPose;
 
+	virtual void GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) override;
+
 protected:
 	virtual ovrPoseStatef GetOculusPose(const ovrTrackingState &trackingState) override;
 
