@@ -35,6 +35,10 @@ BackendManager::~BackendManager() {
 }
 
 
+IHMD* BackendManager::GetPrimaryHMD() {
+	return backend->GetPrimaryHMD();
+}
+
 void BackendManager::GetSinglePose(
 	vr::ETrackingUniverseOrigin origin,
 	vr::TrackedDeviceIndex_t index,
