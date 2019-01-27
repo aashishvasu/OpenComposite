@@ -115,6 +115,9 @@ add_library(DrvOculus STATIC
 	# Devices
 	DrvOculus/OculusDevice.cpp
 	DrvOculus/OculusDevice.h
+
+	DrvOculus/OculusHMD.cpp
+	DrvOculus/OculusHMD.h
 )
 target_include_directories(DrvOculus PUBLIC DrvOculus/pub)
 target_include_directories(DrvOculus PRIVATE DrvOculus)

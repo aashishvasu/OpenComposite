@@ -3,6 +3,7 @@
 #include "../OpenOVR/Compositor/compositor.h"
 
 #include "OculusDevice.h"
+#include "OculusHMD.h"
 
 class OculusBackend : public IBackend {
 public:
