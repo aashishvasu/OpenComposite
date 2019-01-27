@@ -29,6 +29,35 @@ public:
 		vr::ETrackingUniverseOrigin origin,
 		vr::TrackedDevicePose_t* pose,
 		ETrackingStateType trackingState) = 0;
+
+
+	/** Returns a bool property. If the device index is not valid or the property is not a bool type this function will return false. */
+	virtual bool GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL);
+
+	/** Returns a float property. If the device index is not valid or the property is not a float type this function will return 0. */
+	virtual float GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL);
+
+	/** Returns an int property. If the device index is not valid or the property is not a int type this function will return 0. */
+	virtual int32_t GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL);
+
+	/** Returns a uint64 property. If the device index is not valid or the property is not a uint64 type this function will return 0. */
+	virtual uint64_t GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL);
+
+	/** Returns a matrix property. If the device index is not valid or the property is not a matrix type, this function will return identity. */
+	virtual vr::HmdMatrix34_t GetMatrix34TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL);
+
+	/** Returns an array of one type of property. If the device index is not valid or the property is not a single value or an array of the specified type,
+	* this function will return 0. Otherwise it returns the number of bytes necessary to hold the array of properties. If unBufferSize is
+	* greater than the returned size and pBuffer is non-NULL, pBuffer is filled with the contents of array of properties. */
+	virtual uint32_t GetArrayTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::PropertyTypeTag_t propType, void *pBuffer,
+		uint32_t unBufferSize, vr::ETrackedPropertyError *pError);
+
+	/** Returns a string property. If the device index is not valid or the property is not a string type this function will
+	* return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing
+	* null. Strings will always fit in buffers of k_unMaxPropertyStringSize characters. */
+	virtual uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char *pchValue,
+		uint32_t unBufferSize, vr::ETrackedPropertyError *pErrorL);
+
 };
 
 /**
