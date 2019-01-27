@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "OpenVR/interfaces/vrtypes.h"
+#include "../OpenOVR/custom_types.h" // TODO move this into the OpenVR tree
 
 // for OOVR_Compositor_FrameTiming
 #include "../OpenOVR/Reimpl/BaseCompositor.h"
@@ -36,6 +37,28 @@ public:
 class IHMD : public virtual ITrackedDevice {
 public:
 	virtual void GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) = 0;
+
+	// from BaseSystem
+
+	/** The projection matrix for the specified eye */
+	virtual vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ) = 0;
+	virtual vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention) = 0;
+
+	/** The components necessary to build your own projection matrix in case your
+	* application is doing something fancy like infinite Z */
+	virtual void GetProjectionRaw(vr::EVREye eEye, float *pfLeft, float *pfRight, float *pfTop, float *pfBottom) = 0;
+
+	/** Gets the result of the distortion function for the specified eye and input UVs. UVs go from 0,0 in
+	* the upper left of that eye's viewport and 1,1 in the lower right of that eye's viewport.
+	* Returns true for success. Otherwise, returns false, and distortion coordinates are not suitable. */
+	virtual bool ComputeDistortion(vr::EVREye eEye, float fU, float fV, vr::DistortionCoordinates_t *pDistortionCoordinates) = 0;
+
+	/** Returns the transform from eye space to the head space. Eye space is the per-eye flavor of head
+	* space that provides stereo disparity. Instead of Model * View * Projection the sequence is Model * View * Eye^-1 * Projection.
+	* Normally View and Eye^-1 will be multiplied together and treated as View in your application.
+	*/
+	virtual vr::HmdMatrix34_t GetEyeToHeadTransform(vr::EVREye eEye) = 0;
+
 };
 
 #define DECLARE_BACKEND_FUNCS(PREPEND, APPEND) \
