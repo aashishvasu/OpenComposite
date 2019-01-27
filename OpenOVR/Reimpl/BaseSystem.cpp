@@ -225,27 +225,7 @@ ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t d
 }
 
 bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) {
-	if (deviceIndex == k_unTrackedDeviceIndex_Hmd) {
-		return true; // TODO
-	}
-
-	unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
-
-	if (oovr_global_configuration.ForceConnectedTouch()) {
-		connected |= ovrControllerType_LTouch | ovrControllerType_RTouch;
-	}
-
-	if (deviceIndex == leftHandIndex) {
-		return connected && ovrControllerType_LTouch != 0;
-	}
-	else if (deviceIndex == rightHandIndex) {
-		return connected && ovrControllerType_RTouch != 0;
-	}
-	else if (deviceIndex == thirdTouchIndex) {
-		return connected && ovrControllerType_Object0 != 0;
-	}
-
-	return false;
+	return BackendManager::Instance().GetDevice(deviceIndex) != nullptr;
 }
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
