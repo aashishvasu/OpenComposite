@@ -118,6 +118,7 @@ add_library(DrvOculus STATIC
 
 	DrvOculus/OculusBackendSubmit.cpp
 	DrvOculus/OculusBackendMirror.cpp
+	DrvOculus/OculusBackendGuardian.cpp
 
 	DrvOculus/pub/DrvOculus.h
 

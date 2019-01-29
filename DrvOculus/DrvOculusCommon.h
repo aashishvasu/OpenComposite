@@ -1,5 +1,7 @@
 #pragma once
 
+#include "OpenVR/interfaces/vrtypes.h"
+
 // TODO remove this
 #include "../OpenOVR/logging.h"
 

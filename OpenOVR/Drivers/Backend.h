@@ -138,6 +138,10 @@ PREPEND bool GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32_t unFr
 PREPEND IBackend::openvr_enum_t GetMirrorTextureD3D11(vr::EVREye eEye, void * pD3D11DeviceOrResource, void ** ppD3D11ShaderResourceView) APPEND; \
 PREPEND void ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) APPEND; \
 /* #endif */ \
+/** Returns the points of the Play Area. */ \
+PREPEND bool GetPlayAreaPoints(vr::HmdVector3_t *points, int *count) APPEND; \
+/** Determine whether the bounds are showing right now **/ \
+PREPEND bool AreBoundsVisible() APPEND; \
 
 
 /**

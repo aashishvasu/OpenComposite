@@ -2,7 +2,10 @@
 #define BASE_IMPL
 #include "BaseChaperone.h"
 
+#include "Drivers/Backend.h"
 #include "libovr_wrapper.h"
+
+#include <vector>
 
 using namespace std;
 using namespace vr;
@@ -11,63 +14,38 @@ BaseChaperone::BaseChaperoneCalibrationState BaseChaperone::GetCalibrationState(
 	return ChaperoneCalibrationState_OK;
 }
 bool BaseChaperone::GetPlayAreaSize(float *pSizeX, float *pSizeZ) {
-	ovrVector3f points[4];
-	int pointsCount;
+	vr::HmdVector3_t minPoint, maxPoint;
+	bool success = GetMinMaxPoints(minPoint, maxPoint);
 
-	ovrResult status = ovr_GetBoundaryGeometry(
-		*ovr::session,
-		ovrBoundary_PlayArea,
-		points,
-		&pointsCount
-	);
+	if(!success)
+		return false;
 
-	// TODO handle ovrSuccess_BoundaryInvalid
-	OOVR_FAILED_OVR_ABORT(status);
-
-	float xmin = points[0].x, xmax = points[0].x;
-	float zmin = points[0].z, zmax = points[0].z;
-
-	for (int i = 0; i < 4; i++) {
-		float x = points[i].x, z = points[i].z;
-
-		if (x < xmin)
-			xmin = x;
-		if (z < zmin)
-			zmin = z;
-
-		if (x > xmax)
-			xmax = x;
-		if (z > zmax)
-			zmax = z;
-	}
-
-	*pSizeX = xmax - xmin;
-	*pSizeZ = zmax - zmin;
+	*pSizeX = maxPoint.v[0] - minPoint.v[0];
+	*pSizeZ = maxPoint.v[2] - minPoint.v[2];
 
 	// TODO verify return value
 	return true;
 }
 bool BaseChaperone::GetPlayAreaRect(HmdQuad_t *rect) {
-	ovrVector3f points[4];
-	int pointsCount;
+	memset(rect, 0, sizeof(vr::HmdQuad_t));
 
-	ovrResult status = ovr_GetBoundaryGeometry(
-		*ovr::session,
-		ovrBoundary_PlayArea,
-		points,
-		&pointsCount
-	);
+	vr::HmdVector3_t minPoint, maxPoint;
+	bool success = GetMinMaxPoints(minPoint, maxPoint);
 
-	// TODO handle ovrSuccess_BoundaryInvalid
-	OOVR_FAILED_OVR_ABORT(status);
+	if(!success)
+		return false;
 
-	// Lifted from ReVive
-	// TODO add ReVive (MIT) licence to repo
-	// TODO make it go counter-clockwise
-	memcpy(points, rect->vCorners, 4 * sizeof(ovrVector3f));
+	rect->vCorners[0].v[0] = maxPoint.v[0];
+	rect->vCorners[0].v[2] = maxPoint.v[2];
 
-	//string msg = to_string(status) + "," + to_string(pointsCount);
-	//OOVR_LOG(msg.c_str());
+	rect->vCorners[1].v[0] = maxPoint.v[0];
+	rect->vCorners[1].v[2] = minPoint.v[2];
+
+	rect->vCorners[2].v[0] = minPoint.v[0];
+	rect->vCorners[2].v[2] = minPoint.v[2];
+
+	rect->vCorners[3].v[0] = minPoint.v[0];
+	rect->vCorners[3].v[2] = maxPoint.v[2];
 
 	return true;
 }
@@ -81,18 +59,37 @@ void BaseChaperone::GetBoundsColor(HmdColor_t *pOutputColorArray, int nNumOutput
 	STUBBED();
 }
 bool BaseChaperone::AreBoundsVisible() {
-	ovrBool out;
-
-	ovrResult res = ovr_GetBoundaryVisible(*ovr::session, &out);
-	OOVR_FAILED_OVR_ABORT(res);
-
-	// If the boundaries are invalid, they're surely not visible
-	if (res == ovrSuccess_BoundaryInvalid) {
-		return false;
-	}
-
-	return out;
+	return BackendManager::Instance().AreBoundsVisible();
 }
 void BaseChaperone::ForceBoundsVisible(bool bForce) {
 	ovr_RequestBoundaryVisible(*ovr::session, bForce);
+}
+
+bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t &minPoint, vr::HmdVector3_t &maxPoint) {
+	int count;
+	bool success = BackendManager::Instance().GetPlayAreaPoints(nullptr, &count);
+
+	if(!success)
+		return false; // the play area isn't set up, or is unsupported by the backend
+
+	std::vector<vr::HmdVector3_t> points(count);
+	success = BackendManager::Instance().GetPlayAreaPoints(points.data(), nullptr);
+
+	if(!success)
+		return false; // shouldn't happen - should be caught by first check
+
+	if(points.size() < 2)
+		return false; // not enough points to find a min/max
+
+	minPoint = points[0];
+	maxPoint = points[0];
+
+	for(const auto &point : points) {
+		for(int i=0; i<3; i++) {
+			minPoint.v[i] = min(minPoint.v[i], point.v[i]);
+			maxPoint.v[i] = max(maxPoint.v[i], point.v[i]);
+		}
+	}
+
+	return true;
 }

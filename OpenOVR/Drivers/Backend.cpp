@@ -110,6 +110,14 @@ void BackendManager::ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) 
 }
 #endif
 
+bool BackendManager::GetPlayAreaPoints(vr::HmdVector3_t *points, int *count) {
+	return backend->GetPlayAreaPoints(points, count);
+}
+
+bool BackendManager::AreBoundsVisible() {
+	return backend->AreBoundsVisible();
+}
+
 // ITrackedDevice
 
 // setup
