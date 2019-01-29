@@ -55,3 +55,7 @@ bool OculusBackend::AreBoundsVisible() {
 
 	return out;
 }
+
+void OculusBackend::ForceBoundsVisible(bool bForce) {
+	ovr_RequestBoundaryVisible(*ovr::session, bForce);
+}

@@ -142,6 +142,9 @@ PREPEND void ReleaseMirrorTextureD3D11(void * pD3D11ShaderResourceView) APPEND; 
 PREPEND bool GetPlayAreaPoints(vr::HmdVector3_t *points, int *count) APPEND; \
 /** Determine whether the bounds are showing right now **/ \
 PREPEND bool AreBoundsVisible() APPEND; \
+/** Set the boundaries to be visible or not (although setting this to false shouldn't affect \
+ * what happens if the player moves their hands too close and shows it that way) **/ \
+PREPEND void ForceBoundsVisible(bool status) APPEND; \
 
 
 /**

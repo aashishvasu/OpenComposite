@@ -118,6 +118,10 @@ bool BackendManager::AreBoundsVisible() {
 	return backend->AreBoundsVisible();
 }
 
+void BackendManager::ForceBoundsVisible(bool status){
+	return backend->ForceBoundsVisible(status);
+}
+
 // ITrackedDevice
 
 // setup

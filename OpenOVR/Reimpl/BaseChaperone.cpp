@@ -3,7 +3,6 @@
 #include "BaseChaperone.h"
 
 #include "Drivers/Backend.h"
-#include "libovr_wrapper.h"
 
 #include <vector>
 
@@ -62,7 +61,7 @@ bool BaseChaperone::AreBoundsVisible() {
 	return BackendManager::Instance().AreBoundsVisible();
 }
 void BaseChaperone::ForceBoundsVisible(bool bForce) {
-	ovr_RequestBoundaryVisible(*ovr::session, bForce);
+	return BackendManager::Instance().ForceBoundsVisible(bForce);
 }
 
 bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t &minPoint, vr::HmdVector3_t &maxPoint) {
