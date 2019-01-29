@@ -314,7 +314,7 @@ target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
 target_link_libraries(OCCore OpenVR ovr ovrkernel)
 
 # Set up precompiled headers for OCCore
-add_precompiled_header(OCCore OpenOVR/stdafx.h EXCLUDE
+add_precompiled_header(OCCore ${CMAKE_SOURCE_DIR}/OpenOVR/stdafx.h EXCLUDE
 	${OVR_PCH_EXCLUDED}
 )
 
