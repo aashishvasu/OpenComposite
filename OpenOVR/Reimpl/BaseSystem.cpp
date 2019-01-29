@@ -447,8 +447,24 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 	if (sizeof(VRControllerState_t) != controllerStateSize)
 		OOVR_ABORT("Bad controller state size - was the host compiled with an older version of OpenVR?");
 
-	ovrHandType id = ovrHand_Count;
+	memset(controllerState, 0, controllerStateSize);
 
+	ITrackedDevice *dev = BackendManager::Instance().GetDevice(controllerDeviceIndex);
+
+	if(!dev)
+		return false;
+
+	bool state = dev->GetControllerState(controllerState);
+
+	if(!state)
+		return false;
+
+	// TODO do this properly
+	static uint32_t unPacketNum = 0;
+	controllerState->unPacketNum = unPacketNum++;
+
+	// Check if we're blocking input
+	ovrHandType id = ovrHand_Count;
 	if (controllerDeviceIndex == leftHandIndex) {
 		id = ovrHand_Left;
 	}
@@ -456,109 +472,15 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 		id = ovrHand_Right;
 	}
 
-	if (id == ovrHand_Count) return false;
-
-	uint64_t Buttons = 0;
-	uint64_t Touches = 0;
-
-	// TODO cache this
-	ovrInputState inputState;
-	ovrResult result = ovr_GetInputState(*ovr::session, ovrControllerType_Touch, &inputState);
-	if (!OVR_SUCCESS(result)) {
-		string str = "[WARN] Could not get input: ";
-		str += to_string(result);
-		OOVR_LOG(str.c_str());
-		return false;
-	}
-
-#define CHECK(var, type, left, right, out) \
-if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type ## _ ## right)) \
-	var |= ButtonMaskFromId(out)
-
-#define BUTTON(left, right, out) CHECK(Buttons, Button, left, right, out); CHECK(Touches, Touch, left, right, out)
-
-	BUTTON(Y, B, k_EButton_ApplicationMenu);
-	BUTTON(X, A, k_EButton_A); // k_EButton_A is the SteamVR name for the lower buttons on the Touch controllers
-	BUTTON(LThumb, RThumb, k_EButton_SteamVR_Touchpad);
-	// TODO
-
-#undef BUTTON
-#undef CHECK
-
-	// Grip/Trigger button
-	// TODO what should the cutoff be?
-	if (inputState.HandTrigger[id] >= 0.4) {
-		Buttons |= ButtonMaskFromId(k_EButton_Grip);
-		Buttons |= ButtonMaskFromId(k_EButton_Axis2);
-	}
-	if (inputState.IndexTrigger[id] >= 0.4) {
-		Buttons |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
-	}
-
-	if (inputState.Touches & (id == ovrHand_Left ? ovrTouch_LIndexTrigger : ovrTouch_RIndexTrigger)) {
-		Touches |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
-	}
-
-	// Trigger and Thumbstick - Analog (axis) inputs
-	VRControllerAxis_t &trigger = controllerState->rAxis[1];
-	trigger.x = inputState.IndexTrigger[id];
-	trigger.y = 0;
-
-	VRControllerAxis_t &grip = controllerState->rAxis[2];
-	grip.x = inputState.HandTrigger[id];
-	grip.y = 0;
-
-	VRControllerAxis_t &thumbstick = controllerState->rAxis[0];
-	ovrVector2f &ovrThumbstick = inputState.Thumbstick[id];
-	thumbstick.x = ovrThumbstick.x;
-	thumbstick.y = ovrThumbstick.y;
-
-	// Pythagoras, and don't bother square rooting it since that's much slower than squaring what we compare it to
-	float valueSquared = thumbstick.x * thumbstick.x + thumbstick.y * thumbstick.y;
-
-	// The threshold for activating the virtual DPad buttons
-	// TODO add a latch thing so you can't have it flip back and forth
-	float threshold = 0.6f;
-
-	if (valueSquared > threshold * threshold) {
-		// 0=west
-		float angle = atan2(thumbstick.y, thumbstick.x);
-
-		// Subtract 45deg so the divisions are diagonal
-		angle -= math_pi / 4;
-
-		if (angle < 0)
-			angle += math_pi * 2;
-
-		if (angle < math_pi * 0.5) {
-			Buttons |= ButtonMaskFromId(k_EButton_DPad_Right);
-		}
-		else if (angle < math_pi * 1.0) {
-			Buttons |= ButtonMaskFromId(k_EButton_DPad_Down);
-		}
-		else if (angle < math_pi * 1.5) {
-			Buttons |= ButtonMaskFromId(k_EButton_DPad_Left);
-		}
-		else {
-			Buttons |= ButtonMaskFromId(k_EButton_DPad_Up);
-		}
-	}
-
-	controllerState->ulButtonPressed = Buttons;
-	controllerState->ulButtonTouched = Touches;
-
-	// TODO do this properly
-	static uint32_t unPacketNum = 0;
-	controllerState->unPacketNum = unPacketNum++;
-
-	if (blockingInputsUntilRelease[id]) {
-		if (Buttons)
+	if (id != ovrHand_Count && blockingInputsUntilRelease[id]) {
+		if (controllerState->ulButtonPressed)
 			goto blockInput;
 
 		// Inputs released, permit input again
 		blockingInputsUntilRelease[id] = false;
 	}
 
+	//  Send the data to the overlays
 	BaseOverlay *overlay = GetUnsafeBaseOverlay();
 	if (overlay) {
 		EVREye side = id == ovrHand_Left ? Eye_Left : Eye_Right;
@@ -574,11 +496,9 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 	return true;
 
 blockInput:
-
-	uint32_t packet = controllerState->unPacketNum;
+	uint32_t packetNum = controllerState->unPacketNum;
 	memset(controllerState, 0, controllerStateSize);
-	controllerState->unPacketNum = packet;
-
+	controllerState->unPacketNum = packetNum;
 	return true;
 }
 

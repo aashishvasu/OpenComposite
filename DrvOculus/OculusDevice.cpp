@@ -145,6 +145,107 @@ bool OculusControllerDevice::IsConnected() {
 	return (connected & GetControllerType()) != 0;
 }
 
+bool OculusControllerDevice::GetControllerState(vr::VRControllerState_t *state) {
+
+	ovrHandType id;
+	if (device == EOculusTrackedObject::LTouch) {
+		id = ovrHand_Left;
+	} else if (device == EOculusTrackedObject::RTouch) {
+		id = ovrHand_Right;
+	} else {
+		return false;
+	}
+
+	uint64_t Buttons = 0;
+	uint64_t Touches = 0;
+
+	// TODO cache this
+	ovrInputState inputState;
+	ovrResult result = ovr_GetInputState(*ovr::session, ovrControllerType_Touch, &inputState);
+	if (!OVR_SUCCESS(result)) {
+		OOVR_LOGF("[WARN] Could not get input: %u", result);
+		return false;
+	}
+
+#define CHECK(var, type, left, right, out) \
+if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type ## _ ## right)) \
+	var |= ButtonMaskFromId(out)
+
+#define BUTTON(left, right, out) CHECK(Buttons, Button, left, right, out); CHECK(Touches, Touch, left, right, out)
+
+	BUTTON(Y, B, k_EButton_ApplicationMenu);
+	BUTTON(X, A, k_EButton_A); // k_EButton_A is the SteamVR name for the lower buttons on the Touch controllers
+	BUTTON(LThumb, RThumb, k_EButton_SteamVR_Touchpad);
+	// TODO
+
+#undef BUTTON
+#undef CHECK
+
+	// Grip/Trigger button
+	// TODO what should the cutoff be?
+	if (inputState.HandTrigger[id] >= 0.4) {
+		Buttons |= ButtonMaskFromId(k_EButton_Grip);
+		Buttons |= ButtonMaskFromId(k_EButton_Axis2);
+	}
+	if (inputState.IndexTrigger[id] >= 0.4) {
+		Buttons |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
+	}
+
+	if (inputState.Touches & (id == ovrHand_Left ? ovrTouch_LIndexTrigger : ovrTouch_RIndexTrigger)) {
+		Touches |= ButtonMaskFromId(k_EButton_SteamVR_Trigger);
+	}
+
+	// Trigger and Thumbstick - Analog (axis) inputs
+	VRControllerAxis_t &trigger = state->rAxis[1];
+	trigger.x = inputState.IndexTrigger[id];
+	trigger.y = 0;
+
+	VRControllerAxis_t &grip = state->rAxis[2];
+	grip.x = inputState.HandTrigger[id];
+	grip.y = 0;
+
+	VRControllerAxis_t &thumbstick = state->rAxis[0];
+	ovrVector2f &ovrThumbstick = inputState.Thumbstick[id];
+	thumbstick.x = ovrThumbstick.x;
+	thumbstick.y = ovrThumbstick.y;
+
+	// Pythagoras, and don't bother square rooting it since that's much slower than squaring what we compare it to
+	float valueSquared = thumbstick.x * thumbstick.x + thumbstick.y * thumbstick.y;
+
+	// The threshold for activating the virtual DPad buttons
+	// TODO add a latch thing so you can't have it flip back and forth
+	float threshold = 0.6f;
+
+	if (valueSquared > threshold * threshold) {
+		// 0=west
+		float angle = atan2(thumbstick.y, thumbstick.x);
+
+		// Subtract 45deg so the divisions are diagonal
+		angle -= math_pi / 4;
+
+		if (angle < 0)
+			angle += math_pi * 2;
+
+		if (angle < math_pi * 0.5) {
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Right);
+		}
+		else if (angle < math_pi * 1.0) {
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Down);
+		}
+		else if (angle < math_pi * 1.5) {
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Left);
+		}
+		else {
+			Buttons |= ButtonMaskFromId(k_EButton_DPad_Up);
+		}
+	}
+
+	state->ulButtonPressed = Buttons;
+	state->ulButtonTouched = Touches;
+
+	return true;
+}
+
 ovrPoseStatef OculusControllerDevice::GetOculusPose(const ovrTrackingState & trackingState) {
 	switch (device) {
 	case EOculusTrackedObject::LTouch:

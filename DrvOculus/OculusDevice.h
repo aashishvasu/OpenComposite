@@ -51,6 +51,8 @@ public:
 
 	virtual bool IsConnected() override;
 
+	virtual bool GetControllerState(vr::VRControllerState_t *state) override;
+
 	// properties
 	virtual bool GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL) override;
 	virtual int32_t GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL) override;

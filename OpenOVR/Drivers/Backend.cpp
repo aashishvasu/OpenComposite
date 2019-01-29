@@ -123,6 +123,11 @@ void BackendManager::ForceBoundsVisible(bool status){
 }
 
 // ITrackedDevice
+bool ITrackedDevice::GetControllerState(vr::VRControllerState_t *state) {
+
+	// Provide a default implementation for devices that don't supply controller state
+	return false;
+}
 
 // setup
 vr::TrackedDeviceIndex_t ITrackedDevice::DeviceIndex() {

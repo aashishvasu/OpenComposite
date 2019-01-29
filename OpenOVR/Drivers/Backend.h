@@ -58,6 +58,10 @@ public:
 	virtual uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char *pchValue,
 		uint32_t unBufferSize, vr::ETrackedPropertyError *pErrorL);
 
+	/** Fills the supplied struct with the current state of the controller. Returns false if the controller index
+	* is invalid. */
+	virtual bool GetControllerState(vr::VRControllerState_t *pControllerState);
+
 	///////
 	vr::TrackedDeviceIndex_t DeviceIndex();
 	virtual void InitialiseDevice(vr::TrackedDeviceIndex_t deviceIndex);
@@ -111,6 +115,11 @@ public:
 	* HiddenAreaMesh_t->unTriangleCount set to the number of vertices.
 	*/
 	virtual vr::HiddenAreaMesh_t GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMeshType type) = 0;
+
+	/** Fills the supplied struct with the current state of the controller. Returns false if the controller index
+	* is invalid. */
+	virtual bool GetControllerState(vr::TrackedDeviceIndex_t unControllerDeviceIndex,
+			vr::VRControllerState_t *pControllerState, uint32_t unControllerStateSize) = 0;
 };
 
 #define DECLARE_BACKEND_FUNCS(PREPEND, APPEND) \
