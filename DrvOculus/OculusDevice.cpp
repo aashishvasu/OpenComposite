@@ -267,11 +267,15 @@ if(prop == in) { \
 	switch (device) {
 	case EOculusTrackedObject::LTouch:
 		PROP(Prop_RenderModelName_String, "renderLeftHand");
+		PROP(Prop_ModelNumber_String, "Oculus Rift CV1 (Left Controller)");
 		break;
 	case EOculusTrackedObject::RTouch:
 		PROP(Prop_RenderModelName_String, "renderRightHand");
+		PROP(Prop_ModelNumber_String, "Oculus Rift CV1 (Right Controller)");
 		break;
 	}
+
+	// TODO render model and model number for the tracking object
 
 	return OculusDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
