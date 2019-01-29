@@ -51,29 +51,7 @@ HmdMatrix34_t BaseSystem::GetEyeToHeadTransform(EVREye ovr_eye) {
 }
 
 bool BaseSystem::GetTimeSinceLastVsync(float * pfSecondsSinceLastVsync, uint64_t * pulFrameCounter) {
-	// Bit of a mess
-	// See https://github.com/ValveSoftware/openvr/issues/518
-	// And https://github.com/ValveSoftware/openvr/wiki/IVRSystem::GetDeviceToAbsoluteTrackingPose
-
-	float fDisplayFrequency = GetFloatTrackedDeviceProperty(vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_DisplayFrequency_Float, nullptr);
-	float fFrameDuration = 1.f / fDisplayFrequency;
-	float fVsyncToPhotons = GetFloatTrackedDeviceProperty(vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SecondsFromVsyncToPhotons_Float, nullptr);
-
-	// Here's how a game would calculate the timing:
-	// float timeUntilNextVsync = fFrameDuration - fSecondsSinceLastVsync;
-	// float fPredictedSecondsFromNow = timeUntilNextVsync + fVsyncToPhotons;
-	// Since we want fPredictedSecondsFromNow to equal the predicted display time, reverse this to find it:
-
-	float desiredPhotonTime = ovr_GetPredictedDisplayTime(*ovr::session, 0);
-	float desiredPhotonTimeFromNow = desiredPhotonTime - ovr_GetTimeInSeconds();
-
-	float timeSinceStartOfFrame = fFrameDuration - desiredPhotonTimeFromNow;
-	float fFakeSecondsSinceLastVsync = timeSinceStartOfFrame + fVsyncToPhotons;
-
-	if (pfSecondsSinceLastVsync)
-		*pfSecondsSinceLastVsync = fFakeSecondsSinceLastVsync;
-
-	return true;
+	return BackendManager::Instance().GetPrimaryHMD()->GetTimeSinceLastVsync(pfSecondsSinceLastVsync, pulFrameCounter);
 }
 
 int32_t BaseSystem::GetD3D9AdapterIndex() {

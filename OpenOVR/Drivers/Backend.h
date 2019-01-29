@@ -94,6 +94,12 @@ public:
 	*/
 	virtual vr::HmdMatrix34_t GetEyeToHeadTransform(vr::EVREye eEye) = 0;
 
+	/** Returns the number of elapsed seconds since the last recorded vsync event. This
+	*	will come from a vsync timer event in the timer if possible or from the application-reported
+	*   time if that is not available. If no vsync times are available the function will
+	*   return zero for vsync time and frame counter and return false from the method. */
+	virtual bool GetTimeSinceLastVsync(float *pfSecondsSinceLastVsync, uint64_t *pulFrameCounter) = 0;
+
 };
 
 #define DECLARE_BACKEND_FUNCS(PREPEND, APPEND) \
