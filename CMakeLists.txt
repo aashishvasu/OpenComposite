@@ -144,6 +144,10 @@ set(OVR_PCH_EXCLUDED
 	OpenOVR/Misc/lodepng.cpp
 )
 add_library(OCCore STATIC
+	# Use when doing PCH
+	# Place it above everything else, so it gets built first
+	OpenOVR/stdafx.cpp
+
 	OpenOVR/API/OCBaseSystem.cpp
 	OpenOVR/Compositor/compositor.cpp
 	OpenOVR/Compositor/dx11compositor.cpp
@@ -194,9 +198,6 @@ add_library(OCCore STATIC
 
 	# Definitions
 	OpenOVR/Reimpl/CVRServerDriverHost.cpp
-
-	# Use when doing PCH
-	OpenOVR/stdafx.cpp
 
 	# Exclude from the PCH requirement
 	${OVR_PCH_EXCLUDED}
