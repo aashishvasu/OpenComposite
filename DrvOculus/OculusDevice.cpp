@@ -142,7 +142,7 @@ OculusControllerDevice::OculusControllerDevice(OculusBackend *backend, EOculusTr
 bool OculusControllerDevice::IsConnected() {
 	unsigned int connected = ovr_GetConnectedControllerTypes(*ovr::session);
 
-	return connected && GetControllerType() != 0;
+	return (connected & GetControllerType()) != 0;
 }
 
 ovrPoseStatef OculusControllerDevice::GetOculusPose(const ovrTrackingState & trackingState) {
