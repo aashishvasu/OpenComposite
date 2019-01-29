@@ -21,6 +21,14 @@ OculusBackend::OculusBackend() {
 	leftHand = new OculusControllerDevice(this, EOculusTrackedObject::LTouch);
 	rightHand = new OculusControllerDevice(this, EOculusTrackedObject::RTouch);
 	trackedObject0 = new OculusControllerDevice(this, EOculusTrackedObject::Object0);
+
+	// setup the device indexes
+	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
+		OculusDevice *dev = GetDeviceOculus(i);
+
+		if (dev)
+			dev->InitialiseDevice(i);
+	}
 }
 
 OculusBackend::~OculusBackend() {

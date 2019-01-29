@@ -58,6 +58,12 @@ public:
 	virtual uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char *pchValue,
 		uint32_t unBufferSize, vr::ETrackedPropertyError *pErrorL);
 
+	///////
+	vr::TrackedDeviceIndex_t DeviceIndex();
+	virtual void InitialiseDevice(vr::TrackedDeviceIndex_t deviceIndex);
+
+private:
+	vr::TrackedDeviceIndex_t deviceIndex = vr::k_unTrackedDeviceIndexInvalid;
 };
 
 /**
