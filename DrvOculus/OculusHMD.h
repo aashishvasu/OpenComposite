@@ -7,6 +7,7 @@
 class OculusHMD : public OculusDevice, public IHMD {
 public:
 	OculusHMD(OculusBackend *backend);
+	~OculusHMD() override;
 
 	// delete the default ctors
 	OculusHMD() = delete;
@@ -45,6 +46,18 @@ public:
 	*   return zero for vsync time and frame counter and return false from the method. */
 	virtual bool GetTimeSinceLastVsync(float *pfSecondsSinceLastVsync, uint64_t *pulFrameCounter) override;
 
+	/** Returns the hidden area mesh for the current HMD. The pixels covered by this mesh will never be seen by the user after the lens distortion is
+	* applied based on visibility to the panels. If this HMD does not have a hidden area mesh, the vertex data and count will be NULL and 0 respectively.
+	* This mesh is meant to be rendered into the stencil buffer (or into the depth buffer setting nearz) before rendering each eye's view.
+	* This will improve performance by letting the GPU early-reject pixels the user will never see before running the pixel shader.
+	* NOTE: Render this mesh with backface culling disabled since the winding order of the vertices can be different per-HMD or per-eye.
+	* Setting the bInverse argument to true will produce the visible area mesh that is commonly used in place of full-screen quads.
+	* The visible area mesh covers all of the pixels the hidden area mesh does not cover.
+	* Setting the bLineLoop argument will return a line loop of vertices in HiddenAreaMesh_t->pVertexData with
+	* HiddenAreaMesh_t->unTriangleCount set to the number of vertices.
+	*/
+	virtual vr::HiddenAreaMesh_t GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMeshType) override;
+
 	// properties
 	virtual bool GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL) override;
 	virtual float GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pErrorL) override;
@@ -56,5 +69,7 @@ protected:
 	virtual ovrPoseStatef GetOculusPose(const ovrTrackingState &trackingState) override;
 
 	virtual ovrPosef GetOffset() override;
+
+	vr::HiddenAreaMesh_t hiddenAreaMeshes[2] = {nullptr};
 };
 #pragma warning(pop)

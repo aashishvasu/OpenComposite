@@ -439,84 +439,8 @@ const char * BaseSystem::GetEventTypeNameFromEnum(EVREventType eType) {
 	STUBBED();
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult)
-ovr_GetViewportStencil(
-	ovrSession session,
-	const ovrViewportStencilDesc* viewportStencilDesc,
-	ovrViewportStencilMeshBuffer* outMeshBuffer);
-
 HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type) {
-	// TODO should we not cache this?
-	if (hiddenAreaMeshes[eEye].pVertexData) {
-		return hiddenAreaMeshes[eEye];
-	}
-
-	if (!oovr_global_configuration.UseViewportStencil()) {
-		HiddenAreaMesh_t &result = hiddenAreaMeshes[eEye];
-		result.pVertexData = NULL;
-		result.unTriangleCount = 0;
-		return result;
-	}
-
-	ovrEyeType eye = eEye == Eye_Left ? ovrEye_Left : ovrEye_Right;
-	ovrViewportStencilDesc desc;
-	desc.Eye = eye;
-	desc.FovPort = ovr::hmdDesc.DefaultEyeFov[eye];
-	desc.HmdToEyeRotation = ovr::eyeRenderDesc[eye].HmdToEyePose.Orientation;
-
-	if (type == k_eHiddenAreaMesh_Inverse) {
-		desc.StencilType = ovrViewportStencil_VisibleArea;
-	}
-	else if (type == k_eHiddenAreaMesh_LineLoop) {
-		desc.StencilType = ovrViewportStencil_BorderLine;
-	}
-	else {
-		desc.StencilType = ovrViewportStencil_HiddenArea;
-	}
-
-	ovrViewportStencilMeshBuffer mb = { 0 };
-	mb.AllocVertexCount = 0;
-	mb.VertexBuffer = NULL;
-	mb.AllocIndexCount = 0;
-	mb.IndexBuffer = NULL;
-
-	// Query for the size
-	ovr_GetViewportStencil(*ovr::session, &desc, &mb);
-
-	// Create the buffers
-	mb.AllocVertexCount = mb.UsedVertexCount;
-	mb.VertexBuffer = new ovrVector2f[mb.AllocVertexCount];
-	mb.AllocIndexCount = mb.UsedIndexCount;
-	mb.IndexBuffer = new uint16_t[mb.AllocIndexCount];
-	
-	// Get the data
-	ovr_GetViewportStencil(*ovr::session, &desc, &mb);
-
-	// Convert the data into something usable by SteamVR
-	HiddenAreaMesh_t &result = hiddenAreaMeshes[eEye];
-	vr::HmdVector2_t *arr = new vr::HmdVector2_t[mb.UsedIndexCount];
-	result.pVertexData = arr;
-
-	for (int i = 0; i < mb.UsedIndexCount; i++) {
-		int index = mb.IndexBuffer[i];
-		ovrVector2f &v = mb.VertexBuffer[index];
-
-		arr[i] = HmdVector2_t{v.x, v.y};
-	}
-
-	if (type == k_eHiddenAreaMesh_LineLoop) {
-		result.unTriangleCount = mb.UsedIndexCount;
-	}
-	else {
-		result.unTriangleCount = mb.UsedIndexCount / 3;
-	}
-
-	// Delete the buffers
-	delete mb.VertexBuffer;
-	delete mb.IndexBuffer;
-
-	// Return the result
-	return result;
+	return BackendManager::Instance().GetPrimaryHMD()->GetHiddenAreaMesh(eEye, type);
 }
 
 bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {

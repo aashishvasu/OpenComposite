@@ -24,8 +24,6 @@ private:
 	VRControllerState_t lastLeftHandState;
 	VRControllerState_t lastRightHandState;
 
-	HiddenAreaMesh_t hiddenAreaMeshes[2] = { 0 };
-
 	bool blockingInputsUntilRelease[2] = { false, false };
 
 	ETrackingUniverseOrigin origin = ETrackingUniverseOrigin::TrackingUniverseStanding;

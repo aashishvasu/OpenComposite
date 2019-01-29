@@ -100,6 +100,17 @@ public:
 	*   return zero for vsync time and frame counter and return false from the method. */
 	virtual bool GetTimeSinceLastVsync(float *pfSecondsSinceLastVsync, uint64_t *pulFrameCounter) = 0;
 
+	/** Returns the hidden area mesh for the current HMD. The pixels covered by this mesh will never be seen by the user after the lens distortion is
+	* applied based on visibility to the panels. If this HMD does not have a hidden area mesh, the vertex data and count will be NULL and 0 respectively.
+	* This mesh is meant to be rendered into the stencil buffer (or into the depth buffer setting nearz) before rendering each eye's view.
+	* This will improve performance by letting the GPU early-reject pixels the user will never see before running the pixel shader.
+	* NOTE: Render this mesh with backface culling disabled since the winding order of the vertices can be different per-HMD or per-eye.
+	* Setting the bInverse argument to true will produce the visible area mesh that is commonly used in place of full-screen quads.
+	* The visible area mesh covers all of the pixels the hidden area mesh does not cover.
+	* Setting the bLineLoop argument will return a line loop of vertices in HiddenAreaMesh_t->pVertexData with
+	* HiddenAreaMesh_t->unTriangleCount set to the number of vertices.
+	*/
+	virtual vr::HiddenAreaMesh_t GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMeshType type) = 0;
 };
 
 #define DECLARE_BACKEND_FUNCS(PREPEND, APPEND) \
