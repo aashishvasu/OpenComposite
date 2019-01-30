@@ -21,8 +21,8 @@ private:
 	ovrSessionStatus lastStatus;
 	std::queue<event_info_t> events;
 
-	VRControllerState_t lastLeftHandState;
-	VRControllerState_t lastRightHandState;
+	VRControllerState_t lastLeftHandState = { 0 };
+	VRControllerState_t lastRightHandState = { 0 };
 
 	bool blockingInputsUntilRelease[2] = { false, false };
 
