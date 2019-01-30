@@ -374,9 +374,13 @@ if(prop == in) { \
 		PROP(Prop_RenderModelName_String, "renderRightHand");
 		PROP(Prop_ModelNumber_String, "Oculus Rift CV1 (Right Controller)");
 		break;
-	}
+	case EOculusTrackedObject::Object0:
+		PROP(Prop_RenderModelName_String, "renderObject0");
 
-	// TODO render model and model number for the tracking object
+		// This is made up, and not at all verified with SteamVR
+		PROP(Prop_ModelNumber_String, "Oculus Rift CV1 (Tracked Object 0)");
+		break;
+	}
 
 	return OculusDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
