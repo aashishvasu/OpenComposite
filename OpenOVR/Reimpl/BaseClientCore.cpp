@@ -31,7 +31,7 @@ static bool ReadJson(wstring path, Json::Value &result) {
 static void WriteJson(wstring path, const Json::Value &value) {
 	ofstream out(path, ios::binary);
 	if (!out) {
-		OOVR_ABORT("Failed to write applist json!");
+		OOVR_ABORTF("Failed to write applist json: %s", strerror(errno));
 	}
 
 	out << value;
