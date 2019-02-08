@@ -22,6 +22,8 @@ add_library(OpenVR INTERFACE)
 target_include_directories(OpenVR INTERFACE SplitOpenVRHeaders) # TODO make this private and put the public headers elsewhere
 
 # === LibOVR ===
+if(WIN32)
+
 set(OVRDIR libs/libovr/OculusSDK/LibOVR)
 add_library(ovr STATIC
 	${OVRDIR}/Shim/OVR_CAPI_Prototypes.h
@@ -133,6 +135,8 @@ target_include_directories(DrvOculus PUBLIC DrvOculus/pub)
 target_include_directories(DrvOculus PRIVATE DrvOculus)
 target_link_libraries(DrvOculus OpenVR ovr ovrkernel)
 source_group(Public REGULAR_EXPRESSION DrvOculus/pub/*)
+
+endif (WIN32)
 
 # === OCCore ===
 # TODO: precompiled headers
@@ -315,9 +319,11 @@ target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
 target_link_libraries(OCCore OpenVR ovr ovrkernel)
 
 # Set up precompiled headers for OCCore
+if (WIN32)
 add_precompiled_header(OCCore ${CMAKE_SOURCE_DIR}/OpenOVR/stdafx.h EXCLUDE
 	${OVR_PCH_EXCLUDED}
 )
+endif ()
 
 source_group(OpenVR REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/*)
 source_group(OpenVR\\Drivers REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/driver_*)
