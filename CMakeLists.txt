@@ -21,6 +21,15 @@ include_external_msproject(
 add_library(OpenVR INTERFACE)
 target_include_directories(OpenVR INTERFACE SplitOpenVRHeaders) # TODO make this private and put the public headers elsewhere
 
+# === Vulkan ===
+add_library(Vulkan INTERFACE)
+target_include_directories(Vulkan INTERFACE libs/vulkan/Include) # TODO make this private and put the public headers elsewhere
+if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib/vulkan-1.lib)
+else()
+target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib32/vulkan-1.lib)
+endif()
+
 # === LibOVR ===
 if(WIN32)
 
@@ -315,8 +324,8 @@ add_library(OCCore STATIC
 )
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
-target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX -DSUPPORT_GL)
-target_link_libraries(OCCore OpenVR ovr ovrkernel)
+target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX -DSUPPORT_GL -DSUPPORT_VK)
+target_link_libraries(OCCore OpenVR ovr ovrkernel Vulkan)
 
 # Set up precompiled headers for OCCore
 if (WIN32)
