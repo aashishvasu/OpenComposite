@@ -315,7 +315,7 @@ add_library(OCCore STATIC
 )
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
-target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX)
+target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX -DSUPPORT_GL)
 target_link_libraries(OCCore OpenVR ovr ovrkernel)
 
 # Set up precompiled headers for OCCore
