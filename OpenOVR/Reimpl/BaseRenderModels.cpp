@@ -455,5 +455,24 @@ uint32_t BaseRenderModels::GetRenderModelOriginalPath(const char * pchRenderMode
 }
 
 const char * BaseRenderModels::GetRenderModelErrorNameFromEnum(EVRRenderModelError error) {
-	STUBBED();
+#define ERR_HND(name) case VRRenderModelError_ ## name: return #name;
+
+	switch (error) {
+		ERR_HND(None)
+		ERR_HND(Loading)
+		ERR_HND(NotSupported)
+		ERR_HND(InvalidArg)
+		ERR_HND(InvalidModel)
+		ERR_HND(NoShapes)
+		ERR_HND(MultipleShapes)
+		ERR_HND(TooManyVertices)
+		ERR_HND(MultipleTextures)
+		ERR_HND(BufferTooSmall)
+		ERR_HND(NotEnoughNormals)
+		ERR_HND(NotEnoughTexCoords)
+		ERR_HND(InvalidTexture)
+		default:
+			OOVR_ABORTF("Unknown render model error ID=%d", error);
+	}
+#undef ERR_HND
 }
