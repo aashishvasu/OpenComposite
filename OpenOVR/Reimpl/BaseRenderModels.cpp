@@ -154,6 +154,10 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char * pchRend
 		rid = RES_O_HAND_RIGHT;
 		sided = -1;
 	}
+	else if (name == "oculusHmdRenderModel") {
+		// no model for the HMD
+		return VRRenderModelError_NotSupported;
+	}
 	else {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
