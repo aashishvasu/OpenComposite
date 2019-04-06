@@ -366,7 +366,7 @@ uint32_t BaseRenderModels::GetComponentName(const char * pchRenderModelName, uin
 
 	string name = pchRenderModelName;
 
-	if (name != "renderLeftHand" && name != "renderRightHand") {
+	if (name != "renderLeftHand" && name != "renderRightHand" && name != "oculusHmdRenderModel") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
@@ -400,7 +400,7 @@ uint32_t BaseRenderModels::GetComponentRenderModelName(const char * pchRenderMod
 	char * componentModelName, uint32_t componentModelNameLen) {
 
 	string name = pchRenderModelName;
-	if (name != "renderLeftHand" && name != "renderRightHand") {
+	if (name != "renderLeftHand" && name != "renderRightHand" && name != "oculusHmdRenderModel") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
