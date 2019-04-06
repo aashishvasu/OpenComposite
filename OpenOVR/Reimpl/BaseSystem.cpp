@@ -149,10 +149,35 @@ HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
 	return res;
 }
 
-uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass,
-	vr::TrackedDeviceIndex_t * punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount,
-	vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex) {
-	STUBBED();
+uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass targetClass,
+		vr::TrackedDeviceIndex_t *indexArray, uint32_t indexCount,
+		vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex) {
+
+	uint32_t outCount = 0;
+
+	for (vr::TrackedDeviceIndex_t dev = 0; dev < vr::k_unMaxTrackedDeviceCount; dev++) {
+		vr::ETrackedDeviceClass cls = GetTrackedDeviceClass(dev);
+
+		if (cls != targetClass)
+			continue;
+
+		if (outCount < indexCount)
+			indexArray[outCount] = dev;
+
+		outCount++;
+	}
+
+	// TODO sort the devices
+	// I'm allowing this to do in despite not sorting it, since I can't see any usecase
+	// for relying on the sort results, possibly except for determining the left and right controller.
+	//
+	// So if some game has the left and right controllers flipped then investigate it, otherwise this
+	// shouldn't be a big issue.
+	//
+	// From what I've seen, it's generally used to get a list of devices of a class, without caring about
+	// the order of the results.
+
+	return outCount;
 }
 
 EDeviceActivityLevel BaseSystem::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId) {
