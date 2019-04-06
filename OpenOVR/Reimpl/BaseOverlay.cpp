@@ -41,6 +41,15 @@ public:
 	ovrLayerQuad layerQuad = {};
 	std::unique_ptr<Compositor> compositor;
 
+	// Transform
+	VROverlayTransformType transformType = VROverlayTransform_Absolute;
+	union {
+		struct {
+			HmdMatrix34_t offset;
+			TrackedDeviceIndex_t  device;
+		} deviceRelative;
+	} transformData;
+
 	OverlayData(string key, string name) : key(key), name(name) {
 	}
 };
@@ -108,6 +117,30 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 			//  the overlay without changing the texture.
 			overlay.layerQuad.QuadSize.x = overlay.widthMeters;
 			overlay.layerQuad.QuadSize.y = overlay.widthMeters / aspect;
+
+			if (overlay.transformType == VROverlayTransform_TrackedDeviceRelative) {
+				TrackedDeviceIndex_t dev = overlay.transformData.deviceRelative.device;
+
+				OVR::Matrix4f offset;
+				S2O_om44(overlay.transformData.deviceRelative.offset, offset);
+
+				TrackedDevicePose_t pose{};
+
+				BaseCompositor *comp = GetUnsafeBaseCompositor();
+				BaseSystem *sys = GetUnsafeBaseSystem();
+				if (comp && sys) {
+					comp->GetSinglePoseRendering(sys->_GetRenderTrackingOrigin(), dev, &pose);
+				}
+
+				if (pose.bPoseIsValid) {
+					OVR::Matrix4f devOffset;
+					S2O_om44(pose.mDeviceToAbsoluteTracking, devOffset);
+
+					offset = devOffset * offset;
+				}
+
+				overlay.layerQuad.QuadPoseCenter = OVR::Posef(OVR::Quatf(offset), offset.GetTranslation());
+			}
 
 			// Finally, add it to the list of layers to be sent to LibOVR
 			layerHeaders.push_back(&overlay.layerQuad.Header);
@@ -439,7 +472,9 @@ EVROverlayError BaseOverlay::SetOverlayRenderModel(VROverlayHandle_t ulOverlayHa
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayTransformType(VROverlayHandle_t ulOverlayHandle, VROverlayTransformType *peTransformType) {
-	STUBBED();
+	USEH();
+
+	*peTransformType = overlay->transformType;
 }
 EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToOverlayTransform) {
 	USEH();
@@ -448,6 +483,7 @@ EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOve
 	//  subtract the floor position to match it. This shouldn't usually be an issue though, as I can't
 	//  imagine many apps will use a different origin for their overlays.
 
+	overlay->transformType = VROverlayTransform_Absolute;
 	overlay->layerQuad.QuadPoseCenter = S2O_om34_pose(*pmatTrackingOriginToOverlayTransform);
 
 	return VROverlayError_None;
@@ -456,7 +492,11 @@ EVROverlayError BaseOverlay::GetOverlayTransformAbsolute(VROverlayHandle_t ulOve
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTransformTrackedDeviceRelative(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t unTrackedDevice, const HmdMatrix34_t *pmatTrackedDeviceToOverlayTransform) {
-	STUBBED();
+	USEH();
+
+	overlay->transformType = VROverlayTransform_TrackedDeviceRelative;
+	overlay->transformData.deviceRelative.device = unTrackedDevice;
+	overlay->transformData.deviceRelative.offset = *pmatTrackedDeviceToOverlayTransform;
 }
 EVROverlayError BaseOverlay::GetOverlayTransformTrackedDeviceRelative(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t *punTrackedDevice, HmdMatrix34_t *pmatTrackedDeviceToOverlayTransform) {
 	STUBBED();

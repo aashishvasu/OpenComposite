@@ -39,6 +39,7 @@ public:
 	void _SetTrackingOrigin(ETrackingUniverseOrigin origin);
 	ETrackingUniverseOrigin _GetTrackingOrigin();
 	HmdMatrix34_t _PoseToTrackingSpace(ETrackingUniverseOrigin origin, ovrPosef pose);
+	ETrackingUniverseOrigin _GetRenderTrackingOrigin();
 private:
 	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t &last);
 

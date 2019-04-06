@@ -659,6 +659,10 @@ result:
 	return result;
 }
 
+ETrackingUniverseOrigin BaseSystem::_GetRenderTrackingOrigin() {
+	return usingDualOriginMode ? TrackingUniverseStanding : origin;
+}
+
 void BaseSystem::_ResetFakeSeatedHeight() {
 	ovrTrackingState state = ovr_GetTrackingState(*ovr::session, ovr_GetTimeInSeconds(), false);
 
