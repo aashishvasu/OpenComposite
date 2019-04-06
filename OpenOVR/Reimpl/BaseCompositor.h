@@ -98,6 +98,9 @@ private:
 
 	bool isInSkybox = false;
 
+	// True if the current frame has only nullptr textures supplied, and should be ignored
+	bool isNullRender = false;
+
 public:
 	typedef int ovr_enum_t;
 

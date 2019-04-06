@@ -201,7 +201,6 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, co
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const VRTextureBounds_t * bounds, EVRSubmitFlags submitFlags) {
 	bool isFirstEye = !leftEyeSubmitted && !rightEyeSubmitted;
-	BackendManager::Instance().StoreEyeTexture(eye, texture, bounds, submitFlags, isFirstEye);
 
 	bool eyeState = false;
 	if (eye == Eye_Left)
@@ -218,8 +217,24 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 	else
 		rightEyeSubmitted = true;
 
+	// Handle null textures
+	// Rather surprisingly, it's perfectly valid to pass null textures to SteamVR. So far, I've
+	// only seen this used in Sparc (see #19). If a game tries to do this, ensure that either neither or
+	// both eyes do so, and don't actually send a frame to LibOVR.
+	bool textureNull = texture->handle == nullptr;
+	if (isFirstEye) {
+		isNullRender = textureNull;
+	} else if(textureNull != isNullRender) {
+		OOVR_ABORT("Cannot mismatch first and second eye renders");
+	}
+
+	if(!textureNull)
+		BackendManager::Instance().StoreEyeTexture(eye, texture, bounds, submitFlags, isFirstEye);
+
 	if (leftEyeSubmitted && rightEyeSubmitted) {
-		BackendManager::Instance().SubmitFrames(isInSkybox);
+		if(!isNullRender)
+			BackendManager::Instance().SubmitFrames(isInSkybox);
+
 		leftEyeSubmitted = false;
 		rightEyeSubmitted = false;
 	}
