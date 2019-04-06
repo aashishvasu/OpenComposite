@@ -38,7 +38,7 @@ private:
 
 	// Default to false since this was preventing PAYDAY 2 from starting, need to investigate to find out
 	//  if this is game-specific, or if it's a problem with the layer system
-	bool enableLayers = false;
+	bool enableLayers = true;
 
 	bool dx10Mode = false;
 	bool enableAppRequestedCubemap = true;
