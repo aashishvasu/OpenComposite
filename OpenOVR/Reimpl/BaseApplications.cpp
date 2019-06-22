@@ -50,7 +50,8 @@ bool BaseApplications::CancelApplicationLaunch(const char *pchAppKey) {
 	STUBBED();
 }
 EVRApplicationError BaseApplications::IdentifyApplication(uint32_t unProcessId, const char *pchAppKey) {
-	STUBBED();
+	OOVR_LOGF("NOOP: Attempting to identify application %s, pid=%d", pchAppKey, unProcessId);
+	return VRApplicationError_None;
 }
 uint32_t BaseApplications::GetApplicationProcessId(const char *pchAppKey) {
 	STUBBED();
