@@ -382,5 +382,9 @@ if(prop == in) { \
 		break;
 	}
 
+	// TODO fill this out properly!
+	// It was crashing VRChat, which was just checking if it's equal to index_controller
+	PROP(Prop_RegisteredDeviceType_String, "touch_controller");
+
 	return OculusDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
