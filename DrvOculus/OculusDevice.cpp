@@ -369,10 +369,12 @@ if(prop == in) { \
 	case EOculusTrackedObject::LTouch:
 		PROP(Prop_RenderModelName_String, "renderLeftHand");
 		PROP(Prop_ModelNumber_String, "Oculus Rift CV1 (Left Controller)");
+			PROP(Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Left"); // TODO is this different CV1 vs S?
 		break;
 	case EOculusTrackedObject::RTouch:
 		PROP(Prop_RenderModelName_String, "renderRightHand");
 		PROP(Prop_ModelNumber_String, "Oculus Rift CV1 (Right Controller)");
+		PROP(Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Right");
 		break;
 	case EOculusTrackedObject::Object0:
 		PROP(Prop_RenderModelName_String, "renderObject0");
@@ -381,10 +383,6 @@ if(prop == in) { \
 		PROP(Prop_ModelNumber_String, "Oculus Rift CV1 (Tracked Object 0)");
 		break;
 	}
-
-	// TODO fill this out properly!
-	// It was crashing VRChat, which was just checking if it's equal to index_controller
-	PROP(Prop_RegisteredDeviceType_String, "touch_controller");
 
 	return OculusDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }

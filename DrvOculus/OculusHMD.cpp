@@ -296,6 +296,7 @@ if(prop == in) { \
 		break;
 	case ovrHmd_CV1:
 		PROP(Prop_ModelNumber_String, "Oculus Rift CV1");
+		PROP(Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F");
 		break;
 	default:
 		PROP(Prop_ModelNumber_String, "<unknown>");
