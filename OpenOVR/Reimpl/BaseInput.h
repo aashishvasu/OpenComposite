@@ -1,6 +1,9 @@
 #pragma once
 #include "BaseCommon.h"
 
+#include "Misc/json/json.h"
+#include <string>
+
 enum OOVR_EVRSkeletalReferencePose
 {
 	VRSkeletalReferencePose_BindPose = 0,
@@ -297,4 +300,13 @@ public:
 
 	// --------------- Legacy Input ------------------- //
 	virtual bool IsUsingLegacyInput();
+
+private:
+	// these are helper methods to be used internally
+	void ProcessInputSource(Json::Value inputJson, VRActionHandle_t actionHandle, std::string sourceType,
+		std::string parameterSubMode, std::string actionSetName);
+
+	void DetermineActionState(uint64_t buttonId, uint64_t buttonFlags, bool pressedButtonState,
+		bool& masterPressedButtonState, vr::VRControllerAxis_t axis, double activateThreshold, double deactivateThreshold,
+		bool& bState, bool& bChanged, bool& actionSourceDirectionState);
 };
