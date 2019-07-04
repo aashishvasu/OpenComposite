@@ -1,6 +1,52 @@
 #pragma once
 #include "BaseCommon.h"
 
+enum OOVR_EVRSkeletalReferencePose
+{
+	VRSkeletalReferencePose_BindPose = 0,
+	VRSkeletalReferencePose_OpenHand,
+	VRSkeletalReferencePose_Fist,
+	VRSkeletalReferencePose_GripLimit
+};
+
+enum OOVR_EVRFinger
+{
+	VRFinger_Thumb = 0,
+	VRFinger_Index,
+	VRFinger_Middle,
+	VRFinger_Ring,
+	VRFinger_Pinky,
+	VRFinger_Count
+};
+
+enum OOVR_EVRFingerSplay
+{
+	VRFingerSplay_Thumb_Index = 0,
+	VRFingerSplay_Index_Middle,
+	VRFingerSplay_Middle_Ring,
+	VRFingerSplay_Ring_Pinky,
+	VRFingerSplay_Count
+};
+
+enum OOVR_EVRSummaryType
+{
+	// The skeletal summary data will match the animated bone transforms for the action.
+	VRSummaryType_FromAnimation = 0,
+
+	// The skeletal summary data will include unprocessed data directly from the device when available.
+	// This data is generally less latent than the data that is computed from the animations.
+	VRSummaryType_FromDevice = 1,
+};
+
+enum OOVR_EVRInputStringBits
+{
+	VRInputString_Hand = 0x01,
+	VRInputString_ControllerType = 0x02,
+	VRInputString_InputSource = 0x04,
+
+	VRInputString_All = 0xFFFFFFFF
+};
+
 struct OOVR_InputAnalogActionData_t {
 	// Whether or not this action is currently available to be bound in the active action set
 	bool bActive;
@@ -46,26 +92,23 @@ struct OOVR_InputPoseActionData_t {
 	vr::TrackedDevicePose_t pose;
 };
 
-struct OOVR_InputSkeletalActionData_t {
-	// Whether or not this action is currently available to be bound in the active action set
-	bool bActive;
-
-	// The origin that caused this action's current state
-	vr::VRInputValueHandle_t activeOrigin;
-
-	// The number of bones in the skeletal data
-	uint32_t boneCount;
-};
-
 enum OOVR_EVRSkeletalTransformSpace {
 	VRSkeletalTransformSpace_Model = 0,
 	VRSkeletalTransformSpace_Parent = 1,
-	VRSkeletalTransformSpace_Additive = 2,
 };
 
 enum OOVR_EVRInputFilterCancelType {
 	VRInputFilterCancel_Timers = 0,
 	VRInputFilterCancel_Momentum = 1,
+};
+
+struct OOVR_InputSkeletalActionData_t
+{
+	/** Whether or not this action is currently available to be bound in the active action set */
+	bool bActive;
+
+	/** The origin that caused this action's current state */
+	vr::VRInputValueHandle_t activeOrigin;
 };
 
 struct OOVR_InputOriginInfo_t {
@@ -96,6 +139,20 @@ struct OOVR_VRActiveActionSet_t {
 	int32_t nPriority;
 };
 
+/** Contains summary information about the current skeletal pose */
+struct OOVR_VRSkeletalSummaryData_t
+{
+	/** The amount that each finger is 'curled' inwards towards the palm.  In the case of the thumb,
+	* this represents how much the thumb is wrapped around the fist.
+	* 0 means straight, 1 means fully curled */
+	float	flFingerCurl[VRFinger_Count];
+
+	/** The amount that each pair of adjacent fingers are separated.
+	* 0 means the digits are touching, 1 means they are fully separated.
+	*/
+	float	flFingerSplay[VRFingerSplay_Count];
+};
+
 
 class BaseInput {
 public:
@@ -113,6 +170,9 @@ public:
 	typedef OOVR_InputSkeletalActionData_t InputSkeletalActionData_t;
 	typedef OOVR_EVRSkeletalTransformSpace EVRSkeletalTransformSpace;
 	typedef OOVR_InputOriginInfo_t InputOriginInfo_t;
+	typedef OOVR_EVRSkeletalReferencePose EVRSkeletalReferencePose;
+	typedef OOVR_EVRSummaryType EVRSummaryType;
+	typedef OOVR_VRSkeletalSummaryData_t VRSkeletalSummaryData_t;
 
 	// ---------------  Handle management   --------------- //
 
@@ -148,21 +208,66 @@ public:
 	/** Reads the state of a pose action given its handle. */
 	virtual EVRInputError GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow, InputPoseActionData_t *pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
+	/** Reads the state of a pose action given its handle for the number of seconds relative to now. This
+	* will generally be called with negative times from the fUpdateTime fields in other actions. */
+	virtual EVRInputError GetPoseActionDataRelativeToNow(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow, InputPoseActionData_t *pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
+
+	/** Reads the state of a pose action given its handle. The returned values will match the values returned
+	* by the last call to IVRCompositor::WaitGetPoses(). */
+	virtual EVRInputError GetPoseActionDataForNextFrame(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, InputPoseActionData_t *pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
+
+
 	/** Reads the state of a skeletal action given its handle. */
 	virtual EVRInputError GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t *pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
-	// --------------- Skeletal Bone Data ------------------- //
+	/** Reads the state of a skeletal action given its handle. */
+	virtual EVRInputError GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t *pActionData, uint32_t unActionDataSize);
+
+
+	// ---------------  Static Skeletal Data ------------------- //
+
+	/** Reads the number of bones in skeleton associated with the given action */
+	virtual EVRInputError GetBoneCount(VRActionHandle_t action, uint32_t* pBoneCount);
+
+	/** Fills the given array with the index of each bone's parent in the skeleton associated with the given action */
+	virtual EVRInputError GetBoneHierarchy(VRActionHandle_t action, VR_ARRAY_COUNT(unIndexArayCount) vr::BoneIndex_t* pParentIndices, uint32_t unIndexArayCount);
+
+	/** Fills the given buffer with the name of the bone at the given index in the skeleton associated with the given action */
+	virtual EVRInputError GetBoneName(VRActionHandle_t action, vr::BoneIndex_t nBoneIndex, VR_OUT_STRING() char* pchBoneName, uint32_t unNameBufferSize);
+
+	/** Fills the given buffer with the transforms for a specific static skeletal reference pose */
+	virtual EVRInputError GetSkeletalReferenceTransforms(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalReferencePose eReferencePose, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t *pTransformArray, uint32_t unTransformArrayCount);
+
+	/** Reads the level of accuracy to which the controller is able to track the user to recreate a skeletal pose */
+	virtual EVRInputError GetSkeletalTrackingLevel(VRActionHandle_t action, vr::EVRSkeletalTrackingLevel* pSkeletalTrackingLevel);
+
+	// ---------------  Dynamic Skeletal Data ------------------- //
 
 	/** Reads the state of the skeletal bone data associated with this action and copies it into the given buffer. */
 	virtual EVRInputError GetSkeletalBoneData(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t *pTransformArray, uint32_t unTransformArrayCount, VRInputValueHandle_t ulRestrictToDevice);
 
+	/** Reads the state of the skeletal bone data associated with this action and copies it into the given buffer. */
+	virtual EVRInputError GetSkeletalBoneData(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t *pTransformArray, uint32_t unTransformArrayCount);
+
+	/** Reads summary information about the current pose of the skeleton associated with the given action.   */
+	virtual EVRInputError GetSkeletalSummaryData(VRActionHandle_t action, EVRSummaryType eSummaryType, VRSkeletalSummaryData_t * pSkeletalSummaryData);
+
+	/** Reads the state of the skeletal bone data in a compressed form that is suitable for
+		* sending over the network. The required buffer size will never exceed ( sizeof(VR_BoneTransform_t)*boneCount + 2).
+		* Usually the size will be much smaller. */
+	virtual EVRInputError GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalMotionRange eMotionRange, VR_OUT_BUFFER_COUNT(unCompressedSize) void *pvCompressedData, uint32_t unCompressedSize, uint32_t *punRequiredCompressedSize, VRInputValueHandle_t ulRestrictToDevice);
+
 	/** Reads the state of the skeletal bone data in a compressed form that is suitable for
 	* sending over the network. The required buffer size will never exceed ( sizeof(VR_BoneTransform_t)*boneCount + 2).
 	* Usually the size will be much smaller. */
-	virtual EVRInputError GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalMotionRange eMotionRange, VR_OUT_BUFFER_COUNT(unCompressedSize) void *pvCompressedData, uint32_t unCompressedSize, uint32_t *punRequiredCompressedSize, VRInputValueHandle_t ulRestrictToDevice);
+	virtual EVRInputError GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalMotionRange eMotionRange, VR_OUT_BUFFER_COUNT(unCompressedSize) void *pvCompressedData, uint32_t unCompressedSize, uint32_t *punRequiredCompressedSize);
 
 	/** Turns a compressed buffer from GetSkeletalBoneDataCompressed and turns it back into a bone transform array. */
 	virtual EVRInputError DecompressSkeletalBoneData(void *pvCompressedBuffer, uint32_t unCompressedBufferSize, EVRSkeletalTransformSpace *peTransformSpace, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t *pTransformArray, uint32_t unTransformArrayCount);
+
+
+	/** Turns a compressed buffer from GetSkeletalBoneDataCompressed and turns it back into a bone transform array. */
+	virtual EVRInputError DecompressSkeletalBoneData(const void *pvCompressedBuffer, uint32_t unCompressedBufferSize, EVRSkeletalTransformSpace eTransformSpace, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t *pTransformArray, uint32_t unTransformArrayCount);
 
 	// --------------- Haptics ------------------- //
 
@@ -177,6 +282,10 @@ public:
 	/** Retrieves the name of the origin in the current language */
 	virtual EVRInputError GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char *pchNameArray, uint32_t unNameArraySize);
 
+	/** Retrieves the name of the origin in the current language. unStringSectionsToInclude is a bitfield of values in EVRInputStringBits that allows the
+			application to specify which parts of the origin's information it wants a string for. */
+	virtual EVRInputError GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char *pchNameArray, uint32_t unNameArraySize, int32_t unStringSectionsToInclude);
+
 	/** Retrieves useful information for the origin of this action */
 	virtual EVRInputError GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t *pOriginInfo, uint32_t unOriginInfoSize);
 
@@ -185,4 +294,7 @@ public:
 
 	/** Shows the current binding all the actions in the specified action sets */
 	virtual EVRInputError ShowBindingsForActionSet(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t *pSets, uint32_t unSizeOfVRSelectedActionSet_t, uint32_t unSetCount, VRInputValueHandle_t originToHighlight);
+
+	// --------------- Legacy Input ------------------- //
+	virtual bool IsUsingLegacyInput();
 };
