@@ -75,4 +75,18 @@ public:
 
 	bool ExportLiveToBuffer(VR_OUT_STRING() char *pBuffer, uint32_t *pnBufferLength);
 	bool ImportFromBufferToWorking(const char *pBuffer, uint32_t nImportFlags);
+
+	/** Sets the Collision Bounds in the working copy. */
+	void SetWorkingPerimeter(VR_ARRAY_COUNT(unPointCount) vr::HmdVector2_t *pPointBuffer, uint32_t unPointCount);
+
+	/** Shows the chaperone data in the working set to preview in the compositor.*/
+	void ShowWorkingSetPreview();
+
+	/** Hides the chaperone data in the working set to preview in the compositor (if it was visible).*/
+	void HideWorkingSetPreview();
+
+	/** Fire an event that the tracking system can use to know room setup is about to begin. This lets the tracking
+	 * system make any last minute adjustments that should be incorporated into the new setup.  If the user is adjusting
+	 * live in HMD using a tweak tool, keep in mind that calling this might cause the user to see the room jump. */
+	void RoomSetupStarting();
 };
