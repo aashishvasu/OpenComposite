@@ -606,6 +606,9 @@ EVROverlayError BaseOverlay::SetOverlayDualAnalogTransform(VROverlayHandle_t ulO
 EVROverlayError BaseOverlay::GetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, HmdVector2_t *pvCenter, float *pfRadius) {
 	STUBBED();
 }
+EVROverlayError BaseOverlay::SetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, const HmdVector2_t *pvCenter, float fRadius) {
+	STUBBED();
+}
 EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle, const Texture_t *pTexture) {
 	USEH();
 	overlay->texture = *pTexture;

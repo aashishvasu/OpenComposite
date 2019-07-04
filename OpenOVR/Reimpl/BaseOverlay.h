@@ -415,6 +415,10 @@ public:
 	/** Gets the analog input to Dual Analog coordinate scale for the specified overlay. */
 	virtual EVROverlayError GetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, HmdVector2_t *pvCenter, float *pfRadius);
 
+	/** Sets the analog input to Dual Analog coordinate scale for the specified overlay. */
+	virtual EVROverlayError SetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, const HmdVector2_t *pvCenter, float fRadius);
+
+
 	// ---------------------------------------------
 	// Overlay texture methods
 	// ---------------------------------------------

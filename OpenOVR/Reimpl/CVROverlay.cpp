@@ -11,6 +11,7 @@ GEN_INTERFACE("Overlay", "014")
 GEN_INTERFACE("Overlay", "016")
 GEN_INTERFACE("Overlay", "017")
 GEN_INTERFACE("Overlay", "018")
+GEN_INTERFACE("Overlay", "019")
 
 #include "GVROverlay.gen.h"
 
