@@ -433,3 +433,15 @@ void BaseCompositor::SetExplicitTimingMode(ovr_enum_t eTimingMode) {
 ovr_enum_t BaseCompositor::SubmitExplicitTimingData() {
 	STUBBED();
 }
+
+bool BaseCompositor::IsMotionSmoothingSupported() {
+	STUBBED();
+}
+
+bool BaseCompositor::IsMotionSmoothingEnabled() {
+	STUBBED();
+}
+
+bool BaseCompositor::IsCurrentSceneFocusAppLoading() {
+	STUBBED();
+}

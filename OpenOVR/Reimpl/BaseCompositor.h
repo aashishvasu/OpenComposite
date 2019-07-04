@@ -308,4 +308,16 @@ public:
 	* will perform a vkQueueSubmit on Vulkan so must not be done simultaneously with VkQueue operations on another thread.
 	* Returns VRCompositorError_RequestFailed if SetExplicitTimingMode is not enabled. */
 	virtual ovr_enum_t SubmitExplicitTimingData();
+
+	/** Indicates whether or not motion smoothing is enabled by the user settings.
+	* If you want to know if motion smoothing actually triggered due to a late frame, check Compositor_FrameTiming
+	* m_nReprojectionFlags & VRCompositor_ReprojectionMotion instead. */
+	virtual bool IsMotionSmoothingEnabled();
+
+	/** Indicates whether or not motion smoothing is supported by the current hardware. */
+	virtual bool IsMotionSmoothingSupported();
+
+	/** Indicates whether or not the current scene focus app is currently loading.  This is inferred from its use of FadeGrid to
+	* explicitly fade to the compositor to cover up the fact that it cannot render at a sustained full framerate during this time. */
+	virtual bool IsCurrentSceneFocusAppLoading();
 };
