@@ -425,6 +425,13 @@ uint32_t BaseRenderModels::GetComponentRenderModelName(const char * pchRenderMod
 	return (uint32_t) name.length() + 1;
 }
 
+bool BaseRenderModels::GetComponentStateForDevicePath(const char *pchRenderModelName, const char *pchComponentName,
+	vr::VRInputValueHandle_t devicePath, const OOVR_RenderModel_ControllerMode_State_t *pState,
+	OOVR_RenderModel_ComponentState_t *pComponentState)
+{
+	STUBBED();
+}
+
 bool BaseRenderModels::GetComponentState(const char * pchRenderModelName, const char * pchComponentName,
 	const vr::VRControllerState_t * pControllerState,const OOVR_RenderModel_ControllerMode_State_t * pState,
 	OOVR_RenderModel_ComponentState_t * pComponentState) {

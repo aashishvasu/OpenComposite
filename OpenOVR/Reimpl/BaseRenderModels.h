@@ -86,6 +86,9 @@ public:
 	* If the pchRenderModelName or pchComponentName is invalid, this will return false (and transforms will be set to identity).
 	* Otherwise, return true
 	* Note: For dynamic objects, visibility may be dynamic. (I.e., true/false will be returned based on controller state and controller mode state ) */
+	virtual bool GetComponentStateForDevicePath(const char *pchRenderModelName, const char *pchComponentName, vr::VRInputValueHandle_t devicePath, const OOVR_RenderModel_ControllerMode_State_t *pState, OOVR_RenderModel_ComponentState_t *pComponentState);
+
+	/** This version of GetComponentState takes a controller state block instead of an action origin. This function is deprecated. You should use the new input system and GetComponentStateForDevicePath instead. */
 	virtual bool GetComponentState(const char *pchRenderModelName, const char *pchComponentName, const vr::VRControllerState_t *pControllerState, const OOVR_RenderModel_ControllerMode_State_t *pState, OOVR_RenderModel_ComponentState_t *pComponentState);
 
 	/** Returns true if the render model has a component with the specified name */
