@@ -1315,7 +1315,8 @@ EVRInputError BaseInput::DecompressSkeletalBoneData(const void *pvCompressedBuff
 EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, float fStartSecondsFromNow, float fDurationSeconds,
 	float fFrequency, float fAmplitude, VRInputValueHandle_t ulRestrictToDevice) {
 
-	STUBBED();
+	// TODO implement
+	// STUBBED();
 }
 EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t digitalActionHandle,
 	VR_ARRAY_COUNT(originOutCount) VRInputValueHandle_t *originsOut, uint32_t originOutCount) {
