@@ -1317,6 +1317,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 
 	// TODO implement
 	// STUBBED();
+	return VRInputError_None;
 }
 EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t digitalActionHandle,
 	VR_ARRAY_COUNT(originOutCount) VRInputValueHandle_t *originsOut, uint32_t originOutCount) {
