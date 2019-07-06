@@ -273,6 +273,7 @@ add_library(OCCore STATIC
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_005.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_006.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRChaperoneSetup_005.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRChaperoneSetup_006.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRChaperone_003.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_012.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_013.h
@@ -287,7 +288,9 @@ add_library(OCCore STATIC
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRDriverManager_001.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRExtendedDisplay_001.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRInput_004.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRInput_006.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRIOBuffer_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRIOBuffer_002.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRNotifications_002.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_010.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_011.h
@@ -297,6 +300,7 @@ add_library(OCCore STATIC
 	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_016.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_017.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_018.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVROverlay_019.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRRenderModels_004.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRRenderModels_005.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRRenderModels_006.h
@@ -314,6 +318,7 @@ add_library(OCCore STATIC
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_019.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRTrackedCamera_003.h
 	SplitOpenVRHeaders/OpenVR/interfaces/openvr.h
+	SplitOpenVRHeaders/OpenVR/interfaces/version.h
 	SplitOpenVRHeaders/OpenVR/interfaces/vrannotation.h
 	SplitOpenVRHeaders/OpenVR/interfaces/vrtypes.h
 
