@@ -287,6 +287,7 @@ add_library(OCCore STATIC
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_022.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRDriverManager_001.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRExtendedDisplay_001.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRInput_003.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRInput_004.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRInput_005.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRInput_006.h
