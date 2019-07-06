@@ -1292,6 +1292,9 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeleta
 EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t action, EVRSummaryType eSummaryType, VRSkeletalSummaryData_t * pSkeletalSummaryData) {
 	STUBBED();
 }
+EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t action, VRSkeletalSummaryData_t * pSkeletalSummaryData) {
+	return GetSkeletalSummaryData(action, VRSummaryType_FromDevice, pSkeletalSummaryData);
+}
 EVRInputError BaseInput::GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace,
 	EVRSkeletalMotionRange eMotionRange, VR_OUT_BUFFER_COUNT(unCompressedSize) void *pvCompressedData, uint32_t unCompressedSize,
 	uint32_t *punRequiredCompressedSize, VRInputValueHandle_t ulRestrictToDevice) {

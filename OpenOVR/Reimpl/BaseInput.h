@@ -4,6 +4,8 @@
 #include "Misc/json/json.h"
 #include <string>
 
+typedef vr::EVRSkeletalTrackingLevel OOVR_EVRSkeletalTrackingLevel;
+
 enum OOVR_EVRSkeletalReferencePose
 {
 	VRSkeletalReferencePose_BindPose = 0,
@@ -254,6 +256,9 @@ public:
 
 	/** Reads summary information about the current pose of the skeleton associated with the given action.   */
 	virtual EVRInputError GetSkeletalSummaryData(VRActionHandle_t action, EVRSummaryType eSummaryType, VRSkeletalSummaryData_t * pSkeletalSummaryData);
+
+	// Same as above, but default to VRSummaryType_FromDevice (TODO check if this matches SteamVR). This was used in IVRInput_005
+	virtual EVRInputError GetSkeletalSummaryData(VRActionHandle_t action, VRSkeletalSummaryData_t * pSkeletalSummaryData);
 
 	/** Reads the state of the skeletal bone data in a compressed form that is suitable for
 		* sending over the network. The required buffer size will never exceed ( sizeof(VR_BoneTransform_t)*boneCount + 2).
