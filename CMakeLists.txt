@@ -318,6 +318,7 @@ add_library(OCCore STATIC
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_017.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRSystem_019.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRTrackedCamera_003.h
+	SplitOpenVRHeaders/OpenVR/interfaces/IVRTrackedCamera_005.h
 	SplitOpenVRHeaders/OpenVR/interfaces/openvr.h
 	SplitOpenVRHeaders/OpenVR/interfaces/version.h
 	SplitOpenVRHeaders/OpenVR/interfaces/vrannotation.h
