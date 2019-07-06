@@ -1278,7 +1278,13 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t action,
 	STUBBED();
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel) {
-	STUBBED();
+	// STUBBED();
+	// TODO implement properly, using the action
+	// TODO check what SteamVR returns for this, and match it - it's not clear what it should be
+	if(pSkeletalTrackingLevel)
+		*pSkeletalTrackingLevel = VRSkeletalTracking_Estimated;
+
+	return VRInputError_None;
 }
 EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace,
 	EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t *pTransformArray,
