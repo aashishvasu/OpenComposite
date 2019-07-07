@@ -290,6 +290,10 @@ ovrControllerType OculusControllerDevice::GetControllerType() {
 	}
 }
 
+int32_t OculusControllerDevice::TriggerHapticVibrationAction(float fFrequency, float fAmplitude) {
+	return ovr_SetControllerVibration(*ovr::session, GetControllerType(), fFrequency, fAmplitude);
+}
+
 // properties
 bool OculusControllerDevice::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
 	if(pErrorL)

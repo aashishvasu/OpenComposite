@@ -10,6 +10,7 @@
 #include <iostream>
 #include "Drivers/Backend.h"
 #include <map>
+#include <thread>
 Json::Value _actionManifest;
 Json::Value _bindingsJson;
 
@@ -1325,11 +1326,55 @@ EVRInputError BaseInput::DecompressSkeletalBoneData(const void *pvCompressedBuff
 	VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t *pTransformArray, uint32_t unTransformArrayCount) {
 	STUBBED();
 }
+
 EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, float fStartSecondsFromNow, float fDurationSeconds,
 	float fFrequency, float fAmplitude, VRInputValueHandle_t ulRestrictToDevice) {
 
-	// TODO implement
-	// STUBBED();
+	if (action == vr::k_ulInvalidActionHandle)
+	{
+		return VRInputError_InvalidHandle;
+	}
+
+	Action *vibrationAction = (Action*)action;
+
+	InputValue *inputValue;
+
+	// ulRestrictToDevice may tell us input handle to look at if both inputs are available
+	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
+	{
+		if (ulRestrictToDevice == vibrationAction->rightInputValue)
+			inputValue = (InputValue*)vibrationAction->rightInputValue;
+		else if (ulRestrictToDevice == vibrationAction->leftInputValue)
+			inputValue = (InputValue*)vibrationAction->leftInputValue;
+
+	}
+	else if (vibrationAction->leftInputValue != k_ulInvalidInputValueHandle)
+	{
+		inputValue = (InputValue*)vibrationAction->leftInputValue;
+	}
+	else if (vibrationAction->rightInputValue != k_ulInvalidInputValueHandle)
+	{
+		inputValue = (InputValue*)vibrationAction->rightInputValue;
+	}
+
+	ITrackedDevice *device = BackendManager::Instance().GetDevice(inputValue->trackedDeviceIndex);
+
+	// use async/threading to be non-blocking
+	std::thread delay_thread([fStartSecondsFromNow, fDurationSeconds, device, fFrequency, fAmplitude]() {
+		long startMillisecondsFromNow = round(fStartSecondsFromNow * 1000);
+		long durationMilliseconds = round(fDurationSeconds * 1000);
+
+		std::this_thread::sleep_for(std::chrono::milliseconds{ startMillisecondsFromNow }); // wait to start
+
+		device->TriggerHapticVibrationAction(fFrequency, fAmplitude); // start non-buffered haptic
+
+		std::this_thread::sleep_for(std::chrono::milliseconds{ durationMilliseconds }); // wait for duration
+
+		device->TriggerHapticVibrationAction(0, 0); // stop haptic
+
+	});
+	delay_thread.detach();
+
 	return VRInputError_None;
 }
 EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t digitalActionHandle,

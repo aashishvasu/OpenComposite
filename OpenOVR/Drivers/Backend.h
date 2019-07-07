@@ -62,6 +62,9 @@ public:
 	* is invalid. */
 	virtual bool GetControllerState(vr::VRControllerState_t *pControllerState);
 
+	/** Triggers a haptic event, running at the given frequency for and given amplitude. This will be called again to stop the action. */
+	virtual int32_t TriggerHapticVibrationAction(float fFrequency, float fAmplitude);
+
 	///////
 	vr::TrackedDeviceIndex_t DeviceIndex();
 	virtual void InitialiseDevice(vr::TrackedDeviceIndex_t deviceIndex);
