@@ -176,7 +176,11 @@ EVRInputError BaseInput::GetActionSetHandle(const char *pchActionSetName, VRActi
 				if (iequals(jsonActionSet[index]["name"].asCString(), pchActionSetName))
 				{
 					ActionSet *actionSet = new ActionSet();
-					actionSet->name = jsonActionSet[index]["name"].asString();
+
+					string name = jsonActionSet[index]["name"].asString();
+					std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+					actionSet->name = name;
+
 					actionSet->usage = jsonActionSet[index]["usage"].asString();
 
 					(*((ActionSet**)pHandle)) = actionSet;
