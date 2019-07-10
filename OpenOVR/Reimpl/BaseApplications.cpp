@@ -23,7 +23,7 @@ EVRApplicationError BaseApplications::RemoveApplicationManifest(const char *pchA
 }
 
 bool BaseApplications::IsApplicationInstalled(const char *pchAppKey) {
-	STUBBED();
+	return false;
 }
 uint32_t BaseApplications::GetApplicationCount() {
 	return 0;
