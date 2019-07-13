@@ -356,6 +356,8 @@ private:
 		bool& masterPressedButtonState, vr::VRControllerAxis_t axis, double activateThreshold, double deactivateThreshold,
 		bool& bState, bool& bChanged, bool& actionSourceDirectionState);
 
+	void BuildActionSet(const ActionSet *);
+
 	std::map<std::string, Action *> _stringActionMap;
 	std::map<std::string, ActionSet *> _stringActionSetMap;
 	std::map<std::string, InputValue *> _stringInputValueMap;

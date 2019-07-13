@@ -252,6 +252,223 @@ EVRInputError BaseInput::GetInputSourceHandle(const char *pchInputSourcePath, VR
 
 	return VRInputError_None;
 }
+
+void BaseInput::BuildActionSet(const ActionSet *actionSet) {
+	// update controller state for each action:
+	Json::Value jsonPoses = _bindingsJson["bindings"][actionSet->name]["poses"];
+	for (int index = 0; index < jsonPoses.size(); index++) {
+		Json::Value jsonCurrentItem = jsonPoses[index];
+		VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
+		GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
+		if (actionHandle == vr::k_ulInvalidActionHandle)
+			continue; // action does not exist for this source
+
+		Action *action = (Action *) actionHandle;
+
+		string path = jsonCurrentItem["path"].asString();
+
+		VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
+
+		string left = "/user/hand/left";
+		string right = "/user/hand/right";
+		string pathLeftSubst = path.substr(0, left.size());
+		string pathRightSubst = path.substr(0, right.size());
+		if (iequals(pathLeftSubst, left)) {
+			GetInputSourceHandle(left.c_str(), &inputValueHandle);
+			action->leftInputValue = inputValueHandle;
+
+		}
+		if (iequals(pathRightSubst, right)) {
+			GetInputSourceHandle(right.c_str(), &inputValueHandle);
+			action->rightInputValue = inputValueHandle;
+
+		}
+
+	}
+
+	Json::Value jsonHaptics = _bindingsJson["bindings"][actionSet->name]["haptics"];
+	for (int index = 0; index < jsonHaptics.size(); index++) {
+		Json::Value jsonCurrentItem = jsonHaptics[index];
+		VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
+		GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
+		if (actionHandle == vr::k_ulInvalidActionHandle)
+			continue; // action does not exist for this source
+
+		Action *action = (Action *) actionHandle;
+
+		string path = jsonCurrentItem["path"].asString();
+
+		VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
+
+		string left = "/user/hand/left";
+		string right = "/user/hand/right";
+		string pathLeftSubst = path.substr(0, left.size());
+		string pathRightSubst = path.substr(0, right.size());
+		if (iequals(pathLeftSubst, left)) {
+			GetInputSourceHandle(left.c_str(), &inputValueHandle);
+			action->leftInputValue = inputValueHandle;
+		}
+		if (iequals(pathRightSubst, right)) {
+			GetInputSourceHandle(right.c_str(), &inputValueHandle);
+			action->rightInputValue = inputValueHandle;
+		}
+
+	}
+
+
+	Json::Value jsonSkeleton = _bindingsJson["bindings"][actionSet->name]["skeleton"];
+	for (int index = 0; index < jsonSkeleton.size(); index++) {
+		Json::Value jsonCurrentItem = jsonSkeleton[index];
+		VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
+		GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
+		if (actionHandle == vr::k_ulInvalidActionHandle)
+			continue; // action does not exist for this source
+
+		Action *action = (Action *) actionHandle;
+
+		string path = jsonCurrentItem["path"].asString();
+
+		VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
+
+		string left = "/user/hand/left";
+		string right = "/user/hand/right";
+		string pathLeftSubst = path.substr(0, left.size());
+		string pathRightSubst = path.substr(0, right.size());
+		if (iequals(pathLeftSubst, left)) {
+			GetInputSourceHandle(left.c_str(), &inputValueHandle);
+			action->leftInputValue = inputValueHandle;
+		}
+		if (iequals(pathRightSubst, right)) {
+			GetInputSourceHandle(right.c_str(), &inputValueHandle);
+			action->rightInputValue = inputValueHandle;
+		}
+
+	}
+
+
+	Json::Value jsonChords = _bindingsJson["bindings"][actionSet->name]["chords"];
+	for (int index = 0; index < jsonChords.size(); index++) {
+		Json::Value jsonCurrentItem = jsonChords[index];
+		VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
+		GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
+		if (actionHandle == vr::k_ulInvalidActionHandle)
+			continue; // action does not exist for this source
+
+		Action *action = (Action *) actionHandle;
+
+		string path = jsonCurrentItem["path"].asString();
+
+		VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
+
+		string left = "/user/hand/left";
+		string right = "/user/hand/right";
+		string pathLeftSubst = path.substr(0, left.size());
+		string pathRightSubst = path.substr(0, right.size());
+		if (iequals(pathLeftSubst, left)) {
+			GetInputSourceHandle(left.c_str(), &inputValueHandle);
+			action->leftInputValue = inputValueHandle;
+		}
+		if (iequals(pathRightSubst, right)) {
+			GetInputSourceHandle(right.c_str(), &inputValueHandle);
+			action->rightInputValue = inputValueHandle;
+		}
+
+	}
+
+
+	Json::Value jsonSources = _bindingsJson["bindings"][actionSet->name]["sources"];
+	for (int index = 0; index < jsonSources.size(); index++) {
+		Json::Value jsonCurrentSourceItem = jsonSources[index];
+		VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
+		string sourceType;
+		string parameterSubMode = "";
+
+		Json::Value jsonSubMode = jsonCurrentSourceItem["parameters"]["sub_mode"];
+		if (!jsonSubMode.isNull())
+			parameterSubMode = jsonSubMode.asCString();
+
+		Json::Value jsonClickOutput = jsonCurrentSourceItem["inputs"]["click"]["output"];
+		if (!jsonClickOutput.isNull()) {
+			GetActionHandle(jsonClickOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "click";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+
+		Json::Value jsonPositionOutput = jsonCurrentSourceItem["inputs"]["position"]["output"];
+		if (!jsonPositionOutput.isNull()) {
+			GetActionHandle(jsonPositionOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "position";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+
+		Json::Value jsonTouchOutput = jsonCurrentSourceItem["inputs"]["touch"]["output"];
+		if (!jsonTouchOutput.isNull()) {
+			GetActionHandle(jsonTouchOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "touch";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+
+		Json::Value jsonPullOutput = jsonCurrentSourceItem["inputs"]["pull"]["output"];
+		if (!jsonPullOutput.isNull()) {
+			GetActionHandle(jsonPullOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "pull";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+
+		Json::Value jsonNorthOutput = jsonCurrentSourceItem["inputs"]["north"]["output"];
+		if (!jsonNorthOutput.isNull()) {
+			GetActionHandle(jsonNorthOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "north";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+
+		Json::Value jsonSouthOutput = jsonCurrentSourceItem["inputs"]["south"]["output"];
+		if (!jsonSouthOutput.isNull()) {
+			GetActionHandle(jsonSouthOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "south";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+
+		Json::Value jsonEastOutput = jsonCurrentSourceItem["inputs"]["east"]["output"];
+		if (!jsonEastOutput.isNull()) {
+			GetActionHandle(jsonEastOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "east";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+
+		Json::Value jsonWestOutput = jsonCurrentSourceItem["inputs"]["west"]["output"];
+		if (!jsonWestOutput.isNull()) {
+			GetActionHandle(jsonWestOutput.asCString(), &actionHandle);
+			if (actionHandle != vr::k_ulInvalidActionHandle) {
+				sourceType = "west";
+
+				ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
+			}
+		}
+	}
+}
+
 bool actionSourcesBuilt = false;
 EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t *pSets,
 	uint32_t unSizeOfVRSelectedActionSet_t, uint32_t unSetCount) {
@@ -271,249 +488,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	{
 		ActionSet *actionSet = (ActionSet*)pSets->ulActionSet;
 
-		// update controller state for each action:
-		Json::Value jsonPoses = _bindingsJson["bindings"][actionSet->name]["poses"];
-		for (int index = 0; index < jsonPoses.size(); index++)
-		{
-			Json::Value jsonCurrentItem = jsonPoses[index];
-			VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
-			GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
-			if (actionHandle == vr::k_ulInvalidActionHandle)
-				continue; // action does not exist for this source
-
-			Action *action = (Action*)actionHandle;
-
-			string path = jsonCurrentItem["path"].asString();
-
-			VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
-
-			string left = "/user/hand/left";
-			string right = "/user/hand/right";
-			string pathLeftSubst = path.substr(0, left.size());
-			string pathRightSubst = path.substr(0, right.size());
-			if (iequals(pathLeftSubst, left))
-			{
-				GetInputSourceHandle(left.c_str(), &inputValueHandle);
-				action->leftInputValue = inputValueHandle;
-
-			}
-			if (iequals(pathRightSubst, right))
-			{
-				GetInputSourceHandle(right.c_str(), &inputValueHandle);
-				action->rightInputValue = inputValueHandle;
-
-			}
-
-		}
-
-		Json::Value jsonHaptics = _bindingsJson["bindings"][actionSet->name]["haptics"];
-		for (int index = 0; index < jsonHaptics.size(); index++)
-		{
-			Json::Value jsonCurrentItem = jsonHaptics[index];
-			VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
-			GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
-			if (actionHandle == vr::k_ulInvalidActionHandle)
-				continue; // action does not exist for this source
-
-			Action *action = (Action*)actionHandle;
-
-			string path = jsonCurrentItem["path"].asString();
-
-			VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
-
-			string left = "/user/hand/left";
-			string right = "/user/hand/right";
-			string pathLeftSubst = path.substr(0, left.size());
-			string pathRightSubst = path.substr(0, right.size());
-			if (iequals(pathLeftSubst, left))
-			{
-				GetInputSourceHandle(left.c_str(), &inputValueHandle);
-				action->leftInputValue = inputValueHandle;
-			}
-			if (iequals(pathRightSubst, right))
-			{
-				GetInputSourceHandle(right.c_str(), &inputValueHandle);
-				action->rightInputValue = inputValueHandle;
-			}
-
-		}
-
-
-		Json::Value jsonSkeleton = _bindingsJson["bindings"][actionSet->name]["skeleton"];
-		for (int index = 0; index < jsonSkeleton.size(); index++)
-		{
-			Json::Value jsonCurrentItem = jsonSkeleton[index];
-			VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
-			GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
-			if (actionHandle == vr::k_ulInvalidActionHandle)
-				continue; // action does not exist for this source
-
-			Action *action = (Action*)actionHandle;
-
-			string path = jsonCurrentItem["path"].asString();
-
-			VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
-
-			string left = "/user/hand/left";
-			string right = "/user/hand/right";
-			string pathLeftSubst = path.substr(0, left.size());
-			string pathRightSubst = path.substr(0, right.size());
-			if (iequals(pathLeftSubst, left))
-			{
-				GetInputSourceHandle(left.c_str(), &inputValueHandle);
-				action->leftInputValue = inputValueHandle;
-			}
-			if (iequals(pathRightSubst, right))
-			{
-				GetInputSourceHandle(right.c_str(), &inputValueHandle);
-				action->rightInputValue = inputValueHandle;
-			}
-
-		}
-
-
-		Json::Value jsonChords = _bindingsJson["bindings"][actionSet->name]["chords"];
-		for (int index = 0; index < jsonChords.size(); index++)
-		{
-			Json::Value jsonCurrentItem = jsonChords[index];
-			VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
-			GetActionHandle(jsonCurrentItem["output"].asCString(), &actionHandle);
-			if (actionHandle == vr::k_ulInvalidActionHandle)
-				continue; // action does not exist for this source
-
-			Action *action = (Action*)actionHandle;
-
-			string path = jsonCurrentItem["path"].asString();
-
-			VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
-
-			string left = "/user/hand/left";
-			string right = "/user/hand/right";
-			string pathLeftSubst = path.substr(0, left.size());
-			string pathRightSubst = path.substr(0, right.size());
-			if (iequals(pathLeftSubst, left))
-			{
-				GetInputSourceHandle(left.c_str(), &inputValueHandle);
-				action->leftInputValue = inputValueHandle;
-			}
-			if (iequals(pathRightSubst, right))
-			{
-				GetInputSourceHandle(right.c_str(), &inputValueHandle);
-				action->rightInputValue = inputValueHandle;
-			}
-
-		}
-
-
-		Json::Value jsonSources = _bindingsJson["bindings"][actionSet->name]["sources"];
-		for (int index = 0; index < jsonSources.size(); index++)
-		{
-			Json::Value jsonCurrentSourceItem = jsonSources[index];
-			VRActionHandle_t actionHandle = vr::k_ulInvalidActionHandle;
-			string sourceType;
-			string parameterSubMode = "";
-
-			Json::Value jsonSubMode = jsonCurrentSourceItem["parameters"]["sub_mode"];
-			if (!jsonSubMode.isNull())
-				parameterSubMode = jsonSubMode.asCString();
-
-			Json::Value jsonClickOutput = jsonCurrentSourceItem["inputs"]["click"]["output"];
-			if (!jsonClickOutput.isNull())
-			{
-				GetActionHandle(jsonClickOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "click";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-			Json::Value jsonPositionOutput = jsonCurrentSourceItem["inputs"]["position"]["output"];
-			if (!jsonPositionOutput.isNull())
-			{
-				GetActionHandle(jsonPositionOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "position";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-			Json::Value jsonTouchOutput = jsonCurrentSourceItem["inputs"]["touch"]["output"];
-			if (!jsonTouchOutput.isNull())
-			{
-				GetActionHandle(jsonTouchOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "touch";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-			Json::Value jsonPullOutput = jsonCurrentSourceItem["inputs"]["pull"]["output"];
-			if (!jsonPullOutput.isNull())
-			{
-				GetActionHandle(jsonPullOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "pull";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-			Json::Value jsonNorthOutput = jsonCurrentSourceItem["inputs"]["north"]["output"];
-			if (!jsonNorthOutput.isNull())
-			{
-				GetActionHandle(jsonNorthOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "north";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-			Json::Value jsonSouthOutput = jsonCurrentSourceItem["inputs"]["south"]["output"];
-			if (!jsonSouthOutput.isNull())
-			{
-				GetActionHandle(jsonSouthOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "south";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-			Json::Value jsonEastOutput = jsonCurrentSourceItem["inputs"]["east"]["output"];
-			if (!jsonEastOutput.isNull())
-			{
-				GetActionHandle(jsonEastOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "east";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-			Json::Value jsonWestOutput = jsonCurrentSourceItem["inputs"]["west"]["output"];
-			if (!jsonWestOutput.isNull())
-			{
-				GetActionHandle(jsonWestOutput.asCString(), &actionHandle);
-				if (actionHandle != vr::k_ulInvalidActionHandle)
-				{
-					sourceType = "west";
-
-					ProcessInputSource(jsonCurrentSourceItem, actionHandle, sourceType, parameterSubMode, actionSet->name);
-				}
-			}
-
-		}
+		BuildActionSet(actionSet);
 
 		actionSourcesBuilt = true;
 	}
