@@ -243,7 +243,8 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t * texture, const V
 }
 
 void BaseCompositor::ClearLastSubmittedFrame() {
-	STUBBED();
+	// At this point we should show the loading screen and show Guardian, and undo this when the
+	// next frame comes along. TODO implement since it would improve loading screens, but it's certainly not critical
 }
 
 void BaseCompositor::PostPresentHandoff() {
