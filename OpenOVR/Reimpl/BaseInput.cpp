@@ -62,51 +62,6 @@ static bool iequals(const string& a, const string& b) {
 	return true;
 }
 
-// Represents an action set. This is a set of controls that can be configured
-// independantly - as I understand it, these are to be used for different portions
-// of a game. You might have one action set for shooting, one for driving, and so on.
-// It also stores the usage mode, which controls how it should eventually be shown
-// in the binding editor (whether the user can bind controls seperately for each hand
-// or not).
-// See https://github.com/ValveSoftware/openvr/wiki/Action-manifest#action-sets
-struct ActionSet
-{
-	string name;
-	string usage;
-};
-
-struct ActionSource
-{
-	string sourceType;
-	string sourceMode;
-	string sourcePath;
-	string actionSetName;
-	string parameterSubMode;
-	double sourceParametersActivateThreshold = -1;
-	double sourceParametersDeactivateThreshold = -1;
-	bool leftState;
-	bool rightState;
-};
-struct Action
-{
-	string name;
-	string type;
-	VRInputValueHandle_t leftInputValue;
-	VRInputValueHandle_t rightInputValue;
-	vector<ActionSource*> leftActionSources;
-	vector<ActionSource*> rightActionSources;
-};
-struct InputValue
-{
-	string name;
-	string type;
-	TrackedDeviceIndex_t trackedDeviceIndex;
-	VRControllerState_t controllerState;
-	bool isConnected;
-};
-map<string, Action*> _stringActionMap;
-map<string, ActionSet*> _stringActionSetMap;
-map<string, InputValue*> _stringInputValueMap;
 
 // ---
 

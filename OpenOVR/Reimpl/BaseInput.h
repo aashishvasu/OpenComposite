@@ -3,6 +3,8 @@
 
 #include "Misc/json/json.h"
 #include <string>
+#include <map>
+#include <vector>
 
 typedef vr::EVRSkeletalTrackingLevel OOVR_EVRSkeletalTrackingLevel;
 
@@ -307,6 +309,45 @@ public:
 	virtual bool IsUsingLegacyInput();
 
 private:
+	// Represents an action set. This is a set of controls that can be configured
+	// independantly - as I understand it, these are to be used for different portions
+	// of a game. You might have one action set for shooting, one for driving, and so on.
+	// It also stores the usage mode, which controls how it should eventually be shown
+	// in the binding editor (whether the user can bind controls seperately for each hand
+	// or not).
+	// See https://github.com/ValveSoftware/openvr/wiki/Action-manifest#action-sets
+	struct ActionSet {
+		std::string name;
+		std::string usage;
+	};
+
+	struct ActionSource {
+		std::string sourceType;
+		std::string sourceMode;
+		std::string sourcePath;
+		std::string actionSetName;
+		std::string parameterSubMode;
+		double sourceParametersActivateThreshold = -1;
+		double sourceParametersDeactivateThreshold = -1;
+		bool leftState;
+		bool rightState;
+	};
+	struct Action {
+		std::string name;
+		std::string type;
+		VRInputValueHandle_t leftInputValue;
+		VRInputValueHandle_t rightInputValue;
+		std::vector<ActionSource *> leftActionSources;
+		std::vector<ActionSource *> rightActionSources;
+	};
+	struct InputValue {
+		std::string name;
+		std::string type;
+		vr::TrackedDeviceIndex_t trackedDeviceIndex;
+		vr::VRControllerState_t controllerState;
+		bool isConnected;
+	};
+
 	// these are helper methods to be used internally
 	void ProcessInputSource(Json::Value inputJson, VRActionHandle_t actionHandle, std::string sourceType,
 		std::string parameterSubMode, std::string actionSetName);
@@ -314,4 +355,8 @@ private:
 	void DetermineActionState(uint64_t buttonId, uint64_t buttonFlags, bool pressedButtonState,
 		bool& masterPressedButtonState, vr::VRControllerAxis_t axis, double activateThreshold, double deactivateThreshold,
 		bool& bState, bool& bChanged, bool& actionSourceDirectionState);
+
+	std::map<std::string, Action *> _stringActionMap;
+	std::map<std::string, ActionSet *> _stringActionSetMap;
+	std::map<std::string, InputValue *> _stringInputValueMap;
 };
