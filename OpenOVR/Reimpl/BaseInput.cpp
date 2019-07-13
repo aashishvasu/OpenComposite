@@ -486,9 +486,16 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	// build up action source bindings, once
 	if (!actionSourcesBuilt)
 	{
-		ActionSet *actionSet = (ActionSet*)pSets->ulActionSet;
+		// for now, we ignore the provided active action set
+		//ActionSet *actionSet = (ActionSet*)pSets->ulActionSet;
 
-		BuildActionSet(actionSet);
+		// instead, we will setup all available action sets
+		for (auto it = _stringActionSetMap.begin(); it != _stringActionSetMap.end(); ++it) {
+			string actionSetName = it->first;
+			ActionSet *actionSet = it->second;
+
+			BuildActionSet(actionSet);
+		}
 
 		actionSourcesBuilt = true;
 	}
