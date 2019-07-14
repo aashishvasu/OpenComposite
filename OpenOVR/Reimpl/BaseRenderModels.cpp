@@ -429,7 +429,8 @@ bool BaseRenderModels::GetComponentStateForDevicePath(const char *pchRenderModel
 	vr::VRInputValueHandle_t devicePath, const OOVR_RenderModel_ControllerMode_State_t *pState,
 	OOVR_RenderModel_ComponentState_t *pComponentState)
 {
-	STUBBED();
+	// todo: make use of devicePath
+	return GetComponentState(pchRenderModelName, pchComponentName, nullptr, pState, pComponentState);
 }
 
 bool BaseRenderModels::GetComponentState(const char * pchRenderModelName, const char * pchComponentName,
