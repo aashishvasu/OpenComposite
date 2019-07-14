@@ -4,6 +4,8 @@
 #include <string>
 
 
+#include "static_bases.gen.h"
+#include "BaseClientCore.h"
 #include "BaseSystem.h"
 #include <fstream>
 #include <codecvt>
@@ -69,6 +71,11 @@ EVRInputError BaseInput::SetActionManifestPath(const char *pchActionManifestPath
 
 	if ((pchActionManifestPath != NULL) && (pchActionManifestPath[0] == '\0')) // null or empty string
 		return VRInputError_InvalidParam;
+
+	// Put this in the applist, so it can be edited from the launcher
+	std::shared_ptr<BaseClientCore> bcc = GetBaseClientCore();
+	if (bcc)
+		bcc->SetManifestPath(pchActionManifestPath);
 
 	wstring actionManifestPath = utf8to16(pchActionManifestPath);
 	ReadJson(actionManifestPath, _actionManifest);

@@ -7,6 +7,7 @@ class BaseClientCore {
 public:
 	static bool CheckAppEnabled();
 	static std::string GetAlternativeRuntimePath();
+	void SetManifestPath(std::string filename);
 private:
 	static std::string GetAppPath();
 	static std::wstring GetDllDir();

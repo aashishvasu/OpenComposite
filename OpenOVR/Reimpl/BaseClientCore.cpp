@@ -226,3 +226,18 @@ std::wstring BaseClientCore::GetDllDir() {
 	wstring dllpath(buffer, len);
 	return dllpath.substr(0, dllpath.find_last_of('\\') + 1);
 }
+
+void BaseClientCore::SetManifestPath(string filename) {
+	wstring listname = GetDllDir() + L"applist.json";
+	Json::Value root;
+	ReadJson(listname, root);
+
+	Json::Value &tag = root[GetAppPath()];
+
+	// Don't need to update it
+	if(tag["manifest"] == filename)
+		return;
+
+	tag["manifest"] = filename;
+	WriteJson(listname, root);
+}
