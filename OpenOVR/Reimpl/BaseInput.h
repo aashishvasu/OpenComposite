@@ -345,6 +345,9 @@ private:
 		std::string type;
 		vr::TrackedDeviceIndex_t trackedDeviceIndex;
 		vr::VRControllerState_t controllerState;
+		vr::TrackedDevicePose_t seatedPose;
+		vr::TrackedDevicePose_t standingPose;
+		vr::TrackedDevicePose_t rawPose;
 		bool isConnected;
 	};
 

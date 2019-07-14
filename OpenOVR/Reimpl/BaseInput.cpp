@@ -510,7 +510,15 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	ITrackedDevice *device = BackendManager::Instance().GetDevice(trackedDeviceIndex);
 	if (device != nullptr)
 	{
+		// Note that this forces dual-origin mode on the LibOVR driver (OculusDevice.cpp), but it seems
+		// perfectly stable at this point.
+		// Also note that to fix the input lag issue, passing TrackingStateType_Rendering into GetPose in
+		// GetPoseActionData would have probably worked, but this is more along the lines of what SteamVR
+		// probably does.
 		bool success = device->GetControllerState(&inputValue->controllerState);
+		device->GetPose(TrackingUniverseSeated, &inputValue->seatedPose, TrackingStateType_Rendering);
+		device->GetPose(TrackingUniverseStanding, &inputValue->standingPose, TrackingStateType_Rendering);
+		device->GetPose(TrackingUniverseRawAndUncalibrated, &inputValue->rawPose, TrackingStateType_Rendering);
 		inputValue->isConnected = true;
 	}
 	else
@@ -528,6 +536,9 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	if (deviceRight != nullptr)
 	{
 		bool success = deviceRight->GetControllerState(&inputValueRight->controllerState);
+		deviceRight->GetPose(TrackingUniverseSeated, &inputValueRight->seatedPose, TrackingStateType_Rendering);
+		deviceRight->GetPose(TrackingUniverseStanding, &inputValueRight->standingPose, TrackingStateType_Rendering);
+		deviceRight->GetPose(TrackingUniverseRawAndUncalibrated, &inputValueRight->rawPose, TrackingStateType_Rendering);
 		inputValueRight->isConnected = true;
 	}
 	else
@@ -1106,33 +1117,38 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	VRInputValueHandle_t activeOrigin = vr::k_ulInvalidInputValueHandle;
 	TrackedDeviceIndex_t trackedDeviceIndex;
 
-
+	InputValue *inputValue;
 	// ulRestrictToDevice may tell us input handle to look at if both inputs are available
 	if (analogAction->leftInputValue != k_ulInvalidInputValueHandle &&
 		analogAction->rightInputValue != k_ulInvalidInputValueHandle &&
 		ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
 	{
 		activeOrigin = ulRestrictToDevice;
-		InputValue *inputValue = (InputValue*)ulRestrictToDevice;
+		inputValue = (InputValue*)ulRestrictToDevice;
 		trackedDeviceIndex = inputValue->trackedDeviceIndex;
 	}
 	else if (analogAction->leftInputValue != vr::k_ulInvalidInputValueHandle)
 	{
 		activeOrigin = analogAction->leftInputValue;
-		InputValue *inputValueLeft = (InputValue*)analogAction->leftInputValue;
-		trackedDeviceIndex = inputValueLeft->trackedDeviceIndex;
+		inputValue = (InputValue*)analogAction->leftInputValue;
+		trackedDeviceIndex = inputValue->trackedDeviceIndex;
 	}
 	else
 	{
 		activeOrigin = analogAction->rightInputValue;
-		InputValue *inputValueRight = (InputValue*)analogAction->rightInputValue;
-		trackedDeviceIndex = inputValueRight->trackedDeviceIndex;
+		inputValue = (InputValue*)analogAction->rightInputValue;
+		trackedDeviceIndex = inputValue->trackedDeviceIndex;
 	}
 
-	ITrackedDevice *device = BackendManager::Instance().GetDevice(trackedDeviceIndex);
-	if (device != nullptr)
+	if (inputValue->isConnected)
 	{
-		device->GetPose(eOrigin, &pActionData->pose, ETrackingStateType::TrackingStateType_Now);
+		if (eOrigin == TrackingUniverseSeated)
+			pActionData->pose = inputValue->seatedPose;
+		else if (eOrigin == TrackingUniverseStanding)
+			pActionData->pose = inputValue->standingPose;
+		else // TrackingUniverseRawAndUncalibrated
+			pActionData->pose = inputValue->rawPose;
+
 		pActionData->activeOrigin = activeOrigin;
 		pActionData->bActive = true;
 	}
