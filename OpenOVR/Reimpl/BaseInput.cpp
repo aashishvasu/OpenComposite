@@ -730,7 +730,7 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 	}
 	else
 	{
-		return VRInputError_InvalidDevice; // left and right controllers both not found? b/c action is not yet configured...
+		return VRInputError_None; // left and right controllers both not found? b/c action is not yet configured...
 	}
 
 	buttonPressedFlags = inputValue->controllerState.ulButtonPressed;
@@ -1022,7 +1022,14 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 	if (analogAction->leftInputValue == vr::k_ulInvalidInputValueHandle &&
 		analogAction->rightInputValue == vr::k_ulInvalidInputValueHandle)
 	{
-		return VRInputError_InvalidDevice;
+		// If the action has no input, that means the action was defined in the action manifest but not defined in controller binding JSON.
+		// This probably means the binding is optional and not set up, so we will mark it as inactive.
+		pActionData->x = 0;
+		pActionData->y = 0;
+		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle;
+		pActionData->bActive = false;
+
+		return VRInputError_None;
 	}
 
 	// determine input based on action path:
@@ -1111,7 +1118,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		pActionData->pose.bPoseIsValid = false;
 		pActionData->pose.bDeviceIsConnected = false;
 		pActionData->bActive = false;
-		return VRInputError_InvalidDevice;
+		return VRInputError_None;
 	}
 
 	VRInputValueHandle_t activeOrigin = vr::k_ulInvalidInputValueHandle;
