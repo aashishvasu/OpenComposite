@@ -7,6 +7,9 @@ class BaseClientCore {
 public:
 	static bool CheckAppEnabled();
 	static std::string GetAlternativeRuntimePath();
+private:
+	static std::string GetAppPath();
+	static std::wstring GetDllDir();
 public:
 	/** Initializes the system */
 	virtual vr::EVRInitError Init(vr::EVRApplicationType eApplicationType, const char *pStartupInfo);

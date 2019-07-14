@@ -44,10 +44,7 @@ enum Runtime {
 };
 
 bool BaseClientCore::CheckAppEnabled() {
-	wchar_t buffer[MAX_PATH];
-	DWORD len = GetModuleFileNameW(openovr_module_id, buffer, sizeof(buffer));
-	wstring dllpath(buffer, len);
-	wstring dlldir = dllpath.substr(0, dllpath.find_last_of('\\') + 1);
+	wstring dlldir = GetDllDir();
 	wstring listname = dlldir + L"applist.json";
 	wstring configname = dlldir + L"apps-config.json";
 
@@ -71,10 +68,7 @@ bool BaseClientCore::CheckAppEnabled() {
 		tag["timestamp"] = Json::Value(ms);
 	}
 
-	char appExe[MAX_PATH];
-	len = GetModuleFileNameA(0, appExe, sizeof(appExe));
-	string apppath(appExe, len);
-
+	string apppath = GetAppPath();
 	Json::Value root;
 	ReadJson(listname, root);
 
@@ -218,4 +212,17 @@ const char * BaseClientCore::GetEnglishStringForHmdError(vr::EVRInitError eError
 
 const char * BaseClientCore::GetIDForVRInitError(vr::EVRInitError eError) {
 	return VR_GetVRInitErrorAsSymbol(eError);
+}
+
+std::string BaseClientCore::GetAppPath() {
+	char appExe[MAX_PATH];
+	DWORD len = GetModuleFileNameA(nullptr, appExe, sizeof(appExe));
+	return string(appExe, len);
+}
+
+std::wstring BaseClientCore::GetDllDir() {
+	wchar_t buffer[MAX_PATH];
+	DWORD len = GetModuleFileNameW(openovr_module_id, buffer, sizeof(buffer));
+	wstring dllpath(buffer, len);
+	return dllpath.substr(0, dllpath.find_last_of('\\') + 1);
 }
