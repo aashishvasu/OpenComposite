@@ -1333,7 +1333,40 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t digitalActionHandle,
 	VR_ARRAY_COUNT(originOutCount) VRInputValueHandle_t *originsOut, uint32_t originOutCount) {
 
-	STUBBED();
+	// Retrieves the action sources for an action. If the action has more origins than will fit in the array,
+	// only the number that will fit in the array are returned. If the action has fewer origins, the extra array
+	// entries will be set to k_ulInvalidInputValueHandle
+
+	uint32_t unActionDataSize;
+	VRInputValueHandle_t ulRestrictToDevice = k_ulInvalidInputValueHandle;
+	InputDigitalActionData_t *pActionData;
+
+	Action *digitalAction = (Action *) digitalActionHandle;
+
+	std::vector<VRInputValueHandle_t> vectorOriginOut;
+	uint32_t count = originOutCount;
+
+	// Note: right now the action source is going to be either left or right controller...
+	// In the future, they should be split up to controller parts (ex: button a)
+	if (digitalAction->leftInputValue != k_ulInvalidInputValueHandle && count > 0) {
+		vectorOriginOut.push_back(digitalAction->leftInputValue);
+		count--;
+	}
+
+	if (digitalAction->rightInputValue != k_ulInvalidInputValueHandle && count > 0) {
+		vectorOriginOut.push_back(digitalAction->rightInputValue);
+		count--;
+	}
+
+	while (count > 0) {
+		vectorOriginOut.push_back(k_ulInvalidInputValueHandle);
+
+		count--;
+	}
+
+	originsOut = &vectorOriginOut[0];
+
+	return VRInputError_None;
 }
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char *pchNameArray, uint32_t unNameArraySize) {
 	STUBBED();
