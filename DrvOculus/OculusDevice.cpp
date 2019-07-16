@@ -181,6 +181,10 @@ if(inputState.var & (id == ovrHand_Left ? ovr ## type ## _ ## left : ovr ## type
 #undef BUTTON
 #undef CHECK
 
+	// Menu button
+	if (id == ovrHand_Left && inputState.Buttons & ovrButton_Enter)
+		Buttons |= ButtonMaskFromId(EVRButtonId::k_EButton_System);
+
 	// Grip/Trigger button
 	// TODO what should the cutoff be?
 	if (inputState.HandTrigger[id] >= 0.4) {

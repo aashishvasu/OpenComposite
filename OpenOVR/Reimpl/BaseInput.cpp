@@ -662,6 +662,7 @@ bool _aButtonTouched = false;
 bool _bButtonTouched = false;
 bool _xButtonTouched = false;
 bool _yButtonTouched = false;
+bool _menuButtonTouched = false;
 bool _rightGripTouched = false;
 bool _leftGripTouched = false;
 bool _rightTriggerTouched = false;
@@ -765,6 +766,7 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 	bool bButtonTouched = _bButtonTouched;
 	bool xButtonTouched = _xButtonTouched;
 	bool yButtonTouched = _yButtonTouched;
+	bool menuButtonTouched = _menuButtonTouched;
 	bool rightGripTouched = _rightGripTouched;
 	bool leftGripTouched = _leftGripTouched;
 	bool rightTriggerTouched = _rightTriggerTouched;
@@ -986,6 +988,12 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 		{
 			DetermineActionState((uint64_t)EVRButtonId::k_EButton_ApplicationMenu, buttonTouchedFlags, yButtonTouched, _yButtonTouched,
 				emptyAxis, actionSource->sourceParametersActivateThreshold, actionSource->sourceParametersDeactivateThreshold,
+				bState, bChanged, actionSource->leftState);
+		}
+		else if (iequals(pathSubst, "/input/system") && isLeft)
+		{
+			DetermineActionState((uint64_t)EVRButtonId::k_EButton_System, buttonPressedFlags, menuButtonTouched, _menuButtonTouched,
+				emptyAxis,actionSource->sourceParametersActivateThreshold, actionSource->sourceParametersDeactivateThreshold,
 				bState, bChanged, actionSource->leftState);
 		}
 		else
