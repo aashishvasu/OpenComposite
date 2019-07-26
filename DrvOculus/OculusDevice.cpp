@@ -20,9 +20,17 @@ OculusDevice::~OculusDevice() {
 }
 
 void OculusDevice::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t *pose, ETrackingStateType trackingState) {
+	GetPose(origin, pose, trackingState, 0);
+}
+
+void OculusDevice::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t *pose, ETrackingStateType trackingState,
+	double absTime) {
 	ovrTrackingState state;
 	if (trackingState == TrackingStateType_Now) {
 		state = ovr_GetTrackingState(*ovr::session, 0 /* Most recent */, ovrTrue);
+	}
+	else if (trackingState == TrackingStateType_Prediction) {
+		state = ovr_GetTrackingState(*ovr::session, absTime, ovrTrue);
 	}
 	else {
 		state = backend->GetTrackingState();

@@ -15,6 +15,12 @@ public:
 		vr::TrackedDevicePose_t* pose,
 		ETrackingStateType trackingState) override;
 
+	virtual void GetPose(
+		vr::ETrackingUniverseOrigin origin,
+		vr::TrackedDevicePose_t* pose,
+		ETrackingStateType trackingState,
+		double absTime) override;
+
 	virtual bool IsConnected() = 0;
 
 	// For optimisation

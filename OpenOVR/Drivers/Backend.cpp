@@ -30,6 +30,10 @@ vr::TrackedDevicePose_t BackendManager::InvalidPose() {
 	return pose;
 }
 
+float BackendManager::GetTimeInSeconds() {
+	return ovr_GetTimeInSeconds();
+}
+
 BackendManager::BackendManager() {
 }
 
