@@ -352,6 +352,26 @@ public:
 	* prompt the user to save and then exit afterward, otherwise the user will be left in a confusing state. */
 	virtual void AcknowledgeQuit_UserPrompt();
 
+	// -------------------------------------
+	// App container sandbox methods
+	// -------------------------------------
+
+	/** Retrieves a null-terminated, semicolon-delimited list of UTF8 file paths that an application
+	* must have read access to when running inside of an app container. Returns the number of bytes
+	* needed to hold the list. */
+	virtual uint32_t GetAppContainerFilePaths(VR_OUT_STRING() char *pchBuffer, uint32_t unBufferSize);
+
+	// -------------------------------------
+	// System methods
+	// -------------------------------------
+
+	/** Returns the current version of the SteamVR runtime. The returned string will remain valid until VR_Shutdown is called.
+	*
+	* NOTE: Is it not appropriate to use this version to test for the presence of any SteamVR feature. Only use this version
+	* number for logging or showing to a user, and not to try to detect anything at runtime. When appropriate, feature-specific
+	* presence information is provided by other APIs. */
+	virtual const char *GetRuntimeVersion();
+
 public:
 	// Legacy methods
 

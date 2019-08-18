@@ -11,6 +11,7 @@ GEN_INTERFACE("System", "016")
 GEN_INTERFACE("System", "017")
 // AFAIK 18 doesn't exist
 GEN_INTERFACE("System", "019")
+GEN_INTERFACE("System", "020")
 
 #include "GVRSystem.gen.h"
 
