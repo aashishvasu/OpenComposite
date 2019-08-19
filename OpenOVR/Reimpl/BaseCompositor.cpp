@@ -269,6 +269,14 @@ uint32_t BaseCompositor::GetFrameTimings(OOVR_Compositor_FrameTiming * pTiming, 
 	STUBBED();
 }
 
+bool BaseCompositor::GetFrameTiming(vr::Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
+	STUBBED();
+}
+
+uint32_t BaseCompositor::GetFrameTimings(vr::Compositor_FrameTiming * pTiming, uint32_t nFrames) {
+	STUBBED();
+}
+
 float BaseCompositor::GetFrameTimeRemaining() {
 	STUBBED();
 }

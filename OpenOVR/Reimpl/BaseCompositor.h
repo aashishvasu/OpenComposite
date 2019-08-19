@@ -183,6 +183,14 @@ public:
 	* Only the first entry's m_nSize needs to be set, as the rest will be inferred from that.  Returns total number of entries filled out. */
 	virtual uint32_t GetFrameTimings(OOVR_Compositor_FrameTiming *pTiming, uint32_t nFrames);
 
+	/** Returns true if timing data is filled it.  Sets oldest timing info if nFramesAgo is larger than the stored history.
+	* Be sure to set timing.size = sizeof(Compositor_FrameTiming) on struct passed in before calling this function. */
+	virtual bool GetFrameTiming(vr::Compositor_FrameTiming *pTiming, uint32_t unFramesAgo);
+
+	/** Interface for copying a range of timing data.  Frames are returned in ascending order (oldest to newest) with the last being the most recent frame.
+	* Only the first entry's m_nSize needs to be set, as the rest will be inferred from that.  Returns total number of entries filled out. */
+	virtual uint32_t GetFrameTimings(vr::Compositor_FrameTiming *pTiming, uint32_t nFrames);
+
 	/** Returns the time in seconds left in the current (as identified by FrameTiming's frameIndex) frame.
 	* Due to "running start", this value may roll over to the next frame before ever reaching 0.0. */
 	virtual float GetFrameTimeRemaining();
