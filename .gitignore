@@ -41,3 +41,7 @@
 /OpenOVR/API/opencomposite.gen.h
 /OpenOVR/API/opencomposite_capi.gen.h
 /OpenOVR/API/opencomposite_api.gen.cs
+
+# CLion/Rider files
+/.idea
+/RuntimeSwitcher.DotSettings.user
