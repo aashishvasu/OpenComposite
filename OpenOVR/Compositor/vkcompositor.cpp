@@ -109,6 +109,24 @@ VkCompositor::VkCompositor(const vr::Texture_t *initialTexture) {
 
 found:
 
+	// Call ovr_GetSessionPhysicalDeviceVk, and check that Oculus wants us to render on the same GPU
+	// as the application has chosen. This is important since ovr_GetSessionPhysicalDeviceVk MUST be
+	// called before creating a swapchain.
+	VkPhysicalDevice oculusRequiredDevice;
+
+	// AFAIK you're allowed to call this multiple times, right?
+	ovrResult res = ovr_GetSessionPhysicalDeviceVk(OVSS, *ovr::luid, tex->m_pInstance, &oculusRequiredDevice);
+	if(!OVR_SUCCESS(res)) {
+		ERR("Could not get Oculus's desired Vulkan physical device");
+	}
+
+	// Check that Oculus and the game have both picked the same GPU
+	if(oculusRequiredDevice != tex->m_pPhysicalDevice) {
+		ERR("Oculus and the game are attempting to render to different GPUs. If you only have a single graphics\n"
+			"card, this is probably a bug and please report the issue. If you have multiple GPUs, try switching which\n"
+			"one the game is rendering to.");
+	}
+
 	// Create a command pool for it
 	// TODO only create one for all instances of VkCompositor
 
