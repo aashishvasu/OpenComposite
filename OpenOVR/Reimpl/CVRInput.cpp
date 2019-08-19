@@ -5,3 +5,4 @@
 GEN_INTERFACE("Input", "004")
 GEN_INTERFACE("Input", "005")
 GEN_INTERFACE("Input", "006")
+GEN_INTERFACE("Input", "007")

@@ -160,6 +160,13 @@ struct OOVR_VRSkeletalSummaryData_t
 	float	flFingerSplay[VRFingerSplay_Count];
 };
 
+struct OOVR_InputBindingInfo_t
+{
+	char rchDevicePathName[128];
+	char rchInputPathName[128];
+	char rchModeName[128];
+	char rchSlotName[128];
+};
 
 class BaseInput {
 public:
@@ -298,6 +305,9 @@ public:
 
 	/** Retrieves useful information for the origin of this action */
 	virtual EVRInputError GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t *pOriginInfo, uint32_t unOriginInfoSize);
+
+	/** Retrieves useful information about the bindings for an action */
+	virtual EVRInputError GetActionBindingInfo(VRActionHandle_t action, OOVR_InputBindingInfo_t *pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t *punReturnedBindingInfoCount);
 
 	/** Shows the current binding for the action in-headset */
 	virtual EVRInputError ShowActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle);

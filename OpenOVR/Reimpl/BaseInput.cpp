@@ -1447,6 +1447,14 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 
 	return VRInputError_None;
 }
+
+/** Retrieves useful information about the bindings for an action */
+EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t action, OOVR_InputBindingInfo_t *pOriginInfo,
+		uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t *punReturnedBindingInfoCount ) {
+
+	STUBBED();
+}
+
 EVRInputError BaseInput::ShowActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle) {
 	STUBBED();
 }
