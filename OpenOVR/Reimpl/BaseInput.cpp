@@ -1449,10 +1449,50 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 }
 
 /** Retrieves useful information about the bindings for an action */
-EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t action, OOVR_InputBindingInfo_t *pOriginInfo,
+EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOVR_InputBindingInfo_t *pOriginInfo,
 		uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t *punReturnedBindingInfoCount ) {
 
-	STUBBED();
+	// TODO confirm this is correct
+
+	auto *action = (Action *) actionHandle;
+
+	OOVR_FALSE_ABORT(action != nullptr);
+	OOVR_FALSE_ABORT(unBindingInfoSize == sizeof(OOVR_InputBindingInfo_t));
+
+	for (int i = 0; i < unBindingInfoCount; i++) {
+		pOriginInfo[i] = {0};
+	}
+
+	uint32_t i = 0;
+
+	for (const ActionSource *src : action->leftActionSources) {
+		if (i >= unBindingInfoCount)
+			break;
+		GetActionSourceBindingInfo(action, src, &pOriginInfo[i++]);
+	}
+
+	for (const ActionSource *src : action->rightActionSources) {
+		if (i >= unBindingInfoCount)
+			break;
+		GetActionSourceBindingInfo(action, src, &pOriginInfo[i++]);
+	}
+
+	*punReturnedBindingInfoCount = i;
+	return VRInputError_None;
+}
+
+void BaseInput::GetActionSourceBindingInfo(const Action *action,
+		const ActionSource *src, OOVR_InputBindingInfo_t *result) {
+
+	*result = {0};
+
+	// TODO cleanup with define
+	strcpy_s(result->rchDevicePathName, sizeof(result->rchDevicePathName), action->name.c_str());
+	strcpy_s(result->rchModeName, sizeof(result->rchModeName), src->sourceMode.c_str());
+	strcpy_s(result->rchSlotName, sizeof(result->rchSlotName), src->sourceType.c_str());
+
+	// FIXME afaik this isn't correct
+	strcpy_s(result->rchInputPathName, sizeof(result->rchInputPathName), src->sourcePath.c_str());
 }
 
 EVRInputError BaseInput::ShowActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle) {

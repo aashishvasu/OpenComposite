@@ -371,6 +371,9 @@ private:
 
 	void BuildActionSet(const ActionSet *);
 
+	/** Retrieves useful information about the bindings for an action */
+	void GetActionSourceBindingInfo(const Action *action, const ActionSource *src, OOVR_InputBindingInfo_t *result);
+
 	std::map<std::string, Action *> _stringActionMap;
 	std::map<std::string, ActionSet *> _stringActionSetMap;
 	std::map<std::string, InputValue *> _stringInputValueMap;
