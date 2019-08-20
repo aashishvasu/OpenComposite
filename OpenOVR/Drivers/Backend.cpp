@@ -222,6 +222,13 @@ uint32_t ITrackedDevice::GetArrayTrackedDeviceProperty(vr::ETrackedDevicePropert
 uint32_t ITrackedDevice::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
 	char * value, uint32_t bufferSize, vr::ETrackedPropertyError * pErrorL) {
 
+	// From docs:
+	// input profile to use for this device in the input system. Will default to tracking system
+	// name if this isn't provided
+	if(prop == vr::Prop_InputProfilePath_String) {
+		return GetStringTrackedDeviceProperty(vr::Prop_TrackingSystemName_String, value, bufferSize, pErrorL);
+	}
+
 	if (oovr_global_configuration.AdmitUnknownProps()) {
 		*pErrorL = vr::TrackedProp_UnknownProperty;
 		return 0;
