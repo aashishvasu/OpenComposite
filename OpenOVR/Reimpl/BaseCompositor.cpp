@@ -107,8 +107,16 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t * renderPoseArray, u
 	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
 
 	for (uint32_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
-		TrackedDevicePose_t *renderPose = i < renderPoseArrayCount ? renderPoseArray + i : NULL;
-		TrackedDevicePose_t *gamePose = i < gamePoseArrayCount ? gamePoseArray + i : NULL;
+		TrackedDevicePose_t *renderPose = NULL;
+		TrackedDevicePose_t *gamePose = NULL;
+
+		if (renderPoseArray) {
+			renderPose = i < renderPoseArrayCount ? renderPoseArray + i : NULL;
+		}
+
+		if (gamePoseArray) {
+			gamePose = i < gamePoseArrayCount ? gamePoseArray + i : NULL;
+		}
 
 		if (renderPose) {
 			GetSinglePoseRendering(origin, i, renderPose);
