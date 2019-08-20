@@ -1399,27 +1399,24 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 	Action *digitalAction = (Action *) digitalActionHandle;
 
 	std::vector<VRInputValueHandle_t> vectorOriginOut;
-	uint32_t count = originOutCount;
 
 	// Note: right now the action source is going to be either left or right controller...
 	// In the future, they should be split up to controller parts (ex: button a)
-	if (digitalAction->leftInputValue != k_ulInvalidInputValueHandle && count > 0) {
+	if (digitalAction->leftInputValue != k_ulInvalidInputValueHandle) {
 		vectorOriginOut.push_back(digitalAction->leftInputValue);
-		count--;
 	}
 
-	if (digitalAction->rightInputValue != k_ulInvalidInputValueHandle && count > 0) {
+	if (digitalAction->rightInputValue != k_ulInvalidInputValueHandle) {
 		vectorOriginOut.push_back(digitalAction->rightInputValue);
-		count--;
 	}
 
-	while (count > 0) {
-		vectorOriginOut.push_back(k_ulInvalidInputValueHandle);
-
-		count--;
+	for(int i=0; i<originOutCount; i++) {
+		if (i < vectorOriginOut.size()) {
+			originsOut[i] = vectorOriginOut[i];
+		} else {
+			originsOut[i] = k_ulInvalidInputValueHandle;
+		}
 	}
-
-	originsOut = &vectorOriginOut[0];
 
 	return VRInputError_None;
 }
