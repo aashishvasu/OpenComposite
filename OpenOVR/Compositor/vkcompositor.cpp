@@ -31,6 +31,12 @@ ovrTextureFormat vkToOvrFormat(VkFormat vk, vr::EColorSpace colourSpace) {
 	case VK_FORMAT_B8G8R8A8_SRGB:
 		return OVR_FORMAT_B8G8R8A8_UNORM_SRGB;
 
+	case VK_FORMAT_R8G8B8A8_UNORM:
+		// *Why* does this work? Isn't this supposed to be a linear texture?
+		// Whatever, colour correction somehow breaks if we return the supposedly
+		// correct non-SRGB format.
+		return OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+
 		// TODO The following formats are supported by SteamVR, and not supported by OpenComposite:
 		// VK_FORMAT_R8G8B8A8_UNORM
 		// VK_FORMAT_B8G8R8A8_UNORM
