@@ -309,6 +309,10 @@ void VkCompositor::InvokeCubemap(const vr::Texture_t * textures) {
 	OOVR_ABORT("VkCompositor::InvokeCubemap: Not yet supported!");
 }
 
+unsigned int VkCompositor::GetFlags() {
+	return submitVerticallyFlipped ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
+}
+
 bool VkCompositor::CheckChainCompatible(const vr::VRVulkanTextureData_t &tex, const ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace) {
 	bool usable = true;
 #define FAIL(name) { \
