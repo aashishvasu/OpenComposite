@@ -335,6 +335,7 @@ private:
 		std::string sourceType;
 		std::string sourceMode;
 		std::string sourcePath;
+		std::string sourceDevice;
 		std::string actionSetName;
 		std::string parameterSubMode;
 		double sourceParametersActivateThreshold = -1;

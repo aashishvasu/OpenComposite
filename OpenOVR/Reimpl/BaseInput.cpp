@@ -582,6 +582,7 @@ void BaseInput::ProcessInputSource(Json::Value inputJson, VRActionHandle_t actio
 		ActionSource *actionSource = new ActionSource();
 		actionSource->sourceMode = inputJson["mode"].asString();
 		actionSource->sourcePath = path;
+		actionSource->sourceDevice = pathLeftSubst; // TODO should it be left? Case might be different
 		actionSource->sourceType = sourceType;
 		actionSource->parameterSubMode = parameterSubMode;
 		actionSource->actionSetName = actionSetName;
@@ -604,6 +605,7 @@ void BaseInput::ProcessInputSource(Json::Value inputJson, VRActionHandle_t actio
 		ActionSource *actionSource = new ActionSource();
 		actionSource->sourceMode = inputJson["mode"].asString();
 		actionSource->sourcePath = path;
+		actionSource->sourceDevice = pathRightSubst; // TODO should it be right? Case might be different
 		actionSource->sourceType = sourceType;
 		actionSource->parameterSubMode = parameterSubMode;
 		actionSource->actionSetName = actionSetName;
@@ -1493,13 +1495,28 @@ void BaseInput::GetActionSourceBindingInfo(const Action *action,
 
 	*result = {0};
 
+	// Some sample values from the SteamVR OpenGL example:
+	// {
+	//   rchDevicePathName = "/user/hand/right"
+	//   rchInputPathName = "/input/trigger"
+	//   rchModeName = "button"
+	//   rchSlotName = "click"
+	// }
+
 	// TODO cleanup with define
-	strcpy_s(result->rchDevicePathName, sizeof(result->rchDevicePathName), action->name.c_str());
 	strcpy_s(result->rchModeName, sizeof(result->rchModeName), src->sourceMode.c_str());
 	strcpy_s(result->rchSlotName, sizeof(result->rchSlotName), src->sourceType.c_str());
 
-	// FIXME afaik this isn't correct
-	strcpy_s(result->rchInputPathName, sizeof(result->rchInputPathName), src->sourcePath.c_str());
+	// Split the input pathname (eg "/user/hand/right/input/trigger") into a device
+	// path ("/user/hand/right") and input path ("/input/trigger")
+	strcpy_s(result->rchDevicePathName, sizeof(result->rchDevicePathName), src->sourceDevice.c_str());
+
+	string inputPath = src->sourcePath.substr(src->sourceDevice.size());
+	strcpy_s(result->rchInputPathName, sizeof(result->rchInputPathName), inputPath.c_str());
+
+	// Note there still seems to be some issues with No Man's Sky's control display - it's showing everything
+	// as belonging to the left controller. Not sure whether that's the fault of this code or not, but in
+	// any case it should be noted in #126.
 }
 
 EVRInputError BaseInput::ShowActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle) {
