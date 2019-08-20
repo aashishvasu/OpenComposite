@@ -444,11 +444,16 @@ uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T * 
 }
 
 void BaseCompositor::SetExplicitTimingMode(ovr_enum_t eTimingMode) {
-	STUBBED();
+	// Explicit timing means the application calls SubmitExplicitTimingData each
+	// frame, and in return we're not allowed to use their Vulkan queue
+	// during WaitGetPoses. We don't do any of that anyway, so nothing needs to
+	// be done here.
 }
 
 ovr_enum_t BaseCompositor::SubmitExplicitTimingData() {
-	STUBBED();
+	// In SteamVR this records a more accurate timestamp for tracking via the GPU's
+	// clock, Oculus doesn't support that so noop here is fine.
+	return VRCompositorError_None;
 }
 
 bool BaseCompositor::IsMotionSmoothingSupported() {
