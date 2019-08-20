@@ -201,6 +201,16 @@ EVRInputError BaseInput::GetActionHandle(const char *pchActionName, VRActionHand
 		}
 	}
 
+	// Create a new action that doesn't appear in the manifest
+	// Appears in No Man's Sky for quitgame
+	// More experimentation may be required to figure out how SteamVR handles this
+	auto *action = new Action();
+	action->name = pchActionNameString;
+	action->type = "<unset>";
+
+	(*((Action**)pHandle)) = action;
+	_stringActionMap[pchActionNameString] = action;
+
 	return VRInputError_None;
 }
 EVRInputError BaseInput::GetInputSourceHandle(const char *pchInputSourcePath, VRInputValueHandle_t  *pHandle) {
