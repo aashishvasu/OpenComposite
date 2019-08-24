@@ -271,6 +271,9 @@ void BaseCompositor::PostPresentHandoff() {
 
 bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
 	return BackendManager::Instance().GetFrameTiming(pTiming, unFramesAgo);
+
+	// TODO fill in the m_nNumVSyncsReadyForUse and uint32_t m_nNumVSyncsToFirstView fields, but only
+	// when called from the correct version of the interface.
 }
 
 uint32_t BaseCompositor::GetFrameTimings(OOVR_Compositor_FrameTiming * pTiming, uint32_t nFrames) {
@@ -278,11 +281,11 @@ uint32_t BaseCompositor::GetFrameTimings(OOVR_Compositor_FrameTiming * pTiming, 
 }
 
 bool BaseCompositor::GetFrameTiming(vr::Compositor_FrameTiming * pTiming, uint32_t unFramesAgo) {
-	STUBBED();
+	return GetFrameTiming((OOVR_Compositor_FrameTiming *) pTiming, unFramesAgo);
 }
 
 uint32_t BaseCompositor::GetFrameTimings(vr::Compositor_FrameTiming * pTiming, uint32_t nFrames) {
-	STUBBED();
+	return GetFrameTimings((OOVR_Compositor_FrameTiming *) pTiming, nFrames);
 }
 
 float BaseCompositor::GetFrameTimeRemaining() {
