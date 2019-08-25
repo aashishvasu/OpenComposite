@@ -690,12 +690,17 @@ bool _leftJoystickSouth = false;
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t *pActionData, uint32_t unActionDataSize,
 	VRInputValueHandle_t ulRestrictToDevice) {
 
+	OOVR_FALSE_ABORT(sizeof(InputDigitalActionData_t) == unActionDataSize);
+
+	// Initialise the action data to being invalid, in case we return without setting it
+	memset(pActionData, 0, unActionDataSize);
+	pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle;
+	pActionData->bActive = false;
+
 	float functionCallTimeInSeconds = BackendManager::Instance().GetTimeInSeconds();
 
 	if (action == vr::k_ulInvalidActionHandle)
 	{
-		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle;
-		pActionData->bActive = false;
 		return VRInputError_InvalidHandle;
 	}
 
