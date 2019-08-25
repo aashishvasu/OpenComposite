@@ -2,6 +2,7 @@
 
 [![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
 [![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg)](https://ci.appveyor.com/project/ZNix/openovr)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BXJJ984LPFV44&source=url)
 
 OpenComposite (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
