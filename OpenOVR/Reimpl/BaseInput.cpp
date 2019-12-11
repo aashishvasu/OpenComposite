@@ -1415,6 +1415,13 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 
 	Action *digitalAction = (Action *) digitalActionHandle;
 
+	if (!digitalAction) {
+		for (auto i = 0; i < originOutCount; i++) {
+			originsOut[i] = {};
+		}
+		return VRInputError_InvalidHandle;
+	}
+
 	std::vector<VRInputValueHandle_t> vectorOriginOut;
 
 	// Note: right now the action source is going to be either left or right controller...
@@ -1470,11 +1477,19 @@ EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOV
 
 	auto *action = (Action *) actionHandle;
 
-	OOVR_FALSE_ABORT(action != nullptr);
 	OOVR_FALSE_ABORT(unBindingInfoSize == sizeof(OOVR_InputBindingInfo_t));
 
 	for (int i = 0; i < unBindingInfoCount; i++) {
 		pOriginInfo[i] = {0};
+	}
+
+	// For some reason No Man's Sky calls this with a nullptr handle
+	// Haven't confirmed this is how SteamVR behaves, I'm guessing
+	// it just returns InvalidHandle and does nothing, and that seems
+	// to work.
+	if (!action) {
+		*punReturnedBindingInfoCount = 0;
+		return VRInputError_InvalidHandle;
 	}
 
 	uint32_t i = 0;
