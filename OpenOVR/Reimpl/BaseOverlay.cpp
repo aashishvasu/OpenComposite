@@ -108,6 +108,11 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 			if (!overlay.visible || overlay.texture.handle == nullptr)
 				continue;
 
+			// Quick hack to get around Boneworks creating overlays and setting them to an opacity of
+			// zero to hide them. Leave 1% of margin in case of weird float issues.
+			if (overlay.colour.a < 0.01)
+				continue;
+
 			// Calculate the texture's aspect ratio
 			const ovrSizei &srcSize = overlay.layerQuad.Viewport.Size;
 			const float aspect = srcSize.h > 0 ? static_cast<float>(srcSize.w) / srcSize.h : 1.0f;
