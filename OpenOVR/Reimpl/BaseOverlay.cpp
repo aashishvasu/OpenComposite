@@ -59,8 +59,8 @@ public:
 #define OVL (*((OverlayData**)pOverlayHandle))
 #define USEH() \
 OverlayData *overlay = (OverlayData*)ulOverlayHandle; \
-if (!overlay || !overlays.count(overlay->key)) { \
-	return VROverlayError_InvalidHandle; \
+if (!overlay || !validOverlays.count(overlay) || !overlays.count(overlay->key)) { \
+    return VROverlayError_InvalidHandle; \
 }
 
 #define USEHB() \
@@ -182,6 +182,7 @@ EVROverlayError BaseOverlay::CreateOverlay(const char *pchOverlayKey, const char
 	OVL = data;
 
 	overlays[pchOverlayKey] = data;
+	validOverlays.insert(data);
 
 	// Set up the LibOVR layer
 	OOVR_LOGF(R"(New texture overlay created "%s" "%s")", pchOverlayKey, pchOverlayName);
@@ -213,6 +214,7 @@ EVROverlayError BaseOverlay::DestroyOverlay(VROverlayHandle_t ulOverlayHandle) {
 		highQualityOverlay = NULL;
 
 	overlays.erase(overlay->key);
+	validOverlays.erase(overlay);
 	delete overlay;
 
 	return VROverlayError_None;

@@ -2,6 +2,7 @@
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
 #include "../Misc/Keyboard/VRKeyboard.h" // TODO don't import from OCOVR, and remove the "../"
 #include <map>
+#include <set>
 #include <queue>
 #include <vector>
 #include <memory>
@@ -158,6 +159,11 @@ private:
 
 	// Name-to-overlay mapping
 	std::map<std::string, OverlayData*> overlays;
+
+	// Set of overlay pointers - use these to ensure the overlays are valid, and
+	// if games pass in some random value (*COUGH* Boneworks *COUGH) we can deal
+	// with it, rather than crashing everything.
+	std::set<OverlayData*> validOverlays;
 
 	// This doesn't do a whole lot, since OOVR does this for every overlay
 	VROverlayHandle_t highQualityOverlay;
