@@ -627,3 +627,21 @@ api_cs.write("\n}\n")
 api_cxx.close()
 api_c.close()
 api_cs.close()
+
+# Print out all the interfaces we *don't* implement
+
+# First find the list of all the interfaces contained in the split OpenVR headers
+all_openvr_interfaces = []
+for fi in os.listdir("../../SplitOpenVRHeaders/OpenVR/interfaces"):
+    if not fi.startswith("IVR"): continue
+    all_openvr_interfaces.append(fi)
+
+# Then remove from them as appropriate
+for i in all_interfaces:
+    if i.__class__ != InterfaceDef: continue
+    all_openvr_interfaces.remove(i.interface_v() + ".h")
+
+if len(all_openvr_interfaces) != 0:
+    print("Note: Unimplemented interfaces:")
+    for i in all_openvr_interfaces:
+        print("\t" + i)
