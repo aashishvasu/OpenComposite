@@ -400,5 +400,7 @@ if(prop == in) { \
 		break;
 	}
 
+	PROP(Prop_ControllerType_String, "oculus_touch");
+
 	return OculusDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
