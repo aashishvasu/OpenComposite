@@ -206,13 +206,13 @@ void  BaseSettings::GetString(const char * pchSection, const char * pchSettingsK
 
 		wstring_convert<codecvt_utf8<wchar_t>> conv;
 
-		if (key == kk::k_pch_audio_OnPlaybackDevice_String) {
+		if (key == kk1::k_pch_audio_OnPlaybackDevice_String) {
 			wchar_t buff[OVR_AUDIO_MAX_DEVICE_STR_SIZE];
 			ovr_GetAudioDeviceOutGuidStr(buff);
 			result = conv.to_bytes(buff);
 			goto found;
 		}
-		else if (key == kk::k_pch_audio_OnRecordDevice_String) {
+		else if (key == kk1::k_pch_audio_OnRecordDevice_String) {
 			wchar_t buff[OVR_AUDIO_MAX_DEVICE_STR_SIZE];
 			ovr_GetAudioDeviceInGuidStr(buff);
 			result = conv.to_bytes(buff);
