@@ -63,6 +63,15 @@ enum OOVR_EVRApplicationTransitionState {
 	VRApplicationTransition_NewAppLaunched = 20,
 };
 
+enum OOVR_EVRSceneApplicationState
+{
+	EVRSceneApplicationState_None						      = 0, // Scene Application is not running
+	EVRSceneApplicationState_Starting					      = 1, // Scene Application is starting
+	EVRSceneApplicationState_Quitting					      = 2, // Scene Application is quitting
+	EVRSceneApplicationState_Running						  = 3, // Scene Application is running, and submitting frames, a custom skybox, or a visible overlay
+	EVRSceneApplicationState_Waiting						  = 4, // Scene Application is running, but not drawing anything
+};
+
 struct OOVR_AppOverrideKeys_t {
 	const char *pchKey;
 	const char *pchValue;
@@ -73,6 +82,7 @@ public:
 	typedef OOVR_EVRApplicationError EVRApplicationError;
 	typedef OOVR_EVRApplicationProperty EVRApplicationProperty;
 	typedef OOVR_EVRApplicationTransitionState EVRApplicationTransitionState;
+	typedef OOVR_EVRSceneApplicationState EVRSceneApplicationState;
 	typedef OOVR_AppOverrideKeys_t AppOverrideKeys_t;
 
 	// ---------------  Application management  --------------- //
@@ -169,6 +179,7 @@ public:
 
 	/** Returns the application transition state */
 	virtual EVRApplicationTransitionState GetTransitionState();
+	virtual EVRSceneApplicationState GetSceneApplicationState(); // New name for the above in IVRApplications_007
 
 	/** Returns errors that would prevent the specified application from launching immediately. Calling this function will
 	* cause the current scene application to quit, so only call it when you are actually about to launch something else.
@@ -183,6 +194,7 @@ public:
 
 	/** Returns a string for an application transition state */
 	virtual const char *GetApplicationsTransitionStateNameFromEnum(EVRApplicationTransitionState state);
+	virtual const char *GetSceneApplicationStateNameFromEnum(EVRSceneApplicationState state); // New name for the above in IVRApplications_007
 
 	/** Returns true if the outgoing scene app has requested a save prompt before exiting */
 	virtual bool IsQuitUserPromptRequested();

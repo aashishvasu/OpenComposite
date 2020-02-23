@@ -95,10 +95,16 @@ EVRApplicationError BaseApplications::GetStartingApplication(VR_OUT_STRING() cha
 BaseApplications::EVRApplicationTransitionState BaseApplications::GetTransitionState() {
 	STUBBED();
 }
+BaseApplications::EVRSceneApplicationState BaseApplications::GetSceneApplicationState() {
+	STUBBED();
+}
 EVRApplicationError BaseApplications::PerformApplicationPrelaunchCheck(const char *pchAppKey) {
 	STUBBED();
 }
 const char * BaseApplications::GetApplicationsTransitionStateNameFromEnum(EVRApplicationTransitionState state) {
+	STUBBED();
+}
+const char * BaseApplications::GetSceneApplicationStateNameFromEnum(BaseApplications::EVRSceneApplicationState state) {
 	STUBBED();
 }
 bool BaseApplications::IsQuitUserPromptRequested() {
