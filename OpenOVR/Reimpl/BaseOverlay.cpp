@@ -422,6 +422,12 @@ EVROverlayError BaseOverlay::GetOverlayWidthInMeters(VROverlayHandle_t ulOverlay
 
 	return VROverlayError_None;
 }
+EVROverlayError BaseOverlay::SetOverlayCurvature(VROverlayHandle_t ulOverlayHandle, float fCurvature) {
+	STUBBED();
+}
+EVROverlayError BaseOverlay::GetOverlayCurvature(VROverlayHandle_t ulOverlayHandle, float *pfCurvature) {
+	STUBBED();
+}
 EVROverlayError BaseOverlay::SetOverlayAutoCurveDistanceRangeInMeters(VROverlayHandle_t ulOverlayHandle, float fMinDistanceInMeters, float fMaxDistanceInMeters) {
 	USEH();
 

@@ -295,6 +295,13 @@ public:
 	/** Returns the width of the overlay quad in meters. By default overlays are rendered on a quad that is 1 meter across */
 	virtual EVROverlayError GetOverlayWidthInMeters(VROverlayHandle_t ulOverlayHandle, float *pfWidthInMeters);
 
+	/** Use to draw overlay as a curved surface. Curvature is a percentage from (0..1] where 1 is a fully closed cylinder.
+	* For a specific radius, curvature can be computed as: overlay.width / (2 PI r). */
+	virtual EVROverlayError SetOverlayCurvature(VROverlayHandle_t ulOverlayHandle, float fCurvature);
+
+	/** Returns the curvature of the overlay as a percentage from (0..1] where 1 is a fully closed cylinder. */
+	virtual EVROverlayError GetOverlayCurvature(VROverlayHandle_t ulOverlayHandle, float *pfCurvature);
+
 	/** For high-quality curved overlays only, sets the distance range in meters from the overlay used to automatically curve
 	* the surface around the viewer.  Min is distance is when the surface will be most curved.  Max is when least curved. */
 	virtual EVROverlayError SetOverlayAutoCurveDistanceRangeInMeters(VROverlayHandle_t ulOverlayHandle, float fMinDistanceInMeters, float fMaxDistanceInMeters);
