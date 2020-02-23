@@ -488,6 +488,8 @@ EVROverlayError BaseOverlay::GetOverlayTransformType(VROverlayHandle_t ulOverlay
 	USEH();
 
 	*peTransformType = overlay->transformType;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToOverlayTransform) {
 	USEH();
@@ -510,6 +512,8 @@ EVROverlayError BaseOverlay::SetOverlayTransformTrackedDeviceRelative(VROverlayH
 	overlay->transformType = VROverlayTransform_TrackedDeviceRelative;
 	overlay->transformData.deviceRelative.device = unTrackedDevice;
 	overlay->transformData.deviceRelative.offset = *pmatTrackedDeviceToOverlayTransform;
+
+	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlayTransformTrackedDeviceRelative(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t *punTrackedDevice, HmdMatrix34_t *pmatTrackedDeviceToOverlayTransform) {
 	STUBBED();
