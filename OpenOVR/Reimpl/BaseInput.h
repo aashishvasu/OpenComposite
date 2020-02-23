@@ -318,6 +318,12 @@ public:
 	// --------------- Legacy Input ------------------- //
 	virtual bool IsUsingLegacyInput();
 
+	// --------------- Utilities ------------------- //
+
+	/** Opens the binding user interface. If no app key is provided it will use the key from the calling process.
+	* If no set is provided it will open to the root of the app binding page. */
+	virtual EVRInputError OpenBindingUI( const char* pchAppKey, VRActionSetHandle_t ulActionSetHandle, VRInputValueHandle_t ulDeviceHandle, bool bShowOnDesktop );
+
 private:
 	// Represents an action set. This is a set of controls that can be configured
 	// independantly - as I understand it, these are to be used for different portions

@@ -1551,3 +1551,10 @@ EVRInputError BaseInput::ShowBindingsForActionSet(VR_ARRAY_COUNT(unSetCount) VRA
 bool BaseInput::IsUsingLegacyInput() {
 	STUBBED();
 }
+
+// Interestingly enough this was added to IVRInput_007 without bumping the version number - that's fine since it's
+// at the end of the vtable, but it's interesting that the version has always been bumped for this in the past.
+EVRInputError BaseInput::OpenBindingUI(const char *pchAppKey, VRActionSetHandle_t ulActionSetHandle,
+		VRInputValueHandle_t ulDeviceHandle, bool bShowOnDesktop) {
+	STUBBED();
+}
