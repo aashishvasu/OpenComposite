@@ -358,6 +358,13 @@ public:
 	/** Sets the transform to relative to the transform of the specified overlay. This overlays visibility will also track the parents visibility */
 	virtual EVROverlayError SetOverlayTransformOverlayRelative(VROverlayHandle_t ulOverlayHandle, VROverlayHandle_t ulOverlayHandleParent, const HmdMatrix34_t *pmatParentOverlayToOverlayTransform);
 
+	/** Sets the hotspot for the specified overlay when that overlay is used as a cursor. These are in texture space with 0,0 in the upper left corner of
+	* the texture and 1,1 in the lower right corner of the texture. */
+	virtual EVROverlayError SetOverlayTransformCursor(VROverlayHandle_t ulCursorOverlayHandle, const HmdVector2_t *pvHotspot);
+
+	/** Gets cursor hotspot/transform for the specified overlay */
+	virtual EVROverlayError GetOverlayTransformCursor(VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvHotspot);
+
 	/** Shows the VR overlay.  For dashboard overlays, only the Dashboard Manager is allowed to call this. */
 	virtual EVROverlayError ShowOverlay(VROverlayHandle_t ulOverlayHandle);
 
@@ -431,6 +438,18 @@ public:
 	/** Sets the analog input to Dual Analog coordinate scale for the specified overlay. */
 	virtual EVROverlayError SetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, const HmdVector2_t *pvCenter, float fRadius);
 
+	/** Triggers a haptic event on the laser mouse controller for the specified overlay */
+	virtual EVROverlayError TriggerLaserMouseHapticVibration(VROverlayHandle_t ulOverlayHandle, float fDurationSeconds, float fFrequency, float fAmplitude);
+
+	/** Sets the cursor to use for the specified overlay. This will be drawn instead of the generic blob when the laser mouse is pointed at the specified overlay */
+	virtual EVROverlayError SetOverlayCursor(VROverlayHandle_t ulOverlayHandle, VROverlayHandle_t ulCursorHandle);
+
+	/** Sets the override cursor position to use for this overlay in overlay mouse coordinates. This position will be used to draw the cursor
+	* instead of whatever the laser mouse cursor position is. */
+	virtual EVROverlayError SetOverlayCursorPositionOverride(VROverlayHandle_t ulOverlayHandle, const HmdVector2_t *pvCursor);
+
+	/** Clears the override cursor position for this overlay */
+	virtual EVROverlayError ClearOverlayCursorPositionOverride(VROverlayHandle_t ulOverlayHandle);
 
 	// ---------------------------------------------
 	// Overlay texture methods

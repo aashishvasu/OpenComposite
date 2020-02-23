@@ -13,7 +13,7 @@ GEN_INTERFACE("Compositor", "019")
 GEN_INTERFACE("Compositor", "020")
 GEN_INTERFACE("Compositor", "021")
 GEN_INTERFACE("Compositor", "022")
-// TODO 023
+// 023 is missing, but never appeared in a public header - it was bumped from 022 to 024 in OpenVR 1.9.16
 GEN_INTERFACE("Compositor", "024")
 
 #include "GVRCompositor.gen.h"
