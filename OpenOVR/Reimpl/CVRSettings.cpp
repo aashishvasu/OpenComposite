@@ -4,6 +4,7 @@
 
 GEN_INTERFACE("Settings", "001")
 GEN_INTERFACE("Settings", "002")
+GEN_INTERFACE("Settings", "003")
 
 #include "GVRSettings.gen.h"
 
