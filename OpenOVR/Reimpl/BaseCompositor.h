@@ -89,6 +89,31 @@ enum OOVR_EVRCompositorTimingMode {
 	VRCompositorTimingMode_Explicit_ApplicationPerformsPostPresentHandoff = 2,
 };
 
+struct OOVR_Compositor_StageRenderSettings {
+	/** Primary color is applied as a tint to (i.e. multiplied with) the model's texture */
+	vr::HmdColor_t m_PrimaryColor = { 1, 1, 1, 1 };
+	vr::HmdColor_t m_SecondaryColor = { 1, 1, 1, 1 };
+
+	/** Vignette radius is in meters and is used to fade to the specified secondary solid color over
+	* that 3D distance from the origin of the playspace. */
+	float m_flVignetteInnerRadius = 0.0f;
+	float m_flVignetteOuterRadius = 0.0f;
+
+	/** Fades to the secondary color based on view incidence.  This variable controls the linearity
+	* of the effect.  It is mutually exclusive with vignette.  Additionally, it treats the mesh as faceted. */
+	float m_flFresnelStrength = 0.0f;
+
+	/** Controls backface culling. */
+	bool m_bBackfaceCulling = false;
+
+	/** Converts the render model's texture to luma and applies to rgb equally.  This is useful to
+	* combat compression artifacts that can occur on desaturated source material. */
+	bool m_bGreyscale = false;
+
+	/** Renders mesh as a wireframe. */
+	bool m_bWireframe = false;
+};
+
 class BaseCompositor {
 private:
 	bool leftEyeSubmitted = false, rightEyeSubmitted = false;
@@ -324,4 +349,13 @@ public:
 	/** Indicates whether or not the current scene focus app is currently loading.  This is inferred from its use of FadeGrid to
 	* explicitly fade to the compositor to cover up the fact that it cannot render at a sustained full framerate during this time. */
 	virtual bool IsCurrentSceneFocusAppLoading();
+
+     /** Override the stage model used in the compositor to replace the grid.  RenderModelPath is a full path the an OBJ file to load.
+     * This file will be loaded asynchronously from disk and uploaded to the gpu by the runtime.  Once ready for rendering, the
+     * VREvent StageOverrideReady will be sent.  Use FadeToGrid to reveal.  Call ClearStageOverride to free the associated resources when finished. */
+     virtual ovr_enum_t SetStageOverride_Async( const char *pchRenderModelPath, const vr::HmdMatrix34_t *pTransform = 0,
+             const OOVR_Compositor_StageRenderSettings *pRenderSettings = 0, uint32_t nSizeOfRenderSettings = 0 );
+
+     /** Resets the stage to its default user specified setting. */
+     virtual void ClearStageOverride();
 };

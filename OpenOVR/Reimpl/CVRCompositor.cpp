@@ -13,6 +13,8 @@ GEN_INTERFACE("Compositor", "019")
 GEN_INTERFACE("Compositor", "020")
 GEN_INTERFACE("Compositor", "021")
 GEN_INTERFACE("Compositor", "022")
+// TODO 023
+GEN_INTERFACE("Compositor", "024")
 
 #include "GVRCompositor.gen.h"
 

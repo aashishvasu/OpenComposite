@@ -470,3 +470,12 @@ bool BaseCompositor::IsMotionSmoothingEnabled() {
 bool BaseCompositor::IsCurrentSceneFocusAppLoading() {
 	STUBBED();
 }
+
+ovr_enum_t BaseCompositor::SetStageOverride_Async(const char *pchRenderModelPath, const HmdMatrix34_t *pTransform,
+		const OOVR_Compositor_StageRenderSettings *pRenderSettings, uint32_t nSizeOfRenderSettings) {
+	STUBBED();
+}
+
+void BaseCompositor::ClearStageOverride() {
+	STUBBED();
+}
