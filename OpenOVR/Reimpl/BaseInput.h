@@ -368,6 +368,8 @@ private:
 		std::string parameterSubMode;
 		double sourceParametersActivateThreshold = -1;
 		double sourceParametersDeactivateThreshold = -1;
+		double sourceParametersHapticAmplitude = -1;
+		double sourceParametersHapticFrequency = -1;
 		bool leftState;
 		bool rightState;
 	};
@@ -406,4 +408,6 @@ private:
 	std::map<std::string, Action *> _stringActionMap;
 	std::map<std::string, ActionSet *> _stringActionSetMap;
 	std::map<std::string, InputValue *> _stringInputValueMap;
+	bool _hapticTriggerOrGripPullActivationSetDuringCurrentActionState = false;
+	bool _hapticTriggerOrGripReleaseActivationSetDuringCurrentActionState = false;
 };

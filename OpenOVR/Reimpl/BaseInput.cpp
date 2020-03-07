@@ -563,6 +563,11 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 		inputValueRight->isSetControllerStateFromLastUpdate = false;
 		inputValueRight->isSetControllerState = false;
 	}
+
+	//clear data for new round
+	_hapticTriggerOrGripPullActivationSetDuringCurrentActionState = false;
+	_hapticTriggerOrGripReleaseActivationSetDuringCurrentActionState = false;
+
 	return VRInputError_None;
 }
 
@@ -578,52 +583,52 @@ void BaseInput::ProcessInputSource(Json::Value inputJson, VRActionHandle_t actio
 	string right = "/user/hand/right";
 	string pathLeftSubst = path.substr(0, left.size());
 	string pathRightSubst = path.substr(0, right.size());
-	if (iequals(pathLeftSubst, left))
+	bool isLeft = iequals(pathLeftSubst, left);
+	bool isRight = iequals(pathRightSubst, right);
+	string pathDirection = "";
+	if (isLeft)
 	{
 		GetInputSourceHandle(left.c_str(), &inputValueHandle);
 		action->leftInputValue = inputValueHandle;
-
-		// add action source to action
-		ActionSource *actionSource = new ActionSource();
-		actionSource->sourceMode = inputJson["mode"].asString();
-		actionSource->sourcePath = path;
-		actionSource->sourceDevice = pathLeftSubst; // TODO should it be left? Case might be different
-		actionSource->sourceType = sourceType;
-		actionSource->parameterSubMode = parameterSubMode;
-		actionSource->actionSetName = actionSetName;
-		Json::Value activateThreshold = inputJson["parameters"]["click_activate_threshold"];
-		if (!activateThreshold.isNull())
-			actionSource->sourceParametersActivateThreshold = stod(activateThreshold.asString());
-		Json::Value deactivateThreshold = inputJson["parameters"]["click_deactivate_threshold"];
-		if (!deactivateThreshold.isNull())
-			actionSource->sourceParametersDeactivateThreshold = stod(deactivateThreshold.asString());
-
-		action->leftActionSources.push_back(*&actionSource);
-
+		pathDirection = pathLeftSubst;
 	}
-	if (iequals(pathRightSubst, right))
+	else if (isRight)
 	{
 		GetInputSourceHandle(right.c_str(), &inputValueHandle);
 		action->rightInputValue = inputValueHandle;
+		pathDirection = pathRightSubst;
+	}
 
-		// add action source to action
-		ActionSource *actionSource = new ActionSource();
-		actionSource->sourceMode = inputJson["mode"].asString();
-		actionSource->sourcePath = path;
-		actionSource->sourceDevice = pathRightSubst; // TODO should it be right? Case might be different
-		actionSource->sourceType = sourceType;
-		actionSource->parameterSubMode = parameterSubMode;
-		actionSource->actionSetName = actionSetName;
-		Json::Value activateThreshold = inputJson["parameters"]["click_activate_threshold"];
-		if (!activateThreshold.isNull())
-			actionSource->sourceParametersActivateThreshold = stod(activateThreshold.asString());
-		Json::Value deactivateThreshold = inputJson["parameters"]["click_deactivate_threshold"];
-		if (!deactivateThreshold.isNull())
-			actionSource->sourceParametersDeactivateThreshold = stod(deactivateThreshold.asString());
 
+	// add action source to action
+	ActionSource* actionSource = new ActionSource();
+	actionSource->sourceMode = inputJson["mode"].asString();
+	actionSource->sourcePath = path;
+	actionSource->sourceDevice = pathDirection;
+	actionSource->sourceType = sourceType;
+	actionSource->parameterSubMode = parameterSubMode;
+	actionSource->actionSetName = actionSetName;
+	Json::Value activateThreshold = inputJson["parameters"]["click_activate_threshold"];
+	if (!activateThreshold.isNull())
+		actionSource->sourceParametersActivateThreshold = stod(activateThreshold.asString());
+	
+	Json::Value deactivateThreshold = inputJson["parameters"]["click_deactivate_threshold"];
+	if (!deactivateThreshold.isNull())
+		actionSource->sourceParametersDeactivateThreshold = stod(deactivateThreshold.asString());
+
+	Json::Value hapticAmplitude = inputJson["parameters"]["haptic_amplitude"];
+	if (!hapticAmplitude.isNull())
+		actionSource->sourceParametersHapticAmplitude = stod(hapticAmplitude.asString());
+
+	Json::Value hapticFrequency = inputJson["parameters"]["haptic_frequency"];
+	if (!hapticFrequency.isNull())
+		actionSource->sourceParametersHapticFrequency = stod(hapticFrequency.asString());
+
+	if (isLeft)
+		action->leftActionSources.push_back(*&actionSource);
+	else if (isRight)
 		action->rightActionSources.push_back(*&actionSource);
 
-	}
 }
 
 // helper method
@@ -808,6 +813,16 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 	bool leftJoystickNorth = _leftJoystickNorth;
 	bool leftJoystickSouth = _leftJoystickSouth;
 
+	// Unless the action defines haptic_amplitude of zero, the default haptic for grip/trigger is 20%.
+	float triggerOrGripHapticAmplitude = 0.2f;
+
+	// made up defaults
+	float triggerOrGripHapticDurationInSeconds = 0.05f;
+	float triggerOrGripHapticFrequency = 1.0f / triggerOrGripHapticDurationInSeconds;
+
+	bool performHapticOnTriggerOrGripPullActivation = false;
+	bool performHapticOnTriggerOrGripReleaseActivation = false;
+
 	// loop through all sources for this action and determine action state
 	bool bState = false;
 	bool bChanged = false;
@@ -822,6 +837,9 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 		string pathSubst = sourcePath.substr(name.size(), sourcePath.size() - name.size());
 		bool isRight = name == "/user/hand/right";
 		bool isLeft = name == "/user/hand/left";
+		bool triggerOrGripHapticIsMuted = actionSource->sourceParametersHapticAmplitude == 0;
+		bool triggerOrGripHapticAmplitudeIsSet = actionSource->sourceParametersHapticAmplitude != -1;
+		bool triggerOrGripHapticFrequencyIsSet = actionSource->sourceParametersHapticFrequency != -1;
 
 		if (iequals(pathSubst, "/input/grip") && iequals(actionSource->sourceType, "click"))
 		{
@@ -837,6 +855,14 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 					gripAxis, actionSource->sourceParametersActivateThreshold, actionSource->sourceParametersDeactivateThreshold,
 					bState, bChanged, actionSource->leftState);
 			}
+			performHapticOnTriggerOrGripPullActivation = bChanged && bState && !triggerOrGripHapticIsMuted;
+			performHapticOnTriggerOrGripReleaseActivation = bChanged && !bState && !triggerOrGripHapticIsMuted;
+			
+			if (!triggerOrGripHapticIsMuted && triggerOrGripHapticAmplitudeIsSet)
+				triggerOrGripHapticAmplitude = actionSource->sourceParametersHapticAmplitude;
+
+			if (triggerOrGripHapticFrequencyIsSet)
+				triggerOrGripHapticFrequency = actionSource->sourceParametersHapticFrequency;
 		}
 		else if (iequals(pathSubst, "/input/trigger") && iequals(actionSource->sourceType, "click"))
 		{
@@ -852,6 +878,14 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 					triggerAxis, actionSource->sourceParametersActivateThreshold, actionSource->sourceParametersDeactivateThreshold,
 					bState, bChanged, actionSource->leftState);
 			}
+			performHapticOnTriggerOrGripPullActivation = bChanged && bState && !triggerOrGripHapticIsMuted;
+			performHapticOnTriggerOrGripReleaseActivation = bChanged && !bState && !triggerOrGripHapticIsMuted;
+
+			if (!triggerOrGripHapticIsMuted && triggerOrGripHapticAmplitudeIsSet)
+				triggerOrGripHapticAmplitude = actionSource->sourceParametersHapticAmplitude;
+
+			if (triggerOrGripHapticFrequencyIsSet)
+				triggerOrGripHapticFrequency = actionSource->sourceParametersHapticFrequency;
 		}
 		else if (iequals(pathSubst, "/input/trigger") && iequals(actionSource->sourceType, "touch"))
 		{
@@ -1030,6 +1064,33 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 		bActive = true;
 
 	}
+
+	// Haptic workaround:
+	// It appears that the haptic function is not called by steamvr for default grip/trigger haptics.
+	// The workaround is to do inititate it here when a grip/trigger is reached pull/release activation.
+	
+	if (performHapticOnTriggerOrGripPullActivation && !_hapticTriggerOrGripPullActivationSetDuringCurrentActionState)
+	{
+		float fAmplitude = triggerOrGripHapticAmplitude;
+		float fDurationInSeconds = triggerOrGripHapticDurationInSeconds;
+		float fFrequency = triggerOrGripHapticFrequency;
+
+		TriggerHapticVibrationAction(action, 0, fDurationInSeconds, fFrequency, fAmplitude, activeOrigin);
+
+		_hapticTriggerOrGripPullActivationSetDuringCurrentActionState = true;
+	}
+	else if (performHapticOnTriggerOrGripReleaseActivation && !_hapticTriggerOrGripReleaseActivationSetDuringCurrentActionState)
+	{
+		float fAmplitude = triggerOrGripHapticAmplitude;
+		float fDurationInSeconds = triggerOrGripHapticDurationInSeconds;
+		float fFrequency = triggerOrGripHapticFrequency;
+
+		TriggerHapticVibrationAction(action, 0, fDurationInSeconds, fFrequency, fAmplitude, activeOrigin);
+
+		_hapticTriggerOrGripReleaseActivationSetDuringCurrentActionState = true;
+	}
+
+
 
 	float nowTimeInSeconds = BackendManager::Instance().GetTimeInSeconds();
 	float fUpdateTime = functionCallTimeInSeconds - nowTimeInSeconds;
