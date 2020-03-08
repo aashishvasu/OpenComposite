@@ -7,6 +7,7 @@
 #include "BaseSystem.h"
 #include <string>
 #include <codecvt>
+#include "libovr_wrapper.h"
 
 #include "OVR_CAPI_Audio.h"
 
@@ -115,6 +116,15 @@ void  BaseSettings::SetFloat(const char * pchSection, const char * pchSettingsKe
 	if (peError)
 		*peError = VRSettingsError_None;
 
+	string section = pchSection;
+	string key = pchSettingsKey;
+	if (section == kk::k_pch_CollisionBounds_Section) {
+		if (key == kk::k_pch_CollisionBounds_FadeDistance_Float) {
+			// No way to alter guardian from LibOVR
+			return;
+		}
+	}
+	
 	STUBBED();
 }
 void  BaseSettings::SetString(const char * pchSection, const char * pchSettingsKey, const char * pchValue, EVRSettingsError * peError) {
@@ -176,6 +186,12 @@ float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsK
 		}
 		else if (key == kk::k_pch_SteamVR_IPD_Float) {
 			return BaseSystem::SGetIpd();
+		}
+	} 
+	else if (section == kk::k_pch_CollisionBounds_Section)
+	{
+		if (key == kk::k_pch_CollisionBounds_FadeDistance_Float) {
+			return 1.0f; // made up some value that we will not use
 		}
 	}
 
