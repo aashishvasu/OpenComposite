@@ -479,3 +479,15 @@ ovr_enum_t BaseCompositor::SetStageOverride_Async(const char *pchRenderModelPath
 void BaseCompositor::ClearStageOverride() {
 	STUBBED();
 }
+
+bool BaseCompositor::GetCompositorBenchmarkResults(Compositor_BenchmarkResults *pBenchmarkResults, uint32_t nSizeOfBenchmarkResults) {
+	STUBBED();
+}
+
+ovr_enum_t BaseCompositor::GetLastPosePredictionIDs(uint32_t *pRenderPosePredictionID, uint32_t *pGamePosePredictionID) {
+	STUBBED();
+}
+
+ovr_enum_t BaseCompositor::GetPosesForFrame(uint32_t unPosePredictionID, TrackedDevicePose_t *pPoseArray, uint32_t unPoseArrayCount) {
+	STUBBED();
+}

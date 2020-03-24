@@ -358,4 +358,15 @@ public:
 
      /** Resets the stage to its default user specified setting. */
      virtual void ClearStageOverride();
+
+	/** Returns true if pBenchmarkResults is filled it.  Sets pBenchmarkResults with the result of the compositor benchmark.
+	* nSizeOfBenchmarkResults should be set to sizeof(Compositor_BenchmarkResults) */
+	virtual bool GetCompositorBenchmarkResults(vr::Compositor_BenchmarkResults *pBenchmarkResults, uint32_t nSizeOfBenchmarkResults);
+
+	/** Returns the frame id associated with the poses last returned by WaitGetPoses.  Deltas between IDs correspond to
+	 * number of headset vsync intervals. */
+	virtual ovr_enum_t GetLastPosePredictionIDs(uint32_t *pRenderPosePredictionID, uint32_t *pGamePosePredictionID);
+
+	/** Get the most up-to-date predicted (or recorded - up to 100ms old) set of poses for a given frame id. */
+	virtual ovr_enum_t GetPosesForFrame(uint32_t unPosePredictionID, vr::TrackedDevicePose_t *pPoseArray, uint32_t unPoseArrayCount);
 };
