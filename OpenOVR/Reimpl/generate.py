@@ -15,6 +15,7 @@ interfaces_list = [
     "ExtendedDisplay",
     "Applications",
     "Input",
+    "InputInternal",
     "ClientCore",
     "OverlayView",
 

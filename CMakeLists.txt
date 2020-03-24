@@ -187,6 +187,7 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/BaseCompositor.cpp
 	OpenOVR/Reimpl/BaseExtendedDisplay.cpp
 	OpenOVR/Reimpl/BaseInput.cpp
+	OpenOVR/Reimpl/BaseInputInternal.cpp
 	OpenOVR/Reimpl/BaseOverlay.cpp
 	OpenOVR/Reimpl/BaseOverlayView.cpp
 	OpenOVR/Reimpl/BaseRenderModels.cpp
@@ -200,6 +201,7 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/CVRCompositor.cpp
 	OpenOVR/Reimpl/CVRExtendedDisplay.cpp
 	OpenOVR/Reimpl/CVRInput.cpp
+	OpenOVR/Reimpl/CVRInputInternal.cpp
 	OpenOVR/Reimpl/CVROCSystem.cpp
 	OpenOVR/Reimpl/CVROverlay.cpp
 	OpenOVR/Reimpl/CVROverlayView.cpp
@@ -249,6 +251,7 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/BaseCompositor.h
 	OpenOVR/Reimpl/BaseExtendedDisplay.h
 	OpenOVR/Reimpl/BaseInput.h
+	OpenOVR/Reimpl/BaseInputInternal.cpp
 	OpenOVR/Reimpl/BaseOverlay.h
 	OpenOVR/Reimpl/BaseOverlayView.h
 	OpenOVR/Reimpl/BaseRenderModels.h
