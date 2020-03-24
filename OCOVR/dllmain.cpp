@@ -127,6 +127,14 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 		return interfaces[interfaceVersion].get();
 	}
 
+	// Hack for Half-Life: Alyx
+	// This is an interface that is enabled or not by what seems to be a compile-time
+	// switch inside SteamVR, disabled on the public build I was looking at.
+	if (!strcmp("IXrProto_001", interfaceVersion)) {
+		*error = VRInitError_Init_InterfaceNotFound;
+		return NULL;
+	}
+
 	bool valid_apptypes_success;
 	uint64_t valid_apptypes = GetInterfaceFlagsByName(interfaceVersion, "APPTYPE", &valid_apptypes_success);
 
