@@ -229,6 +229,8 @@ bool OculusHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr
 	switch (prop) {
 	case Prop_DeviceProvidesBatteryStatus_Bool:
 		return false;
+	case Prop_HasDriverDirectModeComponent_Bool:
+		return true; // Who knows what this is used for? It's in HL:A anyway.
 	}
 
 	return OculusDevice::GetBoolTrackedDeviceProperty(prop, pErrorL);
