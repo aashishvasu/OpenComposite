@@ -72,13 +72,6 @@ enum OOVR_EVRComponentProperty {
 	VRComponentProperty_IsScrolled = (1 << 4),
 };
 
-/** Describes state information about a render-model component, including transforms and other dynamic properties */
-struct OOVR_RenderModel_ComponentState_t {
-	vr::HmdMatrix34_t mTrackingToComponentRenderModel;  // Transform required when drawing the component render model
-	vr::HmdMatrix34_t mTrackingToComponentLocal;        // Transform available for attaching to a local component coordinate system (-Z out from surface )
-	VRComponentProperties uProperties; // See OOVR_EVRComponentProperty
-};
-
 #pragma endregion
 
 typedef OOVR_RenderModel_t RenderModel_t;

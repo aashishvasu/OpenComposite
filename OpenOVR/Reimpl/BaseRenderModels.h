@@ -6,7 +6,7 @@ struct OOVR_RenderModel_t;
 typedef int32_t OOVR_TextureID_t;
 struct OOVR_RenderModel_TextureMap_t;
 struct OOVR_RenderModel_ControllerMode_State_t;
-struct OOVR_RenderModel_ComponentState_t;
+typedef vr::RenderModel_ComponentState_t OOVR_RenderModel_ComponentState_t;
 
 class BaseRenderModels {
 private:
