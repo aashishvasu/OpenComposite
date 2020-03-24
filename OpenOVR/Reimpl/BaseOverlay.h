@@ -525,7 +525,22 @@ public:
 	/** Show the virtual keyboard to accept input **/
 	virtual EVROverlayError ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue);
 
+	/**
+	 * Show the virtual keyboard to accept input. In most cases, you should pass KeyboardFlag_Modal to enable modal overlay
+	 * behavior on the keyboard itself. See EKeyboardFlags for more.
+	 */
+	virtual EVROverlayError ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, uint32_t unFlags,
+			const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, uint64_t uUserValue);
+
 	virtual EVROverlayError ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode, uint64_t uUserValue);
+
+	/**
+	 * Show the virtual keyboard to accept input for an overlay. In most cases, you should pass KeyboardFlag_Modal to enable modal
+	 * overlay behavior on the keyboard itself. See EKeyboardFlags for more.
+	 */
+	virtual EVROverlayError ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode,
+			EGamepadTextInputLineMode eLineInputMode, uint32_t unFlags, const char *pchDescription, uint32_t unCharMax,
+			const char *pchExistingText, uint64_t uUserValue);
 
 	/** Get the text that was entered into the text input **/
 	virtual uint32_t GetKeyboardText(char *pchText, uint32_t cchText);

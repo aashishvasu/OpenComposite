@@ -750,6 +750,10 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 
 	return ShowKeyboardWithDispatch(eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText, bUseMinimalMode, uUserValue, dispatch);
 }
+EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, uint32_t unFlags,
+		const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, uint64_t uUserValue) {
+	STUBBED();
+}
 EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle,
 	EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
 	const char *pchDescription, uint32_t unCharMax, const char *pchExistingText,
@@ -762,6 +766,11 @@ EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayH
 	};
 
 	return ShowKeyboardWithDispatch(eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText, bUseMinimalMode, uUserValue, dispatch);
+}
+EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle, EGamepadTextInputMode eInputMode,
+		EGamepadTextInputLineMode eLineInputMode, uint32_t unFlags, const char *pchDescription, uint32_t unCharMax,
+		const char *pchExistingText, uint64_t uUserValue) {
+	STUBBED();
 }
 uint32_t BaseOverlay::GetKeyboardText(char *pchText, uint32_t cchText) {
 	string str = keyboard ? VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents()) : keyboardCache;
