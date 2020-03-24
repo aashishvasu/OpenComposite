@@ -16,6 +16,7 @@ interfaces_list = [
     "Applications",
     "Input",
     "ClientCore",
+    "OverlayView",
 
     # OpenComposite-specific interfaces
     "OCSystem",
