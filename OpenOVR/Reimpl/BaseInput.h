@@ -237,6 +237,13 @@ public:
 	/** Reads the state of a skeletal action given its handle. */
 	virtual EVRInputError GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t *pActionData, uint32_t unActionDataSize);
 
+	/** Returns the current dominant hand for the user for this application. This function will only return success for applications
+	* which include "supports_dominant_hand_setting": true in their action manifests. The dominant hand will only change after
+	* a call to UpdateActionState, and the action data returned after that point will use the new dominant hand. */
+	virtual EVRInputError GetDominantHand(vr::ETrackedControllerRole *peDominantHand);
+
+	/** Sets the dominant hand for the user for this application. */
+	virtual EVRInputError SetDominantHand(vr::ETrackedControllerRole eDominantHand);
 
 	// ---------------  Static Skeletal Data ------------------- //
 
@@ -315,6 +322,11 @@ public:
 	/** Shows the current binding all the actions in the specified action sets */
 	virtual EVRInputError ShowBindingsForActionSet(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t *pSets, uint32_t unSizeOfVRSelectedActionSet_t, uint32_t unSetCount, VRInputValueHandle_t originToHighlight);
 
+	/** Use this to query what action on the component returned by GetOriginTrackedDeviceInfo would trigger this binding. */
+	virtual EVRInputError GetComponentStateForBinding(const char *pchRenderModelName, const char *pchComponentName,
+			const OOVR_InputBindingInfo_t *pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount,
+			vr::RenderModel_ComponentState_t *pComponentState);
+
 	// --------------- Legacy Input ------------------- //
 	virtual bool IsUsingLegacyInput();
 
@@ -323,6 +335,12 @@ public:
 	/** Opens the binding user interface. If no app key is provided it will use the key from the calling process.
 	* If no set is provided it will open to the root of the app binding page. */
 	virtual EVRInputError OpenBindingUI( const char* pchAppKey, VRActionSetHandle_t ulActionSetHandle, VRInputValueHandle_t ulDeviceHandle, bool bShowOnDesktop );
+
+	/**
+	 * Returns the variant set in the current bindings. If the binding doesn't include a variant setting, this function
+	 * will return an empty string
+	 */
+	virtual EVRInputError GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath, char *pchVariantArray, uint32_t unVariantArraySize);
 
 private:
 	// Represents an action set. This is a set of controls that can be configured

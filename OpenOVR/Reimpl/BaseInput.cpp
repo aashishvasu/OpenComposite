@@ -1295,6 +1295,12 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t action, InputSke
 
 	return VRInputError_None;
 }
+EVRInputError BaseInput::GetDominantHand(vr::ETrackedControllerRole *peDominantHand) {
+	STUBBED();
+}
+EVRInputError BaseInput::SetDominantHand(vr::ETrackedControllerRole eDominantHand) {
+	STUBBED();
+}
 EVRInputError BaseInput::GetBoneCount(VRActionHandle_t action, uint32_t* pBoneCount) {
 	STUBBED();
 }
@@ -1548,6 +1554,12 @@ EVRInputError BaseInput::ShowBindingsForActionSet(VR_ARRAY_COUNT(unSetCount) VRA
 	STUBBED();
 }
 
+EVRInputError BaseInput::GetComponentStateForBinding(const char *pchRenderModelName, const char *pchComponentName,
+		const OOVR_InputBindingInfo_t *pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount,
+		vr::RenderModel_ComponentState_t *pComponentState) {
+	STUBBED();
+}
+
 bool BaseInput::IsUsingLegacyInput() {
 	STUBBED();
 }
@@ -1556,5 +1568,9 @@ bool BaseInput::IsUsingLegacyInput() {
 // at the end of the vtable, but it's interesting that the version has always been bumped for this in the past.
 EVRInputError BaseInput::OpenBindingUI(const char *pchAppKey, VRActionSetHandle_t ulActionSetHandle,
 		VRInputValueHandle_t ulDeviceHandle, bool bShowOnDesktop) {
+	STUBBED();
+}
+
+EVRInputError BaseInput::GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath, char *pchVariantArray, uint32_t unVariantArraySize) {
 	STUBBED();
 }
