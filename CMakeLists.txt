@@ -281,6 +281,9 @@ add_library(OCCore STATIC
 	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRClientCore_002.h
 	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRClientCore_003.h
 	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRCompositor_017.h
+	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRMailbox_001.h
+	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRInputInternal_002.h
+	SplitOpenVRHeaders/OpenVR/custom_interfaces/IVRControlPanel_006.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_004.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_005.h
 	SplitOpenVRHeaders/OpenVR/interfaces/IVRApplications_006.h
