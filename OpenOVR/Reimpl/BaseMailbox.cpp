@@ -4,22 +4,29 @@
 
 #include "BaseMailbox.h"
 
-OOVR_vrmb_typeb BaseMailbox::undoc1(const char *a, OOVR_vrmb_typea *b)
+typedef BaseMailbox::MboxErr MboxErr;
+
+MboxErr BaseMailbox::RegisterMailbox(const char* name, OOVR_mbox_handle* handle)
+{
+	*handle = 123;
+
+	// Ignore it for now
+	OOVR_LOGF("Pretending to register mailbox '%s'", name);
+
+	return VR_MBox_None;
+}
+
+MboxErr BaseMailbox::undoc2(OOVR_mbox_handle a)
 {
 	STUBBED();
 }
 
-OOVR_vrmb_typeb BaseMailbox::undoc2(OOVR_vrmb_typea a)
+MboxErr BaseMailbox::undoc3(OOVR_mbox_handle a, const char* b, const char* c)
 {
 	STUBBED();
 }
 
-OOVR_vrmb_typeb BaseMailbox::undoc3(OOVR_vrmb_typea a, const char *b, const char *c)
-{
-	STUBBED();
-}
-
-OOVR_vrmb_typeb BaseMailbox::undoc4(OOVR_vrmb_typea a, char *b, uint32_t c, uint32_t *d)
+MboxErr BaseMailbox::undoc4(OOVR_mbox_handle a, char* b, uint32_t c, uint32_t* d)
 {
 	STUBBED();
 }

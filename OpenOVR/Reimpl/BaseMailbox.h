@@ -3,19 +3,23 @@
 #include "../BaseCommon.h"
 #include "OpenVR/custom_interfaces/IVRMailbox_001.h"
 
-typedef vr::IVRMailbox_001::vrmb_typea OOVR_vrmb_typea;
-typedef vr::IVRMailbox_001::vrmb_typeb OOVR_vrmb_typeb;
+typedef vr::IVRMailbox_001::mbox_handle OOVR_mbox_handle;
 
-class BaseMailbox
-{
+class BaseMailbox {
 public:
+	enum MboxErr {
+		VR_MBox_None = 0,
+	};
+
 	// TODO build up names and comments for these and their types
 
-	OOVR_vrmb_typeb undoc1(const char *a, OOVR_vrmb_typea *b);
+	MboxErr RegisterMailbox(const char* name, OOVR_mbox_handle* handle);
 
-	OOVR_vrmb_typeb undoc2(OOVR_vrmb_typea a);
+	MboxErr undoc2(OOVR_mbox_handle a);
 
-	OOVR_vrmb_typeb undoc3(OOVR_vrmb_typea a, const char *b, const char *c);
+	MboxErr undoc3(OOVR_mbox_handle a, const char* b, const char* c);
 
-	OOVR_vrmb_typeb undoc4(OOVR_vrmb_typea a, char *b, uint32_t c, uint32_t *d);
+	MboxErr undoc4(OOVR_mbox_handle a, char* b, uint32_t c, uint32_t* d);
 };
+
+typedef BaseMailbox::MboxErr OOVR_vrmb_typeb;

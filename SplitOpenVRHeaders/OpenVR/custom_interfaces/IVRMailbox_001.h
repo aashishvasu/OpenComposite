@@ -13,7 +13,7 @@ namespace vr
 namespace IVRMailbox_001
 {
 
-typedef uint64_t vrmb_typea;
+typedef uint64_t mbox_handle;
 
 enum vrmb_typeb
 {
@@ -23,10 +23,10 @@ enum vrmb_typeb
 class IVRMailbox
 {
 public:
-	virtual vrmb_typeb undoc1( const char *a, vrmb_typea *b ) = 0;
-	virtual vrmb_typeb undoc2( vrmb_typea a ) = 0;
-	virtual vrmb_typeb undoc3( vrmb_typea a, const char *b, const char *c ) = 0;
-	virtual vrmb_typeb undoc4( vrmb_typea a, char *b, uint32_t c, uint32_t *d ) = 0;
+	virtual vrmb_typeb RegisterMailbox(const char *name, mbox_handle *handle) = 0;
+	virtual vrmb_typeb undoc2(mbox_handle handle) = 0;
+	virtual vrmb_typeb undoc3(mbox_handle handle, const char *b, const char *c) = 0;
+	virtual vrmb_typeb undoc4(mbox_handle handle, char *b, uint32_t c, uint32_t *d) = 0;
 };
 
 static const char * const IVRMailbox_Version = "IVRMailbox_001";
