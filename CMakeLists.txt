@@ -195,6 +195,7 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/BaseSettings.cpp
 	OpenOVR/Reimpl/BaseSystem.cpp
 	OpenOVR/Reimpl/BaseMailbox.cpp
+	OpenOVR/Reimpl/BaseControlPanel.cpp
 	OpenOVR/Reimpl/CVRApplications.cpp
 	OpenOVR/Reimpl/CVRChaperone.cpp
 	OpenOVR/Reimpl/CVRChaperoneSetup.cpp
@@ -211,6 +212,7 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/CVRSettings.cpp
 	OpenOVR/Reimpl/CVRSystem.cpp
 	OpenOVR/Reimpl/CVRMailbox.cpp
+	OpenOVR/Reimpl/CVRControlPanel.cpp
 	OpenOVR/Reimpl/stubs.gen.cpp
 
 	# Base classes
@@ -261,6 +263,7 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/BaseSettings.h
 	OpenOVR/Reimpl/BaseSystem.h
 	OpenOVR/Reimpl/BaseMailbox.h
+	OpenOVR/Reimpl/BaseControlPanel.h
 	OpenOVR/Reimpl/Interfaces.h
 	OpenOVR/Reimpl/static_bases.gen.h
 	OpenOVR/resources.h

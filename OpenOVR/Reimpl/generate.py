@@ -19,6 +19,7 @@ interfaces_list = [
     "ClientCore",
     "OverlayView",
     "Mailbox",
+    "ControlPanel",
 
     # OpenComposite-specific interfaces
     "OCSystem",
