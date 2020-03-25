@@ -101,7 +101,10 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	}
 
 	// Unless we later change this otherwise, it was successful.
-	*error = VRInitError_None;
+	// Oh, and who would pass in a null error pointer, since they're only called by `openvr_api.dll` which
+	// defines all of them? HL:A of course!
+	if (error)
+		*error = VRInitError_None;
 
 	// First check if they're getting the 'FnTable' version of this interface.
 	// This is a table of methods, but critically they *don't* take a 'this' pointer,
@@ -131,7 +134,8 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	// This is an interface that is enabled or not by what seems to be a compile-time
 	// switch inside SteamVR, disabled on the public build I was looking at.
 	if (!strcmp("IXrProto_001", interfaceVersion)) {
-		*error = VRInitError_Init_InterfaceNotFound;
+		if (error)
+			*error = VRInitError_Init_InterfaceNotFound;
 		return NULL;
 	}
 
