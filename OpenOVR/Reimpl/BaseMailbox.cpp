@@ -26,7 +26,15 @@ MboxErr BaseMailbox::undoc3(OOVR_mbox_handle a, const char* b, const char* c)
 	STUBBED();
 }
 
-MboxErr BaseMailbox::undoc4(OOVR_mbox_handle a, char* b, uint32_t c, uint32_t* d)
+MboxErr BaseMailbox::ReadMessage(OOVR_mbox_handle mboxHandle, char* outBuf, uint32_t outBufLen, uint32_t* msgLen)
 {
-	STUBBED();
+	// Read message function
+	// If we have a message available (IDK what the mailbox is even supposed to do), try to read a message.
+	// If the message fits within the output buffer, copy it in and return 0.
+	// Otherwise if it doesn't fit, return 2.
+	// In both cases, set msgLen
+	// If we don't have a message, return an unknown error code other than 0 and 2 (HL:A doesn't care).
+
+	// Fow now, just say we don't have a message
+	return (MboxErr)12345;
 }

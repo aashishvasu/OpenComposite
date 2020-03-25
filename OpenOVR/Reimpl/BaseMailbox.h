@@ -19,7 +19,7 @@ public:
 
 	MboxErr undoc3(OOVR_mbox_handle a, const char* b, const char* c);
 
-	MboxErr undoc4(OOVR_mbox_handle a, char* b, uint32_t c, uint32_t* d);
+	MboxErr ReadMessage(OOVR_mbox_handle mbox, char* outBuf, uint32_t outBufLen, uint32_t* msgLen);
 };
 
 typedef BaseMailbox::MboxErr OOVR_vrmb_typeb;
