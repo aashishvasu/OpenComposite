@@ -39,13 +39,13 @@ struct OOVR_Compositor_FrameTiming {
 	float m_flCompositorRenderCpuMs; // time spent on cpu submitting the above work for this frame
 	float m_flCompositorIdleCpuMs; // time spent waiting for running start (application could have used this much more time)
 
-								   /** Miscellaneous measured intervals. */
+	/** Miscellaneous measured intervals. */
 	float m_flClientFrameIntervalMs; // time between calls to WaitGetPoses
 	float m_flPresentCallCpuMs; // time blocked on call to present (usually 0.0, but can go long)
 	float m_flWaitForPresentCpuMs; // time spent spin-waiting for frame index to change (not near-zero indicates wait object failure)
 	float m_flSubmitFrameMs; // time spent in IVRCompositor::Submit (not near-zero indicates driver issue)
 
-							 /** The following are all relative to this frame's SystemTimeInSeconds */
+	/** The following are all relative to this frame's SystemTimeInSeconds */
 	float m_flWaitGetPosesCalledMs;
 	float m_flNewPosesReadyMs;
 	float m_flNewFrameReadyMs; // second call to IVRCompositor::Submit
@@ -141,7 +141,7 @@ public:
 	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize);
 
 	// TODO clean this up, and make the keyboard work with OpenGL and Vulkan too
-	static DX11Compositor *dxcomp;
+	static DX11Compositor* dxcomp;
 
 public:
 	// OpenVR interface methods from here on:
@@ -161,16 +161,16 @@ public:
 	*	- DoNotHaveFocus (some other app has taken focus - this will throttle the call to 10hz to reduce the impact on that app)
 	*/
 	virtual ovr_enum_t WaitGetPoses(vr::TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount,
-		vr::TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount);
+	    vr::TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount);
 
 	/** Get the last set of poses returned by WaitGetPoses. */
 	virtual ovr_enum_t GetLastPoses(vr::TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount,
-		vr::TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount);
+	    vr::TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount);
 
 	/** Interface for accessing last set of poses returned by WaitGetPoses one at a time.
 	* Returns VRCompositorError_IndexOutOfRange if unDeviceIndex not less than k_unMaxTrackedDeviceCount otherwise VRCompositorError_None.
 	* It is okay to pass NULL for either pose if you only want one of the values. */
-	virtual ovr_enum_t GetLastPoseForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex, vr::TrackedDevicePose_t *pOutputPose, vr::TrackedDevicePose_t *pOutputGamePose);
+	virtual ovr_enum_t GetLastPoseForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex, vr::TrackedDevicePose_t* pOutputPose, vr::TrackedDevicePose_t* pOutputGamePose);
 
 	/** Updated scene texture to display. If pBounds is NULL the entire texture will be used.  If called from an OpenGL app, consider adding a glFlush after
 	* Submitting both frames to signal the driver to start processing, otherwise it may wait until the command buffer fills up, causing the app to miss frames.
@@ -187,7 +187,7 @@ public:
 	*	- InvalidTexture (usually means bad arguments passed in)
 	*	- AlreadySubmitted (app has submitted two left textures or two right textures in a single frame - i.e. before calling WaitGetPoses again)
 	*/
-	virtual ovr_enum_t Submit(vr::EVREye eEye, const vr::Texture_t *pTexture, const vr::VRTextureBounds_t* pBounds, vr::EVRSubmitFlags nSubmitFlags = vr::Submit_Default);
+	virtual ovr_enum_t Submit(vr::EVREye eEye, const vr::Texture_t* pTexture, const vr::VRTextureBounds_t* pBounds, vr::EVRSubmitFlags nSubmitFlags = vr::Submit_Default);
 
 	/** Clears the frame that was sent with the last call to Submit. This will cause the
 	* compositor to show the grid until Submit is called again. */
@@ -202,22 +202,22 @@ public:
 
 	/** Returns true if timing data is filled it.  Sets oldest timing info if nFramesAgo is larger than the stored history.
 	* Be sure to set timing.size = sizeof(Compositor_FrameTiming) on struct passed in before calling this function. */
-	virtual bool GetFrameTiming(OOVR_Compositor_FrameTiming *pTiming, uint32_t unFramesAgo);
+	virtual bool GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32_t unFramesAgo);
 
 	/** Interface for copying a range of timing data.  Frames are returned in ascending order (oldest to newest) with the last being the most recent frame.
 	* Only the first entry's m_nSize needs to be set, as the rest will be inferred from that.  Returns total number of entries filled out. */
-	virtual uint32_t GetFrameTimings(OOVR_Compositor_FrameTiming *pTiming, uint32_t nFrames);
+	virtual uint32_t GetFrameTimings(OOVR_Compositor_FrameTiming* pTiming, uint32_t nFrames);
 
 	// The Compositor_FrameTiming type was moved to vrtypes.h, hence the duplicate methods
-	virtual bool GetFrameTiming(vr::Compositor_FrameTiming *pTiming, uint32_t unFramesAgo);
-	virtual uint32_t GetFrameTimings(vr::Compositor_FrameTiming *pTiming, uint32_t nFrames);
+	virtual bool GetFrameTiming(vr::Compositor_FrameTiming* pTiming, uint32_t unFramesAgo);
+	virtual uint32_t GetFrameTimings(vr::Compositor_FrameTiming* pTiming, uint32_t nFrames);
 
 	/** Returns the time in seconds left in the current (as identified by FrameTiming's frameIndex) frame.
 	* Due to "running start", this value may roll over to the next frame before ever reaching 0.0. */
 	virtual float GetFrameTimeRemaining();
 
 	/** Fills out stats accumulated for the last connected application.  Pass in sizeof( Compositor_CumulativeStats ) as second parameter. */
-	virtual void GetCumulativeStats(OOVR_Compositor_CumulativeStats *pStats, uint32_t nStatsSizeInBytes);
+	virtual void GetCumulativeStats(OOVR_Compositor_CumulativeStats* pStats, uint32_t nStatsSizeInBytes);
 
 	/** Fades the view on the HMD to the specified color. The fade will take fSeconds, and the color values are between
 	* 0.0 and 1.0. This color is faded on top of the scene based on the alpha parameter. Removing the fade color instantly
@@ -236,7 +236,7 @@ public:
 	/** Override the skybox used in the compositor (e.g. for during level loads when the app can't feed scene images fast enough)
 	* Order is Front, Back, Left, Right, Top, Bottom.  If only a single texture is passed, it is assumed in lat-long format.
 	* If two are passed, it is assumed a lat-long stereo pair. */
-	virtual ovr_enum_t SetSkyboxOverride(const vr::Texture_t *pTextures, uint32_t unTextureCount);
+	virtual ovr_enum_t SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount);
 
 	/** Resets compositor skybox back to defaults. */
 	virtual void ClearSkyboxOverride();
@@ -291,11 +291,11 @@ public:
 
 	/** Opens a shared D3D11 texture with the undistorted composited image for each eye.  Use ReleaseMirrorTextureD3D11 when finished
 	* instead of calling Release on the resource itself. */
-	virtual ovr_enum_t GetMirrorTextureD3D11(vr::EVREye eEye, void *pD3D11DeviceOrResource, void **ppD3D11ShaderResourceView);
-	virtual void ReleaseMirrorTextureD3D11(void *pD3D11ShaderResourceView);
+	virtual ovr_enum_t GetMirrorTextureD3D11(vr::EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView);
+	virtual void ReleaseMirrorTextureD3D11(void* pD3D11ShaderResourceView);
 
 	/** Access to mirror textures from OpenGL. */
-	virtual ovr_enum_t GetMirrorTextureGL(vr::EVREye eEye, vr::glUInt_t *pglTextureId, vr::glSharedTextureHandle_t *pglSharedTextureHandle);
+	virtual ovr_enum_t GetMirrorTextureGL(vr::EVREye eEye, vr::glUInt_t* pglTextureId, vr::glSharedTextureHandle_t* pglSharedTextureHandle);
 	virtual bool ReleaseSharedGLTexture(vr::glUInt_t glTextureId, vr::glSharedTextureHandle_t glSharedTextureHandle);
 	virtual void LockGLSharedTextureForAccess(vr::glSharedTextureHandle_t glSharedTextureHandle);
 	virtual void UnlockGLSharedTextureForAccess(vr::glSharedTextureHandle_t glSharedTextureHandle);
@@ -303,12 +303,12 @@ public:
 	/** [Vulkan Only]
 	* return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing
 	* null.  The string will be a space separated list of-required instance extensions to enable in VkCreateInstance */
-	virtual uint32_t GetVulkanInstanceExtensionsRequired(char *pchValue, uint32_t unBufferSize);
+	virtual uint32_t GetVulkanInstanceExtensionsRequired(char* pchValue, uint32_t unBufferSize);
 
 	/** [Vulkan only]
 	* return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing
 	* null.  The string will be a space separated list of required device extensions to enable in VkCreateDevice */
-	virtual uint32_t GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T *pPhysicalDevice, char *pchValue, uint32_t unBufferSize);
+	virtual uint32_t GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T* pPhysicalDevice, char* pchValue, uint32_t unBufferSize);
 
 	/** [ Vulkan/D3D12 Only ]
 	* There are two purposes for SetExplicitTimingMode:
@@ -350,23 +350,23 @@ public:
 	* explicitly fade to the compositor to cover up the fact that it cannot render at a sustained full framerate during this time. */
 	virtual bool IsCurrentSceneFocusAppLoading();
 
-     /** Override the stage model used in the compositor to replace the grid.  RenderModelPath is a full path the an OBJ file to load.
+	/** Override the stage model used in the compositor to replace the grid.  RenderModelPath is a full path the an OBJ file to load.
      * This file will be loaded asynchronously from disk and uploaded to the gpu by the runtime.  Once ready for rendering, the
      * VREvent StageOverrideReady will be sent.  Use FadeToGrid to reveal.  Call ClearStageOverride to free the associated resources when finished. */
-     virtual ovr_enum_t SetStageOverride_Async( const char *pchRenderModelPath, const vr::HmdMatrix34_t *pTransform = 0,
-             const OOVR_Compositor_StageRenderSettings *pRenderSettings = 0, uint32_t nSizeOfRenderSettings = 0 );
+	virtual ovr_enum_t SetStageOverride_Async(const char* pchRenderModelPath, const vr::HmdMatrix34_t* pTransform = 0,
+	    const OOVR_Compositor_StageRenderSettings* pRenderSettings = 0, uint32_t nSizeOfRenderSettings = 0);
 
-     /** Resets the stage to its default user specified setting. */
-     virtual void ClearStageOverride();
+	/** Resets the stage to its default user specified setting. */
+	virtual void ClearStageOverride();
 
 	/** Returns true if pBenchmarkResults is filled it.  Sets pBenchmarkResults with the result of the compositor benchmark.
 	* nSizeOfBenchmarkResults should be set to sizeof(Compositor_BenchmarkResults) */
-	virtual bool GetCompositorBenchmarkResults(vr::Compositor_BenchmarkResults *pBenchmarkResults, uint32_t nSizeOfBenchmarkResults);
+	virtual bool GetCompositorBenchmarkResults(vr::Compositor_BenchmarkResults* pBenchmarkResults, uint32_t nSizeOfBenchmarkResults);
 
 	/** Returns the frame id associated with the poses last returned by WaitGetPoses.  Deltas between IDs correspond to
 	 * number of headset vsync intervals. */
-	virtual ovr_enum_t GetLastPosePredictionIDs(uint32_t *pRenderPosePredictionID, uint32_t *pGamePosePredictionID);
+	virtual ovr_enum_t GetLastPosePredictionIDs(uint32_t* pRenderPosePredictionID, uint32_t* pGamePosePredictionID);
 
 	/** Get the most up-to-date predicted (or recorded - up to 100ms old) set of poses for a given frame id. */
-	virtual ovr_enum_t GetPosesForFrame(uint32_t unPosePredictionID, vr::TrackedDevicePose_t *pPoseArray, uint32_t unPoseArrayCount);
+	virtual ovr_enum_t GetPosesForFrame(uint32_t unPosePredictionID, vr::TrackedDevicePose_t* pPoseArray, uint32_t unPoseArrayCount);
 };
