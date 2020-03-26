@@ -1455,7 +1455,19 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 }
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char *pchNameArray, uint32_t unNameArraySize,
 	int32_t unStringSectionsToInclude) {
-	STUBBED();
+
+	OOVR_FALSE_ABORT(origin != 0);
+
+	InputValue* value = (InputValue*)origin;
+
+	std::string tgt = "Localise::" + value->name;
+
+	if (unNameArraySize < tgt.length())
+		return VRInputError_BufferTooSmall;
+
+	strcpy_s(pchNameArray, unNameArraySize, tgt.c_str());
+
+	return VRInputError_None;
 }
 EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t *pOriginInfo, uint32_t unOriginInfoSize) {
 
