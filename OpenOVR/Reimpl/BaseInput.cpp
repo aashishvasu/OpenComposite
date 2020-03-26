@@ -111,6 +111,29 @@ EVRInputError BaseInput::SetActionManifestPath(const char *pchActionManifestPath
 	wstring bindingsPathw = utf8to16(bindingsPath);
 	ReadJson(bindingsPathw, _bindingsJson);
 
+	// Load the action sets
+	// This used to be done in GetActionSetHandle. This was fine (AFAIK) until HL:A came along (not that it's
+	// their fault this time). Most games call ::GetActionSetHandle for each action set early on, while HL:A
+	// doesn't. One issue of initialising this in GetActionSetHandle is that _stringActionSetMap is used
+	// by UpdateActionState. If that's called before the action set handles have been taken, then that
+	// action set isn't usable.
+	// I'm not 100% certain this won't cause issues, though.
+	Json::Value jsonActionSet = _actionManifest["action_sets"];
+	if (!jsonActionSet.isNull()) {
+		for (Json::Value& json : jsonActionSet) {
+			ActionSet* actionSet = new ActionSet();
+
+			string name = json["name"].asString();
+			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+			actionSet->name = name;
+
+			actionSet->usage = json["usage"].asString();
+
+			_stringActionSetMap[name] = actionSet;
+			return VRInputError_None;
+		}
+	}
+
 	return VRInputError_None;
 }
 EVRInputError BaseInput::GetActionSetHandle(const char *pchActionSetName, VRActionSetHandle_t *pHandle) {
@@ -129,30 +152,8 @@ EVRInputError BaseInput::GetActionSetHandle(const char *pchActionSetName, VRActi
 	}
 	else // key not found
 	{
-		// create new ActionSet and insert/return handle
-
 		Json::Value jsonActionSet = _actionManifest["action_sets"];
-		if (!jsonActionSet.isNull())
-		{
-			for (int index = 0; index < jsonActionSet.size(); index++)
-			{
-				if (iequals(jsonActionSet[index]["name"].asCString(), pchActionSetName))
-				{
-					ActionSet *actionSet = new ActionSet();
-
-					string name = jsonActionSet[index]["name"].asString();
-					std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-					actionSet->name = name;
-
-					actionSet->usage = jsonActionSet[index]["usage"].asString();
-
-					(*((ActionSet**)pHandle)) = actionSet;
-					_stringActionSetMap[pchActionSetNameString] = actionSet;
-					return VRInputError_None;
-				}
-			}
-		}
-		else // no action_sets in json, setup default
+		if (jsonActionSet.isNull()) // no action_sets in json, setup default
 		{
 			ActionSet *actionSet = new ActionSet();
 			actionSet->name = "/actions/demo";
