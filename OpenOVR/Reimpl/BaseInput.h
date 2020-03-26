@@ -219,7 +219,11 @@ public:
 	* action is something other than analog */
 	virtual EVRInputError GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t *pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
-	/** Reads the state of a pose action given its handle. */
+	/**
+	 * Reads the state of a pose action given its handle.
+	 *
+	 * Renamed to GetPoseActionDataRelativeToNow as of IVRInput_006.
+	 */
 	virtual EVRInputError GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow, InputPoseActionData_t *pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
 	/** Reads the state of a pose action given its handle for the number of seconds relative to now. This
