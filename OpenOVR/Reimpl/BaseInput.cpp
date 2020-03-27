@@ -1077,10 +1077,11 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 	string sourcePath;
 
 	// ulRestrictToDevice may tell us input handle to look at if both inputs are available
-	if (analogAction->leftInputValue != k_ulInvalidInputValueHandle &&
-		analogAction->rightInputValue != k_ulInvalidInputValueHandle &&
-		ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
+	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
 	{
+		if (analogAction->leftInputValue != ulRestrictToDevice && analogAction->rightInputValue != ulRestrictToDevice)
+			return VRInputError_InvalidDevice;
+
 		activeOrigin = ulRestrictToDevice;
 		InputValue *inputValue = (InputValue*)ulRestrictToDevice;
 
@@ -1180,10 +1181,11 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 
 	InputValue *inputValue;
 	// ulRestrictToDevice may tell us input handle to look at if both inputs are available
-	if (analogAction->leftInputValue != k_ulInvalidInputValueHandle &&
-		analogAction->rightInputValue != k_ulInvalidInputValueHandle &&
-		ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
+	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
 	{
+		if (analogAction->leftInputValue != ulRestrictToDevice && analogAction->rightInputValue != ulRestrictToDevice)
+			return VRInputError_InvalidDevice;
+
 		activeOrigin = ulRestrictToDevice;
 		inputValue = (InputValue*)ulRestrictToDevice;
 	}
