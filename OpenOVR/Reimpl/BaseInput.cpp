@@ -1157,24 +1157,23 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow,
 	InputPoseActionData_t *pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice) {
 
+	// Initialise the action data to being invalid, in case we return without setting it
+	memset(pActionData, 0, unActionDataSize);
+	pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle;
+	pActionData->pose.bPoseIsValid = false;
+	pActionData->pose.bDeviceIsConnected = false;
+	pActionData->bActive = false;
+
 	if (action == vr::k_ulInvalidActionHandle)
-	{
-		pActionData->activeOrigin = vr::k_ulInvalidActionHandle;
-		pActionData->pose.bPoseIsValid = false;
-		pActionData->pose.bDeviceIsConnected = false;
-		pActionData->bActive = false;
 		return VRInputError_InvalidHandle;
-	}
 
 	Action *analogAction = (Action*)action;
 
 	if (analogAction->leftInputValue == k_ulInvalidInputValueHandle &&
 		analogAction->rightInputValue == k_ulInvalidInputValueHandle)
 	{
-		pActionData->activeOrigin = vr::k_ulInvalidActionHandle;
-		pActionData->pose.bPoseIsValid = false;
-		pActionData->pose.bDeviceIsConnected = false;
-		pActionData->bActive = false;
+		// If the action has no input, that means the action was defined in the action manifest but not defined in controller binding JSON.
+		// This probably means the binding is optional and not set up, so we will mark it as inactive and not return an error code
 		return VRInputError_None;
 	}
 
@@ -1225,14 +1224,8 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		pActionData->activeOrigin = activeOrigin;
 		pActionData->bActive = true;
 	}
-	else // device not found, consider it disconnected
-	{
-		pActionData->activeOrigin = vr::k_ulInvalidActionHandle;
-		pActionData->pose.bPoseIsValid = false;
-		pActionData->pose.bDeviceIsConnected = false;
-		pActionData->bActive = false;
-	}
 
+	// if we made it this far, device was not found, consider it disconnected, return without an error code
 	return VRInputError_None;
 }
 
