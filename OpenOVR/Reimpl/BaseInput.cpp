@@ -1038,12 +1038,20 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 
 	float functionCallTimeInSeconds = BackendManager::Instance().GetTimeInSeconds();
 
+	// Initialise the action data to being invalid, in case we return without setting it
+	memset(pActionData, 0, unActionDataSize);
+	pActionData->x = 0;
+	pActionData->y = 0;
+	pActionData->z = 0;
+	pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle;
 	pActionData->bActive = false;
+	pActionData->fUpdateTime = 0;
+	pActionData->deltaX = 0;
+	pActionData->deltaY = 0;
+	pActionData->deltaZ = 0;
+
 	if (action == vr::k_ulInvalidActionHandle)
-	{
-		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle;
 		return VRInputError_InvalidHandle;
-	}
 
 	Action *analogAction = (Action*)action;
 
@@ -1058,16 +1066,7 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 		analogAction->rightInputValue == vr::k_ulInvalidInputValueHandle)
 	{
 		// If the action has no input, that means the action was defined in the action manifest but not defined in controller binding JSON.
-		// This probably means the binding is optional and not set up, so we will mark it as inactive.
-		pActionData->x = 0;
-		pActionData->y = 0;
-		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle;
-		pActionData->bActive = false;
-		pActionData->fUpdateTime = 0;
-		pActionData->deltaX = 0;
-		pActionData->deltaY = 0;
-		pActionData->deltaZ = 0;
-
+		// This probably means the binding is optional and not set up, so we will mark it as inactive and not return an error code
 		return VRInputError_None;
 	}
 
