@@ -1177,8 +1177,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		return VRInputError_None;
 	}
 
-	VRInputValueHandle_t activeOrigin = vr::k_ulInvalidInputValueHandle;
-	TrackedDeviceIndex_t trackedDeviceIndex;
+	VRInputValueHandle_t activeOrigin;
 
 	InputValue *inputValue;
 	// ulRestrictToDevice may tell us input handle to look at if both inputs are available
@@ -1188,36 +1187,31 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	{
 		activeOrigin = ulRestrictToDevice;
 		inputValue = (InputValue*)ulRestrictToDevice;
-		trackedDeviceIndex = inputValue->trackedDeviceIndex;
 	}
 	else if (analogAction->leftInputValue != vr::k_ulInvalidInputValueHandle)
 	{
 		activeOrigin = analogAction->leftInputValue;
 		inputValue = (InputValue*)analogAction->leftInputValue;
-		trackedDeviceIndex = inputValue->trackedDeviceIndex;
 	}
 	else
 	{
 		activeOrigin = analogAction->rightInputValue;
 		inputValue = (InputValue*)analogAction->rightInputValue;
-		trackedDeviceIndex = inputValue->trackedDeviceIndex;
 	}
 
-	if (inputValue->isConnected)
-	{
-		if (fPredictedSecondsFromNow != 0)
-		{
-			ITrackedDevice *device = BackendManager::Instance().GetDevice(inputValue->trackedDeviceIndex);
+	if (inputValue->isConnected) {
+		ITrackedDevice* device = BackendManager::Instance().GetDevice(inputValue->trackedDeviceIndex);
+
+		if (device == nullptr) // device must have just timed out or disconnected, return without an error code
+			return VRInputError_None;
+
+		if (fPredictedSecondsFromNow != 0) {
 			device->GetPose(eOrigin, &pActionData->pose, TrackingStateType_Prediction, fPredictedSecondsFromNow);
-		}
-		else
-		{
+		} else {
 			// Note that this forces dual-origin mode on the LibOVR driver (OculusDevice.cpp), but it seems
 			// perfectly stable at this point.
 			// Also note that to completely fix the input lag issue, passing TrackingStateType_Rendering into
 			// GetPose had to happen in GetPoseActionData instead of UpdateActionState.
-
-			ITrackedDevice *device = BackendManager::Instance().GetDevice(inputValue->trackedDeviceIndex);
 			device->GetPose(eOrigin, &pActionData->pose, TrackingStateType_Rendering);
 		}
 
