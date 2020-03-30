@@ -228,7 +228,7 @@ the MIT licence, a copy of which can be found in the `LICENSE_INIH` file of this
 ### Microblink Build
 
 This program uses a part of Psiha's and Microblink's [build](https://github.com/microblink/build) CMake utilities
-library. This is available under the two-clause BSD licence, a copy of which can be found in the 'LICENCE_BUILD_UTIL.txt'
+library. This is available under the two-clause BSD licence, a copy of which can be found in the `LICENCE_BUILD_UTIL.txt`
 file of this repository.
 
 ## Compiling (**for developers**)
