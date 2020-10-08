@@ -660,7 +660,35 @@ for i in all_interfaces:
     if i.__class__ != InterfaceDef: continue
     all_openvr_interfaces.remove(i.interface_v() + ".h")
 
+# Here's some interfaces we haven't added and won't immediately add - categorise these
+# separately from the rest, so when we add a new OpenVR header we can see what was added
+known_unimplemented_interfaces = [
+    "IVRDebug_001.h",
+    "IVRDriverManager_001.h",
+    "IVRHeadsetView_001.h",
+    "IVRInput_003.h",
+    "IVRIOBuffer_001.h",
+    "IVRIOBuffer_002.h",
+    "IVRNotifications_002.h",
+    "IVROverlay_012.h",
+    "IVRResources_001.h",
+    "IVRSpatialAnchors_001.h",
+    "IVRTrackedCamera_003.h",
+    "IVRTrackedCamera_005.h",
+    "IVRTrackedCamera_006.h",
+]
+
+if len(known_unimplemented_interfaces) != 0:
+    print("Note: Old/known unimplemented interfaces:")
+    for iface in known_unimplemented_interfaces:
+        print("\t" + iface)
+        if iface not in all_openvr_interfaces:
+            # Keep this as one line so you can easily search for it
+            msg = "Interface %s was marked as unimplemented but is now implemented. This is great, please remove it from Reimpl/generate.py"
+            raise Exception(msg % iface)
+        all_openvr_interfaces.remove(iface)
+
 if len(all_openvr_interfaces) != 0:
-    print("Note: Unimplemented interfaces:")
+    print("Note: New unimplemented interfaces:")
     for i in all_openvr_interfaces:
         print("\t" + i)
