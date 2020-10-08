@@ -158,6 +158,8 @@ public:
 	*
 	* NOTE: This function overrides the user's previously saved seated zero pose and should only be called as the result of a user action.
 	* Users are also able to set their seated zero pose via the OpenVR Dashboard.
+	*
+	* NOTE: As of OpenVR 1.13.10, this is now called BaseChaperone::ResetZeroPose
 	**/
 	virtual void ResetSeatedZeroPose();
 

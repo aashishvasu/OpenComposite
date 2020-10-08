@@ -92,3 +92,7 @@ bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t &minPoint, vr::HmdVector3_t
 
 	return true;
 }
+
+void BaseChaperone::ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin) {
+	STUBBED();
+}
