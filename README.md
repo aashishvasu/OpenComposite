@@ -2,7 +2,6 @@
 
 [![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
 [![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg)](https://ci.appveyor.com/project/ZNix/openovr)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BXJJ984LPFV44&source=url)
 
 OpenComposite (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
@@ -228,7 +227,7 @@ the MIT licence, a copy of which can be found in the `LICENSE_INIH` file of this
 ### Microblink Build
 
 This program uses a part of Psiha's and Microblink's [build](https://github.com/microblink/build) CMake utilities
-library. This is available under the two-clause BSD licence, a copy of which can be found in the 'LICENCE_BUILD_UTIL.txt'
+library. This is available under the two-clause BSD licence, a copy of which can be found in the `LICENCE_BUILD_UTIL.txt`
 file of this repository.
 
 ## Compiling (**for developers**)

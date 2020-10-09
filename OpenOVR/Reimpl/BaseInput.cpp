@@ -130,7 +130,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char *pchActionManifestPath
 			actionSet->usage = json["usage"].asString();
 
 			_stringActionSetMap[name] = actionSet;
-			return VRInputError_None;
 		}
 	}
 
@@ -579,6 +578,26 @@ void BaseInput::ProcessInputSource(Json::Value inputJson, VRActionHandle_t actio
 	VRInputValueHandle_t inputValueHandle = vr::k_ulInvalidInputValueHandle;
 	string path = inputJson["path"].asString();
 
+	// Find the physical type of the source. This depends on what physical control (eg, thumbstick or
+	//  a button) it's mapped to. Put it here in a lambda since we need to know the path of
+	//  the device (eg, /usr/hand/left) to find it out without doing ugly string parsing.
+	// TODO move this in later on, it was a lambda before when there were two copies of the ActionSource code
+	auto findPhysicalType = [&path](const string& device) -> string {
+		string input = path.substr(device.size());
+		if (input == "/input/a" || input == "/input/b" || input == "/input/x" || input == "/input/y")
+			return "button";
+		if (input == "/input/system")
+			return "button"; // Menu button
+		else if (input == "/input/grip" || input == "/input/trigger")
+			return "trigger";
+		else if (input == "/input/joystick" || input == "/input/trackpad")
+			// TODO should '/input/trackpad' return 'trackpad'?
+			return "joystick";
+		else
+			// Should never happen, at least give us a descriptive error
+			OOVR_ABORTF("BaseInput::ProcessInputSource unknown input name (phys-dev): '%s' for '%s'", input.c_str(), path.c_str());
+	};
+
 	string left = "/user/hand/left";
 	string right = "/user/hand/right";
 	string pathLeftSubst = path.substr(0, left.size());
@@ -605,6 +624,7 @@ void BaseInput::ProcessInputSource(Json::Value inputJson, VRActionHandle_t actio
 	actionSource->sourceMode = inputJson["mode"].asString();
 	actionSource->sourcePath = path;
 	actionSource->sourceDevice = pathDirection;
+	actionSource->sourcePhysicalType = findPhysicalType(pathDirection);
 	actionSource->sourceType = sourceType;
 	actionSource->parameterSubMode = parameterSubMode;
 	actionSource->actionSetName = actionSetName;
@@ -1436,7 +1456,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 
 	Action *vibrationAction = (Action*)action;
 
-	InputValue *inputValue;
+	InputValue *inputValue = nullptr;
 
 	// ulRestrictToDevice may tell us input handle to look at if both inputs are available
 	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
@@ -1454,6 +1474,12 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 	else if (vibrationAction->rightInputValue != k_ulInvalidInputValueHandle)
 	{
 		inputValue = (InputValue*)vibrationAction->rightInputValue;
+	}
+
+	if (inputValue == nullptr) {
+		OOVR_LOGF("WARN: Ignoring haptic action for unbound source: $d, %s", ulRestrictToDevice, vibrationAction->name.c_str());
+		// Should this be InvalidDevice?
+		return VRInputError_None;
 	}
 
 	ITrackedDevice *device = BackendManager::Instance().GetDevice(inputValue->trackedDeviceIndex);
@@ -1565,11 +1591,15 @@ EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOV
 
 	auto *action = (Action *) actionHandle;
 
-	OOVR_FALSE_ABORT(unBindingInfoSize == sizeof(OOVR_InputBindingInfo_t));
+	// In OpenVR 1.10.30 the size of InputBindingInfo changed when they added rchInputSourceType.
+	// Thus we have to work with both sizes, and can't just assert it to be the same as our struct.
+	// To implement this we'll write into our full-size struct, then copy it out later.
+	// This does mean a limit on the maximum number of bindings, but this should be more than enough.
+	const int maxSourceCount = 32;
+	OOVR_InputBindingInfo_t fullInfo[maxSourceCount] = {};
 
-	for (int i = 0; i < unBindingInfoCount; i++) {
-		pOriginInfo[i] = {0};
-	}
+	// Zero out the input infos, while respecting whatever size they may have
+	ZeroMemory(pOriginInfo, unBindingInfoSize * unBindingInfoCount);
 
 	// For some reason No Man's Sky calls this with a nullptr handle
 	// Haven't confirmed this is how SteamVR behaves, I'm guessing
@@ -1583,19 +1613,59 @@ EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOV
 	uint32_t i = 0;
 
 	for (const ActionSource *src : action->leftActionSources) {
-		if (i >= unBindingInfoCount)
-			break;
-		GetActionSourceBindingInfo(action, src, &pOriginInfo[i++]);
+		// Note about fencepost errors: it's fine to exit the loop with i == maxSourceCount, just not add one more
+		if (i >= maxSourceCount)
+			goto tooManyActions;
+		GetActionSourceBindingInfo(action, src, &fullInfo[i++]);
 	}
 
 	for (const ActionSource *src : action->rightActionSources) {
-		if (i >= unBindingInfoCount)
-			break;
-		GetActionSourceBindingInfo(action, src, &pOriginInfo[i++]);
+		if (i >= maxSourceCount)
+			goto tooManyActions;
+		GetActionSourceBindingInfo(action, src, &fullInfo[i++]);
 	}
 
+	// If we hit the limit, we should (tested in SteamVR) return VRInputError_BufferTooSmall, return the
+	//  real number of actions in punReturnedBindingInfoCount, and leave pOriginInfo zeroed out.
+	// Until <commit ID> (see #199) we didn't handle this properly and just returned as many as there was
+	//  room in the buffer for, but now we do this properly.
+	// TODO insert the commit IDs where we fixed this.
 	*punReturnedBindingInfoCount = i;
+	if (i > unBindingInfoCount) {
+		return VRInputError_BufferTooSmall;
+	}
+
+	// Make sure we know how to handle this version of the struct
+	// We assume here that the struct size always changes if a change is made, which seems perfectly reasonable.
+	switch (unBindingInfoSize) {
+	case sizeof(OOVR_InputBindingInfo_t):
+		// If it's the newest version of the struct that's fine, just copy 1:1
+		break;
+	case 512:
+		// This is how large the struct was prior to OpenVR 1.10.30 - since a field was added to
+		//  the end of the struct, we're safe to just copy the first unBindingInfoSize bytes over.
+		break;
+	default:
+		OOVR_ABORTF("BaseInput: InputBindingInfo_t is unknown length: %u", unBindingInfoSize);
+	}
+
+	// Copy everything into the output buffer
+	for (int j = 0; j < i; j++) {
+		// Since the size of InputBindingInfo_t might be different at runtime, we can't just index it normally
+		// Thus calculate the offset in using the real size instead
+		char* realOriginInfo = ((char*)pOriginInfo) + (j * unBindingInfoSize);
+		memcpy(realOriginInfo, &fullInfo[j], unBindingInfoSize);
+	}
+
 	return VRInputError_None;
+
+tooManyActions:
+	// Not sure what the appropriate error here is, this is probably sufficiently obscure to match the
+	//  obscurity of a default binding attaching 32 sources to one action.
+	// Ideally we'd return upto the limit of what we can handle and skip the rest, but this code will most
+	//  likely never run.
+	*punReturnedBindingInfoCount = 0;
+	return VRInputError_MaxCapacityReached;
 }
 
 void BaseInput::GetActionSourceBindingInfo(const Action *action,
@@ -1609,6 +1679,7 @@ void BaseInput::GetActionSourceBindingInfo(const Action *action,
 	//   rchInputPathName = "/input/trigger"
 	//   rchModeName = "button"
 	//   rchSlotName = "click"
+	//   rchInputSourceType = "trigger"
 	// }
 
 	// TODO cleanup with define
@@ -1621,6 +1692,8 @@ void BaseInput::GetActionSourceBindingInfo(const Action *action,
 
 	string inputPath = src->sourcePath.substr(src->sourceDevice.size());
 	strcpy_s(result->rchInputPathName, sizeof(result->rchInputPathName), inputPath.c_str());
+
+	strcpy_s(result->rchInputSourceType, sizeof(result->rchInputSourceType), src->sourcePhysicalType.c_str());
 
 	// Note there still seems to be some issues with No Man's Sky's control display - it's showing everything
 	// as belonging to the left controller. Not sure whether that's the fault of this code or not, but in

@@ -39,6 +39,19 @@ public:
 	/** Force the bounds to show, mostly for utilities **/
 	void ForceBoundsVisible(bool bForce);
 
+	/** Sets the zero pose for the given tracker coordinate system to the current position and yaw of the HMD. After
+	 * ResetZeroPose all GetDeviceToAbsoluteTrackingPose calls as the origin will be relative to this new zero pose.
+	 * The new zero coordinate system will not change the fact that the Y axis is up in the real world, so the next
+	 * pose returned from GetDeviceToAbsoluteTrackingPose after a call to ResetZeroPose may not be exactly an
+	 * identity matrix.
+	 *
+	 * NOTE: This function overrides the user's previously saved zero pose and should only be called as the result of a user action.
+	 * Users are also able to set their zero pose via the OpenVR Dashboard.
+	 *
+	 * NOTE: This used to be called BaseSystem::ResetSeatedZeroPose but was moved in OpenVR 1.13.10
+	 **/
+	virtual void ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin);
+
 	enum BaseChaperoneCalibrationState {
 		// OK!
 		ChaperoneCalibrationState_OK = 1,									// Chaperone is fully calibrated and working correctly

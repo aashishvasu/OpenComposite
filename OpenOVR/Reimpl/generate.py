@@ -45,6 +45,7 @@ context = dict()
 
 libparse.read_context(context, "../../SplitOpenVRHeaders/OpenVR/interfaces/vrtypes.h", "vr")
 
+
 class InterfaceDef:
     def __init__(self, version, name, flags, interface_context):
         self._version = version
@@ -97,13 +98,16 @@ class InterfaceDef:
     def __str__(self):
         raise Exception("repl")
 
+
 class CustomInterface(InterfaceDef):
     def header_filename(self):
         return "OpenVR/custom_interfaces/%s.h" % (self.interface_v())
 
+
 class DriverInterface(InterfaceDef):
     def interface_v(self):
         return "driver_%s_%s" % (self.interface(), self.version())
+
 
 class APIInterface(InterfaceDef):
     def header_filename(self):
@@ -127,12 +131,15 @@ class APIInterface(InterfaceDef):
     def varname(self):
         return "OC" + self.name()
 
+
 bases_header_fn = "static_bases.gen.h"
 bases_header = open(bases_header_fn, "w", newline='\n')
 bases_header.write("#pragma once\n")
 bases_header.write("#include <memory>\n")
 
 base_class_getters = []
+
+
 def check_base_class_inst(interface, impl):
     if interface.basename() in base_class_getters:
         return
@@ -157,12 +164,14 @@ def check_base_class_inst(interface, impl):
     impl.write("std::shared_ptr<%s> GetCreate%s() {\n" % (cls, getter_name))
     impl.write("\tstd::shared_ptr<%s> ret = %s.lock();\n" % (cls, var))
     impl.write("\tif(!ret) {\n")
-    impl.write("\t\tret = std::shared_ptr<%s>(new %s(), [](%s *obj){ %s_unsafe = NULL; delete obj; });\n" % (cls, cls, cls, var))
+    impl.write("\t\tret = std::shared_ptr<%s>(new %s(), [](%s *obj){ %s_unsafe = NULL; delete obj; });\n" % (
+        cls, cls, cls, var))
     impl.write("\t\t%s = ret;\n" % var)
     impl.write("\t\t%s_unsafe = ret.get();\n" % var)
     impl.write("\t}\n")
     impl.write("\treturn ret;\n")
     impl.write("}\n")
+
 
 def gen_interface(interface, header, impl, namespace="vr", basedir=""):
     base = interface.basename()
@@ -195,9 +204,9 @@ def gen_interface(interface, header, impl, namespace="vr", basedir=""):
                 funcs.append(func)
                 args = ", ".join(
                     map(lambda f: "%s %s" % (f.type, f.name), func.args)
-                    )
+                )
 
-                header.write("\t%s %s(%s);\n" % ( func.return_type, func.name, args ))
+                header.write("\t%s %s(%s);\n" % (func.return_type, func.name, args))
 
                 # Generate definition
                 # Only do so if the user hasn't defined it
@@ -216,12 +225,14 @@ def gen_interface(interface, header, impl, namespace="vr", basedir=""):
                     if namespace in func.return_type:
                         safereturn += " (%s)" % func.return_type
 
-                    impl.write("%s %s::%s(%s) { %s base->%s(%s); }\n" % ( func.return_type, cname, func.name, args, safereturn, func.name, nargs ))
+                    impl.write("%s %s::%s(%s) { %s base->%s(%s); }\n" % (
+                        func.return_type, cname, func.name, args, safereturn, func.name, nargs))
 
     header.write("};\n")
 
     gen_fntable(interface, funcs, impl)
     return funcs
+
 
 def gen_fntable(interface, funcs, out):
     cname = interface.proxy_class_name()
@@ -235,11 +246,13 @@ def gen_fntable(interface, funcs, out):
 
     # Generate the stub functions
     for func in funcs:
-        nargs = ", ".join([a.name for a in func.args]) # name-only arguments, eg "a, *b, c"
+        nargs = ", ".join([a.name for a in func.args])  # name-only arguments, eg "a, *b, c"
         call_stmt = "return %s->%s(%s);" % (ivarname, func.name, nargs)
 
-        fargs = ", ".join(["%s %s" % (a.type, a.name) for a in func.args]) # full arguments, eg "int a, char *b, uint64_t c"
-        out.write("static %s OPENVR_FNTABLE_CALLTYPE %s(%s) { %s }\n" % (func.return_type, fnametemplate % func.name, fargs, call_stmt))
+        fargs = ", ".join(
+            ["%s %s" % (a.type, a.name) for a in func.args])  # full arguments, eg "int a, char *b, uint64_t c"
+        out.write("static %s OPENVR_FNTABLE_CALLTYPE %s(%s) { %s }\n" % (
+            func.return_type, fnametemplate % func.name, fargs, call_stmt))
 
     # Generate the array
     out.write("static void *%s[] = {\n" % arrvarname)
@@ -251,8 +264,10 @@ def gen_fntable(interface, funcs, out):
     # Generate the getter
     out.write("void** %s::_GetStatFuncList() { %s = this; return %s; }\n" % (cname, ivarname, arrvarname))
 
+
 def gen_api_interface(interface, header, impl):
     return gen_interface(interface, header, impl, namespace="ocapi", basedir="API/")
+
 
 def write_api_class(iface, funcs, cxxapi, capi, csapi):
     interface = iface.interface()
@@ -304,7 +319,7 @@ def write_api_class(iface, funcs, cxxapi, capi, csapi):
     csapi.write("public class %s\n{\n" % cvr)
     csapi.write("\tprivate %s fn;\n" % interface)
     csapi.write("\tinternal %s(IntPtr ptr) {\n" % cvr)
-    csapi.write("\t\tfn = (%s)Marshal.PtrToStructure(ptr, typeof(%s));\n" % (interface,interface))
+    csapi.write("\t\tfn = (%s)Marshal.PtrToStructure(ptr, typeof(%s));\n" % (interface, interface))
     csapi.write("\t}\n")
 
     # Stub functions
@@ -321,6 +336,7 @@ def write_api_class(iface, funcs, cxxapi, capi, csapi):
         csapi.write("\t}\n")
 
     csapi.write("}\n")
+
 
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
 baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=]*))?\s*\)")
@@ -506,7 +522,6 @@ impl.write("\tif(success) *success = false;\n")
 impl.write("\treturn 0;\n")
 impl.write("}\n")
 
-
 impl.close()
 
 # Write out the API interface stuff
@@ -591,7 +606,7 @@ for i in api_interfaces:
     # If we've already tried to get the interface, return it
     # Note it might be unsuccessful and we don't want to try over and over, so that's why
     #  we don't use `!=null` here.
-    api_cs.write("\t\tif(m_%s_done) return m_%s;\n" % (name,name))
+    api_cs.write("\t\tif(m_%s_done) return m_%s;\n" % (name, name))
 
     # Check the interface is available, and if so look up the interface
     api_cs.write("\t\tif(OpenVR.IsInterfaceVersionValid(%s.Version)) {\n" % cls)
@@ -600,7 +615,7 @@ for i in api_interfaces:
 
     # If the call was successful and didn't return null, create the wrapper object
     api_cs.write("\t\t\tif(ptr != IntPtr.Zero && eError == EVRInitError.None)\n")
-    api_cs.write("\t\t\t\tm_%s = new %s(ptr);\n" % (name,cvr))
+    api_cs.write("\t\t\t\tm_%s = new %s(ptr);\n" % (name, cvr))
     api_cs.write("\t\t}\n")
 
     # Mark the lookup as done so we don't try this again (unless there's a new VR session, see CheckClear).
@@ -645,7 +660,35 @@ for i in all_interfaces:
     if i.__class__ != InterfaceDef: continue
     all_openvr_interfaces.remove(i.interface_v() + ".h")
 
+# Here's some interfaces we haven't added and won't immediately add - categorise these
+# separately from the rest, so when we add a new OpenVR header we can see what was added
+known_unimplemented_interfaces = [
+    "IVRDebug_001.h",
+    "IVRDriverManager_001.h",
+    "IVRHeadsetView_001.h",
+    "IVRInput_003.h",
+    "IVRIOBuffer_001.h",
+    "IVRIOBuffer_002.h",
+    "IVRNotifications_002.h",
+    "IVROverlay_012.h",
+    "IVRResources_001.h",
+    "IVRSpatialAnchors_001.h",
+    "IVRTrackedCamera_003.h",
+    "IVRTrackedCamera_005.h",
+    "IVRTrackedCamera_006.h",
+]
+
+if len(known_unimplemented_interfaces) != 0:
+    print("Note: Old/known unimplemented interfaces:")
+    for iface in known_unimplemented_interfaces:
+        print("\t" + iface)
+        if iface not in all_openvr_interfaces:
+            # Keep this as one line so you can easily search for it
+            msg = "Interface %s was marked as unimplemented but is now implemented. This is great, please remove it from Reimpl/generate.py"
+            raise Exception(msg % iface)
+        all_openvr_interfaces.remove(iface)
+
 if len(all_openvr_interfaces) != 0:
-    print("Note: Unimplemented interfaces:")
+    print("Note: New unimplemented interfaces:")
     for i in all_openvr_interfaces:
         print("\t" + i)

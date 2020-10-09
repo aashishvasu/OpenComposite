@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseChaperone.h"
+#include "BaseSystem.h"
+#include "static_bases.gen.h"
 
 #include "Drivers/Backend.h"
 
@@ -91,4 +93,9 @@ bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t &minPoint, vr::HmdVector3_t
 	}
 
 	return true;
+}
+
+void BaseChaperone::ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin) {
+	// TODO do we have to do anything about the tracking origin?
+	GetUnsafeBaseSystem()->ResetSeatedZeroPose();
 }

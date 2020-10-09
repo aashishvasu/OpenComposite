@@ -3,3 +3,4 @@
 #include "BaseCommon.h"
 
 GEN_INTERFACE("Chaperone", "003")
+GEN_INTERFACE("Chaperone", "004")
