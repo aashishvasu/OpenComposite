@@ -130,7 +130,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char *pchActionManifestPath
 			actionSet->usage = json["usage"].asString();
 
 			_stringActionSetMap[name] = actionSet;
-			return VRInputError_None;
 		}
 	}
 
