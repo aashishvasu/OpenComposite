@@ -166,6 +166,22 @@ struct OOVR_InputBindingInfo_t
 	char rchInputPathName[128];
 	char rchModeName[128];
 	char rchSlotName[128];
+
+	/**
+	 * The type of the physical input that the user actuates. For example a button bound to the thumbstick click
+	 * returns 'joystick' and the trigger mapped as a digital button returns 'trigger'.
+	 *
+	 * The known values are:
+	 * - joystick (the thumbstick)
+	 * - trigger (the main trigger and the grip)
+	 * - button (the X/Y/A/B buttons and the menu button)
+	 *
+	 * Note: no documentation I could find on this, found it by running SteamVR and noting these values down
+	 *
+	 * @author ZNix
+	 * @since OpenVR 1.10.30
+	 */
+	char rchInputSourceType[32];
 };
 
 class BaseInput {
@@ -364,6 +380,7 @@ private:
 		std::string sourceMode;
 		std::string sourcePath;
 		std::string sourceDevice;
+		std::string sourcePhysicalType; // Maps to OOVR_InputBindingInfo_t::rchInputSourceType
 		std::string actionSetName;
 		std::string parameterSubMode;
 		double sourceParametersActivateThreshold = -1;
