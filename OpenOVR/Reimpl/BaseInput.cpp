@@ -1390,7 +1390,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 
 	Action *vibrationAction = (Action*)action;
 
-	InputValue *inputValue;
+	InputValue *inputValue = nullptr;
 
 	// ulRestrictToDevice may tell us input handle to look at if both inputs are available
 	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle)
@@ -1408,6 +1408,12 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 	else if (vibrationAction->rightInputValue != k_ulInvalidInputValueHandle)
 	{
 		inputValue = (InputValue*)vibrationAction->rightInputValue;
+	}
+
+	if (inputValue == nullptr) {
+		OOVR_LOGF("WARN: Ignoring haptic action for unbound source: $d, %s", ulRestrictToDevice, vibrationAction->name.c_str());
+		// Should this be InvalidDevice?
+		return VRInputError_None;
 	}
 
 	ITrackedDevice *device = BackendManager::Instance().GetDevice(inputValue->trackedDeviceIndex);
