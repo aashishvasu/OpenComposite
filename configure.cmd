@@ -31,5 +31,5 @@ cd "%~dp0/SplitOpenVRHeaders/OpenVR"
 py -3 generate.py --nooverwrite
 
 echo Generating Interface Stubs
-cd "%~dp0/OpenOVR/Reimpl"
-py -3 generate.py
+cd "%~dp0/scripts"
+py -3 stubs.py
