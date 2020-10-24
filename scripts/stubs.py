@@ -58,9 +58,6 @@ interfaces_list = [
     "Mailbox",
     "ControlPanel",
 
-    # OpenComposite-specific interfaces
-    "OCSystem",
-
     # Driver interfaces
     "ServerDriverHost",
 ]

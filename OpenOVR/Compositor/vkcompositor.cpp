@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "compositor.h"
 
-#if defined(SUPPORT_VK)
+#if defined(SUPPORT_VK) && !defined(OC_XR_PORT)
 
 #include "libovr_wrapper.h"
 #include "OVR_CAPI_Vk.h"
@@ -284,6 +284,7 @@ void VkCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 	vr::VRVulkanTextureData_t &tex = *(vr::VRVulkanTextureData_t*) texture->handle;
 	ovrRecti &viewport = layer.Viewport[eye];
 
+	// TODO deduplicate with dx11compositor, and use for all compositors
 	if (ptrBounds) {
 		vr::VRTextureBounds_t bounds = *ptrBounds;
 

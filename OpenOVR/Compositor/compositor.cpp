@@ -1,11 +1,11 @@
 #include "stdafx.h"
+
 #include "compositor.h"
 
-#include "libovr_wrapper.h"
-
-Compositor::~Compositor() {
+Compositor::~Compositor()
+{
 	if (chain) {
-		ovr_DestroyTextureSwapChain(*ovr::session, chain);
-		chain = NULL;
+		xrDestroySwapchain(chain);
+		chain = nullptr;
 	}
 }

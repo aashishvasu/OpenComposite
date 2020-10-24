@@ -31,13 +31,15 @@ if (!OVR_SUCCESS(expression)) { \
 	OOVR_LOGF("OVR Call failed.  Error code: %d  Descr: %s", e.Result, e.ErrorString); \
 }
 
-#define OOVR_FAILED_OVR_ABORT(expression) \
-if (!OVR_SUCCESS(expression)) { \
-	ovrErrorInfo e = {}; \
-	ovr_GetLastErrorInfo(&e); \
-	std::string err = "OVR Call failed, aborting.  Error code: " + std::to_string(e.Result) + "  Descr: " + std::string(e.ErrorString); \
-	OOVR_ABORT(err.c_str()); \
-}
+// TODO does OpenXR have an equivalent of ovr_GetLastErrorInfo?
+#define OOVR_FAILED_XR_ABORT(expression)                                                                              \
+	{                                                                                                                 \
+		XrResult failed_xr_abort_result = (expression);                                                               \
+		if (XR_FAILED(failed_xr_abort_result)) {                                                                      \
+			std::string err = "OpenXR Call failed, aborting.  Error code: " + std::to_string(failed_xr_abort_result); \
+			OOVR_ABORT(err.c_str());                                                                                  \
+		}                                                                                                             \
+	}
 
 // Yay for there not being a PI constant in the standard
 // (technically it has absolutely nothing to do with logging but this is a convenient place to put it)

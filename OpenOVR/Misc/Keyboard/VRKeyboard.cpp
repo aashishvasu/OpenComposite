@@ -1,4 +1,7 @@
 #include "stdafx.h"
+
+#ifndef OC_XR_PORT
+
 #include "VRKeyboard.h"
 #include "libovr_wrapper.h"
 
@@ -462,3 +465,5 @@ void VRKeyboard::SubmitEvent(vr::EVREventType ev, wchar_t ch) {
 
 	eventDispatch(evt);
 }
+
+#endif

@@ -2,14 +2,11 @@
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
 #include "OpenVR/interfaces/IVRCompositor_022.h"
 
-#include "Extras/OVR_Math.h"
-
 #include "../Compositor/compositor.h" // TODO don't import from OCOVR, and remove the "../"
 
 #include <vector>
 
 #ifdef SUPPORT_DX
-#include "OVR_CAPI_D3D.h"
 // Let's really hope noone tries to use DX10
 #include "d3d11.h"
 #include "d3d12.h"
@@ -135,13 +132,15 @@ public:
 	// Used in CVRSystem
 	void GetSinglePoseRendering(vr::ETrackingUniverseOrigin origin, vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
 
-	static OVR::Matrix4f GetHandTransform();
+	static MfMatrix4f GetHandTransform();
 
 	/** Creates API specific Compositor */
-	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize);
+	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture, const XrExtent2Di& fovTextureSize);
 
+#ifndef OC_XR_PORT
 	// TODO clean this up, and make the keyboard work with OpenGL and Vulkan too
 	static DX11Compositor* dxcomp;
+#endif
 
 public:
 	// OpenVR interface methods from here on:

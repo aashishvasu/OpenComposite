@@ -12,8 +12,13 @@
 #include <sstream>
 #include <vector>
 
+#include <glm/gtx/transform.hpp>
+
 using namespace std;
-using namespace OVR;
+using glm::vec3;
+using glm::vec4;
+using glm::mat4;
+using glm::quat;
 
 #pragma region structs
 
@@ -137,7 +142,7 @@ static OOVR_RenderModel_Vertex_t split_face(
 EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char * pchRenderModelName, RenderModel_t ** renderModel) {
 	string name = pchRenderModelName;
 	int rid;
-	int sided;
+	float sided;
 
 	if (name == "renderLeftHand") {
 		rid = RES_O_HAND_LEFT;
@@ -165,14 +170,14 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char * pchRend
 	vector<OOVR_RenderModel_Vertex_t> vertexData;
 
 	// Transform to line up the model with the Touch controller
-	Matrix4f modelTransform = Matrix4f(Quatf(Vector3f(0, 0, 1), sided * math_pi / 2));
-	modelTransform.SetTranslation(Vector3f(sided * 0.015f, 0.0f, 0.03f));
+	mat4 modelTransform = mat4(glm::rotate(sided * math_pi / 2, vec3(0, 0, 1)));
+	modelTransform[3] = vec4(sided * 0.015f, 0.0f, 0.03f, 1.0f);
 
 	// SteamVR rotates it's models 180deg around the Y axis for some reason
-	modelTransform *= Matrix4f(Quatf(Vector3f(0, 1, 0), math_pi));
+	modelTransform *= mat4(glm::rotate(math_pi, vec3(0, 1, 0)));
 
-	Matrix4f transform = BaseCompositor::GetHandTransform().Inverted() * modelTransform;
-	Quatf rotate = Quatf(transform);
+	mat4 transform = glm::inverse(BaseCompositor::GetHandTransform()) * modelTransform;
+	quat rotate = quat(transform);
 
 	while (!res.eof()) {
 		string op;
@@ -180,18 +185,16 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char * pchRend
 
 		if (op == "v") {
 			// Vertex
-			Vector3f v;
+			vec3 v;
 			res >> v.x >> v.y >> v.z;
 
 			// Maya exports in cm, so translate that to meters
 			v *= 0.01f;
 
 			// Transform from the OVR pose to the SteamVR pose, and rotate the hand model at the same time
-			v = transform.Transform(v);
+			v = transform * vec4(v, 0);
 
-			vr::HmdVector3_t res;
-			O2S_v3f(v, res);
-			verts.push_back(res);
+			verts.push_back(G2S_v3f(v));
 		}
 		else if (op == "vt") {
 			// UV
@@ -201,16 +204,14 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char * pchRend
 		}
 		else if (op == "vn") {
 			// Normal
-			Vector3f v;
+			vec3 v;
 			res >> v.x >> v.y >> v.z;
 
 			// Transform from the OVR pose to the SteamVR pose
 			// Don't translate it though, since it's a normal
-			v = rotate * v;
+			v = rotate * vec4(v, 0);
 
-			vr::HmdVector3_t res;
-			O2S_v3f(v, res);
-			normals.push_back(res);
+			normals.push_back(G2S_v3f(v));
 		}
 		else if (op == "f") {
 			// Face
@@ -290,7 +291,7 @@ EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t tex
 	// Grab the desired colour
 	vr::HmdColor_t colour = oovr_global_configuration.HandColour();
 
-	pix_t pixColour = { colour.r * 255, colour.g * 255, colour.b * 255, 255 };
+	pix_t pixColour = { (uint8_t)(colour.r * 255), (uint8_t)(colour.g * 255), (uint8_t)(colour.b * 255), 255 };
 
 	// Since we don't know what the map flags are, make an identical texture and copy across
 

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#ifndef OC_XR_PORT
 #include "compositor.h"
 #include "libovr_wrapper.h"
 
@@ -186,6 +187,7 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 	Invoke(texture);
 
 	// Set the viewport up
+    // TODO deduplicate with dx11compositor, and use for all compositors
 	ovrRecti &viewport = layer.Viewport[eye];
 	if (ptrBounds) {
 		vr::VRTextureBounds_t bounds = *ptrBounds;
@@ -240,3 +242,4 @@ if(inputDesc.name != chainDesc.chainName) FAIL(name);
 
 	return usable;
 }
+#endif

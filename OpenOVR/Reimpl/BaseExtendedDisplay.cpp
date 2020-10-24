@@ -2,6 +2,8 @@
 #define BASE_IMPL
 #include "BaseExtendedDisplay.h"
 
+#ifndef OC_XR_PORT
+
 #include "libovr_wrapper.h"
 #include "OVR_CAPI.h"
 #include <string>
@@ -29,3 +31,5 @@ void BaseExtendedDisplay::GetEyeOutputViewport(vr::EVREye eEye, uint32_t * pnX, 
 void BaseExtendedDisplay::GetDXGIOutputInfo(int32_t * pnAdapterIndex, int32_t * pnAdapterOutputIndex) {
 	STUBBED();
 }
+
+#endif

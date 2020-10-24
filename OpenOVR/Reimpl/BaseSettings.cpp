@@ -6,10 +6,11 @@
 #include "Misc/Config.h"
 #include "BaseSystem.h"
 #include <string>
-#include <codecvt>
-#include "libovr_wrapper.h"
 
-#include "OVR_CAPI_Audio.h"
+#ifndef OC_XR_PORT
+// Required for the Oculus audio switching thing
+#include <codecvt>
+#endif
 
 #define STUBBED_BASIC() { \
 	string str = "Hit stubbed file at " __FILE__ " func "  " line " + to_string(__LINE__); \
@@ -216,6 +217,9 @@ void  BaseSettings::GetString(const char * pchSection, const char * pchSettingsK
 		}
 	}
 	else if (section == kk::k_pch_audio_Section) {
+#ifdef OC_XR_PORT
+		STUBBED();
+#else
 		// Sansar, and hopefully other games (since this very nicely solves the audio device problem), uses the
 		//  auto-switching SteamVR audio devices.
 		// See https://gitlab.com/znixian/OpenOVR/issues/65
@@ -234,6 +238,7 @@ void  BaseSettings::GetString(const char * pchSection, const char * pchSettingsK
 			result = conv.to_bytes(buff);
 			goto found;
 		}
+#endif
 	}
 
 	STUBBED();

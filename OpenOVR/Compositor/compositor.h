@@ -7,7 +7,7 @@
 #include <wrl/client.h>
 #include <atlbase.h>
 
-#include <Extras/OVR_Math.h>
+#include "../Misc/xrutil.h"
 
 #include <vector>
 #include <memory>
@@ -23,17 +23,17 @@ public:
 	// Only copy a texture - this can be used for overlays and such
 	virtual void Invoke(const vr::Texture_t * texture) = 0;
 
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) = 0;
+	virtual void Invoke(XruEye eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
+		vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView &viewport) = 0;
 
 	virtual void InvokeCubemap(const vr::Texture_t * textures) = 0;
 	virtual bool SupportsCubemap() { return false; }
 
-	virtual ovrTextureSwapChain GetSwapChain() { return chain; };
+	virtual XrSwapchain GetSwapChain() { return chain; };
 
 	virtual unsigned int GetFlags() { return 0; }
 
-	virtual OVR::Sizei GetSrcSize() { return srcSize; };
+	virtual XrExtent2Di GetSrcSize() { return srcSize; };
 
 	/**
 	 * Loads and unloads some context required for submitting textures to LibOVR. LoadSubmitContext is
@@ -44,12 +44,13 @@ public:
 	virtual void ResetSubmitContext() {};
 
 protected:
-	ovrTextureSwapChain chain = nullptr;
+	XrSwapchain chain = nullptr;
 
 	// TODO set in the Vulkan and DX12 compositors
-	OVR::Sizei srcSize = OVR::Sizei(0, 0);
+	XrExtent2Di srcSize = { 0, 0 };
 };
 
+#ifndef OC_XR_PORT
 class DX12Compositor : public Compositor {
 public:
 	DX12Compositor(vr::D3D12TextureData_t *td, OVR::Sizei &bufferSize, ovrTextureSwapChain *chains);
@@ -173,3 +174,4 @@ private:
 
 	uint32_t graphicsQueueFamilyId = 0;
 };
+#endif

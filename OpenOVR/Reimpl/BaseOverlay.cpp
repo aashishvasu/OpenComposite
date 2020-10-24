@@ -2,10 +2,8 @@
 #define BASE_IMPL
 #include "BaseOverlay.h"
 #include "BaseSystem.h"
-#include "OVR_CAPI.h"
 #include <string>
 #include "Compositor/compositor.h"
-#include "libovr_wrapper.h"
 #include "convert.h"
 #include "BaseCompositor.h"
 #include "static_bases.gen.h"
@@ -13,8 +11,8 @@
 #include "Misc/ScopeGuard.h"
 
 using namespace std;
-using Vec3 = OVR::Vector3f;
-using Mat4 = OVR::Matrix4f;
+using glm::vec3;
+using glm::mat4;
 
 // Class to represent an overlay
 class BaseOverlay::OverlayData {
@@ -38,7 +36,9 @@ public:
 
 	// Rendering
 	Texture_t texture = {};
+#ifndef OC_XR_PORT
 	ovrLayerQuad layerQuad = {};
+#endif
 	std::unique_ptr<Compositor> compositor;
 
 	// Transform
@@ -89,7 +89,9 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 	bool checkUsingInput = false;
 
 	if (keyboard) {
+#ifndef OC_XR_PORT
 		layerHeaders.push_back(keyboard->Update());
+#endif
 		checkUsingInput = true;
 
 		if (keyboard->IsClosed())
@@ -113,6 +115,7 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 			if (overlay.colour.a < 0.01)
 				continue;
 
+#ifndef OC_XR_PORT
 			// Calculate the texture's aspect ratio
 			const ovrSizei &srcSize = overlay.layerQuad.Viewport.Size;
 			const float aspect = srcSize.h > 0 ? static_cast<float>(srcSize.w) / srcSize.h : 1.0f;
@@ -149,6 +152,7 @@ int BaseOverlay::_BuildLayers(ovrLayerHeader_ * sceneLayer, ovrLayerHeader_ cons
 
 			// Finally, add it to the list of layers to be sent to LibOVR
 			layerHeaders.push_back(&overlay.layerQuad.Header);
+#endif
 		}
 	}
 
@@ -165,7 +169,9 @@ bool BaseOverlay::_HandleOverlayInput(EVREye side, TrackedDeviceIndex_t index, V
 	if (!keyboard)
 		return true;
 
+#ifndef OC_XR_PORT
 	keyboard->HandleOverlayInput(side, state, (float)ovr_GetTimeInSeconds());
+#endif
 	return false;
 }
 
@@ -189,6 +195,7 @@ EVROverlayError BaseOverlay::CreateOverlay(const char *pchOverlayKey, const char
 	overlays[pchOverlayKey] = data;
 	validOverlays.insert(data);
 
+#ifndef OC_XR_PORT
 	// Set up the LibOVR layer
 	OOVR_LOGF(R"(New texture overlay created "%s" "%s")", pchOverlayKey, pchOverlayName);
 	data->layerQuad.Header.Type = ovrLayerType_Quad;
@@ -209,6 +216,7 @@ EVROverlayError BaseOverlay::CreateOverlay(const char *pchOverlayKey, const char
 	// Contents texture starts at 0,0 - this is not overridden
 	data->layerQuad.Viewport.Pos.x = 0;
 	data->layerQuad.Viewport.Pos.y = 0;
+#endif
 
 	return VROverlayError_None;
 }
@@ -499,7 +507,9 @@ EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOve
 	//  imagine many apps will use a different origin for their overlays.
 
 	overlay->transformType = VROverlayTransform_Absolute;
+#ifndef OC_XR_PORT
 	overlay->layerQuad.QuadPoseCenter = S2O_om34_pose(*pmatTrackingOriginToOverlayTransform);
+#endif
 
 	return VROverlayError_None;
 }
@@ -565,7 +575,7 @@ bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREven
 	VREvent_t e = overlay->eventQueue.front();
 	overlay->eventQueue.pop();
 
-	memcpy(pEvent, &e, min(sizeof(e), eventSize));
+	memcpy(pEvent, &e, min((uint32_t)sizeof(e), eventSize));
 
 	return true;
 }
@@ -651,6 +661,7 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 	if (!oovr_global_configuration.EnableLayers())
 		return VROverlayError_None;
 
+#ifndef OC_XR_PORT
 	if (!overlay->compositor) {
 		const auto size = ovr_GetFovTextureSize(*ovr::session, ovrEye_Left, ovr::hmdDesc.DefaultEyeFov[ovrEye_Left], 1);
 		overlay->compositor.reset(GetUnsafeBaseCompositor()->CreateCompositorAPI(pTexture, size));
@@ -667,6 +678,7 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 	overlay->layerQuad.ColorTexture = overlay->compositor->GetSwapChain();
 
 	OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(*ovr::session, overlay->layerQuad.ColorTexture));
+#endif
 
 	return VROverlayError_None;
 }
@@ -719,6 +731,7 @@ EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInp
 	const char * pchDescription, uint32_t unCharMax, const char * pchExistingText, bool bUseMinimalMode, uint64_t uUserValue,
 	VRKeyboard::eventDispatch_t eventDispatch) {
 
+#ifndef OC_XR_PORT
 	if (!BaseCompositor::dxcomp)
 		OOVR_ABORT("Keyboard currently only available on DX11 and DX10 games");
 
@@ -735,6 +748,9 @@ EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInp
 	if (system) {
 		system->_BlockInputsUntilReleased();
 	}
+#else
+	STUBBED();
+#endif
 
 	return VROverlayError_None;
 }

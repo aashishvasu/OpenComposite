@@ -30,93 +30,20 @@ else()
 target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib32/vulkan-1.lib)
 endif()
 
-# === LibOVR ===
-if(WIN32)
+# === OpenXR ===
 
-set(OVRDIR libs/libovr/OculusSDK/LibOVR)
-add_library(ovr STATIC
-	${OVRDIR}/Shim/OVR_CAPI_Prototypes.h
-	${OVRDIR}/Shim/OVR_CAPI_Util.cpp
-	${OVRDIR}/Shim/OVR_CAPIShim.c
-	${OVRDIR}/Shim/OVR_StereoProjection.cpp
+set(XrDir libs/openxr-sdk)
+add_library(OpenXR INTERFACE # STATIC
+	# ${XrDir}/src/
 )
-target_include_directories(ovr PUBLIC ${OVRDIR}/Include)
+target_include_directories(OpenXR INTERFACE ${XrDir}/include)
 
-# Resource Processor
-set(OVR_SHADER_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen_shaders")
-function(build_fx path profile src_tgt)
-	get_filename_component(abspath ${path} ABSOLUTE)
-	get_filename_component(name ${path} NAME_WE)
-	set(fx_header ${OVR_SHADER_DIR}/Shaders/${name}.h)
+# === glm ===
+# Since we used to use LibOVR's maths library, we need a replacement
+# glm is an obvious choice
 
-	add_custom_command(
-			OUTPUT ${fx_header} # ${fx_obj}
-			COMMAND fxc ARGS
-				/nologo
-				/T ${profile}
-				/Fh ${fx_header}
-				/Vn ${name}
-				${abspath}
-			MAIN_DEPENDENCY ${abspath}
-	)
-
-	set_property(SOURCE ${src_tgt} APPEND PROPERTY OBJECT_DEPENDS ${fx_header})
-endfunction()
-file(MAKE_DIRECTORY ${OVR_SHADER_DIR}/Shaders)
-
-# === LibOVRKernel ===
-set(OVRKDIR libs/libovr/OculusSDK/LibOVRKernel)
-set(OVRKSDIR ${OVRKDIR}/Src/Util/Shaders)
-add_library(ovrkernel STATIC
-	${OVRKDIR}/../Logging/src/internal/Logging_Tools.cpp
-	${OVRKDIR}/../Logging/src/Logging_Library.cpp
-	${OVRKDIR}/../Logging/src/Logging_OutputPlugins.cpp
-	${OVRKDIR}/Src/GL/CAPI_GLE.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Alg.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Allocator.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Atomic.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Callbacks.cpp
-	${OVRKDIR}/Src/Kernel/OVR_CRC32.cpp
-	${OVRKDIR}/Src/Kernel/OVR_DebugHelp.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Error.cpp
-	${OVRKDIR}/Src/Kernel/OVR_File.cpp
-	${OVRKDIR}/Src/Kernel/OVR_FileFILE.cpp
-	${OVRKDIR}/Src/Kernel/OVR_JSON.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Log.cpp
-	${OVRKDIR}/Src/Kernel/OVR_mach_exc_OSX.c
-	${OVRKDIR}/Src/Kernel/OVR_Rand.cpp
-	${OVRKDIR}/Src/Kernel/OVR_RefCount.cpp
-	${OVRKDIR}/Src/Kernel/OVR_SharedMemory.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Std.cpp
-	${OVRKDIR}/Src/Kernel/OVR_String.cpp
-	${OVRKDIR}/Src/Kernel/OVR_String_FormatUtil.cpp
-	${OVRKDIR}/Src/Kernel/OVR_String_PathUtil.cpp
-	${OVRKDIR}/Src/Kernel/OVR_SysFile.cpp
-	${OVRKDIR}/Src/Kernel/OVR_System.cpp
-	${OVRKDIR}/Src/Kernel/OVR_ThreadsPthread.cpp
-	${OVRKDIR}/Src/Kernel/OVR_ThreadsWinAPI.cpp
-	${OVRKDIR}/Src/Kernel/OVR_Timer.cpp
-	${OVRKDIR}/Src/Kernel/OVR_UTF8Util.cpp
-	${OVRKDIR}/Src/Util/Util_D3D11_Blitter.cpp
-	${OVRKDIR}/Src/Util/Util_Direct3D.cpp
-	${OVRKDIR}/Src/Util/Util_GL_Blitter.cpp
-	${OVRKDIR}/Src/Util/Util_ImageWindow.cpp
-	${OVRKDIR}/Src/Util/Util_LongPollThread.cpp
-	${OVRKDIR}/Src/Util/Util_SystemGUI.cpp
-	${OVRKDIR}/Src/Util/Util_SystemInfo.cpp
-	${OVRKDIR}/Src/Util/Util_Watchdog.cpp
-)
-target_include_directories(ovrkernel PUBLIC ${OVRKDIR}/Src)
-target_include_directories(ovrkernel PRIVATE ${OVRKDIR}/../Logging/include)
-target_link_libraries(ovrkernel ovr)
-
-# Shader configuration
-target_include_directories(ovrkernel PRIVATE ${OVR_SHADER_DIR})
-
-set(OVRK_BLITTER ${OVRKDIR}/Src/Util/Util_D3D11_Blitter.cpp)
-build_fx(${OVRKSDIR}/Blt_ps.hlsl ps_4_0 ${OVRK_BLITTER})
-build_fx(${OVRKSDIR}/Blt_ps_ms2.hlsl ps_5_0 ${OVRK_BLITTER})
-build_fx(${OVRKSDIR}/Blt_vs.hlsl vs_5_0 ${OVRK_BLITTER})
+add_library(glm INTERFACE)
+target_include_directories(glm INTERFACE libs/glm) # No separate include directory :(
 
 # === DrvOculus ===
 add_library(DrvOculus STATIC
@@ -142,10 +69,8 @@ add_library(DrvOculus STATIC
 )
 target_include_directories(DrvOculus PUBLIC DrvOculus/pub)
 target_include_directories(DrvOculus PRIVATE DrvOculus)
-target_link_libraries(DrvOculus OpenVR ovr ovrkernel)
+target_link_libraries(DrvOculus OpenVR OpenXR glm)
 source_group(Public REGULAR_EXPRESSION DrvOculus/pub/*)
-
-endif (WIN32)
 
 # === OCCore ===
 # TODO: precompiled headers
@@ -162,7 +87,6 @@ add_library(OCCore STATIC
 	# Place it above everything else, so it gets built first
 	OpenOVR/stdafx.cpp
 
-	OpenOVR/API/OCBaseSystem.cpp
 	OpenOVR/Compositor/compositor.cpp
 	OpenOVR/Compositor/dx11compositor.cpp
 	OpenOVR/Compositor/dx10compositor.cpp
@@ -170,12 +94,12 @@ add_library(OCCore STATIC
 	OpenOVR/Compositor/glcompositor.cpp
 	OpenOVR/Compositor/vkcompositor.cpp
 	OpenOVR/convert.cpp
-	OpenOVR/libovr_wrapper.cpp
 	OpenOVR/logging.cpp
 	OpenOVR/Misc/audio_override.cpp
 	OpenOVR/Misc/Config.cpp
 	OpenOVR/Misc/debug_helper.cpp
 	OpenOVR/Misc/Haptics.cpp
+	OpenOVR/Misc/xrutil.cpp
 	OpenOVR/Misc/Keyboard/KeyboardLayout.cpp
 	OpenOVR/Misc/Keyboard/SudoFontMeta.cpp
 	OpenOVR/Misc/Keyboard/VRKeyboard.cpp
@@ -204,7 +128,6 @@ add_library(OCCore STATIC
 	OpenOVR/Reimpl/CVRExtendedDisplay.cpp
 	OpenOVR/Reimpl/CVRInput.cpp
 	OpenOVR/Reimpl/CVRInputInternal.cpp
-	OpenOVR/Reimpl/CVROCSystem.cpp
 	OpenOVR/Reimpl/CVROverlay.cpp
 	OpenOVR/Reimpl/CVROverlayView.cpp
 	OpenOVR/Reimpl/CVRRenderModels.cpp
@@ -228,13 +151,10 @@ add_library(OCCore STATIC
 	${OVR_RESOURCES}
 
 	# Headers
-	OpenOVR/API/ISystem_001.h
-	OpenOVR/API/OCBaseSystem.h
 	OpenOVR/BaseCommon.h
 	OpenOVR/Compositor/compositor.h
 	OpenOVR/convert.h
 	OpenOVR/custom_types.h
-	OpenOVR/libovr_wrapper.h
 	OpenOVR/logging.h
 	OpenOVR/Misc/audio_override.h
 	OpenOVR/Misc/Config.h
@@ -348,7 +268,7 @@ add_library(OCCore STATIC
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
 target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX -DSUPPORT_GL -DSUPPORT_VK)
-target_link_libraries(OCCore OpenVR ovr ovrkernel Vulkan)
+target_link_libraries(OCCore OpenVR OpenXR Vulkan glm)
 
 # Set up precompiled headers for OCCore
 if (WIN32)
@@ -370,4 +290,4 @@ add_library(OCOVR SHARED
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
 )
-target_link_libraries(OCOVR OCCore DrvOculus)
+target_link_libraries(OCOVR OCCore) # DrvOculus)

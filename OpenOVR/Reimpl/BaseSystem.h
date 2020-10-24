@@ -1,7 +1,6 @@
 #pragma once
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
 #include "OpenVR/interfaces/IVRSystem_017.h"
-#include <OVR_CAPI.h>
 #include <queue>
 
 using namespace vr;
@@ -14,11 +13,16 @@ private:
 		TrackedDevicePose_t pose = { 0 };
 		VREvent_t ev = { 0 };
 
-		event_info_t(VREvent_t ev) : ev(ev) {}
-		event_info_t(VREvent_t ev, TrackedDevicePose_t pose) : ev(ev), pose(pose) {}
+		event_info_t(VREvent_t ev)
+		    : ev(ev) {}
+
+		event_info_t(VREvent_t ev, TrackedDevicePose_t pose)
+		    : ev(ev), pose(pose) {}
 	};
 
+#ifndef OC_XR_PORT
 	ovrSessionStatus lastStatus;
+#endif
 	std::queue<event_info_t> events;
 
 	VRControllerState_t lastLeftHandState = { 0 };
@@ -26,22 +30,30 @@ private:
 
 	bool blockingInputsUntilRelease[2] = { false, false };
 
-	ETrackingUniverseOrigin origin = ETrackingUniverseOrigin::TrackingUniverseStanding;
-	bool usingDualOriginMode = false;
-	float fakeOriginHeight;
-
 public:
 	// To be called by other base classes
 	void _OnPostFrame();
-	void _EnqueueEvent(const VREvent_t &e);
+	void _EnqueueEvent(const VREvent_t& e);
 	void _BlockInputsUntilReleased();
 
 	void _SetTrackingOrigin(ETrackingUniverseOrigin origin);
 	ETrackingUniverseOrigin _GetTrackingOrigin();
+#ifndef OC_XR_PORT
 	HmdMatrix34_t _PoseToTrackingSpace(ETrackingUniverseOrigin origin, ovrPosef pose);
+#endif
 	ETrackingUniverseOrigin _GetRenderTrackingOrigin();
+
+	// These are going to be widely used elsewhere, so make them public
+	// TODO set these up
+#ifndef OC_XR_PORT
+#error TODO set these up
+#endif
+	XrSpace floorSpace;
+	XrSpace seatedSpace;
+	XrReferenceSpaceType currentSpace = XR_REFERENCE_SPACE_TYPE_STAGE; // The standing/stage origin is the default
+
 private:
-	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t &last);
+	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t& last);
 
 	void _ResetFakeSeatedHeight();
 
@@ -60,19 +72,19 @@ public:
 	// ------------------------------------
 
 	/** Suggested size for the intermediate render target that the distortion pulls from. */
-	virtual void GetRecommendedRenderTargetSize(uint32_t *pnWidth, uint32_t *pnHeight);
+	virtual void GetRecommendedRenderTargetSize(uint32_t* pnWidth, uint32_t* pnHeight);
 
 	/** The projection matrix for the specified eye */
 	virtual HmdMatrix44_t GetProjectionMatrix(EVREye eEye, float fNearZ, float fFarZ);
 
 	/** The components necessary to build your own projection matrix in case your
 	* application is doing something fancy like infinite Z */
-	virtual void GetProjectionRaw(EVREye eEye, float *pfLeft, float *pfRight, float *pfTop, float *pfBottom);
+	virtual void GetProjectionRaw(EVREye eEye, float* pfLeft, float* pfRight, float* pfTop, float* pfBottom);
 
 	/** Gets the result of the distortion function for the specified eye and input UVs. UVs go from 0,0 in
 	* the upper left of that eye's viewport and 1,1 in the lower right of that eye's viewport.
 	* Returns true for success. Otherwise, returns false, and distortion coordinates are not suitable. */
-	virtual bool ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t *pDistortionCoordinates);
+	virtual bool ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t* pDistortionCoordinates);
 
 	/** Returns the transform from eye space to the head space. Eye space is the per-eye flavor of head
 	* space that provides stereo disparity. Instead of Model * View * Projection the sequence is Model * View * Eye^-1 * Projection.
@@ -84,7 +96,7 @@ public:
 	*	will come from a vsync timer event in the timer if possible or from the application-reported
 	*   time if that is not available. If no vsync times are available the function will
 	*   return zero for vsync time and frame counter and return false from the method. */
-	virtual bool GetTimeSinceLastVsync(float *pfSecondsSinceLastVsync, uint64_t *pulFrameCounter);
+	virtual bool GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulFrameCounter);
 
 	/** [D3D9 Only]
 	* Returns the adapter index that the user should pass into CreateDevice to set up D3D9 in such
@@ -96,7 +108,7 @@ public:
 	* Returns the adapter index that the user should pass into EnumAdapters to create the device
 	* and swap chain in DX10 and DX11. If an error occurs the index will be set to -1.
 	*/
-	virtual void GetDXGIOutputInfo(int32_t *pnAdapterIndex);
+	virtual void GetDXGIOutputInfo(int32_t* pnAdapterIndex);
 
 	/**
 	* Returns platform- and texture-type specific adapter identification so that applications and the
@@ -115,7 +127,7 @@ public:
 	* [macOS Only]
 	*  Returns an id<MTLDevice> that should be used by the application.
 	*/
-	virtual void GetOutputDevice(uint64_t *pnDevice, ETextureType textureType, VkInstance_T *pInstance = nullptr);
+	virtual void GetOutputDevice(uint64_t* pnDevice, ETextureType textureType, VkInstance_T* pInstance = nullptr);
 
 	// ------------------------------------
 	// Display Mode methods
@@ -148,7 +160,7 @@ public:
 	* probably not be used unless the application is the Chaperone calibration tool itself, but will provide
 	* poses relative to the hardware-specific coordinate system in the driver.
 	*/
-	virtual void GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin eOrigin, float fPredictedSecondsToPhotonsFromNow, VR_ARRAY_COUNT(unTrackedDevicePoseArrayCount) TrackedDevicePose_t *pTrackedDevicePoseArray, uint32_t unTrackedDevicePoseArrayCount);
+	virtual void GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin eOrigin, float fPredictedSecondsToPhotonsFromNow, VR_ARRAY_COUNT(unTrackedDevicePoseArrayCount) TrackedDevicePose_t* pTrackedDevicePoseArray, uint32_t unTrackedDevicePoseArrayCount);
 
 	/** Sets the zero pose for the seated tracker coordinate system to the current position and yaw of the HMD. After
 	* ResetSeatedZeroPose all GetDeviceToAbsoluteTrackingPose calls that pass TrackingUniverseSeated as the origin
@@ -178,7 +190,7 @@ public:
 	/** Get a sorted array of device indices of a given class of tracked devices (e.g. controllers).  Devices are sorted right to left
 	* relative to the specified tracked device (default: hmd -- pass in -1 for absolute tracking space).  Returns the number of devices
 	* in the list, or the size of the array needed if not large enough. */
-	virtual uint32_t GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass, VR_ARRAY_COUNT(unTrackedDeviceIndexArrayCount) vr::TrackedDeviceIndex_t *punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount, vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex = k_unTrackedDeviceIndex_Hmd);
+	virtual uint32_t GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass, VR_ARRAY_COUNT(unTrackedDeviceIndexArrayCount) vr::TrackedDeviceIndex_t* punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount, vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex = k_unTrackedDeviceIndex_Hmd);
 
 	/** Returns the level of activity on the device. */
 	virtual EDeviceActivityLevel GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId);
@@ -186,7 +198,7 @@ public:
 	/** Convenience utility to apply the specified transform to the specified pose.
 	*   This properly transforms all pose components, including velocity and angular velocity
 	*/
-	virtual void ApplyTransform(TrackedDevicePose_t *pOutputPose, const TrackedDevicePose_t *pTrackedDevicePose, const HmdMatrix34_t *pTransform);
+	virtual void ApplyTransform(TrackedDevicePose_t* pOutputPose, const TrackedDevicePose_t* pTrackedDevicePose, const HmdMatrix34_t* pTransform);
 
 	/** Returns the device index associated with a specific role, for example the left hand or the right hand. */
 	virtual vr::TrackedDeviceIndex_t GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType);
@@ -211,33 +223,33 @@ public:
 	virtual bool IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t unDeviceIndex);
 
 	/** Returns a bool property. If the device index is not valid or the property is not a bool type this function will return false. */
-	virtual bool GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pErrorL);
+	virtual bool GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL);
 
 	/** Returns a float property. If the device index is not valid or the property is not a float type this function will return 0. */
-	virtual float GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pErrorL);
+	virtual float GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL);
 
 	/** Returns an int property. If the device index is not valid or the property is not a int type this function will return 0. */
-	virtual int32_t GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pErrorL);
+	virtual int32_t GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL);
 
 	/** Returns a uint64 property. If the device index is not valid or the property is not a uint64 type this function will return 0. */
-	virtual uint64_t GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pErrorL);
+	virtual uint64_t GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL);
 
 	/** Returns a matrix property. If the device index is not valid or the property is not a matrix type, this function will return identity. */
-	virtual HmdMatrix34_t GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pErrorL);
+	virtual HmdMatrix34_t GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL);
 
 	/** Returns an array of one type of property. If the device index is not valid or the property is not a single value or an array of the specified type,
 	* this function will return 0. Otherwise it returns the number of bytes necessary to hold the array of properties. If unBufferSize is
 	* greater than the returned size and pBuffer is non-NULL, pBuffer is filled with the contents of array of properties. */
-	virtual uint32_t GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void *pBuffer, uint32_t unBufferSize, ETrackedPropertyError *pError);
+	virtual uint32_t GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, ETrackedPropertyError* pError);
 
 	/** Returns a string property. If the device index is not valid or the property is not a string type this function will
 	* return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing
 	* null. Strings will always fit in buffers of k_unMaxPropertyStringSize characters. */
-	virtual uint32_t GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, ETrackedPropertyError *pErrorL);
+	virtual uint32_t GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, VR_OUT_STRING() char* pchValue, uint32_t unBufferSize, ETrackedPropertyError* pErrorL);
 
 	/** returns a string that corresponds with the specified property error. The string will be the name
 	* of the error enum value for all valid error codes */
-	virtual const char *GetPropErrorNameFromEnum(ETrackedPropertyError error);
+	virtual const char* GetPropErrorNameFromEnum(ETrackedPropertyError error);
 
 	/** Returns true if this application is receiving input from the system. This would return false if
 	* system-related functionality is consuming the input stream. */
@@ -261,16 +273,16 @@ public:
 
 	/** Returns true and fills the event with the next event on the queue if there is one. If there are no events
 	* this method returns false. uncbVREvent should be the size in bytes of the VREvent_t struct */
-	virtual bool PollNextEvent(VREvent_t *pEvent, uint32_t uncbVREvent);
+	virtual bool PollNextEvent(VREvent_t* pEvent, uint32_t uncbVREvent);
 
 	/** Returns true and fills the event with the next event on the queue if there is one. If there are no events
 	* this method returns false. Fills in the pose of the associated tracked device in the provided pose struct.
 	* This pose will always be older than the call to this function and should not be used to render the device.
 	uncbVREvent should be the size in bytes of the VREvent_t struct */
-	virtual bool PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t *pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t *pTrackedDevicePose);
+	virtual bool PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t* pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t* pTrackedDevicePose);
 
 	/** returns the name of an EVREvent enum value */
-	virtual const char *GetEventTypeNameFromEnum(EVREventType eType);
+	virtual const char* GetEventTypeNameFromEnum(EVREventType eType);
 
 	// ------------------------------------
 	// Rendering helper methods
@@ -292,22 +304,22 @@ public:
 
 	/** Fills the supplied struct with the current state of the controller. Returns false if the controller index
 	* is invalid. */
-	virtual bool GetControllerState(vr::TrackedDeviceIndex_t unControllerDeviceIndex, vr::VRControllerState_t *pControllerState, uint32_t unControllerStateSize);
+	virtual bool GetControllerState(vr::TrackedDeviceIndex_t unControllerDeviceIndex, vr::VRControllerState_t* pControllerState, uint32_t unControllerStateSize);
 
 	/** fills the supplied struct with the current state of the controller and the provided pose with the pose of
 	* the controller when the controller state was updated most recently. Use this form if you need a precise controller
 	* pose as input to your application when the user presses or releases a button. */
-	virtual bool GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex, vr::VRControllerState_t *pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t *pTrackedDevicePose);
+	virtual bool GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex, vr::VRControllerState_t* pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t* pTrackedDevicePose);
 
 	/** Trigger a single haptic pulse on a controller. After this call the application may not trigger another haptic pulse on this controller
 	* and axis combination for 5ms. */
 	virtual void TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec);
 
 	/** returns the name of an EVRButtonId enum value */
-	virtual const char *GetButtonIdNameFromEnum(EVRButtonId eButtonId);
+	virtual const char* GetButtonIdNameFromEnum(EVRButtonId eButtonId);
 
 	/** returns the name of an EVRControllerAxisType enum value */
-	virtual const char *GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType);
+	virtual const char* GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType);
 
 	/** Tells OpenVR that this process wants exclusive access to controller button states and button events. Other apps will be notified that
 	* they have lost input focus with a VREvent_InputFocusCaptured event. Returns false if input focus could not be captured for
@@ -328,7 +340,7 @@ public:
 	/** Sends a request to the driver for the specified device and returns the response. The maximum response size is 32k,
 	* but this method can be called with a smaller buffer. If the response exceeds the size of the buffer, it is truncated.
 	* The size of the response including its terminating null is returned. */
-	virtual uint32_t DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize);
+	virtual uint32_t DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize);
 
 	// ------------------------------------
 	// Firmware methods
@@ -361,7 +373,7 @@ public:
 	/** Retrieves a null-terminated, semicolon-delimited list of UTF8 file paths that an application
 	* must have read access to when running inside of an app container. Returns the number of bytes
 	* needed to hold the list. */
-	virtual uint32_t GetAppContainerFilePaths(VR_OUT_STRING() char *pchBuffer, uint32_t unBufferSize);
+	virtual uint32_t GetAppContainerFilePaths(VR_OUT_STRING() char* pchBuffer, uint32_t unBufferSize);
 
 	// -------------------------------------
 	// System methods
@@ -372,7 +384,7 @@ public:
 	* NOTE: Is it not appropriate to use this version to test for the presence of any SteamVR feature. Only use this version
 	* number for logging or showing to a user, and not to try to detect anything at runtime. When appropriate, feature-specific
 	* presence information is provided by other APIs. */
-	virtual const char *GetRuntimeVersion();
+	virtual const char* GetRuntimeVersion();
 
 public:
 	// Legacy methods

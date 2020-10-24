@@ -23,6 +23,8 @@
 
 #include "logging.h"
 
+#include "Misc/xrutil.h"
+
 #include <string>
 
 // This module's ID, from DLLMain

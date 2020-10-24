@@ -3,13 +3,14 @@
 
 #include "Misc/Config.h"
 
-#include "OVR_CAPI.h"
 #include "convert.h"
-#include "libovr_wrapper.h"
 
-#include "Extras/OVR_Math.h"
-using namespace OVR;
+#include <glm/gtx/transform.hpp>
 
+using glm::mat4;
+using glm::vec3;
+using glm::vec4;
+using glm::quat;
 using namespace std;
 
 #include "BaseCompositor.h"
@@ -20,11 +21,13 @@ using namespace std;
 #include "static_bases.gen.h"
 
 // Need the LibOVR Vulkan headers for the GetVulkan[Device|Instance]ExtensionsRequired methods
+#ifndef OC_XR_PORT
 #if defined(SUPPORT_VK)
 #include "OVR_CAPI_Vk.h"
 #endif
 #if defined(SUPPORT_DX)
 #include "OVR_CAPI_D3D.h"
+#endif
 #endif
 
 #include "Drivers/Backend.h"
@@ -47,17 +50,17 @@ BaseCompositor::~BaseCompositor()
 
 void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin)
 {
-	ovrTrackingOrigin origin = ovrTrackingOrigin_FloorLevel;
+	XrReferenceSpaceType origin = XR_REFERENCE_SPACE_TYPE_STAGE;
 	if (eOrigin == TrackingUniverseSeated) {
-		origin = ovrTrackingOrigin_EyeLevel;
+		origin = XR_REFERENCE_SPACE_TYPE_LOCAL;
 	}
 
-	OOVR_FAILED_OVR_ABORT(ovr_SetTrackingOriginType(SESS, origin));
+	GetUnsafeBaseSystem()->currentSpace = origin;
 }
 
 ETrackingUniverseOrigin BaseCompositor::GetTrackingSpace()
 {
-	if (ovr_GetTrackingOriginType(SESS) == ovrTrackingOrigin_EyeLevel) {
+	if (GetUnsafeBaseSystem()->currentSpace == XR_REFERENCE_SPACE_TYPE_LOCAL) {
 		return TrackingUniverseSeated;
 	} else {
 		return TrackingUniverseStanding;
@@ -82,7 +85,7 @@ void BaseCompositor::GetSinglePoseRendering(ETrackingUniverseOrigin origin, Trac
 	BackendManager::Instance().GetSinglePose(origin, unDeviceIndex, pOutputPose, ETrackingStateType::TrackingStateType_Rendering);
 }
 
-Matrix4f BaseCompositor::GetHandTransform()
+mat4 BaseCompositor::GetHandTransform()
 {
 	float deg_to_rad = math_pi / 180;
 
@@ -94,15 +97,15 @@ Matrix4f BaseCompositor::GetHandTransform()
 	//  this to lock the controller perfectly flat.
 	// ovrPose.ThePose.Orientation = { 0,0,0,1 };
 
-	Vector3f rotateAxis = Vector3f(1, 0, 0);
-	Quatf rotation = Quatf(rotateAxis, controller_offset_angle * deg_to_rad); //count++ * 0.01f);
+	vec3 rotateAxis = vec3(1, 0, 0);
+	quat rotation = glm::rotate(controller_offset_angle * deg_to_rad, rotateAxis); //count++ * 0.01f);
 
-	Matrix4f transform(rotation);
+	mat4 transform(rotation);
 
 	// Controller offset
 	// Note this is about right, found by playing around in Unity until everything
 	//  roughly lines up. If you want to contribute better numbers, please go ahead!
-	transform.SetTranslation(Vector3f(0.0f, 0.0353f, -0.0451f));
+	transform[3] = vec4(0.0f, 0.0353f, -0.0451f, 1.0f);
 
 	return transform;
 }
@@ -165,6 +168,7 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 	return VRCompositorError_None;
 }
 
+#ifndef OC_XR_PORT
 DX11Compositor* BaseCompositor::dxcomp;
 
 Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize)
@@ -213,6 +217,7 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, co
 
 	return comp;
 }
+#endif
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VRTextureBounds_t* bounds, EVRSubmitFlags submitFlags)
 {
@@ -470,6 +475,7 @@ void BaseCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSh
 	STUBBED();
 }
 
+#ifndef OC_XR_PORT
 uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char* pchValue, uint32_t unBufferSize)
 {
 #if defined(SUPPORT_VK)
@@ -491,6 +497,7 @@ uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T* p
 	STUBBED();
 #endif
 }
+#endif
 
 void BaseCompositor::SetExplicitTimingMode(ovr_enum_t eTimingMode)
 {
