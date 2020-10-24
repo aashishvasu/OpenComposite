@@ -84,9 +84,6 @@ on the end of the line. Ensure your lines do not being with whitespace however.
 
 The available options are:
 
-* `enableAudio` - boolean, default `enabled`. Should OpenComposite redirect the game's audio to the Rift builtin audio. This means you
-don't have to set the Windows default audio device. This doesn't always work and can sometimes cause crashes, see below for
-more information about it.
 * `renderCustomHands` - boolean, default `enabled`. Should OpenComposite render custom hands. Disable this if you *really* dislike
 the hand models, and some games (like Skyrim) come with backup models that will be used instead.
 * `handColour` - colour, default `#4c4c4c`. The colour of the hands OpenComposite draws, as they currently lack proper textures.
@@ -129,30 +126,6 @@ supersampleRatio=1.4
 handColour=#ffff00
 haptics = off
 ```
-
-## Audio Patching
-
-LibOVR includes functionality to tell a game what audio device it should output to, and thus when playing games using this API
-you don't have to change the default Windows audio device. Unfortunately, OpenVR has no such API and games using it almost always
-emit audio to the default audio device. OpenComposite includes a feature to fix this.
-
-Whenever you start a game using OpenComposite, it will attempt to patch the game's audio system (note this does **not** change the actual
-Windows audio device like SteamVR tries to, which causes a huge number of issues). This works in most of the games I tried it
-with. Depending on the game, one of three things can happen:
-
-1. The game sets up it's audio system before the OpenComposite DLL is loaded (should be very uncommon). Unfortunately there's not a lot
-I can do about this, and the audio plays through your default audio device.
-2. The game sets up it's audio system after the DLL is loaded, but before starting the VR system. This will send audio to your rift,
-same as if you'd set it as the default audio device. However, the fancy Oculus audio features (eg audio mirroring) won't work. This is
-probably the most common.
-3. The game sets up it's audio after setting up the VR system. This means the audio will work perfectly, including features like audio
-mirroring, as set up in the Oculus settings.
-
-Notes:
-
-1. If the game allows you to select an audio output, you must set it to the default output if you want the patching
-to take effect.
-2. This does not yet work with microphones - only your speakers.
 
 ## Reporting a bug
 
@@ -213,11 +186,6 @@ found in the `LICENSE_OPENVR.txt` file supplied with the source code.
 Copyright (c) 2015, Valve Corporation
 All rights reserved.
 ```
-
-### audio-router
-
-This program contains code derived from [audio-router](https://github.com/audiorouterdev/audio-router). Audio-router
-is Free Software under the GPLv3, same as this project.
 
 ### INIH
 

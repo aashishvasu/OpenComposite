@@ -126,7 +126,6 @@ add_library(OCCore STATIC
 	OpenOVR/Compositor/vkcompositor.cpp
 	OpenOVR/convert.cpp
 	OpenOVR/logging.cpp
-	OpenOVR/Misc/audio_override.cpp
 	OpenOVR/Misc/Config.cpp
 	OpenOVR/Misc/debug_helper.cpp
 	OpenOVR/Misc/Haptics.cpp
@@ -187,7 +186,6 @@ add_library(OCCore STATIC
 	OpenOVR/convert.h
 	OpenOVR/custom_types.h
 	OpenOVR/logging.h
-	OpenOVR/Misc/audio_override.h
 	OpenOVR/Misc/Config.h
 	OpenOVR/Misc/debug_helper.h
 	OpenOVR/Misc/Haptics.h
