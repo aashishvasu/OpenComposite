@@ -1,9 +1,9 @@
 # Set the Windows kit if using MSVC
 # CMake will look for the newest kit that isn't newer than this
 # Required to find modern D3D12 header
-if(MSVC)
+if (MSVC)
 	set(CMAKE_SYSTEM_VERSION 10.0.17134.0)
-endif()
+endif ()
 
 cmake_minimum_required(VERSION 3.12)
 project(OpenComposite)
@@ -31,12 +31,43 @@ target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/L
 endif()
 
 # === OpenXR ===
+# Building CMake subprojects is a real pain (IMO), so just build this here
 
 set(XrDir libs/openxr-sdk)
-add_library(OpenXR INTERFACE # STATIC
-	# ${XrDir}/src/
+set(XrDirLoader libs/openxr-sdk/src/loader)
+set(XrDirCommon libs/openxr-sdk/src/common)
+add_library(OpenXR STATIC
+	${XrDirLoader}/api_layer_interface.cpp
+	${XrDirLoader}/api_layer_interface.hpp
+	${XrDirLoader}/loader_core.cpp
+	${XrDirLoader}/loader_instance.cpp
+	${XrDirLoader}/loader_instance.hpp
+	${XrDirLoader}/loader_logger.cpp
+	${XrDirLoader}/loader_logger.hpp
+	${XrDirLoader}/loader_logger_recorders.cpp
+	${XrDirLoader}/loader_logger_recorders.hpp
+	${XrDirLoader}/manifest_file.cpp
+	${XrDirLoader}/manifest_file.hpp
+	${XrDirLoader}/runtime_interface.cpp
+	${XrDirLoader}/runtime_interface.hpp
+
+	${XrDirLoader}/xr_generated_loader.hpp
+	${XrDirLoader}/xr_generated_loader.cpp
+	${XrDir}/src/xr_generated_dispatch_table.h
+	${XrDir}/src/xr_generated_dispatch_table.c
+
+	${XrDirCommon}/filesystem_utils.cpp
+	${XrDirCommon}/object_info.cpp
+
+	${XrDir}/src/external/jsoncpp/src/lib_json/json_reader.cpp
+	${XrDir}/src/external/jsoncpp/src/lib_json/json_value.cpp
+	${XrDir}/src/external/jsoncpp/src/lib_json/json_writer.cpp
 )
-target_include_directories(OpenXR INTERFACE ${XrDir}/include)
+target_include_directories(OpenXR PRIVATE ${XrDirCommon} ${XrDir}/src ${XrDir}/src/external/jsoncpp/include)
+target_include_directories(OpenXR PUBLIC ${XrDir}/include)
+target_compile_definitions(OpenXR PRIVATE -DXR_OS_WINDOWS -DXR_USE_PLATFORM_WIN32
+	-DXR_USE_GRAPHICS_API_D3D11 -DXR_USE_GRAPHICS_API_D3D12)
+target_link_libraries(OpenXR PUBLIC advapi32 pathcch)
 
 # === glm ===
 # Since we used to use LibOVR's maths library, we need a replacement
