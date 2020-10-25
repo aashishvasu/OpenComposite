@@ -113,6 +113,16 @@ XrQuaternionf G2X_quat(const glm::quat& q)
 	return XrQuaternionf{ q.x, q.y, q.z, q.w };
 }
 
+glm::vec3 X2G_v3f(const XrVector3f& v)
+{
+	return glm::vec3(v.x, v.y, v.z);
+}
+
+glm::quat X2G_quat(const XrQuaternionf& q)
+{
+	return glm::quat(q.w, q.x, q.y, q.z);
+}
+
 vr::HmdVector3_t X2S_v3f(const XrVector3f& vec)
 {
 	HmdVector3_t out = {};
@@ -124,5 +134,22 @@ vr::HmdVector3_t X2S_v3f(const XrVector3f& vec)
 
 vr::HmdVector3_t G2S_v3f(const glm::vec3& vec)
 {
-    return HmdVector3_t{ vec.x, vec.y, vec.z };
+	return HmdVector3_t{ vec.x, vec.y, vec.z };
+}
+
+vr::HmdMatrix34_t G2S_m34(const glm::mat4& mat)
+{
+	HmdMatrix34_t out = {};
+
+	// TODO compile with Clang since afaik MSVC doesn't have an unroll pragma and manual unrolling is ugly
+	// FIXME is this breaking our translations? OpenVR stores the translation in the bottom row, what are we doing with glm? Doesn't that
+	//  store it in the fourth column?
+#pragma unroll
+	for (int x = 0; x < 3; x++) {
+#pragma unroll
+		for (int y = 0; y < 4; y++) {
+			out.m[x][y] = mat[x][y];
+		}
+	}
+	return out;
 }

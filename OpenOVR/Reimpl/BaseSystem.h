@@ -36,13 +36,6 @@ public:
 	void _EnqueueEvent(const VREvent_t& e);
 	void _BlockInputsUntilReleased();
 
-	void _SetTrackingOrigin(ETrackingUniverseOrigin origin);
-	ETrackingUniverseOrigin _GetTrackingOrigin();
-#ifndef OC_XR_PORT
-	HmdMatrix34_t _PoseToTrackingSpace(ETrackingUniverseOrigin origin, ovrPosef pose);
-#endif
-	ETrackingUniverseOrigin _GetRenderTrackingOrigin();
-
 	// These are going to be widely used elsewhere, so make them public
 	// TODO set these up
 #ifndef OC_XR_PORT
@@ -54,8 +47,6 @@ public:
 
 private:
 	void CheckControllerEvents(vr::TrackedDeviceIndex_t hand, VRControllerState_t& last);
-
-	void _ResetFakeSeatedHeight();
 
 public:
 	static const TrackedDeviceIndex_t leftHandIndex = 1;

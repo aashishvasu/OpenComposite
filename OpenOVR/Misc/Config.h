@@ -8,7 +8,7 @@ public:
 	bool RenderCustomHands() const { return renderCustomHands; }
 	vr::HmdColor_t HandColour() const { return handColour; }
 	float SupersampleRatio() const { return supersampleRatio; }
-	float Haptics() const { return haptics; }
+	bool Haptics() const { return haptics; }
 	float AdmitUnknownProps() const { return admitUnknownProps; }
 	inline bool ThreePartSubmit() const { return threePartSubmit; }
 	inline bool UseViewportStencil() const { return useViewportStencil; }

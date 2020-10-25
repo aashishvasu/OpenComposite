@@ -164,16 +164,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 [GPL Full Text](https://www.gnu.org/licenses/gpl-3.0-standalone.html). This also can be found in
 the `LICENCE.txt` file supplied with the source code.
 
-### LibOVR
+### OpenXR SDK
 
-The Oculus SDK (LibOVR) is also included in the binaries, however not in the source
-code repository.
-
-```
-Copyright © Facebook Technologies, LLC and its affiliates. All rights reserved.
-
-The text of this may be found at: [https://developer.oculus.com/licenses/sdk-3.4.1/](https://developer.oculus.com/licenses/sdk-3.4.1/)
-```
+The OpenXR SDK is included as a git submodule. It's under the Apache 2 licence, the full text of
+which can be found under `libs/openxr-sdk/LICENSE`.
 
 ### OpenVR
 
@@ -204,9 +198,6 @@ Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR) - it'
 
 Download Visual Studio 2017 and it's C++ package. This may work on older versions of VS, but that break
 at any time.
-
-After cloning this repository, you must download [LibOVR](https://developer.oculus.com/downloads/package/oculus-sdk-for-windows/).
-The archive should contain a single folder, named `OculusSDK`. Place this into the `libs/libovr` folder in the repository root.
 
 Next, if you want to use Vulkan support (enabled by default, remove `SUPPORT_VK` from the preprocessor definitions to compile without it), then
 download a [slimmed down copy of the Vulkan SDK with only `.lib` files and the headers](http://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z),

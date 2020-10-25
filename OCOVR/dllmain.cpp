@@ -7,24 +7,17 @@
 #include "Reimpl/GVRClientCore.gen.h"
 
 #include "steamvr_abi.h"
-#include "libovr_wrapper.h"
 #include "Misc/debug_helper.h"
-#include "Misc/audio_override.h"
 #include "Misc/Config.h"
 #include <map>
 #include <memory>
 
-#include "OVR_CAPI_Audio.h"
-
 // Specific to OCOVR
 #include "Drivers/Backend.h"
 #include "Drivers/DriverManager.h"
-#include "DrvOculus.h"
+#include "DrvOpenXR.h"
 
 using namespace std;
-
-static void init_audio();
-static void setup_audio();
 
 HMODULE openovr_module_id;
 HMODULE chainedImplementation;
@@ -41,7 +34,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #if defined(_DEBUG)
 		DbgSetModule(hModule);
 #endif
-		init_audio();
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
 		break;
@@ -218,10 +210,10 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 	if (running)
 		ERR("Cannot init VR: Already running!");
 
+#ifndef OC_XR_PORT
 	ovr::Setup();
+#endif
 	running_ovr = true;
-
-	setup_audio();
 
 success:
 	current_apptype = eApplicationType;
@@ -229,14 +221,18 @@ success:
 	*peError = VRInitError_None;
 
 	// TODO seperate this from the rest of dllmain
-	BackendManager::Create(DrvOculus::CreateOculusBackend());
+	BackendManager::Create(DrvOpenXR::CreateOpenXRBackend());
 	// DriverManager::Instance().Register(DrvOculus::CreateOculusDriver());
 
 	return current_init_token;
 }
 
 VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent() {
+#ifdef OC_XR_PORT
+	XR_STUBBED();
+#else
 	return ovr::IsAvailable();
+#endif
 }
 
 VR_INTERFACE bool VR_CALLTYPE VR_IsInterfaceVersionValid(const char * pchInterfaceVersion) {
@@ -259,8 +255,10 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 	interfaces.clear();
 
 	// Shut down LibOVR
+#ifndef OC_XR_PORT
 	if(running_ovr)
 		ovr::Shutdown();
+#endif
 
 	running = false;
 }
@@ -320,35 +318,4 @@ VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pRetu
 	OOVR_LOG(pInterfaceName);
 	MessageBoxA(NULL, pInterfaceName, "Missing client interface", MB_OK);
 	ERR("unknown/unsupported interface " + name);
-}
-
-// Hook the audio thing as soon as possible. This will use the Rift device
-//  as listed in the Windows audio settings.
-void init_audio() {
-	if (!oovr_global_configuration.EnableAudio())
-		return;
-
-	std::wstring dev;
-	HRESULT hr = find_basic_rift_output_device(dev);
-
-	/*if (hr) {
-		string s = "Cannot get Rift device: " + to_string(hr);
-		OOVR_ABORT(s.c_str());
-	}*/
-
-	if(!hr)
-		set_app_default_audio_device(dev);
-}
-
-// This switches over to the audio device returned by LibOVR, which supports
-//  stuff like audio mirroring. This can only be called after LibOVR is initialised,
-//  and thus will work on some games and not on others.
-void setup_audio() {
-	if (!oovr_global_configuration.EnableAudio())
-		return;
-
-	WCHAR deviceOutStrBuffer[OVR_AUDIO_MAX_DEVICE_STR_SIZE];
-	ovrResult r = ovr_GetAudioDeviceOutGuidStr(deviceOutStrBuffer);
-	if (r == ovrSuccess)
-		set_app_default_audio_device(deviceOutStrBuffer);
 }

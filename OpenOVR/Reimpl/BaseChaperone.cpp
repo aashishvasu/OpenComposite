@@ -95,7 +95,12 @@ bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t &minPoint, vr::HmdVector3_t
 	return true;
 }
 
-void BaseChaperone::ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin) {
+void BaseChaperone::ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin)
+{
+	if (eTrackingUniverseOrigin != TrackingUniverseSeated) {
+		STUBBED();
+	}
+
 	// TODO do we have to do anything about the tracking origin?
 	GetUnsafeBaseSystem()->ResetSeatedZeroPose();
 }

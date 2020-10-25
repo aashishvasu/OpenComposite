@@ -23,6 +23,8 @@
 #endif
 #endif
 
+#include "Misc/xr_ext.h"
+
 using namespace std;
 
 BaseSystem::BaseSystem() {
@@ -57,15 +59,15 @@ int32_t BaseSystem::GetD3D9AdapterIndex() {
 	STUBBED();
 }
 
-#ifndef OC_XR_PORT
 void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 #ifdef SUPPORT_DX
 #define VALIDATE(x, msg) if (!(x)) { MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); exit(-1); }
 
-	LUID* luid = reinterpret_cast<LUID*>(ovr::luid);
+	// See the comment on XrExt for why we have to use it
+	XrGraphicsRequirementsD3D11KHR graphicsRequirements{};
+	XrResult res = xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements);
+	OOVR_FAILED_XR_ABORT(res);
 
-	//IDXGIFactory * DXGIFactory = nullptr;
-	//HRESULT hr = CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)(&DXGIFactory));
 	IDXGIFactory* DXGIFactory = nullptr;
 	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&DXGIFactory));
 	VALIDATE((hr == ERROR_SUCCESS), "CreateDXGIFactory1 failed");
@@ -76,16 +78,17 @@ void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 		DXGI_ADAPTER_DESC adapterDesc;
 		Adapter->GetDesc(&adapterDesc);
 
-		match = luid == nullptr || memcmp(&adapterDesc.AdapterLuid, luid, sizeof(LUID)) == 0;
+		match = memcmp(&adapterDesc.AdapterLuid, &graphicsRequirements.adapterLuid, sizeof(LUID)) == 0;
 
 		Adapter->Release();
 
 		if (match) {
 			*adapterIndex = i;
-			ovr::dxDeviceId = i;
 			break;
 		}
 	}
+
+	// TODO do something with graphicsRequirements.minFeatureLevel
 
 	DXGIFactory->Release();
 
@@ -97,9 +100,7 @@ void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 	OOVR_ABORT("DX not supported - build with SUPPORT_DX defined");
 #endif
 }
-#endif
 
-#ifndef OC_XR_PORT
 void BaseSystem::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, VkInstance_T * pInstance) {
 
 	switch (textureType) {
@@ -118,7 +119,6 @@ void BaseSystem::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, 
 	}
 
 }
-#endif
 
 bool BaseSystem::IsDisplayOnDesktop() {
 	return false; // Always in direct mode
@@ -134,26 +134,24 @@ void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigi
 	BackendManager::Instance().GetDeviceToAbsoluteTrackingPose(toOrigin, predictedSecondsToPhotonsFromNow, poseArray, poseArrayCount);
 }
 
-// TODO implement with the rest of the standing/seated stuff
-#ifndef OC_XR_PORT
-HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
-	// TODO can we discover the player's seated height somehow?
-	// For now just add 0.5 meters
-	OVR::Matrix4f in;
-	in.Translation(OVR::Vector3f(0, 0.5, 0));
+HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
+{
+	XrSpaceLocation location{};
+	STUBBED(); // FIXME Implement the timing thing
+	XrResult err = xrLocateSpace(seatedSpace, floorSpace, 0 /* TODO */, &location);
+	OOVR_FAILED_XR_ABORT(err);
 
-	HmdMatrix34_t res;
-	O2S_om34(in, res);
-	return res;
+	glm::mat4 m = glm::mat4(X2G_quat(location.pose.orientation));
+	m[3] = glm::vec4(X2G_v3f(location.pose.position), 1.0f);
+
+	return G2S_m34(m);
 }
 
-HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
-	// These *are* the same coordinate systems
-	HmdMatrix34_t res;
-	O2S_om34(OVR::Matrix4f::Identity(), res);
-	return res;
+HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose()
+{
+	// These *are* the same coordinate systems? They were in LibOVR, let's assume they're the same here too
+	return G2S_m34(glm::mat4());
 }
-#endif
 
 uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass targetClass,
 		vr::TrackedDeviceIndex_t *indexArray, uint32_t indexCount,
@@ -321,25 +319,21 @@ const char * BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
 	STUBBED();
 }
 
-// All tied to the Oculus app status system
-// The difference between being in the visible and focused states is how we should be reading this going forwards
-#ifndef OC_XR_PORT
 bool BaseSystem::IsInputAvailable() {
-	return lastStatus.HasInputFocus;
+	return xr_session_state == XR_SESSION_STATE_FOCUSED;
 }
 
 bool BaseSystem::IsSteamVRDrawingControllers() {
-	return !lastStatus.HasInputFocus;
+	return !IsInputAvailable();
 }
 
 bool BaseSystem::ShouldApplicationPause() {
-	return !lastStatus.HasInputFocus;
+	return !IsInputAvailable();
 }
 
 bool BaseSystem::ShouldApplicationReduceRenderingWork() {
-	return lastStatus.OverlayPresent;
+	return !IsInputAvailable();
 }
-#endif
 
 void BaseSystem::_OnPostFrame() {
 #ifndef OC_XR_PORT
@@ -391,14 +385,16 @@ void BaseSystem::_BlockInputsUntilReleased() {
 	blockingInputsUntilRelease[1] = true;
 }
 
-#ifndef OC_XR_PORT
 float BaseSystem::SGetIpd() {
+#ifdef OC_XR_PORT
+	XR_STUBBED();
+#else
 	ovrPosef &left = ovr::hmdToEyeViewPose[ovrEye_Left];
 	ovrPosef &right = ovr::hmdToEyeViewPose[ovrEye_Right];
 
 	return abs(left.Position.x - right.Position.x);
-}
 #endif
+}
 
 void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerState_t &last) {
 	VRControllerState_t state;
@@ -485,8 +481,11 @@ HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType 
 	return BackendManager::Instance().GetPrimaryHMD()->GetHiddenAreaMesh(eEye, type);
 }
 
-#ifndef OC_XR_PORT
 bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
+#ifdef OC_XR_PORT
+	// Only support IVRInput-based stuff for now
+	XR_STUBBED();
+#else
 	if (sizeof(VRControllerState_t) != controllerStateSize)
 		OOVR_ABORT("Bad controller state size - was the host compiled with an older version of OpenVR?");
 
@@ -543,8 +542,8 @@ blockInput:
 	memset(controllerState, 0, controllerStateSize);
 	controllerState->unPacketNum = packetNum;
 	return true;
-}
 #endif
+}
 
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
 	vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t * pTrackedDevicePose) {
@@ -554,7 +553,6 @@ bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr:
 	return GetControllerState(unControllerDeviceIndex, pControllerState, unControllerStateSize);
 }
 
-#ifndef OC_XR_PORT
 void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
 	if (!oovr_global_configuration.Haptics())
 		return;
@@ -562,7 +560,11 @@ void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceI
 	if (unControllerDeviceIndex == leftHandIndex || unControllerDeviceIndex == rightHandIndex) {
 		static Haptics haptics;
 
+#ifdef OC_XR_PORT
+		XR_STUBBED();
+#else
 		haptics.StartSimplePulse(unControllerDeviceIndex == leftHandIndex ? ovrControllerType_LTouch : ovrControllerType_RTouch, usDurationMicroSec);
+#endif
 
 		return;
 	}
@@ -570,7 +572,6 @@ void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceI
 	// Invalid controller
 	STUBBED();
 }
-#endif
 
 const char * BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId) {
 	STUBBED();
@@ -588,11 +589,9 @@ void BaseSystem::ReleaseInputFocus() {
 	STUBBED();
 }
 
-#ifndef OC_XR_PORT
 bool BaseSystem::IsInputFocusCapturedByAnotherProcess() {
-	return !lastStatus.HasInputFocus;
+	return !IsInputAvailable();
 }
-#endif
 
 uint32_t BaseSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {
 	STUBBED();
@@ -637,75 +636,14 @@ void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel) {
 }
 
 // Tracking origin stuff
-#ifndef OC_XR_PORT
-void BaseSystem::_SetTrackingOrigin(ETrackingUniverseOrigin eOrigin) {
-	origin = eOrigin;
-
-	ovrTrackingOrigin ovrOrigin = ovrTrackingOrigin_FloorLevel;
-	if (eOrigin == TrackingUniverseSeated) {
-		ovrOrigin = ovrTrackingOrigin_EyeLevel;
-	}
-
-	// When in dual-origin mode, always use the floor level as a base
-	if (usingDualOriginMode) {
-		ovrOrigin = ovrTrackingOrigin_FloorLevel;
-	}
-
-	OOVR_FAILED_OVR_ABORT(ovr_SetTrackingOriginType(*ovr::session, ovrOrigin));
-}
-
-ETrackingUniverseOrigin BaseSystem::_GetTrackingOrigin() {
-	return origin;
-}
-
-HmdMatrix34_t BaseSystem::_PoseToTrackingSpace(ETrackingUniverseOrigin toOrigin, ovrPosef pose) {
-	// Standard path, most games only use the origin they have selected
-	if (toOrigin == origin && !usingDualOriginMode) {
-		goto result;
-	}
-
-	if (!usingDualOriginMode) {
-		// TODO if usingDualOriginMode is false, then do the initial stuff
-		// otherwise the head position will jump around the first time this is used
-
-		// Enable the dual origin mode
-		usingDualOriginMode = true;
-
-		// Reset the origin, so LibOVR is now working relative to the floor
-		_SetTrackingOrigin(origin);
-
-		// Use the current height as the zero for the seated height
-		_ResetFakeSeatedHeight();
-	}
-
-	if (toOrigin == TrackingUniverseSeated) {
-		pose.Position.y -= fakeOriginHeight;
-	}
-
-result:
-	OVR::Posef thePose(pose);
-	OVR::Matrix4f hmdTransform(thePose);
-
-	HmdMatrix34_t result;
-	O2S_om34(hmdTransform, result);
-	return result;
-}
-
-ETrackingUniverseOrigin BaseSystem::_GetRenderTrackingOrigin() {
-	return usingDualOriginMode ? TrackingUniverseStanding : origin;
-}
-
-void BaseSystem::_ResetFakeSeatedHeight() {
-	ovrTrackingState state = ovr_GetTrackingState(*ovr::session, ovr_GetTimeInSeconds(), false);
-
-	fakeOriginHeight = state.HeadPose.ThePose.Position.y;
-}
-
 void BaseSystem::ResetSeatedZeroPose() {
+#ifdef OC_XR_PORT
+	XR_STUBBED();
+#else
 	// TODO should this only work when seated or whatever?
 	ovr_RecenterTrackingOrigin(*ovr::session);
 
 	if (usingDualOriginMode)
 		_ResetFakeSeatedHeight();
-}
 #endif
+}

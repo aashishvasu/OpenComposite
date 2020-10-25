@@ -31,7 +31,11 @@ vr::TrackedDevicePose_t BackendManager::InvalidPose() {
 }
 
 float BackendManager::GetTimeInSeconds() {
+#ifdef OC_XR_PORT
+	XR_STUBBED();
+#else
 	return ovr_GetTimeInSeconds();
+#endif
 }
 
 BackendManager::BackendManager() {

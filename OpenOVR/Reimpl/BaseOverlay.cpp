@@ -818,12 +818,16 @@ void BaseOverlay::SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTracking
 	if (!keyboard)
 		OOVR_ABORT("Cannot set keyboard position when the keyboard is closed!");
 
+#ifdef OC_XR_PORT
+	XR_STUBBED();
+#else
 	BaseCompositor *compositor = GetUnsafeBaseCompositor();
 	if (compositor && eTrackingOrigin != compositor->GetTrackingSpace()) {
 		OOVR_ABORTF("Origin mismatch - current %d, requested %d", compositor->GetTrackingSpace(), eTrackingOrigin);
 	}
 
 	keyboard->SetTransform(*pmatTrackingOriginToKeyboardTransform);
+#endif
 }
 void BaseOverlay::SetKeyboardPositionForOverlay(VROverlayHandle_t ulOverlayHandle, HmdRect2_t avoidRect) {
 	STUBBED();

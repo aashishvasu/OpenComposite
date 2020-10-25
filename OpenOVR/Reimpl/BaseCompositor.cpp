@@ -114,7 +114,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t* renderPoseArray, ui
     TrackedDevicePose_t* gamePoseArray, uint32_t gamePoseArrayCount)
 {
 
-	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
+	ETrackingUniverseOrigin origin = GetTrackingSpace();
 
 	for (uint32_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
 		TrackedDevicePose_t* renderPose = NULL;
@@ -152,10 +152,8 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 		return VRCompositorError_IndexOutOfRange;
 	}
 
-	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
-
-	TrackedDevicePose_t pose;
-	GetSinglePoseRendering(origin, unDeviceIndex, &pose);
+	TrackedDevicePose_t pose{};
+	GetSinglePoseRendering(GetTrackingSpace(), unDeviceIndex, &pose);
 
 	if (pOutputPose) {
 		*pOutputPose = pose;
@@ -475,7 +473,6 @@ void BaseCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSh
 	STUBBED();
 }
 
-#ifndef OC_XR_PORT
 uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char* pchValue, uint32_t unBufferSize)
 {
 #if defined(SUPPORT_VK)
@@ -497,7 +494,6 @@ uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T* p
 	STUBBED();
 #endif
 }
-#endif
 
 void BaseCompositor::SetExplicitTimingMode(ovr_enum_t eTimingMode)
 {

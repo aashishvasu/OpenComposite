@@ -24,6 +24,9 @@ enum XruEye : int {
 // haven't missed anything
 #define OC_XR_PORT
 
+#define XR_STUBBED() \
+	OOVR_ABORTF("Hit not-yet-ported-to-OpenXR stubbed function at %s:%d func %s", __FILE__, __LINE__, __func__);
+
 // Useful maths typedefs
 // NOTE: THESE ARE DEPRECATED, REMOVE, AND USE THE GLM NAMES
 #include <glm/gtc/type_ptr.hpp>
@@ -32,4 +35,11 @@ enum XruEye : int {
 typedef glm::mat4 MfMatrix4f;
 typedef glm::vec3 MfVector3f;
 
+extern XrInstance xr_instance;
 extern XrSession xr_session;
+extern XrSessionState xr_session_state;
+extern XrSystemId xr_system;
+extern XrViewConfigurationView xr_main_view;
+
+class XrExt;
+extern XrExt* xr_ext;

@@ -38,6 +38,11 @@ bool BaseChaperoneSetup::GetLiveCollisionBoundsInfo(VR_OUT_ARRAY_COUNT(punQuadsC
 
 	XrExtent2Df bounds;
 	XrResult result = xrGetReferenceSpaceBoundsRect(xr_session, XR_REFERENCE_SPACE_TYPE_STAGE, &bounds);
+
+	if (result == XR_SPACE_BOUNDS_UNAVAILABLE) {
+		return false; // TODO verify SteamVR returns this if Guardian isn't set up
+	}
+
 	OOVR_FAILED_XR_ABORT(result);
 
 	if (pQuadsBuffer) {

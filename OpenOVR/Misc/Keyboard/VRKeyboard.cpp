@@ -1,14 +1,8 @@
 #include "stdafx.h"
 
-#ifndef OC_XR_PORT
-
 #include "VRKeyboard.h"
-#include "libovr_wrapper.h"
 
 #include <d3d11.h>
-#include "OVR_CAPI.h"
-#include "OVR_CAPI_D3D.h"
-#include "Extras/OVR_Math.h"
 
 #include "Reimpl/static_bases.gen.h"
 #include "Reimpl/BaseCompositor.h"
@@ -27,7 +21,6 @@
 #include <comdef.h>
 
 using namespace std;
-using namespace OVR;
 
 // If you're working on the keyboard, it may be useful to have it headlocked so you can easily see it in the Oculus mirror
 static const bool DBG_STUCK_TO_FACE = false;
@@ -58,6 +51,8 @@ static vector<char> loadResource(int rid, int type) {
 }
 
 std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;
+
+#ifndef OC_XR_PORT
 
 VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t eventDispatch,
 	EGamepadTextInputMode inputMode)
@@ -142,9 +137,16 @@ VRKeyboard::~VRKeyboard() {
 		ctx->Release();
 }
 
+#else
+VRKeyboard::~VRKeyboard()
+{
+	XR_STUBBED();
+}
+#endif
 wstring VRKeyboard::contents() {
 	return text;
 }
+#ifndef OC_XR_PORT
 
 void VRKeyboard::contents(wstring str) {
 	text = str;

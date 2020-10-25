@@ -76,32 +76,14 @@ target_link_libraries(OpenXR PUBLIC advapi32 pathcch)
 add_library(glm INTERFACE)
 target_include_directories(glm INTERFACE libs/glm) # No separate include directory :(
 
-# === DrvOculus ===
-add_library(DrvOculus STATIC
-	DrvOculus/DrvOculus.cpp
-
-	DrvOculus/DrvOculusCommon.h
-
-	DrvOculus/OculusBackend.cpp
-	DrvOculus/OculusBackend.h
-
-	DrvOculus/OculusBackendSubmit.cpp
-	DrvOculus/OculusBackendMirror.cpp
-	DrvOculus/OculusBackendGuardian.cpp
-
-	DrvOculus/pub/DrvOculus.h
-
-	# Devices
-	DrvOculus/OculusDevice.cpp
-	DrvOculus/OculusDevice.h
-
-	DrvOculus/OculusHMD.cpp
-	DrvOculus/OculusHMD.h
+# === DrvOpenXR ===
+add_library(DrvOpenXR STATIC
+	DrvOpenXR/DrvOpenXR.cpp
 )
-target_include_directories(DrvOculus PUBLIC DrvOculus/pub)
-target_include_directories(DrvOculus PRIVATE DrvOculus)
-target_link_libraries(DrvOculus OpenVR OpenXR glm)
-source_group(Public REGULAR_EXPRESSION DrvOculus/pub/*)
+target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub)
+target_include_directories(DrvOpenXR PRIVATE DrvOpenXR)
+target_link_libraries(DrvOpenXR OpenVR OpenXR glm)
+source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)
 
 # === OCCore ===
 # TODO: precompiled headers
@@ -296,7 +278,7 @@ add_library(OCCore STATIC
 )
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
-target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX -DSUPPORT_GL -DSUPPORT_VK)
+target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX -DSUPPORT_GL)
 target_link_libraries(OCCore OpenVR OpenXR Vulkan glm)
 
 # Set up precompiled headers for OCCore
@@ -319,4 +301,4 @@ add_library(OCOVR SHARED
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
 )
-target_link_libraries(OCOVR OCCore) # DrvOculus)
+target_link_libraries(OCOVR OCCore DrvOpenXR)
