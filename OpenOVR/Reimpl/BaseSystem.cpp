@@ -138,7 +138,7 @@ HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
 {
 	XrSpaceLocation location{};
 	STUBBED(); // FIXME Implement the timing thing
-	XrResult err = xrLocateSpace(seatedSpace, floorSpace, 0 /* TODO */, &location);
+	XrResult err = xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, 0 /* TODO */, &location);
 	OOVR_FAILED_XR_ABORT(err);
 
 	glm::mat4 m = glm::mat4(X2G_quat(location.pose.orientation));

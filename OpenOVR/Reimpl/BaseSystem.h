@@ -41,8 +41,6 @@ public:
 #ifndef OC_XR_PORT
 #error TODO set these up
 #endif
-	XrSpace floorSpace;
-	XrSpace seatedSpace;
 	XrReferenceSpaceType currentSpace = XR_REFERENCE_SPACE_TYPE_STAGE; // The standing/stage origin is the default
 
 private:

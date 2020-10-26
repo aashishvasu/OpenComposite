@@ -11,6 +11,8 @@
 
 #include <openxr/openxr_platform.h>
 
+#include <vector>
+
 /**
  * A wrapper class for the function pointers to OpenXR extensions.
  *
@@ -23,5 +25,10 @@
  */
 class XrExt {
 public:
-	PFN_xrGetD3D11GraphicsRequirementsKHR xrGetD3D11GraphicsRequirementsKHR;
+	XrExt();
+
+	PFN_xrGetD3D11GraphicsRequirementsKHR xrGetD3D11GraphicsRequirementsKHR = nullptr;
 };
+
+// Put this here rather tha xrutil.h so not all files have to include vector
+extern std::vector<XrViewConfigurationView> xr_views_list;

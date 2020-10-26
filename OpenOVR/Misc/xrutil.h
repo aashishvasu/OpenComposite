@@ -35,11 +35,20 @@ enum XruEye : int {
 typedef glm::mat4 MfMatrix4f;
 typedef glm::vec3 MfVector3f;
 
+class XrSessionGlobals {
+public:
+	XrSessionGlobals();
+
+	XrSpace floorSpace;
+	XrSpace seatedSpace;
+};
+
 extern XrInstance xr_instance;
 extern XrSession xr_session;
 extern XrSessionState xr_session_state;
 extern XrSystemId xr_system;
-extern XrViewConfigurationView xr_main_view;
+XrViewConfigurationView& xr_main_view(XruEye view_id);
+extern XrSessionGlobals* xr_gbl;
 
 class XrExt;
 extern XrExt* xr_ext;

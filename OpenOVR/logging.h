@@ -32,13 +32,13 @@ if (!OVR_SUCCESS(expression)) { \
 }
 
 // TODO does OpenXR have an equivalent of ovr_GetLastErrorInfo?
-#define OOVR_FAILED_XR_ABORT(expression)                                                                              \
-	{                                                                                                                 \
-		XrResult failed_xr_abort_result = (expression);                                                               \
-		if (XR_FAILED(failed_xr_abort_result)) {                                                                      \
-			std::string err = "OpenXR Call failed, aborting.  Error code: " + std::to_string(failed_xr_abort_result); \
-			OOVR_ABORT(err.c_str());                                                                                  \
-		}                                                                                                             \
+#define OOVR_FAILED_XR_ABORT(expression)                                                \
+	{                                                                                   \
+		XrResult failed_xr_abort_result = (expression);                                 \
+		if (XR_FAILED(failed_xr_abort_result)) {                                        \
+			OOVR_ABORTF("OpenXR Call failed, aborting. %s:%d %s. Error code: %d\n%s", \
+			    __FILE__, __LINE__, __func__, failed_xr_abort_result, #expression);     \
+		}                                                                               \
 	}
 
 // Yay for there not being a PI constant in the standard

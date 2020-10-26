@@ -181,7 +181,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError * peError, EVRApp
 }
 
 VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRApplicationType eApplicationType, const char * pStartupInfo) {
-	// TODO use peError
+    *peError = VRInitError_None;
 
 	if (eApplicationType == VRApplication_Bootstrapper) {
 		char szFileName[MAX_PATH];
@@ -201,7 +201,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 	}
 
 	if (eApplicationType == VRApplication_Utility) {
-		goto success;
+		return current_init_token;
 	}
 
 	if (eApplicationType != VRApplication_Scene)
@@ -218,7 +218,6 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 success:
 	current_apptype = eApplicationType;
 	running = true;
-	*peError = VRInitError_None;
 
 	// TODO seperate this from the rest of dllmain
 	BackendManager::Create(DrvOpenXR::CreateOpenXRBackend());

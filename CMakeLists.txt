@@ -10,6 +10,8 @@ project(OpenComposite)
 
 include(scripts/pch.cmake)
 
+set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_GL)
+
 # === Runtime Switcher ===
 include_external_msproject(
 	RuntimeSwitcher ${CMAKE_SOURCE_DIR}/RuntimeSwitcher/RuntimeSwitcher.csproj
@@ -79,10 +81,22 @@ target_include_directories(glm INTERFACE libs/glm) # No separate include directo
 # === DrvOpenXR ===
 add_library(DrvOpenXR STATIC
 	DrvOpenXR/DrvOpenXR.cpp
+
+	DrvOpenXR/XrDriverPrivate.h
+
+	DrvOpenXR/XrBackend.cpp
+	DrvOpenXR/XrBackend.h
+
+	DrvOpenXR/XrTrackedDevice.cpp
+	DrvOpenXR/XrTrackedDevice.h
+
+	DrvOpenXR/XrHMD.cpp
+	DrvOpenXR/XrHMD.h
 )
 target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub)
 target_include_directories(DrvOpenXR PRIVATE DrvOpenXR)
 target_link_libraries(DrvOpenXR OpenVR OpenXR glm)
+target_compile_definitions(DrvOpenXR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS} -D_CRT_SECURE_NO_WARNINGS)
 source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)
 
 # === OCCore ===
@@ -278,7 +292,7 @@ add_library(OCCore STATIC
 )
 target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs)
-target_compile_definitions(OCCore PRIVATE -DSUPPORT_DX -DSUPPORT_GL)
+target_compile_definitions(OCCore PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
 target_link_libraries(OCCore OpenVR OpenXR Vulkan glm)
 
 # Set up precompiled headers for OCCore
