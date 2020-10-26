@@ -316,3 +316,6 @@ add_library(OCOVR SHARED
 	${OVR_RESOURCES}
 )
 target_link_libraries(OCOVR OCCore DrvOpenXR)
+
+# Required because the compositor header needs the platform-specific structures enabled via defines
+target_compile_definitions(OCOVR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})

@@ -1,16 +1,17 @@
 #pragma once
 
 #include "OpenVR/interfaces/vrtypes.h"
-#include <d3d12.h>
+#include <atlbase.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
+#include <d3d12.h>
 #include <wrl/client.h>
-#include <atlbase.h>
 
+#include "../Misc/xr_ext.h"
 #include "../Misc/xrutil.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 using Microsoft::WRL::ComPtr;
 
@@ -21,43 +22,42 @@ public:
 	virtual ~Compositor();
 
 	// Only copy a texture - this can be used for overlays and such
-	virtual void Invoke(const vr::Texture_t * texture) = 0;
+	virtual void Invoke(const vr::Texture_t* texture) = 0;
 
-	virtual void Invoke(XruEye eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView &viewport) = 0;
+	virtual void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
+	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport)
+	    = 0;
 
-	virtual void InvokeCubemap(const vr::Texture_t * textures) = 0;
+	virtual void InvokeCubemap(const vr::Texture_t* textures) = 0;
 	virtual bool SupportsCubemap() { return false; }
 
 	virtual XrSwapchain GetSwapChain() { return chain; };
 
 	virtual unsigned int GetFlags() { return 0; }
 
-	virtual XrExtent2Di GetSrcSize() { return srcSize; };
-
 	/**
 	 * Loads and unloads some context required for submitting textures to LibOVR. LoadSubmitContext is
 	 *  called before calling either Invoke or ovr_CommitTextureSwapChain, and ResetSubmitContext after
 	 *  calling both of them.
 	 */
-	virtual void LoadSubmitContext() {};
-	virtual void ResetSubmitContext() {};
+	virtual void LoadSubmitContext(){};
+	virtual void ResetSubmitContext(){};
 
 protected:
 	XrSwapchain chain = nullptr;
 
-	// TODO set in the Vulkan and DX12 compositors
-	XrExtent2Di srcSize = { 0, 0 };
+	// The request used to create the current swapchain. This can be used to check if the swapchain needs recreating.
+	XrSwapchainCreateInfo createInfo{};
 };
 
 #ifndef OC_XR_PORT
 class DX12Compositor : public Compositor {
 public:
-	DX12Compositor(vr::D3D12TextureData_t *td, OVR::Sizei &bufferSize, ovrTextureSwapChain *chains);
+	DX12Compositor(vr::D3D12TextureData_t* td, OVR::Sizei& bufferSize, ovrTextureSwapChain* chains);
 
 	// Override
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
+	    vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov& layer) override;
 
 private:
 	ComPtr<ID3D12Device> device;
@@ -68,7 +68,7 @@ private:
 	int chainLength = -1;
 
 	ComPtr<ID3D12CommandAllocator> allocator = NULL;
-	ComPtr<ID3D12DescriptorHeap> rtvVRHeap = NULL;  // Resource Target View Heap
+	ComPtr<ID3D12DescriptorHeap> rtvVRHeap = NULL; // Resource Target View Heap
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> texRtv;
 	std::vector<ID3D12Resource*> texResource;
 
@@ -80,6 +80,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> srvHeap = NULL;
 	UINT m_rtvDescriptorSize;
 };
+#endif
 
 class DX11Compositor : public Compositor {
 public:
@@ -88,38 +89,39 @@ public:
 	virtual ~DX11Compositor() override;
 
 	// Override
-	virtual void Invoke(const vr::Texture_t * texture) override;
+	virtual void Invoke(const vr::Texture_t* texture) override;
 
-	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
+	virtual void InvokeCubemap(const vr::Texture_t* textures) override;
 	virtual bool SupportsCubemap() override { return true; }
 
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
+	virtual void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
+	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport) override;
 
 	unsigned int GetFlags() override;
 
-	ID3D11Device *GetDevice() { return device; }
+	ID3D11Device* GetDevice() { return device; }
 
 protected:
-	void CheckCreateSwapChain(const vr::Texture_t * texture, bool cube);
+	void CheckCreateSwapChain(const vr::Texture_t* texture, bool cube);
 
 	void ThrowIfFailed(HRESULT test);
 
-	bool CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc & chainDesc, vr::EColorSpace colourSpace);
+	bool CheckChainCompatible(D3D11_TEXTURE2D_DESC& inputDesc, vr::EColorSpace colourSpace);
 
-	ID3D11Device *device = nullptr;
-	ID3D11DeviceContext *context = nullptr;
-
-	ovrTextureSwapChainDesc chainDesc;
+	ID3D11Device* device = nullptr;
+	ID3D11DeviceContext* context = nullptr;
 
 	bool submitVerticallyFlipped = false;
+
+	std::vector<XrSwapchainImageD3D11KHR> imagesHandles;
 };
 
+#ifndef OC_XR_PORT
 class DX10Compositor : public DX11Compositor {
 public:
 	DX10Compositor(ID3D10Texture2D* td);
 
-	virtual void Invoke(const vr::Texture_t * texture) override;
+	virtual void Invoke(const vr::Texture_t* texture) override;
 
 	virtual void LoadSubmitContext() override;
 	virtual void ResetSubmitContext() override;
@@ -138,12 +140,12 @@ public:
 	unsigned int GetFlags() override;
 
 	// Override
-	virtual void Invoke(const vr::Texture_t * texture) override;
+	virtual void Invoke(const vr::Texture_t* texture) override;
 
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
+	    vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov& layer) override;
 
-	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
+	virtual void InvokeCubemap(const vr::Texture_t* textures) override;
 
 private:
 	GLuint fboId = 0;
@@ -151,22 +153,22 @@ private:
 
 class VkCompositor : public Compositor {
 public:
-	VkCompositor(const vr::Texture_t *initialTexture);
+	VkCompositor(const vr::Texture_t* initialTexture);
 
 	virtual ~VkCompositor() override;
 
 	// Override
-	virtual void Invoke(const vr::Texture_t * texture) override;
+	virtual void Invoke(const vr::Texture_t* texture) override;
 
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * bounds,
-		vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) override;
+	virtual void Invoke(ovrEyeType eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
+	    vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov& layer) override;
 
-	virtual void InvokeCubemap(const vr::Texture_t * textures) override;
+	virtual void InvokeCubemap(const vr::Texture_t* textures) override;
 
 	unsigned int GetFlags() override;
 
 private:
-	bool CheckChainCompatible(const vr::VRVulkanTextureData_t &tex, const ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace);
+	bool CheckChainCompatible(const vr::VRVulkanTextureData_t& tex, const ovrTextureSwapChainDesc& chainDesc, vr::EColorSpace colourSpace);
 
 	bool submitVerticallyFlipped = false;
 	ovrTextureSwapChainDesc chainDesc;

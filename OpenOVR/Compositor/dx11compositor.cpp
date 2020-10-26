@@ -1,14 +1,14 @@
 #include "stdafx.h"
-#ifndef OC_XR_PORT
-#include "compositor.h"
-#include "libovr_wrapper.h"
 
-#include "OVR_CAPI_D3D.h"
+#include "compositor.h"
+
+#include "../Misc/xr_ext.h"
 
 using namespace std;
-#define OVSS (*ovr::session)
+using glm::min;
 
-static void XTrace(LPCSTR lpszFormat, ...) {
+static void XTrace(LPCSTR lpszFormat, ...)
+{
 	va_list args;
 	va_start(args, lpszFormat);
 	int nBuf;
@@ -19,75 +19,40 @@ static void XTrace(LPCSTR lpszFormat, ...) {
 	va_end(args);
 }
 
-ovrTextureFormat dxgiToOvrFormat(DXGI_FORMAT dxgi, vr::EColorSpace colourSpace) {
-	// TODO is this really how it should work?
-	// No idea why or how or what, but for now just force SRGB on as otherwise
-	// it causes trouble.
-	bool useSrgb = true; // colourSpace != vr::ColorSpace_Auto;
-
-	switch (dxgi) {
-#define MAPPING(name) \
-			case DXGI_ ## name: \
-				return OVR_ ## name;
-
-#define C_MAPPING(name) \
-			case DXGI_ ## name: \
-			case DXGI_ ## name ## _SRGB: \
-				return useSrgb ? OVR_ ## name ## _SRGB : OVR_ ## name;
-
-		MAPPING(FORMAT_B5G6R5_UNORM);
-		MAPPING(FORMAT_B5G5R5A1_UNORM);
-		MAPPING(FORMAT_B4G4R4A4_UNORM);
-		C_MAPPING(FORMAT_R8G8B8A8_UNORM);
-		C_MAPPING(FORMAT_B8G8R8A8_UNORM);
-		C_MAPPING(FORMAT_B8G8R8X8_UNORM);
-		MAPPING(FORMAT_R16G16B16A16_FLOAT);
-		MAPPING(FORMAT_R11G11B10_FLOAT);
-
-	case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-		return useSrgb ? OVR_FORMAT_R8G8B8A8_UNORM_SRGB : OVR_FORMAT_R8G8B8A8_UNORM;
-
-	case DXGI_FORMAT_B8G8R8A8_TYPELESS:
-		return useSrgb ? OVR_FORMAT_B8G8R8A8_UNORM_SRGB : OVR_FORMAT_B8G8R8A8_UNORM;
-
-#undef C_MAPPING
-#undef MAPPING
+#define ERR(msg)                                                                                                                                       \
+	{                                                                                                                                                  \
+		std::string str = "Hit DX11-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
+		OOVR_LOG(str.c_str());                                                                                                                         \
+		MessageBoxA(NULL, str.c_str(), "Errored func!", MB_OK);                                                                                        \
+		/**((int*)NULL) = 0;*/                                                                                                                         \
+		throw str;                                                                                                                                     \
 	}
 
-	OOVR_LOGF("Unknown DXGI_FORMAT %d for colourspace %d", dxgi, colourSpace);
-	OOVR_ABORT("Unknown DXGI format in log");
-	return OVR_FORMAT_UNKNOWN;
-}
-
-#define ERR(msg) { \
-	std::string str = "Hit DX11-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
-	OOVR_LOG(str.c_str()); \
-	MessageBoxA(NULL, str.c_str(), "Errored func!", MB_OK); \
-	/**((int*)NULL) = 0;*/\
-	throw str; \
-}
-
-void DX11Compositor::ThrowIfFailed(HRESULT test) {
+void DX11Compositor::ThrowIfFailed(HRESULT test)
+{
 	if ((test) != S_OK) {
 		OOVR_FAILED_DX_ABORT(device->GetDeviceRemovedReason());
 		throw "ThrowIfFailed err";
 	}
 }
 
-DX11Compositor::DX11Compositor(ID3D11Texture2D *initial) {
+DX11Compositor::DX11Compositor(ID3D11Texture2D* initial)
+{
 	initial->GetDevice(&device);
 	device->GetImmediateContext(&context);
 }
 
-DX11Compositor::~DX11Compositor() {
+DX11Compositor::~DX11Compositor()
+{
 	context->Release();
 	device->Release();
 }
 
-void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t *texture, bool cube) {
-	ovrTextureSwapChainDesc &desc = chainDesc;
+void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cube)
+{
+	XrSwapchainCreateInfo& desc = createInfo;
 
-	ID3D11Texture2D *src = (ID3D11Texture2D*)texture->handle;
+	auto* src = (ID3D11Texture2D*)texture->handle;
 
 	D3D11_TEXTURE2D_DESC srcDesc;
 	src->GetDesc(&srcDesc);
@@ -98,60 +63,87 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t *texture, bool cub
 		srcDesc.Height = srcDesc.Width = min(srcDesc.Height, srcDesc.Width);
 	}
 
-	bool usable = chain == NULL ? false : CheckChainCompatible(srcDesc, desc, texture->eColorSpace);
+	bool usable = chain == NULL ? false : CheckChainCompatible(srcDesc, texture->eColorSpace);
 
 	if (!usable) {
 		OOVR_LOG("Generating new swap chain");
 
 		// First, delete the old chain if necessary
-		if (chain)
-			ovr_DestroyTextureSwapChain(OVSS, chain);
+		if (chain) {
+			xrDestroySwapchain(chain);
+		}
 
 		// Make eye render buffer
-		desc = {};
-		desc.Type = cube ? ovrTexture_Cube : ovrTexture_2D;
-		desc.ArraySize = cube ? 6 : 1;
-		desc.Width = srcDesc.Width;
-		desc.Height = srcDesc.Height;
-		desc.Format = dxgiToOvrFormat(srcDesc.Format, texture->eColorSpace);
-		desc.MipLevels = srcDesc.MipLevels;
-		desc.SampleCount = 1;
-		desc.StaticImage = ovrFalse;
+		desc = { XR_TYPE_SWAPCHAIN_CREATE_INFO };
+		// TODO desc.Type = cube ? ovrTexture_Cube : ovrTexture_2D;
+		desc.faceCount = cube ? 6 : 1;
+		desc.width = srcDesc.Width;
+		desc.height = srcDesc.Height;
+		desc.format = srcDesc.Format; // TODO colourspace handling?
+		desc.mipCount = srcDesc.MipLevels;
+		desc.sampleCount = 1;
+		desc.arraySize = 1;
 
-		desc.MiscFlags = ovrTextureMisc_DX_Typeless | ovrTextureMisc_AutoGenerateMips;
-		desc.BindFlags = ovrTextureBind_None; // ovrTextureBind_DX_RenderTarget;
+		// TODO do we need to do anything wrt automatic mipmap generation?
+		desc.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 
-		srcSize.w = srcDesc.Width;
-		srcSize.h = srcDesc.Height;
-
-		ovrResult result = ovr_CreateTextureSwapChainDX(OVSS, device, &desc, &chain);
-		if (!OVR_SUCCESS(result))
+		XrResult result = xrCreateSwapchain(xr_session, &desc, &chain);
+		if (!XR_SUCCEEDED(result))
 			ERR("Cannot create DX texture swap chain " + to_string(result));
+
+		// Go through the images and retrieve them - this will be used later in Invoke, since OpenXR doesn't
+		// have a convenient way to request one specific image.
+		uint32_t imageCount;
+		OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, 0, &imageCount, nullptr));
+
+		imagesHandles = std::vector<XrSwapchainImageD3D11KHR>(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR });
+		OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain,
+		    imagesHandles.size(), &imageCount, (XrSwapchainImageBaseHeader*)imagesHandles.data()));
+
+		OOVR_FALSE_ABORT(imageCount == imagesHandles.size());
+
+		// TODO do we need to release the images at some point, or does the swapchain do that for us?
 	}
 }
 
-void DX11Compositor::Invoke(const vr::Texture_t * texture) {
+void DX11Compositor::Invoke(const vr::Texture_t* texture)
+{
 	CheckCreateSwapChain(texture, false);
 
-	int currentIndex = 0;
-	ovr_GetTextureSwapChainCurrentIndex(OVSS, chain, &currentIndex);
+	// First reserve an image from the swapchain
+	XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+	uint32_t currentIndex = 0;
+	OOVR_FAILED_XR_ABORT(xrAcquireSwapchainImage(chain, &acquireInfo, &currentIndex));
 
-	ID3D11Texture2D* tex = nullptr;
-	ovr_GetTextureSwapChainBufferDX(OVSS, chain, currentIndex, IID_PPV_ARGS(&tex));
-	context->CopyResource(tex, (ID3D11Texture2D*)texture->handle);
-	tex->Release();
+	// Wait until the swapchain is ready - this makes sure the compositor isn't writing to it
+	// We don't have to pass in currentIndex since it uses the oldest acquired-but-not-waited-on
+	// image, so we should be careful with concurrency here.
+	XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
+	OOVR_FAILED_XR_ABORT(xrWaitSwapchainImage(chain, &waitInfo));
+
+	// Copy the source to the destination image
+	context->CopyResource(imagesHandles[currentIndex].texture, (ID3D11Texture2D*)texture->handle);
+
+	// Release the swapchain - OpenXR will use the last-released image in a swapchain
+	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo))
 }
 
-void DX11Compositor::InvokeCubemap(const vr::Texture_t * textures) {
+void DX11Compositor::InvokeCubemap(const vr::Texture_t* textures)
+{
 	CheckCreateSwapChain(&textures[0], true);
 
+#ifdef OC_XR_PORT
+	ID3D11Texture2D* tex = nullptr;
+	ERR("TODO cubemap");
+#else
 	int currentIndex = 0;
 	OOVR_FAILED_OVR_ABORT(ovr_GetTextureSwapChainCurrentIndex(OVSS, chain, &currentIndex));
 
-	ID3D11Texture2D* tex = nullptr;
 	OOVR_FAILED_OVR_ABORT(ovr_GetTextureSwapChainBufferDX(OVSS, chain, currentIndex, IID_PPV_ARGS(&tex)));
+#endif
 
-	ID3D11Texture2D *faceSrc;
+	ID3D11Texture2D* faceSrc;
 
 	// Front
 	faceSrc = (ID3D11Texture2D*)textures[0].handle;
@@ -180,15 +172,19 @@ void DX11Compositor::InvokeCubemap(const vr::Texture_t * textures) {
 	tex->Release();
 }
 
-void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
-	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
+void DX11Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds,
+    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
+{
 
 	// Copy the texture across
 	Invoke(texture);
 
 	// Set the viewport up
-    // TODO deduplicate with dx11compositor, and use for all compositors
-	ovrRecti &viewport = layer.Viewport[eye];
+	// TODO deduplicate with dx11compositor, and use for all compositors
+	XrSwapchainSubImage& subImage = layer.subImage;
+	subImage.swapchain = chain;
+	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
+	XrRect2Di& viewport = subImage.imageRect;
 	if (ptrBounds) {
 		vr::VRTextureBounds_t bounds = *ptrBounds;
 
@@ -197,49 +193,49 @@ void DX11Compositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const
 			float newMax = bounds.vMin;
 			bounds.vMin = bounds.vMax;
 			bounds.vMax = newMax;
-		}
-		else {
+		} else {
 			submitVerticallyFlipped = false;
 		}
 
-		viewport.Pos.x = (int)(bounds.uMin * chainDesc.Width);
-		viewport.Pos.y = (int)(bounds.vMin * chainDesc.Height);
-		viewport.Size.w = (int)((bounds.uMax - bounds.uMin) * chainDesc.Width);
-		viewport.Size.h = (int)((bounds.vMax - bounds.vMin) * chainDesc.Height);
-	}
-	else {
-		viewport.Pos.x = viewport.Pos.y = 0;
-		viewport.Size.w = chainDesc.Width;
-		viewport.Size.h = chainDesc.Height;
+		viewport.offset.x = (int)(bounds.uMin * createInfo.width);
+		viewport.offset.y = (int)(bounds.vMin * createInfo.height);
+		viewport.extent.width = (int)((bounds.uMax - bounds.uMin) * createInfo.width);
+		viewport.extent.height = (int)((bounds.vMax - bounds.vMin) * createInfo.height);
+	} else {
+		viewport.offset.x = viewport.offset.y = 0;
+		viewport.extent.width = createInfo.width;
+		viewport.extent.height = createInfo.height;
 
 		submitVerticallyFlipped = false;
 	}
 }
 
-unsigned int DX11Compositor::GetFlags() {
-	return submitVerticallyFlipped ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
+unsigned int DX11Compositor::GetFlags()
+{
+	ERR("TODO");
+	// return submitVerticallyFlipped ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
 }
 
-bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC & inputDesc, ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace) {
+bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC& inputDesc, vr::EColorSpace colourSpace)
+{
 	bool usable = true;
-#define FAIL(name) { \
-	usable = false; \
-	OOVR_LOG("Resource mismatch: " #name); \
-}
-#define CHECK(name) CHECK_ADV(name, name)
-#define CHECK_ADV(name, chainName) \
-if(inputDesc.name != chainDesc.chainName) FAIL(name);
+#define FAIL(name)                             \
+	{                                          \
+		usable = false;                        \
+		OOVR_LOG("Resource mismatch: " #name); \
+	}
+#define CHECK(name, chainName)                  \
+	if (inputDesc.name != createInfo.chainName) \
+		FAIL(name);
 
-	CHECK(Width);
-	CHECK(Height);
-	CHECK(MipLevels);
-	if(chainDesc.Format != dxgiToOvrFormat(inputDesc.Format, colourSpace)) FAIL(Format);
+	CHECK(Width, width)
+	CHECK(Height, height)
+	CHECK(MipLevels, mipCount)
+	CHECK(Format, format)
 	//CHECK_ADV(SampleDesc.Count, SampleCount);
 	//CHECK_ADV(SampleDesc.Quality);
 #undef CHECK
-#undef CHECK_ADV
 #undef FAIL
 
 	return usable;
 }
-#endif

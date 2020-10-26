@@ -12,7 +12,12 @@ IHMD* XrBackend::GetPrimaryHMD()
 ITrackedDevice* XrBackend::GetDevice(
     vr::TrackedDeviceIndex_t index)
 {
-	STUBBED();
+	switch (index) {
+	case vr::k_unTrackedDeviceIndex_Hmd:
+		return GetPrimaryHMD();
+	default:
+		return nullptr;
+	}
 }
 
 void XrBackend::GetDeviceToAbsoluteTrackingPose(
@@ -25,15 +30,30 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
 }
 
 /* Submitting Frames */
+void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
+{
+	// TODO check we're in a suitable session and re-init the session if the D3D11 device changed
+
+	for (std::unique_ptr<Compositor>& compositor : compositors) {
+		// Skip a compositor if it's already set up
+		if (compositor)
+			continue;
+
+		compositor.reset(BaseCompositor::CreateCompositorAPI(tex));
+	}
+}
+
 void XrBackend::WaitForTrackingData()
 {
 	XrFrameWaitInfo waitInfo{ XR_TYPE_FRAME_WAIT_INFO };
 	XrFrameState state{ XR_TYPE_FRAME_STATE };
 
+	// TODO start session
+
 	OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session, &waitInfo, &state));
 
 	// FIXME loop until this returns true?
-	OOVR_FALSE_ABORT(state.shouldRender);
+	// OOVR_FALSE_ABORT(state.shouldRender);
 
 	XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
 	OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session, &beginInfo));
@@ -46,6 +66,8 @@ void XrBackend::StoreEyeTexture(
     vr::EVRSubmitFlags submitFlags,
     bool isFirstEye)
 {
+	CheckOrInitCompositors(texture);
+
 	std::unique_ptr<Compositor>& compPtr = compositors[eye];
 	OOVR_FALSE_ABORT(compPtr.get() != nullptr);
 	Compositor& comp = *compPtr;

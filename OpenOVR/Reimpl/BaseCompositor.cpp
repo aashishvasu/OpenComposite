@@ -8,9 +8,9 @@
 #include <glm/gtx/transform.hpp>
 
 using glm::mat4;
+using glm::quat;
 using glm::vec3;
 using glm::vec4;
-using glm::quat;
 using namespace std;
 
 #include "BaseCompositor.h"
@@ -168,13 +168,14 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 
 #ifndef OC_XR_PORT
 DX11Compositor* BaseCompositor::dxcomp;
+#endif
 
-Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize)
+Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 {
 	Compositor* comp = nullptr;
 
 	switch (texture->eType) {
-#ifdef SUPPORT_GL
+#if defined(SUPPORT_GL) && !defined(OC_XR_PORT)
 	case TextureType_OpenGL: {
 		comp = new GLCompositor(fovTextureSize);
 		break;
@@ -184,10 +185,16 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, co
 	case TextureType_DirectX: {
 		if (!oovr_global_configuration.DX10Mode())
 			comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
+
+#ifdef OC_XR_PORT
+		else
+			STUBBED();
+#else
 		else
 			comp = new DX10Compositor((ID3D10Texture2D*)texture->handle);
 
 		dxcomp = (DX11Compositor*)comp;
+#endif
 
 		break;
 	}
@@ -215,7 +222,6 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, co
 
 	return comp;
 }
-#endif
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VRTextureBounds_t* bounds, EVRSubmitFlags submitFlags)
 {

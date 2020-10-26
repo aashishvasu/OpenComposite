@@ -94,6 +94,11 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	sessionInfo.next = &d3dInfo;
 	OOVR_FAILED_XR_ABORT(xrCreateSession(xr_instance, &sessionInfo, &xr_session));
 
+	// Start the session running
+	XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
+	beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	OOVR_FAILED_XR_ABORT(xrBeginSession(xr_session, &beginInfo));
+
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
 	xr_gbl = new XrSessionGlobals();
 

@@ -17,5 +17,6 @@ public:
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
 
+	void CheckOrInitCompositors(const vr::Texture_t* tex);
 	std::unique_ptr<Compositor> compositors[XruEyeCount];
 };
