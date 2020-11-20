@@ -42,15 +42,32 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	float tanU = tanf(fov.angleUp);
 	float tanD = tanf(fov.angleDown);
 	float horizontalFov = -tanL + tanR;
-	float verticalFov = -tanU + tanD;
+	float verticalFov = tanU - tanD;
+
+	// To make building these projections easier, we build them as row-major matrices then (for graphics
+	// APIs that use column-major matrices) transpose them at the end.
 
 	// TODO verify!
 	glm::mat4 m;
-	m[0] = glm::vec4(twoNear / horizontalFov, 0, (tanL + tanR) / horizontalFov, 0); // First row, determines X out multiplication with vector
-	m[1] = glm::vec4(0, twoNear / horizontalFov, (tanU + tanD) / verticalFov, 0); // Determines Y
-	m[2] = glm::vec4(0, 0, -(fNearZ + fFarZ) / (fFarZ - fNearZ), (2 * fNearZ * fFarZ) / (fFarZ - fNearZ)); // Determines Z
-	m[3] = glm::vec4(0, 0, -1, 0); // Determines W
-	m = glm::transpose(m);
+	if (convention == API_DirectX) {
+		// https://docs.microsoft.com/en-us/windows/win32/dxtecharts/the-direct3d-transformation-pipeline
+		// https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
+		// Also copied from glm::perspectiveLH_ZO
+		m[0] = glm::vec4(1 / tanf(horizontalFov / 2), 0, (tanL + tanR) / horizontalFov, 0);
+		m[1] = glm::vec4(0, 1 / tanf(verticalFov / 2), (tanU + tanD) / verticalFov, 0);
+		m[2] = glm::vec4(0, 0, -fFarZ / (fFarZ - fNearZ), -(fFarZ * fNearZ) / (fFarZ - fNearZ));
+		m[3] = glm::vec4(0, 0, -1, 0);
+	} else {
+		// FIXME this transform is almost certainly wrong
+		m[0] = glm::vec4(twoNear / horizontalFov, 0, (tanL + tanR) / horizontalFov, 0); // First row, determines X out multiplication with vector
+		m[1] = glm::vec4(0, twoNear / horizontalFov, (tanU + tanD) / verticalFov, 0); // Determines Y
+		m[2] = glm::vec4(0, 0, -(fNearZ + fFarZ) / (fFarZ - fNearZ), -(2 * fNearZ * fFarZ) / (fFarZ - fNearZ)); // Determines Z
+		m[3] = glm::vec4(0, 0, -1, 0); // Determines W
+
+		m = glm::transpose(m);
+
+		STUBBED(); // TODO make sure the OpenGL transform matrix is correct
+	}
 
 	return O2S_m4(m);
 }
