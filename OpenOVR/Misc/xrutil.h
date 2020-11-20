@@ -41,6 +41,9 @@ public:
 
 	XrSpace floorSpace;
 	XrSpace seatedSpace;
+
+	// Set by XrBackend
+	XrTime nextPredictedFrameTime = 0;
 };
 
 extern XrInstance xr_instance;

@@ -11,10 +11,14 @@ using Mat4 = MfMatrix4f;
 
 HmdMatrix44_t O2S_m4(Mat4 input)
 {
-	HmdMatrix44_t output;
+	HmdMatrix44_t output{};
 
-	// Note: both value_ptr and HmdMatrix44_t are column-major
-	// See https://github.com/ValveSoftware/openvr/issues/433
+	// Note: while value_ptr is column-major, HmdMatrix44_t is (sometimes?) row-major
+	// This issue claiming HmdMatrix is column-major wasted quite a bit of my time: https://github.com/ValveSoftware/openvr/issues/433
+	// In hindsight HmdMatrix_34 should have been enough of a hint since it has the position data on the bottom
+	// However for the 4x4 matrix it's not obvious which way around it is - pass it through plain and let this function's user
+	// figure out what's correct based on the context.
+
 	memcpy_s(output.m, sizeof(float[4][4]), glm::value_ptr(input), sizeof(float[4][4]));
 
 	return output;

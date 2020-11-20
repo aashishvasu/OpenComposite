@@ -2,5 +2,5 @@
 #include "../OpenOVR/Drivers/Backend.h"
 
 namespace DrvOpenXR {
-	IBackend *CreateOpenXRBackend();
+IBackend* CreateOpenXRBackend();
 };

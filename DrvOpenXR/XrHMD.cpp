@@ -17,15 +17,11 @@ void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 
 vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention)
 {
-	if (convention == API_OpenGL) {
-		STUBBED();
-	}
-
 	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
 
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = 0; // TODO FIXME
+	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
 	locateInfo.space = xr_gbl->floorSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
