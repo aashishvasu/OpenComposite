@@ -10,7 +10,13 @@ project(OpenComposite)
 
 include(scripts/pch.cmake)
 
-set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_GL)
+# Platform-dependent flags
+# Support Vulkan on Linux instead of DirectX
+if (WIN32)
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_GL)
+else()
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
+endif()
 
 # === Runtime Switcher ===
 include_external_msproject(
@@ -67,8 +73,15 @@ add_library(OpenXR STATIC
 )
 target_include_directories(OpenXR PRIVATE ${XrDirCommon} ${XrDir}/src ${XrDir}/src/external/jsoncpp/include)
 target_include_directories(OpenXR PUBLIC ${XrDir}/include)
-target_compile_definitions(OpenXR PRIVATE -DXR_OS_WINDOWS -DXR_USE_PLATFORM_WIN32
+# Platform-dependent flags
+if (WIN32)
+	target_compile_definitions(OpenXR PRIVATE -DXR_OS_WINDOWS -DXR_USE_PLATFORM_WIN32
 	-DXR_USE_GRAPHICS_API_D3D11 -DXR_USE_GRAPHICS_API_D3D12)
+else()
+	# TODO Turtle1331 should we include -DXR_USE_PLATFORM_(XLIB|XCB|WAYLAND) here?
+	target_compile_definitions(OpenXR PRIVATE -DXR_OS_LINUX
+	-DXR_USE_GRAPHICS_API_OPENGL -DXR_USE_GRAPHICS_API_VULKAN)
+endif()
 target_link_libraries(OpenXR PUBLIC advapi32 pathcch)
 
 # === glm ===
