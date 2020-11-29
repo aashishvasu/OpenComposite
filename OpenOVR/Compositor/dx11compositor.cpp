@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "compositor.h"
+#include "dxcompositor.h"
 
 #include "../Misc/xr_ext.h"
 

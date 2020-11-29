@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #ifndef OC_XR_PORT
 #include "compositor.h"
+#include "dxcompositor.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4838)   // int to UINT truncation.
