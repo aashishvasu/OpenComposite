@@ -10,6 +10,9 @@ void oovr_abort_raw(const char *file, long line, const char *func, const char *m
 #define OOVR_ABORT_T(msg, title) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, title); throw msg; }
 #define OOVR_ABORTF(msg, ...) { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, __VA_ARGS__); throw msg; }
 
+void oovr_message_raw(const char *message, const char *title);
+#define OOVR_MESSAGE(message, title) oovr_message_raw(message, title);
+
 // DirectX API validation helpers
 #define OOVR_FAILED_DX_ABORT(expression) \
 { \

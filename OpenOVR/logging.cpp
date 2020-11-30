@@ -1,6 +1,11 @@
-#include "stdafx.h"
 #include "logging.h"
 #include <fstream>
+
+#ifdef WIN32
+	#include "stdafx.h"
+#else
+	#include <iostream>
+#endif
 
 using namespace std;
 
@@ -49,8 +54,21 @@ void oovr_abort_raw(const char * file, long line, const char * func, const char 
 	// Ensure everything gets written
 	stream << flush;
 
-	MessageBoxA(NULL, buff, title, MB_OK);
+	OOVR_MESSAGE(buff, title);
 	exit(1);
+}
+
+void oovr_message_raw(const char *message, const char *title) {
+	// Save to log file
+	oovr_log_raw_format("logging.h", 14, "OOVR_MESSAGE", "%s: %s", title, message);
+
+	#ifdef WIN32
+		// Display a message box on Windows
+		MessageBoxA(NULL, message, title, MB_OK);
+	#else
+		// Print to stderr on Linux
+		cerr << "OOVR_MESSAGE: " << title << ": " << message;
+	#endif
 }
 
 const float math_pi = 3.14159265358979323846f;
