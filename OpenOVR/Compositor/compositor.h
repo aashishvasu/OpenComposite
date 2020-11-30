@@ -1,8 +1,11 @@
 #pragma once
 
 #include "OpenVR/interfaces/vrtypes.h"
-#include <atlbase.h>
-#include <wrl/client.h>
+#ifdef WIN32
+	// Windows template libraries
+	#include <atlbase.h>
+	#include <wrl/client.h>
+#endif
 
 #include "../Misc/xr_ext.h"
 #include "../Misc/xrutil.h"
@@ -10,7 +13,9 @@
 #include <memory>
 #include <vector>
 
-using Microsoft::WRL::ComPtr;
+#ifdef WIN32
+	using Microsoft::WRL::ComPtr;
+#endif
 
 typedef unsigned int GLuint;
 
