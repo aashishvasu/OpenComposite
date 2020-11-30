@@ -24,7 +24,7 @@ static void XTrace(LPCSTR lpszFormat, ...)
 	{                                                                                                                                                  \
 		std::string str = "Hit DX11-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
 		OOVR_LOG(str.c_str());                                                                                                                         \
-		MessageBoxA(NULL, str.c_str(), "Errored func!", MB_OK);                                                                                        \
+		OOVR_MESSAGE(str.c_str(), "Errored func!");                                                                                        \
 		/**((int*)NULL) = 0;*/                                                                                                                         \
 		throw str;                                                                                                                                     \
 	}
