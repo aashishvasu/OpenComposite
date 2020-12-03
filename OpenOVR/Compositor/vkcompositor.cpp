@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "compositor.h"
+#include "vkcompositor.h"
 
 #if defined(SUPPORT_VK) && !defined(OC_XR_PORT)
 

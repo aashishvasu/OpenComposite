@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #ifndef OC_XR_PORT
-#include "Compositor/compositor.h"
+#include "glcompositor.h"
 
 #include "libovr_wrapper.h"
 

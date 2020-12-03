@@ -2,8 +2,7 @@
 
 #if defined(SUPPORT_DX12)
 
-#include "compositor.h"
-#include "dxcompositor.h"
+#include "dx12compositor.h"
 #include "libovr_wrapper.h"
 
 #include <string>
