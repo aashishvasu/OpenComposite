@@ -1,7 +1,7 @@
+#if defined(SUPPORT_VK)
+
 #include "stdafx.h"
 #include "vkcompositor.h"
-
-#if defined(SUPPORT_VK) && !defined(OC_XR_PORT)
 
 #include "libovr_wrapper.h"
 #include "OVR_CAPI_Vk.h"

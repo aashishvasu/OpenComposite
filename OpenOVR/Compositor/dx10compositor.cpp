@@ -1,5 +1,6 @@
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX10) && defined(SUPPORT_DX11)
+
 #include "stdafx.h"
-#ifndef OC_XR_PORT
 #include "dx10compositor.h"
 
 #pragma warning(push)
@@ -63,4 +64,5 @@ void DX10Compositor::ResetSubmitContext() {
 	context1->SwapDeviceContextState(originalContextState, nullptr);
 	originalContextState.Release();
 }
+
 #endif

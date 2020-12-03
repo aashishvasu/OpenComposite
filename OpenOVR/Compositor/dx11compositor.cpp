@@ -1,3 +1,5 @@
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+
 #include "stdafx.h"
 
 #include "dx11compositor.h"
@@ -239,3 +241,5 @@ bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC& inputDesc, vr::E
 
 	return usable;
 }
+
+#endif

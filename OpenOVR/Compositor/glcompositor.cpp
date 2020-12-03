@@ -1,5 +1,6 @@
+#ifdef SUPPORT_GL
+
 #include "stdafx.h"
-#ifndef OC_XR_PORT
 #include "glcompositor.h"
 
 #include "libovr_wrapper.h"
@@ -91,4 +92,5 @@ void GLCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 void GLCompositor::InvokeCubemap(const vr::Texture_t * textures) {
 	OOVR_ABORT("GLCompositor::InvokeCubemap: Not yet supported!");
 }
+
 #endif
