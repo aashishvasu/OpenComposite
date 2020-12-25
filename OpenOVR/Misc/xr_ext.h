@@ -4,10 +4,22 @@
 
 #pragma once
 
+// TODO Turtle1331 it would be nicer to include OpenXR-SDK's xr_dependencies.h if possible
 #ifdef SUPPORT_DX
 #include <d3d11.h>
 #define XR_USE_GRAPHICS_API_D3D11
 #endif
+
+#ifdef SUPPORT_GL
+#include <GL/glx.h>
+#define XR_USE_GRAPHICS_API_OPENGL
+#endif
+
+#ifdef SUPPORT_VK
+#include <vulkan/vulkan.h>
+#define XR_USE_GRAPHICS_API_VULKAN
+#endif
+
 
 #include <openxr/openxr_platform.h>
 
@@ -27,7 +39,15 @@ class XrExt {
 public:
 	XrExt();
 
+#ifdef SUPPORT_DX
 	PFN_xrGetD3D11GraphicsRequirementsKHR xrGetD3D11GraphicsRequirementsKHR = nullptr;
+#endif
+#ifdef SUPPORT_GL
+	PFN_xrGetVulkanGraphicsRequirementsKHR xrGetVulkanGraphicsRequirementsKHR = nullptr;
+#endif
+#ifdef SUPPORT_VK
+	PFN_xrGetOpenGLGraphicsRequirementsKHR xrGetOpenGLGraphicsRequirementsKHR = nullptr;
+#endif
 };
 
 // Put this here rather tha xrutil.h so not all files have to include vector

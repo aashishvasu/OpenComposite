@@ -8,10 +8,20 @@
 
 #ifdef SUPPORT_DX
 	// Let's really hope noone tries to use DX10
-	#include "dx10compositor.h"
-	#include "dx11compositor.h"
-	#include "dx12compositor.h"
+	#ifdef SUPPORT_DX10
+		#include "dx10compositor.h"
+	#endif
+	#ifdef SUPPORT_DX11
+		#include "dx11compositor.h"
+	#endif
+	#ifdef SUPPORT_DX12
+			#include "dx12compositor.h"
+	#endif
+#endif
+#ifdef SUPPORT_VK
 	#include "glcompositor.h"
+#endif
+#ifdef SUPPORT_GL
 	#include "vkcompositor.h"
 #endif
 
