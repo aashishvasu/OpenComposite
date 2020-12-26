@@ -2,28 +2,9 @@
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
 #include "OpenVR/interfaces/IVRCompositor_022.h"
 
-#include "../Compositor/compositor.h" // TODO don't import from OCOVR, and remove the "../"
+#include "../Compositor/compositor_backend.h" // TODO don't import from OCOVR, and remove the "../"
 
 #include <vector>
-
-#ifdef SUPPORT_DX
-	// Let's really hope noone tries to use DX10
-	#ifdef SUPPORT_DX10
-		#include "dx10compositor.h"
-	#endif
-	#ifdef SUPPORT_DX11
-		#include "dx11compositor.h"
-	#endif
-	#ifdef SUPPORT_DX12
-			#include "dx12compositor.h"
-	#endif
-#endif
-#ifdef SUPPORT_VK
-	#include "glcompositor.h"
-#endif
-#ifdef SUPPORT_GL
-	#include "vkcompositor.h"
-#endif
 
 typedef unsigned int GLuint;
 
