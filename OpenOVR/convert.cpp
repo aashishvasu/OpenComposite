@@ -3,6 +3,7 @@
 #include "convert.h"
 
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 using namespace vr;
 
@@ -125,6 +126,11 @@ glm::vec3 X2G_v3f(const XrVector3f& v)
 glm::quat X2G_quat(const XrQuaternionf& q)
 {
 	return glm::quat(q.w, q.x, q.y, q.z);
+}
+
+glm::mat4 X2G_om34_pose(const XrPosef& in)
+{
+	return glm::translate(glm::toMat4(X2G_quat(in.orientation)), X2G_v3f(in.position));
 }
 
 vr::HmdVector3_t X2S_v3f(const XrVector3f& vec)

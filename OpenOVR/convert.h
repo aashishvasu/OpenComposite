@@ -16,6 +16,7 @@ XrQuaternionf G2X_quat(const glm::quat& q);
 
 glm::vec3 X2G_v3f(const XrVector3f& q);
 glm::quat X2G_quat(const XrQuaternionf& q);
+glm::mat4 X2G_om34_pose(const XrPosef& in);
 
 vr::HmdVector3_t G2S_v3f(const glm::vec3& vec);
 vr::HmdMatrix34_t G2S_m34(const glm::mat4& mat);
