@@ -5,9 +5,8 @@ platform:
   - Win32
   - x64
 install:
-  - ps: appveyor DownloadFile https://znix.xyz/random/ovr_sdk_win_1.26.0_public_nosamples.7z
+  - ps: git submodule update --init --recursive
   - ps: appveyor DownloadFile https://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z
-  - ps: 7z x -olibs/libovr ovr_sdk_win_1.26.0_public_nosamples.7z
   - ps: 7z x -olibs vulkan-1.1.85.0-minisdk.7z
   - ps: ./configure.cmd
 before_build:
