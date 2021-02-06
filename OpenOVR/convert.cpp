@@ -146,13 +146,13 @@ vr::HmdMatrix34_t G2S_m34(const glm::mat4& mat)
 	HmdMatrix34_t out = {};
 
 	// TODO compile with Clang since afaik MSVC doesn't have an unroll pragma and manual unrolling is ugly
-	// FIXME is this breaking our translations? OpenVR stores the translation in the bottom row, what are we doing with glm? Doesn't that
-	//  store it in the fourth column?
+	// Note that HmdMatrix34_t is (obviously) row-major (otherwise it wouldn't store a transform) while GLM
+	// uses column-major matrices. Thus we transpose it during the loop.
 #pragma unroll
 	for (int x = 0; x < 3; x++) {
 #pragma unroll
 		for (int y = 0; y < 4; y++) {
-			out.m[x][y] = mat[x][y];
+			out.m[x][y] = mat[y][x];
 		}
 	}
 	return out;
