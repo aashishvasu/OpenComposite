@@ -84,10 +84,18 @@ bool XrHMD::ComputeDistortion(vr::EVREye eEye, float fU, float fV, vr::Distortio
 
 vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 {
-	// TODO implement - return an identity matrix for now which completely breaks the stereoscopic effect but lets us move on
-	vr::HmdMatrix34_t m{};
-	m.m[0][0] = m.m[1][1] = m.m[2][2] = 1;
-	return m;
+	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
+	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
+	locateInfo.space = xr_gbl->viewSpace;
+
+	XrViewState state = { XR_TYPE_VIEW_STATE };
+	uint32_t viewCount = 0;
+	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
+	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
+	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
+
+	return G2S_m34(X2G_om34_pose(views[eEye].pose));
 }
 
 bool XrHMD::GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulFrameCounter)
