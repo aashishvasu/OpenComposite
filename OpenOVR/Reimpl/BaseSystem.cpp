@@ -64,7 +64,8 @@ void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 #define VALIDATE(x, msg) if (!(x)) { MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); exit(-1); }
 
 	// See the comment on XrExt for why we have to use it
-	XrGraphicsRequirementsD3D11KHR graphicsRequirements{};
+	// FIXME dx12 support?
+	XrGraphicsRequirementsD3D11KHR graphicsRequirements = { XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR };
 	XrResult res = xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements);
 	OOVR_FAILED_XR_ABORT(res);
 
