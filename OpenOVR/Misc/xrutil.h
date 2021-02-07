@@ -41,6 +41,7 @@ public:
 
 	XrSpace floorSpace;
 	XrSpace seatedSpace;
+	XrSpace viewSpace;
 
 	// Set by XrBackend
 	XrTime nextPredictedFrameTime = 0;

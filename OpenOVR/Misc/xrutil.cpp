@@ -46,4 +46,7 @@ XrSessionGlobals::XrSessionGlobals()
 
 	spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
 	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &seatedSpace));
+
+	spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
+	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &viewSpace));
 }
