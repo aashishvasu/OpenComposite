@@ -253,11 +253,8 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 	//  need to use it for cleanup.
 	interfaces.clear();
 
-	// Shut down LibOVR
-#ifndef OC_XR_PORT
-	if(running_ovr)
-		ovr::Shutdown();
-#endif
+	// Shut down OpenXR
+	BackendManager::Reset();
 
 	running = false;
 }

@@ -15,4 +15,5 @@
 namespace DrvOpenXR {
 void SetupSession(void* graphicsBinding);
 void ShutdownSession();
+void FullShutdown();
 }

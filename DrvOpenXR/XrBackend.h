@@ -14,6 +14,8 @@ class XrBackend : public IBackend {
 public:
 	DECLARE_BACKEND_FUNCS(virtual, override);
 
+	virtual ~XrBackend() override;
+
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
 

@@ -4,6 +4,11 @@
 
 #include "XrBackend.h"
 
+XrBackend::~XrBackend()
+{
+	DrvOpenXR::FullShutdown();
+}
+
 IHMD* XrBackend::GetPrimaryHMD()
 {
 	return hmd.get();

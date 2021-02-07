@@ -132,6 +132,17 @@ void DrvOpenXR::ShutdownSession()
 	xr_session = nullptr;
 }
 
+void DrvOpenXR::FullShutdown()
+{
+	if (xr_session)
+		ShutdownSession();
+
+	if (xr_instance) {
+		OOVR_FAILED_XR_ABORT(xrDestroyInstance(xr_instance));
+		xr_instance = XR_NULL_HANDLE;
+	}
+}
+
 /**
  * One big hack as detailed above for session creation.
  *

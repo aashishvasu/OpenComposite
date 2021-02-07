@@ -232,5 +232,5 @@ private:
 
 	// For now, just use a single backend
 	// and add multiple in later
-	IBackend *backend;
+	std::unique_ptr<IBackend> backend;
 };

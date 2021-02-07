@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "Backend.h"
 
 #include "Misc/Config.h"
@@ -11,7 +12,7 @@ std::unique_ptr<BackendManager> BackendManager::instance;
 
 void BackendManager::Create(IBackend *backend) {
 	instance.reset(new BackendManager());
-	instance->backend = backend;
+	instance->backend = std::unique_ptr<IBackend>(backend);
 }
 
 BackendManager & BackendManager::Instance() {
