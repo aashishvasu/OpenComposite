@@ -20,6 +20,8 @@ using namespace std;
 #include "BaseSystem.h"
 #include "static_bases.gen.h"
 
+#ifndef OC_XR_PORT
+
 // Need the LibOVR Vulkan headers for the GetVulkan[Device|Instance]ExtensionsRequired methods
 #ifdef SUPPORT_VK
 #include "OVR_CAPI_Vk.h"
@@ -27,6 +29,8 @@ using namespace std;
 
 #ifdef SUPPORT_DX
 #include "OVR_CAPI_D3D.h"
+#endif
+
 #endif
 
 #include "Drivers/Backend.h"
@@ -165,8 +169,8 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 	return VRCompositorError_None;
 }
 
-#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-	DX11Compositor* BaseCompositor::dxcomp;
+#if !defined(OC_XR_PORT) && defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+DX11Compositor* BaseCompositor::dxcomp;
 #endif
 
 Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
