@@ -10,6 +10,7 @@
 #include <string>
 
 static ID3D11Device* CreateTemporaryD3D11Device();
+static ID3D11Device* temporaryGraphics = nullptr;
 
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
@@ -100,6 +101,11 @@ void DrvOpenXR::SetupSession(void* graphicsBinding)
 {
 	if (xr_gbl) {
 		ShutdownSession();
+	}
+
+	if (temporaryGraphics) {
+		temporaryGraphics->Release();
+		temporaryGraphics = nullptr;
 	}
 
 	XrSessionCreateInfo sessionInfo{};
