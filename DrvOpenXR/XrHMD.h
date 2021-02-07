@@ -14,9 +14,17 @@
 #pragma warning(disable : 4250)
 
 class XrHMD : public XrTrackedDevice, public IHMD {
-	void GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height) override;
+public:
+	// Override the GetPose implementation to use the difference between spaces, in the hope it'll make the
+	// head positioning possibly more accurate.
+	void GetPose(
+	    vr::ETrackingUniverseOrigin origin,
+	    vr::TrackedDevicePose_t* pose,
+	    ETrackingStateType trackingState) override;
 
 	// from BaseSystem
+
+	void GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height) override;
 
 	/** The projection matrix for the specified eye */
 	vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention) override;

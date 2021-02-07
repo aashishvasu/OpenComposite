@@ -169,6 +169,27 @@ vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMe
 	return result;
 }
 
+void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t* pose, ETrackingStateType trackingState)
+{
+	// TODO use ETrackingStateType
+
+	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
+	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
+	locateInfo.space = xr_gbl->viewSpace;
+
+	auto baseSpace = xr_space_from_tracking_origin(origin);
+
+	XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
+	XrSpaceLocation info{ XR_TYPE_SPACE_LOCATION, &velocity };
+	OOVR_FAILED_XR_ABORT(xrLocateSpace(xr_gbl->viewSpace, baseSpace, xr_gbl->nextPredictedFrameTime, &info));
+
+	pose->bDeviceIsConnected = true;
+	pose->bPoseIsValid = (info.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0;
+	pose->mDeviceToAbsoluteTracking = G2S_m34(X2G_om34_pose(info.pose));
+	pose->eTrackingResult = pose->bPoseIsValid ? vr::TrackingResult_Running_OK : vr::TrackingResult_Running_OutOfRange;
+}
+
 // Properties
 bool XrHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
