@@ -226,12 +226,28 @@ success:
 	return current_init_token;
 }
 
-VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent() {
-#ifdef OC_XR_PORT
-	XR_STUBBED();
-#else
-	return ovr::IsAvailable();
-#endif
+VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent()
+{
+	// If we're already running, then Oculus's implementation fails with XR_ERROR_RUNTIME_FAILURE
+	if (running)
+		return true;
+
+	// TODO properly test this
+
+	XrSystemGetInfo systemInfo{};
+	systemInfo.type = XR_TYPE_SYSTEM_GET_INFO;
+	systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+	XrSystemId id;
+	XrResult res = xrGetSystem(xr_instance, &systemInfo, &id);
+
+	if (res == XR_SUCCESS)
+		return true;
+
+	if (res == XR_ERROR_FORM_FACTOR_UNAVAILABLE || res == XR_ERROR_FORM_FACTOR_UNSUPPORTED)
+		return false;
+
+	// Something else went wrong
+	OOVR_ABORTF("Failed to probe for OpenXR systems: return status %d", res);
 }
 
 VR_INTERFACE bool VR_CALLTYPE VR_IsInterfaceVersionValid(const char * pchInterfaceVersion) {
