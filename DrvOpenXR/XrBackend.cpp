@@ -41,6 +41,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 	if (!usingApplicationGraphicsAPI) {
 		usingApplicationGraphicsAPI = true;
 
+		OOVR_LOG("Recreating OpenXR session for application graphics API");
+
 		OOVR_FALSE_ABORT(tex->eType == vr::TextureType_DirectX);
 		auto* d3dTex = (ID3D11Texture2D*)tex->handle;
 		ID3D11Device* dev = nullptr;
@@ -93,7 +95,13 @@ void XrBackend::WaitForTrackingData()
 		projectionViews[eye].pose = views[eye].pose;
 	}
 
-	renderingFrame = true;
+	// If we're not on the game's graphics API yet, don't actually mark us as having started the frame.
+	// Instead, set a different flag so we'll call this method again when it's available.
+	if (!usingApplicationGraphicsAPI) {
+		deferredRenderingStart = true;
+	} else {
+		renderingFrame = true;
+	}
 }
 
 void XrBackend::StoreEyeTexture(
@@ -115,6 +123,17 @@ void XrBackend::StoreEyeTexture(
 	comp.Invoke((XruEye)eye, texture, bounds, submitFlags, layer);
 
 	// TODO store view somewhere and use it for submitting our frame
+
+	// If WaitGetPoses was called before the first texture was submitted, we're in a kinda weird state
+	// The application will expect it can submit it's frames (and we do too) however xrBeginFrame was
+	// never called for this session - it was called for the early session, then when the first texture
+	// was published we switched to that, but this new session hasn't had xrBeginFrame called yet.
+	// To get around this, we set a flag if we should begin a frame but are still in the early session. At
+	// this point we can check for that flag and call xrBeginFrame a second time, on the right session.
+	if (deferredRenderingStart && usingApplicationGraphicsAPI) {
+		deferredRenderingStart = false;
+		WaitForTrackingData();
+	}
 }
 
 void XrBackend::SubmitFrames(bool showSkybox)
