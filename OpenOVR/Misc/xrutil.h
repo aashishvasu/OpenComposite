@@ -47,6 +47,8 @@ public:
 	XrTime nextPredictedFrameTime = 0;
 };
 
+XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin);
+
 extern XrInstance xr_instance;
 extern XrSession xr_session;
 extern XrSessionState xr_session_state;

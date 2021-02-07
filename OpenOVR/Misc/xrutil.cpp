@@ -50,3 +50,17 @@ XrSessionGlobals::XrSessionGlobals()
 	spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
 	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &viewSpace));
 }
+
+XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin)
+{
+	switch (origin) {
+	case vr::TrackingUniverseSeated:
+		return xr_gbl->seatedSpace;
+	case vr::TrackingUniverseStanding:
+		return xr_gbl->floorSpace;
+	case vr::TrackingUniverseRawAndUncalibrated:
+		OOVR_ABORT("Tracking origin TrackingUniverseRawAndUncalibrated not supported");
+	default:
+		OOVR_ABORTF("Unknown ETrackingUniverseOrigin type %d", origin);
+	}
+}
