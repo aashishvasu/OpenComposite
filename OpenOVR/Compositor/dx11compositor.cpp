@@ -73,13 +73,42 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cub
 			xrDestroySwapchain(chain);
 		}
 
+		// Figure out what format we need to use
+		DxgiFormatInfo info = {};
+		if (!GetFormatInfo(srcDesc.Format, info)) {
+			OOVR_ABORTF("Unknown (by OC) DXGI texture format %d", srcDesc.Format);
+		}
+		bool useLinearFormat;
+		switch (texture->eColorSpace) {
+		case vr::ColorSpace_Gamma:
+			useLinearFormat = false;
+			break;
+		case vr::ColorSpace_Linear:
+			useLinearFormat = true;
+			break;
+		default:
+			// As per the docs for the auto mode, at eight bits per channel or less it assumes gamma
+			// (using such small channels for linear colour would result in significant banding)
+			useLinearFormat = info.bpc > 8;
+			break;
+		}
+
+		DXGI_FORMAT type = useLinearFormat ? info.linear : info.srgb;
+
+		if (type == DXGI_FORMAT_UNKNOWN) {
+			OOVR_ABORTF("Invalid DXGI target format found: useLinear=%d type=DXGI_FORMAT_UNKNOWN fmt=%d", useLinearFormat, srcDesc.Format);
+		}
+
+		// Set aside the old format for checking later
+		createInfoFormat = srcDesc.Format;
+
 		// Make eye render buffer
 		desc = { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 		// TODO desc.Type = cube ? ovrTexture_Cube : ovrTexture_2D;
 		desc.faceCount = cube ? 6 : 1;
 		desc.width = srcDesc.Width;
 		desc.height = srcDesc.Height;
-		desc.format = srcDesc.Format; // TODO colourspace handling?
+		desc.format = type;
 		desc.mipCount = srcDesc.MipLevels;
 		desc.sampleCount = 1;
 		desc.arraySize = 1;
@@ -89,7 +118,7 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cub
 
 		XrResult result = xrCreateSwapchain(xr_session, &desc, &chain);
 		if (!XR_SUCCEEDED(result))
-			ERR("Cannot create DX texture swap chain " + to_string(result));
+			OOVR_ABORTF("Cannot create DX texture swap chain: err %d", result);
 
 		// Go through the images and retrieve them - this will be used later in Invoke, since OpenXR doesn't
 		// have a convenient way to request one specific image.
@@ -220,10 +249,10 @@ bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC& inputDesc, vr::E
 {
 	bool usable = true;
 #define FAIL(name)                             \
-	{                                          \
+	do {                                       \
 		usable = false;                        \
 		OOVR_LOG("Resource mismatch: " #name); \
-	}
+	} while (0);
 #define CHECK(name, chainName)                  \
 	if (inputDesc.name != createInfo.chainName) \
 		FAIL(name);
@@ -231,11 +260,68 @@ bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC& inputDesc, vr::E
 	CHECK(Width, width)
 	CHECK(Height, height)
 	CHECK(MipLevels, mipCount)
-	CHECK(Format, format)
-	//CHECK_ADV(SampleDesc.Count, SampleCount);
-	//CHECK_ADV(SampleDesc.Quality);
+
+	if (inputDesc.Format != createInfoFormat) {
+		FAIL("Format");
+	}
+
+	// CHECK_ADV(SampleDesc.Count, SampleCount);
+	// CHECK_ADV(SampleDesc.Quality);
 #undef CHECK
 #undef FAIL
 
 	return usable;
+}
+
+bool DX11Compositor::GetFormatInfo(DXGI_FORMAT format, DX11Compositor::DxgiFormatInfo& out)
+{
+#define DEF_FMT_BASE(typeless, linear, srgb, bpp, bpc, channels)            \
+	{                                                                       \
+		out = DxgiFormatInfo{ srgb, linear, typeless, bpp, bpc, channels }; \
+		return true;                                                        \
+	}
+
+#define DEF_FMT_NOSRGB(name, bpp, bpc, channels) \
+	case name##_TYPELESS:                        \
+	case name##_UNORM:                           \
+		DEF_FMT_BASE(name##_TYPELESS, name##_UNORM, DXGI_FORMAT_UNKNOWN, bpp, bpc, channels)
+
+#define DEF_FMT(name, bpp, bpc, channels) \
+	case name##_TYPELESS:                 \
+	case name##_UNORM:                    \
+	case name##_UNORM_SRGB:               \
+		DEF_FMT_BASE(name##_TYPELESS, name##_UNORM, name##_UNORM_SRGB, bpp, bpc, channels)
+
+#define DEF_FMT_UNORM(linear, bpp, bpc, channels) \
+	case linear:                                  \
+		DEF_FMT_BASE(DXGI_FORMAT_UNKNOWN, linear, DXGI_FORMAT_UNKNOWN, bpp, bpc, channels)
+
+	// Note that this *should* have pretty much all the types we'll ever see in games
+	// Filtering out the non-typeless and non-unorm/srgb types, this is all we're left with
+	// (note that types that are only typeless and don't have unorm/srgb variants are dropped too)
+	switch (format) {
+		// The relatively traditional 8bpp 32-bit types
+		DEF_FMT(DXGI_FORMAT_R8G8B8A8, 32, 8, 4)
+		DEF_FMT(DXGI_FORMAT_B8G8R8A8, 32, 8, 4)
+		DEF_FMT(DXGI_FORMAT_B8G8R8X8, 32, 8, 3)
+
+		// Some larger linear-only types
+		DEF_FMT_NOSRGB(DXGI_FORMAT_R16G16B16A16, 64, 16, 4)
+		DEF_FMT_NOSRGB(DXGI_FORMAT_R10G10B10A2, 32, 10, 4)
+
+		// A jumble of other weird types
+		DEF_FMT_UNORM(DXGI_FORMAT_B5G6R5_UNORM, 16, 5, 3)
+		DEF_FMT_UNORM(DXGI_FORMAT_B5G5R5A1_UNORM, 16, 5, 4)
+		DEF_FMT_UNORM(DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, 32, 10, 4)
+		DEF_FMT_UNORM(DXGI_FORMAT_B4G4R4A4_UNORM, 16, 4, 4)
+
+	default:
+		// Unknown type
+		return false;
+	}
+
+#undef DEF_FMT
+#undef DEF_FMT_NOSRGB
+#undef DEF_FMT_BASE
+#undef DEF_FMT_UNORM
 }

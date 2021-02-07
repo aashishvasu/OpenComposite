@@ -44,10 +44,14 @@ public:
 	virtual void ResetSubmitContext(){};
 
 protected:
-	XrSwapchain chain = nullptr;
+	XrSwapchain chain = XR_NULL_HANDLE;
 
 	// The request used to create the current swapchain. This can be used to check if the swapchain needs recreating.
 	XrSwapchainCreateInfo createInfo{};
+
+	// The format specified by the game when creating the swapchain. This is used for verifying the format hasn't changed, since
+	// we do fiddle with it a bit to get the SRGB stuff done correctly.
+	int64_t createInfoFormat;
 };
 
 #ifndef OC_XR_PORT
@@ -114,6 +118,21 @@ protected:
 	bool submitVerticallyFlipped = false;
 
 	std::vector<XrSwapchainImageD3D11KHR> imagesHandles;
+
+	struct DxgiFormatInfo {
+		/// The different versions of this format, set to DXGI_FORMAT_UNKNOWN if absent.
+		/// Both the SRGB and linear formats should be UNORM.
+		DXGI_FORMAT srgb, linear, typeless;
+
+		/// THe bits per pixel, bits per channel, and the number of channels
+		int bpp, bpc, channels;
+	};
+
+	/**
+	 * Gets information about a given format into the output variable. Returns true if the texture was
+	 * found, if not it returns false and leaves out in an undefined state.
+	 */
+	static bool GetFormatInfo(DXGI_FORMAT format, DxgiFormatInfo& out);
 };
 
 #ifndef OC_XR_PORT
