@@ -70,7 +70,7 @@ void GetStackWalk() {
 	//::SymCleanup(::GetCurrentProcess());
 
 	OOVR_LOG(outWalk.c_str());
-	MessageBoxA(NULL, outWalk.c_str(), "OOVR Stack Trace", MB_OK);
+	OOVR_MESSAGE(outWalk.c_str(), "OOVR Stack Trace");
 }
 
 //******************************************************************************

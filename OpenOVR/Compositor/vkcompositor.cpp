@@ -1,7 +1,8 @@
 #include "stdafx.h"
-#include "compositor.h"
 
-#if defined(SUPPORT_VK) && !defined(OC_XR_PORT)
+#if defined(SUPPORT_VK)
+
+#include "vkcompositor.h"
 
 #include "libovr_wrapper.h"
 #include "OVR_CAPI_Vk.h"
@@ -13,7 +14,7 @@ using namespace std;
 #define ERR(msg) { \
 	std::string str = "Hit Vulkan-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
 	OOVR_LOG(str.c_str()); \
-	MessageBoxA(NULL, str.c_str(), "Errored func!", MB_OK); \
+	OOVR_MESSAGE(str.c_str(), "Errored func!"); \
 	/**((int*)NULL) = 0;*/\
 	throw str; \
 }

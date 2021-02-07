@@ -20,14 +20,17 @@ using namespace std;
 #include "BaseSystem.h"
 #include "static_bases.gen.h"
 
-// Need the LibOVR Vulkan headers for the GetVulkan[Device|Instance]ExtensionsRequired methods
 #ifndef OC_XR_PORT
-#if defined(SUPPORT_VK)
+
+// Need the LibOVR Vulkan headers for the GetVulkan[Device|Instance]ExtensionsRequired methods
+#ifdef SUPPORT_VK
 #include "OVR_CAPI_Vk.h"
 #endif
-#if defined(SUPPORT_DX)
+
+#ifdef SUPPORT_DX
 #include "OVR_CAPI_D3D.h"
 #endif
+
 #endif
 
 #include "Drivers/Backend.h"
@@ -166,7 +169,7 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 	return VRCompositorError_None;
 }
 
-#ifndef OC_XR_PORT
+#if !defined(OC_XR_PORT) && defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 DX11Compositor* BaseCompositor::dxcomp;
 #endif
 
@@ -175,37 +178,37 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 	Compositor* comp = nullptr;
 
 	switch (texture->eType) {
-#if defined(SUPPORT_GL) && !defined(OC_XR_PORT)
+#ifdef SUPPORT_GL
 	case TextureType_OpenGL: {
 		comp = new GLCompositor(fovTextureSize);
 		break;
 	}
 #endif
-#ifdef SUPPORT_DX
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	case TextureType_DirectX: {
 		if (!oovr_global_configuration.DX10Mode())
 			comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
 
-#ifdef OC_XR_PORT
-		else
-			STUBBED();
-#else
+#if defined(SUPPORT_DX10) && !defined(OC_XR_PORT)
 		else
 			comp = new DX10Compositor((ID3D10Texture2D*)texture->handle);
 
 		dxcomp = (DX11Compositor*)comp;
+#else
+		else
+			STUBBED();
 #endif
 
 		break;
 	}
 #endif
-#if defined(SUPPORT_VK)
+#ifdef SUPPORT_VK
 	case TextureType_Vulkan: {
 		comp = new VkCompositor(texture);
 		break;
 	}
 #endif
-#if defined(SUPPORT_DX12)
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 	case TextureType_DirectX12: {
 		compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, fovTextureSize, chains);
 		break;
@@ -442,21 +445,22 @@ void BaseCompositor::SuspendRendering(bool bSuspend)
 	//STUBBED();
 }
 
-#if defined(SUPPORT_DX)
 ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView)
 {
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	return BackendManager::Instance().GetMirrorTextureD3D11(eEye, pD3D11DeviceOrResource, ppD3D11ShaderResourceView);
-}
 #else
-ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView)
-{
 	OOVR_ABORT("Cannot get D3D mirror texture - D3D support disabled");
-}
 #endif
+}
 
 void BaseCompositor::ReleaseMirrorTextureD3D11(void* pD3D11ShaderResourceView)
 {
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	return BackendManager::Instance().ReleaseMirrorTextureD3D11(pD3D11ShaderResourceView);
+#else
+	OOVR_ABORT("Cannot get D3D mirror texture - D3D support disabled");
+#endif
 }
 
 ovr_enum_t BaseCompositor::GetMirrorTextureGL(EVREye eEye, glUInt_t* pglTextureId, glSharedTextureHandle_t* pglSharedTextureHandle)

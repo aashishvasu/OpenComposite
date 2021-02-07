@@ -22,6 +22,9 @@ void oovr_abort_raw(const char *file, long line, const char *func, const char *m
 		}                                                                                          \
 	} while (false)
 
+void oovr_message_raw(const char *message, const char *title);
+#define OOVR_MESSAGE(message, title) oovr_message_raw(message, title);
+
 // DirectX API validation helpers
 #define OOVR_FAILED_DX_ABORT(expression) \
 do { \

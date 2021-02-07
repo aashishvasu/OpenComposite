@@ -5,11 +5,13 @@
 
 #pragma once
 
-#include "targetver.h"
+#ifdef WIN32
+    #include "targetver.h"
 
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-// Windows Header Files:
-#include <windows.h>
+    #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+    // Windows Header Files:
+    #include <windows.h>
+#endif
 
 
 
@@ -27,5 +29,13 @@
 
 #include <string>
 
-// This module's ID, from DLLMain
-extern HMODULE openovr_module_id;
+#ifdef WIN32
+    // This module's ID, from DLLMain
+    extern HMODULE openovr_module_id;
+#else
+    // The handle returned from dlopen()
+    __attribute__((constructor))
+    void openovr_module_id();
+
+    // TODO Turtle1331 figure out how to write the shared library entry point (replacement for dllmain.cpp)
+#endif

@@ -61,7 +61,13 @@ int32_t BaseSystem::GetD3D9AdapterIndex() {
 
 void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 #ifdef SUPPORT_DX
-#define VALIDATE(x, msg) if (!(x)) { MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); exit(-1); }
+
+// TODO Turtle1331 use OOVR_ABORT from logging.h
+#ifdef WIN32
+	#define VALIDATE(x, msg) if (!(x)) { MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); exit(-1); }
+#else
+	#define VALIDATE(x, msg) if (!(x)) { exit(-42); }
+#endif
 
 	// See the comment on XrExt for why we have to use it
 	// FIXME dx12 support?

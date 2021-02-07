@@ -151,7 +151,7 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	}
 
 	OOVR_LOG(interfaceVersion);
-	MessageBoxA(NULL, interfaceVersion, "Missing interface", MB_OK);
+	OOVR_MESSAGE(interfaceVersion, "Missing interface");
 	ERR("unknown/unsupported interface " + string(interfaceVersion));
 #undef INTERFACE
 }
@@ -328,6 +328,6 @@ VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pRetu
 #undef CLIENT_VER
 
 	OOVR_LOG(pInterfaceName);
-	MessageBoxA(NULL, pInterfaceName, "Missing client interface", MB_OK);
+	OOVR_MESSAGE(pInterfaceName, "Missing client interface");
 	ERR("unknown/unsupported interface " + name);
 }

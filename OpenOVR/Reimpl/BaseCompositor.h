@@ -2,15 +2,9 @@
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
 #include "OpenVR/interfaces/IVRCompositor_022.h"
 
-#include "../Compositor/compositor.h" // TODO don't import from OCOVR, and remove the "../"
+#include "../Compositor/compositor_backend.h" // TODO don't import from OCOVR, and remove the "../"
 
 #include <vector>
-
-#ifdef SUPPORT_DX
-// Let's really hope noone tries to use DX10
-#include "d3d11.h"
-#include "d3d12.h"
-#endif
 
 typedef unsigned int GLuint;
 
@@ -137,7 +131,7 @@ public:
 	/** Creates API specific Compositor */
 	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture);
 
-#ifndef OC_XR_PORT
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11) && !defined(OC_XR_PORT)
 	// TODO clean this up, and make the keyboard work with OpenGL and Vulkan too
 	static DX11Compositor* dxcomp;
 #endif
