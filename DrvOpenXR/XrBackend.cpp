@@ -197,7 +197,30 @@ void XrBackend::ReleaseMirrorTextureD3D11(void* pD3D11ShaderResourceView)
 /** Returns the points of the Play Area. */
 bool XrBackend::GetPlayAreaPoints(vr::HmdVector3_t* points, int* count)
 {
-	STUBBED();
+	if (count)
+		*count = 0;
+
+	XrExtent2Df bounds;
+	XrResult res = xrGetReferenceSpaceBoundsRect(xr_session, XR_REFERENCE_SPACE_TYPE_STAGE, &bounds);
+
+	if (res == XR_SPACE_BOUNDS_UNAVAILABLE)
+		return false;
+
+	OOVR_FAILED_XR_ABORT(res);
+
+	if (count)
+		*count = 4;
+
+	// The origin of the free space is centred around the player
+	// TODO if we're using the Oculus runtime, grab it's native handle and get the full polygon
+	if (points) {
+		points[0] = vr::HmdVector3_t{ -bounds.width / 2, 0, -bounds.height / 2 };
+		points[1] = vr::HmdVector3_t{ bounds.width / 2, 0, -bounds.height / 2 };
+		points[2] = vr::HmdVector3_t{ bounds.width / 2, 0, bounds.height / 2 };
+		points[3] = vr::HmdVector3_t{ -bounds.width / 2, 0, bounds.height / 2 };
+	}
+
+	return true;
 }
 /** Determine whether the bounds are showing right now **/
 bool XrBackend::AreBoundsVisible()
