@@ -111,7 +111,7 @@ bool BaseApplications::IsQuitUserPromptRequested() {
 	STUBBED();
 }
 EVRApplicationError BaseApplications::LaunchInternalProcess(const char *pchBinaryPath, const char *pchArguments, const char *pchWorkingDirectory) {
-	OOVR_LOG("Launching new app process: following values are path,args,workingDir:")
+	OOVR_LOG("Launching new app process: following values are path,args,workingDir:");
 	OOVR_LOG(pchBinaryPath);
 	OOVR_LOG(pchArguments);
 	OOVR_LOG(pchWorkingDirectory);

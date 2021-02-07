@@ -24,9 +24,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	// FIXME should be removed, for testing only
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_EXPORT_TYPE", "text"));
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_API_LAYER_PATH",
-	    "C:\\Users\\ZNix\\source\\repos\\OpenCompositeXR\\build-openxr\\src\\api_layers"))
+	    "C:\\Users\\ZNix\\source\\repos\\OpenCompositeXR\\build-openxr\\src\\api_layers"));
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_FILE_NAME",
-	    "C:\\Users\\ZNix\\source\\repos\\OpenCompositeXR\\validation-xr.log"))
+	    "C:\\Users\\ZNix\\source\\repos\\OpenCompositeXR\\validation-xr.log"));
 
 	// Create the OpenXR instance - this is the overall handle that connects us to the runtime
 	// https://www.khronos.org/registry/OpenXR/specs/1.0/refguide/openxr-10-reference-guide.pdf

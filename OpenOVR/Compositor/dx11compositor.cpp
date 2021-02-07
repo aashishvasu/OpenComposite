@@ -155,7 +155,7 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture)
 
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
 	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
-	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo))
+	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo));
 }
 
 void DX11Compositor::InvokeCubemap(const vr::Texture_t* textures)
