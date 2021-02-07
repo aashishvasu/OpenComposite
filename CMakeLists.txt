@@ -13,7 +13,7 @@ include(scripts/pch.cmake)
 # Platform-dependent flags
 # Support Vulkan on Linux instead of DirectX
 if (WIN32)
-	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11 -DSUPPORT_GL)
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11)
 else()
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
 endif()
