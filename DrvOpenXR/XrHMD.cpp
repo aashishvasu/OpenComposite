@@ -77,7 +77,46 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 
 void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, float* pfTop, float* pfBottom)
 {
-	STUBBED();
+	// TODO deduplicate with GetProjectionMatrix
+	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
+
+	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
+	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
+	locateInfo.space = xr_gbl->floorSpace; // Should make no difference to the FOV
+
+	XrViewState state = { XR_TYPE_VIEW_STATE };
+	uint32_t viewCount = 0;
+	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
+	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
+	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
+
+	XrFovf& fov = views[eEye].fov;
+
+	/**
+     * With a straight passthrough:
+     *
+     * SteamVR Left:  -1.110925, 0.889498, -0.964926, 0.715264
+     * SteamVR Right: -1.110925, 0.889498, -0.715264, 0.964926
+     *
+     * For the Rift S:
+     * OpenXR Left: 1.000000, -1.150368, -0.965689, 1.035530
+     * SteamVR Left: -1.150368, 1.000000, -0.965689, 1.035530
+     *
+     * Via:
+     *   char buff[1024];
+     *   snprintf(buff, sizeof(buff), "eye=%d %f, %f, %f, %f", eye, *pfTop, *pfBottom, *pfLeft, *pfRight);
+     *   OOVR_LOG(buff);
+     *
+     * This suggests that SteamVR negates the top and left values, which obviously we need to match. OpenXR
+     * also negates the bottom and left value. Since it appears that SteamVR flips the top and bottom angles, we
+     * can just do that and it'll match.
+     */
+
+	*pfTop = tanf(fov.angleDown);
+	*pfBottom = tanf(fov.angleUp);
+	*pfLeft = tanf(fov.angleLeft);
+	*pfRight = tanf(fov.angleRight);
 }
 
 bool XrHMD::ComputeDistortion(vr::EVREye eEye, float fU, float fV, vr::DistortionCoordinates_t* pDistortionCoordinates)
