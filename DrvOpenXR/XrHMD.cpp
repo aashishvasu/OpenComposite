@@ -4,6 +4,7 @@
 
 #include "XrHMD.h"
 
+#include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/convert.h"
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
@@ -45,7 +46,7 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	float verticalFov = tanU - tanD;
 
 	// To make building these projections easier, we build them as row-major matrices then (for graphics
-	// APIs that use column-major matrices) transpose them at the end.
+	// APIs that use column-major matrices) transpose them at the end if needed.
 
 	// TODO verify!
 	glm::mat4 m;
@@ -57,6 +58,8 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 		m[1] = glm::vec4(0, 1 / tanf(verticalFov / 2), (tanU + tanD) / verticalFov, 0);
 		m[2] = glm::vec4(0, 0, -fFarZ / (fFarZ - fNearZ), -(fFarZ * fNearZ) / (fFarZ - fNearZ));
 		m[3] = glm::vec4(0, 0, -1, 0);
+
+		// Don't transpose, since D3D uses row-major matricies anyway.
 	} else {
 		// FIXME this transform is almost certainly wrong
 		m[0] = glm::vec4(twoNear / horizontalFov, 0, (tanL + tanR) / horizontalFov, 0); // First row, determines X out multiplication with vector
@@ -164,4 +167,78 @@ vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMe
 	delete[] mask.vertices;
 
 	return result;
+}
+
+// Properties
+bool XrHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
+{
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	switch (prop) {
+	case vr::Prop_DeviceProvidesBatteryStatus_Bool:
+		return false;
+	case vr::Prop_HasDriverDirectModeComponent_Bool:
+		return true; // Who knows what this is used for? It's in HL:A anyway.
+	}
+
+	return XrTrackedDevice::GetBoolTrackedDeviceProperty(prop, pErrorL);
+}
+
+float XrHMD::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
+{
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	switch (prop) {
+	case vr::Prop_DisplayFrequency_Float:
+		return 90.0; // TODO use the real value
+	case vr::Prop_LensCenterLeftU_Float:
+	case vr::Prop_LensCenterLeftV_Float:
+	case vr::Prop_LensCenterRightU_Float:
+	case vr::Prop_LensCenterRightV_Float:
+		// SteamVR reports it as unknown
+		if (pErrorL)
+			*pErrorL = vr::TrackedProp_UnknownProperty;
+		return 0;
+	case vr::Prop_UserIpdMeters_Float:
+		return BaseSystem::SGetIpd();
+	case vr::Prop_SecondsFromVsyncToPhotons_Float:
+		// Seems to be used by croteam games, IDK what the real value is, 100us should do
+		return 0.0001f;
+	case vr::Prop_UserHeadToEyeDepthMeters_Float:
+		// TODO ensure this has the correct sign, though it seems to always be zero anyway
+		// In any case, see: https://github.com/ValveSoftware/openvr/issues/398
+#ifdef OC_XR_PORT
+		XR_STUBBED();
+#else
+		return ovr::hmdToEyeViewPose[ovrEye_Left].Position.z;
+#endif
+	}
+
+	return XrTrackedDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
+}
+
+uint32_t XrHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
+    char* value, uint32_t bufferSize, vr::ETrackedPropertyError* pErrorL)
+{
+
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+#define PROP(in, out)                                                                                  \
+	if (prop == in) {                                                                                  \
+		if (value != NULL && bufferSize > 0) {                                                         \
+			strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
+		}                                                                                              \
+		return (uint32_t)strlen(out) + 1;                                                              \
+	}
+
+	// Pretend everything is a CV1
+	PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1");
+	PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F");
+
+	PROP(vr::Prop_RenderModelName_String, "oculusHmdRenderModel");
+
+	return XrTrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
