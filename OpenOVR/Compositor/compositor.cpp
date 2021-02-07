@@ -6,6 +6,6 @@ Compositor::~Compositor()
 {
 	if (chain) {
 		xrDestroySwapchain(chain);
-		chain = nullptr;
+		chain = XR_NULL_HANDLE;
 	}
 }

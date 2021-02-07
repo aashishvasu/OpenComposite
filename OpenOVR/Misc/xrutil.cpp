@@ -5,8 +5,8 @@
 #include "convert.h"
 #include "xr_ext.h"
 
-XrInstance xr_instance = nullptr;
-XrSession xr_session = nullptr;
+XrInstance xr_instance = XR_NULL_HANDLE;
+XrSession xr_session = XR_NULL_HANDLE;
 XrSessionState xr_session_state = XR_SESSION_STATE_UNKNOWN;
 XrSystemId xr_system = XR_NULL_SYSTEM_ID;
 XrViewConfigurationView xr_main_views[XruEyeCount] = {};

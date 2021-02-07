@@ -130,7 +130,7 @@ void DrvOpenXR::ShutdownSession()
 	// OOVR_FAILED_XR_ABORT(xrEndSession(xr_session));
 
 	OOVR_FAILED_XR_ABORT(xrDestroySession(xr_session));
-	xr_session = nullptr;
+	xr_session = XR_NULL_HANDLE;
 }
 
 void DrvOpenXR::FullShutdown()
