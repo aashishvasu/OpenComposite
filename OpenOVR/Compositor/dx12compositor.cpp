@@ -1,6 +1,6 @@
-#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
-
 #include "stdafx.h"
+
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 
 #include "dx12compositor.h"
 #include "libovr_wrapper.h"

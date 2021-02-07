@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX10) && defined(SUPPORT_DX11)
 
-#include "stdafx.h"
 #include "dx10compositor.h"
 
 #pragma warning(push)

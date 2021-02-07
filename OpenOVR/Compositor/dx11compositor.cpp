@@ -1,6 +1,6 @@
-#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-
 #include "stdafx.h"
+
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 
 #include "dx11compositor.h"
 

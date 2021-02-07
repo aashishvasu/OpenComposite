@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #if defined(SUPPORT_VK)
 
-#include "stdafx.h"
 #include "vkcompositor.h"
 
 #include "libovr_wrapper.h"

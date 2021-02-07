@@ -1,10 +1,10 @@
+#include "stdafx.h"
+
 #include "logging.h"
 #include <fstream>
 
-#ifdef WIN32
-	#include "stdafx.h"
-#else
-	#include <iostream>
+#ifndef WIN32
+#include <iostream>
 #endif
 
 using namespace std;

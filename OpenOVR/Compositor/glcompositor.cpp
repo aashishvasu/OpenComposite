@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #ifdef SUPPORT_GL
 
-#include "stdafx.h"
 #include "glcompositor.h"
 
 #include "libovr_wrapper.h"
