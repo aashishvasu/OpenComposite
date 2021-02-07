@@ -457,7 +457,7 @@ ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void* pD3D11Device
 void BaseCompositor::ReleaseMirrorTextureD3D11(void* pD3D11ShaderResourceView)
 {
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-	return BackendManager::Instance().GetMirrorTextureD3D11(eEye, pD3D11DeviceOrResource, ppD3D11ShaderResourceView);
+	return BackendManager::Instance().ReleaseMirrorTextureD3D11(pD3D11ShaderResourceView);
 #else
 	OOVR_ABORT("Cannot get D3D mirror texture - D3D support disabled");
 #endif
