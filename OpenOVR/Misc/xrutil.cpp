@@ -28,6 +28,8 @@ XrExt::XrExt()
 {
 	XrResult res = xrGetInstanceProcAddr(xr_instance, "xrGetD3D11GraphicsRequirementsKHR", (PFN_xrVoidFunction*)&xrGetD3D11GraphicsRequirementsKHR);
 	OOVR_FAILED_XR_ABORT(res);
+
+	OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, "xrGetVisibilityMaskKHR", (PFN_xrVoidFunction*)&xrGetVisibilityMaskKHR));
 }
 
 XrSessionGlobals::XrSessionGlobals()

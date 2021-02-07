@@ -40,6 +40,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 		"XR_KHR_D3D11_enable",
 #endif
 		"XR_EXT_debug_utils",
+		"XR_KHR_visibility_mask",
 	};
 
 	const char* const layers[] = {

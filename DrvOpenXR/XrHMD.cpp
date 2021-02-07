@@ -105,5 +105,63 @@ bool XrHMD::GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulF
 
 vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMeshType type)
 {
-	STUBBED();
+	// TODO verify the line loop mode works properly
+
+	XrVisibilityMaskTypeKHR xrType;
+	switch (type) {
+	case vr::k_eHiddenAreaMesh_Standard:
+		xrType = XR_VISIBILITY_MASK_TYPE_HIDDEN_TRIANGLE_MESH_KHR;
+		break;
+	case vr::k_eHiddenAreaMesh_Inverse:
+		xrType = XR_VISIBILITY_MASK_TYPE_VISIBLE_TRIANGLE_MESH_KHR;
+		break;
+	case vr::k_eHiddenAreaMesh_LineLoop:
+		xrType = XR_VISIBILITY_MASK_TYPE_LINE_LOOP_KHR;
+		break;
+	default:
+		OOVR_ABORTF("Invalid vr::EHiddenAreaMeshType value %d", type);
+	}
+
+	// Note: the OpenXR and OpenVR eye indexes are the same, so we can just cast between them.
+	auto eye = (uint32_t)eEye;
+
+	// First find out what size we need to allocate
+	// Note that this doesn't return XR_ERROR_SIZE_INSUFFICIENT, since setting one of the input counts to zero is special-cased
+	XrVisibilityMaskKHR mask = { XR_TYPE_VISIBILITY_MASK_KHR };
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVisibilityMaskKHR(xr_session, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, eye, xrType, &mask));
+
+	// TODO handle cases where a mask isn't available
+
+	// Allocate memory for the mesh
+	mask.vertexCapacityInput = mask.vertexCountOutput;
+	mask.indexCapacityInput = mask.indexCountOutput;
+	mask.indices = new uint32_t[mask.indexCapacityInput];
+	mask.vertices = new XrVector2f[mask.vertexCapacityInput];
+
+	// Now actually request the mask data
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVisibilityMaskKHR(xr_session, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, eye, xrType, &mask));
+
+	// Convert the data into something usable by SteamVR - it doesn't use indices
+	vr::HiddenAreaMesh_t result = {};
+	// FIXME memory allocation handling
+	auto* arr = new vr::HmdVector2_t[mask.indexCountOutput];
+	result.pVertexData = arr;
+
+	for (int i = 0; i < mask.indexCountOutput; i++) {
+		int index = mask.indices[i];
+		XrVector2f v = mask.vertices[index];
+		arr[i] = vr::HmdVector2_t{ v.x, v.y };
+	}
+
+	if (type == vr::k_eHiddenAreaMesh_LineLoop) {
+		result.unTriangleCount = mask.indexCountOutput;
+	} else {
+		result.unTriangleCount = mask.indexCountOutput / 3;
+	}
+
+	// Delete the buffers
+	delete[] mask.indices;
+	delete[] mask.vertices;
+
+	return result;
 }

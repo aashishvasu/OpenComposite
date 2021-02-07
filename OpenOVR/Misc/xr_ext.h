@@ -28,6 +28,7 @@ public:
 	XrExt();
 
 	PFN_xrGetD3D11GraphicsRequirementsKHR xrGetD3D11GraphicsRequirementsKHR = nullptr;
+	PFN_xrGetVisibilityMaskKHR xrGetVisibilityMaskKHR = nullptr;
 };
 
 // Put this here rather tha xrutil.h so not all files have to include vector
