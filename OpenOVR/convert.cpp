@@ -130,7 +130,9 @@ glm::quat X2G_quat(const XrQuaternionf& q)
 
 glm::mat4 X2G_om34_pose(const XrPosef& in)
 {
-	return glm::translate(glm::toMat4(X2G_quat(in.orientation)), X2G_v3f(in.position));
+	// WARNING: glm::translate does not translate a matrix! It builds a transform matrix you can then use
+	// to translate something else.
+	return glm::translate(glm::mat4(1.0f), X2G_v3f(in.position)) * glm::toMat4(X2G_quat(in.orientation));
 }
 
 vr::HmdVector3_t X2S_v3f(const XrVector3f& vec)
