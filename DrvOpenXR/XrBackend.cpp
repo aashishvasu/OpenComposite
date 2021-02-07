@@ -180,7 +180,13 @@ void XrBackend::ClearSkyboxOverride()
  */
 bool XrBackend::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32_t unFramesAgo)
 {
-	STUBBED();
+	// TODO implement - may be a bit harder since OpenXR doesn't appear to have any functions like this
+	OOVR_LOG_ONCE("Frame timing data is not yet supported on OpenXR");
+
+	// Zero everything except the size field
+	memset(pTiming + sizeof(pTiming->m_nSize), 0, pTiming->m_nSize - sizeof(pTiming->m_nSize));
+
+	return false;
 }
 
 /* D3D Mirror textures */
