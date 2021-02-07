@@ -10,6 +10,18 @@ void oovr_abort_raw(const char *file, long line, const char *func, const char *m
 #define OOVR_ABORT_T(msg, title) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, title); throw msg; } while(0)
 #define OOVR_ABORTF(msg, ...) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, __VA_ARGS__); throw msg; } while(0)
 
+// Log once function - useful for warning that a function called many times isn't implemented, while using
+// a workaround to make something mostly work.
+#define OOVR_LOG_ONCE(msg)                                                                         \
+	do {                                                                                           \
+		/* We don't need the function suffix, but it makes it easier to recognise in a debugger */ \
+		static bool oovr_hit_log_once_##__FUNCTION__ = false;                                      \
+		if (!oovr_hit_log_once_##__FUNCTION__) {                                                   \
+			oovr_hit_log_once_##__FUNCTION__ = true;                                               \
+			OOVR_LOG("[once] " msg);                                                               \
+		}                                                                                          \
+	} while (false)
+
 // DirectX API validation helpers
 #define OOVR_FAILED_DX_ABORT(expression) \
 do { \
