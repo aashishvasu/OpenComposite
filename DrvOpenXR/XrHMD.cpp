@@ -38,10 +38,10 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	XrFovf& fov = views[eEye].fov;
 
 	float twoNear = fNearZ * 2;
-	float tanL = tanf(fov.angleLeft);
-	float tanR = tanf(fov.angleRight);
-	float tanU = tanf(fov.angleUp);
-	float tanD = tanf(fov.angleDown);
+	float tanL = fov.angleLeft;
+	float tanR = fov.angleRight;
+	float tanU = fov.angleUp;
+	float tanD = fov.angleDown;
 	float horizontalFov = -tanL + tanR;
 	float verticalFov = tanU - tanD;
 
