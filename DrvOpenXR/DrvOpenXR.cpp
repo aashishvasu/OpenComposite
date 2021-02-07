@@ -19,6 +19,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	if (initialised) {
 		OOVR_ABORT("Cannot double-initialise OpenXR");
 	}
+	initialised = true;
 
 	// FIXME should be removed, for testing only
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_EXPORT_TYPE", "text"));
