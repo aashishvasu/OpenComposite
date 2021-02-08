@@ -26,19 +26,20 @@ XrViewConfigurationView& xr_main_view(XruEye view_id)
 
 XrExt::XrExt()
 {
-	XrResult res = xrGetInstanceProcAddr(xr_instance, "xrGetD3D11GraphicsRequirementsKHR", (PFN_xrVoidFunction*)&xrGetD3D11GraphicsRequirementsKHR);
-	OOVR_FAILED_XR_ABORT(res);
+#define XR_BIND(name) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name))
 
-	OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, "xrGetVisibilityMaskKHR", (PFN_xrVoidFunction*)&xrGetVisibilityMaskKHR));
+	XR_BIND(xrGetD3D11GraphicsRequirementsKHR);
+
+	XR_BIND(xrGetVisibilityMaskKHR);
 
 #ifdef SUPPORT_VK
-#define XR_BIND(name) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name))
 	XR_BIND(xrGetVulkanGraphicsRequirementsKHR);
 	XR_BIND(xrGetVulkanInstanceExtensionsKHR);
 	XR_BIND(xrGetVulkanDeviceExtensionsKHR);
 	XR_BIND(xrGetVulkanGraphicsDeviceKHR);
-#undef XR_BIND
 #endif
+
+#undef XR_BIND
 }
 
 XrSessionGlobals::XrSessionGlobals()
