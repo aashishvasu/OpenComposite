@@ -43,22 +43,32 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 		OOVR_LOG("Recreating OpenXR session for application graphics API");
 
-		// The spec requires that we call this before starting a session using D3D. Unfortunately we
-		// can't actually do anything with this information, since the game has already created the device.
-		XrGraphicsRequirementsD3D11KHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR };
-		OOVR_FAILED_XR_ABORT(xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements));
+		switch (tex->eType) {
+		case vr::TextureType_DirectX: {
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+			// The spec requires that we call this before starting a session using D3D. Unfortunately we
+			// can't actually do anything with this information, since the game has already created the device.
+			XrGraphicsRequirementsD3D11KHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR };
+			OOVR_FAILED_XR_ABORT(xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements));
 
-		OOVR_FALSE_ABORT(tex->eType == vr::TextureType_DirectX);
-		auto* d3dTex = (ID3D11Texture2D*)tex->handle;
-		ID3D11Device* dev = nullptr;
-		d3dTex->GetDevice(&dev);
+			auto* d3dTex = (ID3D11Texture2D*)tex->handle;
+			ID3D11Device* dev = nullptr;
+			d3dTex->GetDevice(&dev);
 
-		XrGraphicsBindingD3D11KHR d3dInfo{};
-		d3dInfo.type = XR_TYPE_GRAPHICS_BINDING_D3D11_KHR;
-		d3dInfo.device = dev;
-		DrvOpenXR::SetupSession(&d3dInfo);
+			XrGraphicsBindingD3D11KHR d3dInfo{};
+			d3dInfo.type = XR_TYPE_GRAPHICS_BINDING_D3D11_KHR;
+			d3dInfo.device = dev;
+			DrvOpenXR::SetupSession(&d3dInfo);
 
-		dev->Release();
+			dev->Release();
+#else
+			OOVR_ABORT("Application is trying to submit a D3D11 texture, which OpenComposite supports but is disabled in this build");
+#endif
+			break;
+		}
+		default:
+			OOVR_ABORTF("Invalid/unknown texture type %d", tex->eType);
+		}
 	}
 
 	for (std::unique_ptr<Compositor>& compositor : compositors) {
