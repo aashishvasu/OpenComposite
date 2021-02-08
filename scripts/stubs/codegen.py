@@ -129,7 +129,7 @@ def _build_fntable(fi, ver: InterfaceDef):
     # Generate the array
     fi.write("static void *%s[] = {\n" % func_array_name)
     for func in ver.functions:
-        fi.write("\t%s,\n" % func_name_template % func.name)
+        fi.write("\t(void*) %s,\n" % func_name_template % func.name)
 
     fi.write("};\n")
 
