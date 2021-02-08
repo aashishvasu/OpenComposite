@@ -2,6 +2,8 @@
 // Created by ZNix on 8/02/2021.
 //
 
+#if defined(SUPPORT_DX11)
+
 #include "TemporaryD3D11.h"
 
 TemporaryD3D11::TemporaryD3D11()
@@ -30,3 +32,5 @@ TemporaryD3D11::~TemporaryD3D11()
 {
 	device->Release();
 }
+
+#endif
