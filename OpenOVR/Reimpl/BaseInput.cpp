@@ -9,6 +9,8 @@
 #include "BaseSystem.h"
 #include <fstream>
 #include <codecvt>
+#include <locale>
+#include <algorithm>
 #include <iostream>
 #include "Drivers/Backend.h"
 #include <map>
@@ -21,8 +23,14 @@ using namespace vr;
 
 
 // This is a duplicate from BaseClientCore.cpp
-static bool ReadJson(wstring path, Json::Value &result) {
+static bool ReadJson(wstring path, Json::Value& result) {
+#ifndef _WIN32
+	typedef std::codecvt_utf8<wchar_t> convert_type;
+	std::wstring_convert<convert_type, wchar_t> converter;
+	ifstream in(converter.to_bytes(path), ios::binary);
+#else
 	ifstream in(path, ios::binary);
+#endif
 	if (in) {
 		std::stringstream contents;
 		contents << in.rdbuf();

@@ -7,7 +7,7 @@
 * -Z is the preferred forward facing direction. */
 class BaseChaperone {
 public:
-	enum BaseChaperoneCalibrationState;
+	enum BaseChaperoneCalibrationState : int;
 
 	/** Get the current state of Chaperone calibration. This state can change at any time during a session due to physical base station changes. **/
 	BaseChaperoneCalibrationState GetCalibrationState();
@@ -52,7 +52,7 @@ public:
 	 **/
 	virtual void ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin);
 
-	enum BaseChaperoneCalibrationState {
+	enum BaseChaperoneCalibrationState : int {
 		// OK!
 		ChaperoneCalibrationState_OK = 1,									// Chaperone is fully calibrated and working correctly
 

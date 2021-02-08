@@ -210,7 +210,7 @@ public:
 	DECLARE_BACKEND_FUNCS(,)
 
 	// Legacy, replaced by GetDevice(index)->GetPose(...)
-	void BackendManager::GetSinglePose(
+	void GetSinglePose(
 		vr::ETrackingUniverseOrigin origin,
 		vr::TrackedDeviceIndex_t index,
 		vr::TrackedDevicePose_t * pose,

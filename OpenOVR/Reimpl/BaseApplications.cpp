@@ -111,6 +111,10 @@ bool BaseApplications::IsQuitUserPromptRequested() {
 	STUBBED();
 }
 EVRApplicationError BaseApplications::LaunchInternalProcess(const char *pchBinaryPath, const char *pchArguments, const char *pchWorkingDirectory) {
+#ifndef _WIN32
+	// Only the lab uses this afaik, we should be pretty safe
+	STUBBED();
+#else
 	OOVR_LOG("Launching new app process: following values are path,args,workingDir:");
 	OOVR_LOG(pchBinaryPath);
 	OOVR_LOG(pchArguments);
@@ -136,6 +140,7 @@ EVRApplicationError BaseApplications::LaunchInternalProcess(const char *pchBinar
 	}
 
 	return VRApplicationError_LaunchFailed;
+#endif
 }
 uint32_t BaseApplications::GetCurrentSceneProcessId() {
 	STUBBED();

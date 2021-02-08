@@ -149,7 +149,7 @@ void ITrackedDevice::InitialiseDevice(vr::TrackedDeviceIndex_t index) {
 	}
 
 	if (index == vr::k_unTrackedDeviceIndexInvalid) {
-		OOVR_ABORTF("Cannot initialise tracked device with ID k_unTrackedDeviceIndexInvalid");
+		OOVR_ABORT("Cannot initialise tracked device with ID k_unTrackedDeviceIndexInvalid");
 	}
 
 	deviceIndex = index;
