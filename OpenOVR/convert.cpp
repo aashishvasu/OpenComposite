@@ -20,7 +20,7 @@ HmdMatrix44_t O2S_m4(Mat4 input)
 	// However for the 4x4 matrix it's not obvious which way around it is - pass it through plain and let this function's user
 	// figure out what's correct based on the context.
 
-	memcpy_s(output.m, sizeof(float[4][4]), glm::value_ptr(input), sizeof(float[4][4]));
+	memcpy(output.m, glm::value_ptr(input), sizeof(float[4][4]));
 
 	return output;
 }
