@@ -2,10 +2,8 @@
 
 #include "logging.h"
 #include <fstream>
-
-#ifndef WIN32
 #include <iostream>
-#endif
+#include <stdarg.h>
 
 using namespace std;
 
