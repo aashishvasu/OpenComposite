@@ -2,9 +2,9 @@
 // Created by ZNix on 8/02/2021.
 //
 
-#include "TemporaryVk.h"
-
 #ifdef SUPPORT_VK
+
+#include "TemporaryVk.h"
 
 #define OOVR_FAILED_VK_ABORT(expression)                                              \
 	do {                                                                              \
