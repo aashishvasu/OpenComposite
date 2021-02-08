@@ -2,8 +2,10 @@
 #include "Config.h"
 #include "ini.h"
 
-#include <string>
 #include <algorithm>
+#include <codecvt>
+#include <locale>
+#include <string>
 
 using namespace std;
 using vr::HmdColor_t;
@@ -124,9 +126,11 @@ int Config::ini_handler(void* user, const char* pSection,
 }
 
 static int wini_parse(const wchar_t* filename, ini_handler handler, void* user) {
-	FILE* file;
-	errno_t err = _wfopen_s(&file, filename, L"r");
-	if (err)
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> CHAR_CONV;
+	std::string utf8filename = CHAR_CONV.to_bytes(filename);
+
+	FILE* file = fopen(utf8filename.c_str(), "r");
+	if (!file)
 		return -1;
 
 	int error = ini_parse_file(file, handler, user);
@@ -135,14 +139,19 @@ static int wini_parse(const wchar_t* filename, ini_handler handler, void* user) 
 }
 
 // The ctor is run before DLLMain, so use this hack for now
+#ifdef _WIN32
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
+#endif
 
 Config::Config() {
+	// If we're on Windows, look for a config file next to the DLL
+	// If we're on Linux, skip that and just check the working directory.
+#ifdef _WIN32
 	wchar_t buffer[MAX_PATH];
 	DWORD len = GetModuleFileNameW(HINST_THISCOMPONENT, buffer, sizeof(buffer));
 
-	wstring dir = L"";
+	wstring dir;
 	if (len) {
 		wstring fname = wstring(buffer, len);
 		size_t slash_index = fname.rfind(L'\\');
@@ -154,6 +163,10 @@ Config::Config() {
 
 	wstring file = dir + L"opencomposite.ini";
 	int err = wini_parse(file.c_str(), ini_handler, this);
+#else
+	int err = -1;
+	wstring file;
+#endif
 
 	if (err == -1 || err == 0) {
 		// No such file or it was parsed successfully, check the working directory
