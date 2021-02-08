@@ -27,6 +27,10 @@
 
 #include "Misc/xrutil.h"
 
+#ifndef _WIN32
+#include "linux_funcs.h"
+#endif
+
 #include <string>
 
 #ifdef WIN32
