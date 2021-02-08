@@ -2,7 +2,9 @@
 
 #include "VRKeyboard.h"
 
+#ifndef OC_XR_PORT
 #include <d3d11.h>
+#endif
 
 #include "Reimpl/static_bases.gen.h"
 #include "Reimpl/BaseCompositor.h"
@@ -15,10 +17,12 @@
 
 #include <vector>
 
+#ifdef _WIN32
 #pragma comment(lib, "d3d11.lib")
 
 // for debugging only for now
 #include <comdef.h>
+#endif
 
 using namespace std;
 
@@ -26,6 +30,7 @@ using namespace std;
 static const bool DBG_STUCK_TO_FACE = false;
 
 static vector<char> loadResource(int rid, int type) {
+#ifdef _WIN32
 	// Open our OBJ file
 	HRSRC ref = FindResource(openovr_module_id, MAKEINTRESOURCE(rid), MAKEINTRESOURCE(type));
 	if (!ref) {
@@ -48,6 +53,13 @@ static vector<char> loadResource(int rid, int type) {
 	// Do we need to use UnlockResource on cstr?
 
 	return vector<char>(cstr, cstr + len);
+#else
+#ifdef OC_XR_PORT
+	XR_STUBBED();
+#else
+#error TODO implement keyboard font loading on Linux
+#endif
+#endif
 }
 
 std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;

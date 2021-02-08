@@ -1,9 +1,12 @@
 #pragma once
 
+#ifndef OC_XR_PORT
 #include <d3d11.h>
+#endif
 
 #include <codecvt>
 #include <functional>
+#include <locale>
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,7 +26,9 @@ public:
 		k_EGamepadTextInputModeSubmit = 2,
 	};
 
+#ifndef OC_XR_PORT
 	VRKeyboard(ID3D11Device* dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t dispatch, EGamepadTextInputMode inputMode);
+#endif
 	~VRKeyboard();
 
 	std::wstring contents();
@@ -48,8 +53,10 @@ public:
 	void SetTransform(vr::HmdMatrix34_t transform);
 
 private:
+#ifndef OC_XR_PORT
 	ID3D11Device* const dev;
 	ID3D11DeviceContext* ctx;
+#endif
 
 	bool dirty = true;
 	bool closed = false;
