@@ -27,6 +27,9 @@ enum XruEye : int {
 #define XR_STUBBED() \
 	OOVR_ABORTF("Hit not-yet-ported-to-OpenXR stubbed function at %s:%d func %s", __FILE__, __LINE__, __func__);
 
+#define LINUX_STUBBED() \
+	OOVR_ABORTF("Hit not-yet-ported-to-Linux stubbed function at %s:%d func %s", __FILE__, __LINE__, __func__);
+
 // Useful maths typedefs
 // NOTE: THESE ARE DEPRECATED, REMOVE, AND USE THE GLM NAMES
 #include <glm/gtc/type_ptr.hpp>
