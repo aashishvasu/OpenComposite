@@ -31,12 +31,14 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	}
 	initialised = true;
 
-	// FIXME should be removed, for testing only
+	// TODO make these work on Linux
+#ifdef XR_VALIDATION_LAYER_PATH
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_EXPORT_TYPE", "text"));
-	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_API_LAYER_PATH",
-	    "C:\\Users\\ZNix\\source\\repos\\OpenCompositeXR\\build-openxr\\src\\api_layers"));
-	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_FILE_NAME",
-	    "C:\\Users\\ZNix\\source\\repos\\OpenCompositeXR\\validation-xr.log"));
+	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_API_LAYER_PATH", XR_VALIDATION_LAYER_PATH));
+#endif
+#ifdef XR_VALIDATION_FILE_NAME
+	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_FILE_NAME", XR_VALIDATION_FILE_NAME));
+#endif
 
 	// Create the OpenXR instance - this is the overall handle that connects us to the runtime
 	// https://www.khronos.org/registry/OpenXR/specs/1.0/refguide/openxr-10-reference-guide.pdf
@@ -57,7 +59,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	};
 
 	const char* const layers[] = {
+#ifdef XR_VALIDATION_LAYER_PATH
 		"XR_APILAYER_LUNARG_core_validation",
+#endif
 	};
 
 	XrInstanceCreateInfo createInfo{};

@@ -10,6 +10,11 @@ project(OpenComposite)
 
 include(scripts/pch.cmake)
 
+# Options
+
+set(XR_VALIDATION_LAYER_PATH "" CACHE STRING "A path to set XR_API_LAYER_PATH to. Setting this will enable the debug layer")
+set(XR_VALIDATION_FILE_NAME "" CACHE STRING "A filename to set XR_CORE_VALIDATION_FILE_NAME to.")
+
 # Platform-dependent flags
 # Support Vulkan on Linux instead of DirectX
 if (WIN32)
@@ -119,6 +124,13 @@ target_include_directories(DrvOpenXR PRIVATE DrvOpenXR)
 target_link_libraries(DrvOpenXR OpenVR OpenXR glm)
 target_compile_definitions(DrvOpenXR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS} -D_CRT_SECURE_NO_WARNINGS)
 source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)
+
+if (NOT (XR_VALIDATION_LAYER_PATH STREQUAL ""))
+	target_compile_definitions(DrvOpenXR PRIVATE -DXR_VALIDATION_LAYER_PATH=\"${XR_VALIDATION_LAYER_PATH}\")
+endif ()
+if (NOT (XR_VALIDATION_FILE_NAME STREQUAL ""))
+	target_compile_definitions(DrvOpenXR PRIVATE -DXR_VALIDATION_FILE_NAME=\"${XR_VALIDATION_FILE_NAME}\")
+endif ()
 
 # === OCCore ===
 # TODO: precompiled headers
