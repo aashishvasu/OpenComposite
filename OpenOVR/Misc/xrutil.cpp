@@ -28,9 +28,11 @@ XrExt::XrExt()
 {
 #define XR_BIND(name) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name))
 
-	XR_BIND(xrGetD3D11GraphicsRequirementsKHR);
-
 	XR_BIND(xrGetVisibilityMaskKHR);
+
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+	XR_BIND(xrGetD3D11GraphicsRequirementsKHR);
+#endif
 
 #ifdef SUPPORT_VK
 	XR_BIND(xrGetVulkanGraphicsRequirementsKHR);
