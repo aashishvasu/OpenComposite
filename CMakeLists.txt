@@ -110,6 +110,8 @@ add_library(DrvOpenXR STATIC
 	DrvOpenXR/tmp_gfx/TemporaryGraphics.h
 	DrvOpenXR/tmp_gfx/TemporaryD3D11.cpp
 	DrvOpenXR/tmp_gfx/TemporaryD3D11.h
+	DrvOpenXR/tmp_gfx/TemporaryVk.cpp
+	DrvOpenXR/tmp_gfx/TemporaryVk.h
 )
 target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub)
 target_include_directories(DrvOpenXR PRIVATE DrvOpenXR)

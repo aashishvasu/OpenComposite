@@ -30,6 +30,15 @@ XrExt::XrExt()
 	OOVR_FAILED_XR_ABORT(res);
 
 	OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, "xrGetVisibilityMaskKHR", (PFN_xrVoidFunction*)&xrGetVisibilityMaskKHR));
+
+#ifdef SUPPORT_VK
+#define XR_BIND(name) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name))
+	XR_BIND(xrGetVulkanGraphicsRequirementsKHR);
+	XR_BIND(xrGetVulkanInstanceExtensionsKHR);
+	XR_BIND(xrGetVulkanDeviceExtensionsKHR);
+	XR_BIND(xrGetVulkanGraphicsDeviceKHR);
+#undef XR_BIND
+#endif
 }
 
 XrSessionGlobals::XrSessionGlobals()

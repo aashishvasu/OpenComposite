@@ -43,6 +43,11 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 		OOVR_LOG("Recreating OpenXR session for application graphics API");
 
+		// The spec requires that we call this before starting a session using D3D. Unfortunately we
+		// can't actually do anything with this information, since the game has already created the device.
+		XrGraphicsRequirementsD3D11KHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR };
+		OOVR_FAILED_XR_ABORT(xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements));
+
 		OOVR_FALSE_ABORT(tex->eType == vr::TextureType_DirectX);
 		auto* d3dTex = (ID3D11Texture2D*)tex->handle;
 		ID3D11Device* dev = nullptr;

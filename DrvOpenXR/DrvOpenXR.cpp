@@ -12,6 +12,10 @@
 #include "tmp_gfx/TemporaryD3D11.h"
 #endif
 
+#if defined(SUPPORT_VK)
+#include "tmp_gfx/TemporaryVk.h"
+#endif
+
 #include <memory>
 #include <string>
 
@@ -44,6 +48,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	const char* const extensions[] = {
 #ifdef SUPPORT_DX
 		"XR_KHR_D3D11_enable",
+#endif
+#if defined(SUPPORT_VK)
+		"XR_KHR_vulkan_enable",
 #endif
 		"XR_EXT_debug_utils",
 		"XR_KHR_visibility_mask",
@@ -90,6 +97,8 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	if (!temporaryGraphics) {
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 		temporaryGraphics = std::make_unique<TemporaryD3D11>();
+#elif defined(SUPPORT_VK)
+		temporaryGraphics = std::make_unique<TemporaryVk>();
 #else
 #error No available temporary graphics implementation
 #endif
