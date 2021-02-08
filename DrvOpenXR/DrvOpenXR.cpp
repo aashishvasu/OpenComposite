@@ -6,11 +6,16 @@
 
 #include "../OpenOVR/Misc/xr_ext.h"
 #include "XrBackend.h"
+#include "tmp_gfx/TemporaryGraphics.h"
 
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+#include "tmp_gfx/TemporaryD3D11.h"
+#endif
+
+#include <memory>
 #include <string>
 
-static ID3D11Device* CreateTemporaryD3D11Device();
-static ID3D11Device* temporaryGraphics = nullptr;
+static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
@@ -82,31 +87,31 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	// Create a session - this tells the runtime that sooner or later we'd like to submit frames
 	// This is when we have to choose what graphics API to use
 
+	if (!temporaryGraphics) {
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+		temporaryGraphics = std::make_unique<TemporaryD3D11>();
+#else
+#error No available temporary graphics implementation
+#endif
+	}
+
 	// FIXME HACK HACK HACK hardcode D3D11 now, since xrCreateSession returns XR_ERROR_GRAPHICS_DEVICE_INVALID if
 	//  you don't pass it a graphics binding. Unfortunately we don't know what graphics API the game is using (much
 	//  less have a handle to it) until it submits it's first frame.
-	// FIXME I'm only using it here as a POC since it's easier to set up than Vulkan, but we'll need to switch over
-	//  to that later on in the name of compatibility.
-	XrGraphicsBindingD3D11KHR d3dInfo{};
-	d3dInfo.type = XR_TYPE_GRAPHICS_BINDING_D3D11_KHR;
-	d3dInfo.device = CreateTemporaryD3D11Device(); // Nooooo
-
-	SetupSession(&d3dInfo);
+	SetupSession(temporaryGraphics->GetGraphicsBinding());
 
 	// Build a backend that works with OpenXR
 	return new XrBackend();
 }
 
-void DrvOpenXR::SetupSession(void* graphicsBinding)
+void DrvOpenXR::SetupSession(const void* graphicsBinding)
 {
 	if (xr_gbl) {
 		ShutdownSession();
 	}
 
-	if (temporaryGraphics) {
-		temporaryGraphics->Release();
-		temporaryGraphics = nullptr;
-	}
+	if (graphicsBinding != temporaryGraphics->GetGraphicsBinding())
+		temporaryGraphics.reset();
 
 	XrSessionCreateInfo sessionInfo{};
 	sessionInfo.type = XR_TYPE_SESSION_CREATE_INFO;
@@ -148,30 +153,4 @@ void DrvOpenXR::FullShutdown()
 		OOVR_FAILED_XR_ABORT(xrDestroyInstance(xr_instance));
 		xr_instance = XR_NULL_HANDLE;
 	}
-}
-
-/**
- * One big hack as detailed above for session creation.
- *
- * Yes this leaves a D3D device, no I don't care for now.
- */
-static ID3D11Device* CreateTemporaryD3D11Device()
-{
-	// The spec requires that we call this first, and use it to get the correct things
-	XrGraphicsRequirementsD3D11KHR graphicsRequirements{};
-	graphicsRequirements.type = XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR;
-	XrResult res = xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements);
-	OOVR_FAILED_XR_ABORT(res);
-
-	// TODO use the proper adapter
-	IDXGIAdapter* adapter = nullptr;
-	ID3D11Device* dev = nullptr;
-
-	// Such a horrid hack - of all the ugly things we do in OpenComposite, this has to be one of the worst.
-	HRESULT createDeviceRes = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
-	    &graphicsRequirements.minFeatureLevel, 1,
-	    D3D11_SDK_VERSION, &dev, nullptr, nullptr);
-	OOVR_FAILED_DX_ABORT(createDeviceRes);
-
-	return dev;
 }
