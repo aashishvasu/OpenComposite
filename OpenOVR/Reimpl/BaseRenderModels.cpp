@@ -22,7 +22,7 @@ using glm::quat;
 
 #pragma region structs
 
-enum OOVR_EVRRenderModelError {
+enum OOVR_EVRRenderModelError : int {
 	VRRenderModelError_None = 0,
 	VRRenderModelError_Loading = 100,
 	VRRenderModelError_NotSupported = 200,
@@ -45,9 +45,9 @@ struct OOVR_RenderModel_Vertex_t {
 	float rfTextureCoord[2];
 };
 
-#if defined(__linux__) || defined(__APPLE__) 
-// This structure was originally defined mis-packed on Linux, preserved for 
-// compatibility. 
+#if defined(__linux__) || defined(__APPLE__)
+// This structure was originally defined mis-packed on Linux, preserved for
+// compatibility.
 #pragma pack( push, 4 )
 #endif
 
@@ -64,7 +64,7 @@ struct OOVR_RenderModel_TextureMap_t {
 	const uint8_t *rubTextureMapData;	// Map texture data. All textures are RGBA with 8 bits per channel per pixel. Data size is width * height * 4ub
 };
 
-#if defined(__linux__) || defined(__APPLE__) 
+#if defined(__linux__) || defined(__APPLE__)
 #pragma pack( pop )
 #endif
 
@@ -85,6 +85,9 @@ typedef OOVR_RenderModel_TextureMap_t RenderModel_TextureMap_t;
 typedef OOVR_TextureID_t TextureID_t;
 
 static string loadResource(int rid) {
+#ifndef _WIN32
+    LINUX_STUBBED();
+#else
 	// Open our OBJ file
 	HRSRC ref = FindResource(openovr_module_id, MAKEINTRESOURCE(rid), MAKEINTRESOURCE(RES_T_OBJ));
 	if (!ref) {
@@ -105,6 +108,7 @@ static string loadResource(int rid) {
 	}
 
 	return string(cstr, len);
+#endif
 }
 
 static OOVR_RenderModel_Vertex_t split_face(
@@ -282,6 +286,9 @@ EVRRenderModelError BaseRenderModels::LoadTextureD3D11_Async(TextureID_t texture
 }
 
 EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t textureId, void * pDstTexture) {
+#ifndef SUPPORT_DX11
+    OOVR_ABORT("Cannot load D3D11 textures without D3D11 support");
+#else
 	ID3D11Texture2D *output = (ID3D11Texture2D*)pDstTexture;
 
 	struct pix_t {
@@ -333,6 +340,7 @@ EVRRenderModelError BaseRenderModels::LoadIntoTextureD3D11_Async(TextureID_t tex
 	device->Release();
 
 	return VRRenderModelError_None;
+#endif
 }
 
 void BaseRenderModels::FreeTextureD3D11(void * pD3D11Texture2D) {

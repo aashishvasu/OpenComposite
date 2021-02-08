@@ -1,7 +1,7 @@
 #pragma once
 #include "BaseCommon.h"
 
-enum OOVR_EVRRenderModelError;
+enum OOVR_EVRRenderModelError : int;
 struct OOVR_RenderModel_t;
 typedef int32_t OOVR_TextureID_t;
 struct OOVR_RenderModel_TextureMap_t;
