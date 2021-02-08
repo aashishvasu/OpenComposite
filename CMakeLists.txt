@@ -143,6 +143,7 @@ add_library(OCCore STATIC
 	OpenOVR/Compositor/vkcompositor.cpp
 	OpenOVR/convert.cpp
 	OpenOVR/logging.cpp
+	OpenOVR/linux_funcs.cpp
 	OpenOVR/Misc/Config.cpp
 	OpenOVR/Misc/debug_helper.cpp
 	OpenOVR/Misc/Haptics.cpp
