@@ -1,6 +1,9 @@
 #pragma once
 #include "OpenVR/interfaces/vrtypes.h"
 
+// For shared pointers in the generated GVRxyz.gen.h headers
+#include <memory>
+
 class CVRCommon {
 public:
 	// Ensure the resources of the base get freed properly
