@@ -83,6 +83,7 @@ else()
 	-DXR_USE_GRAPHICS_API_OPENGL -DXR_USE_GRAPHICS_API_VULKAN)
 endif()
 target_link_libraries(OpenXR PUBLIC advapi32 pathcch)
+target_link_libraries(OpenXR PUBLIC Vulkan)
 
 # === glm ===
 # Since we used to use LibOVR's maths library, we need a replacement
