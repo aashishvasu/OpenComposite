@@ -4,22 +4,24 @@
 
 #include "vkcompositor.h"
 
-#include "libovr_wrapper.h"
 #include "OVR_CAPI_Vk.h"
+#include "libovr_wrapper.h"
 #include <vulkan/vulkan.h>
 
 using namespace std;
 #define OVSS (*ovr::session)
 
-#define ERR(msg) { \
-	std::string str = "Hit Vulkan-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
-	OOVR_LOG(str.c_str()); \
-	OOVR_MESSAGE(str.c_str(), "Errored func!"); \
-	/**((int*)NULL) = 0;*/\
-	throw str; \
-}
+#define ERR(msg)                                                                                                                                         \
+	{                                                                                                                                                    \
+		std::string str = "Hit Vulkan-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
+		OOVR_LOG(str.c_str());                                                                                                                           \
+		OOVR_MESSAGE(str.c_str(), "Errored func!");                                                                                                      \
+		/**((int*)NULL) = 0;*/                                                                                                                           \
+		throw str;                                                                                                                                       \
+	}
 
-ovrTextureFormat vkToOvrFormat(VkFormat vk, vr::EColorSpace colourSpace) {
+ovrTextureFormat vkToOvrFormat(VkFormat vk, vr::EColorSpace colourSpace)
+{
 	// TODO is this really how it should work?
 	// No idea why or how or what, but for now just force SRGB on as otherwise
 	// it causes trouble.
@@ -54,7 +56,8 @@ ovrTextureFormat vkToOvrFormat(VkFormat vk, vr::EColorSpace colourSpace) {
 	return OVR_FORMAT_UNKNOWN;
 }
 
-static VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool) {
+static VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool)
+{
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -73,7 +76,8 @@ static VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool co
 	return commandBuffer;
 }
 
-static void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool, VkCommandBuffer commandBuffer, uint32_t graphicsQueueFamilyId) {
+static void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool, VkCommandBuffer commandBuffer, uint32_t graphicsQueueFamilyId)
+{
 	vkEndCommandBuffer(commandBuffer);
 
 	VkSubmitInfo submitInfo = {};
@@ -91,8 +95,9 @@ static void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool, Vk
 
 /////////
 
-VkCompositor::VkCompositor(const vr::Texture_t *initialTexture) {
-	vr::VRVulkanTextureData_t *tex = (vr::VRVulkanTextureData_t*) initialTexture->handle;
+VkCompositor::VkCompositor(const vr::Texture_t* initialTexture)
+{
+	vr::VRVulkanTextureData_t* tex = (vr::VRVulkanTextureData_t*)initialTexture->handle;
 
 	// Tell Oculus which queue to sync on
 	ovr_SetSynchronizationQueueVk(OVSS, tex->m_pQueue);
@@ -123,15 +128,15 @@ found:
 
 	// AFAIK you're allowed to call this multiple times, right?
 	ovrResult res = ovr_GetSessionPhysicalDeviceVk(OVSS, *ovr::luid, tex->m_pInstance, &oculusRequiredDevice);
-	if(!OVR_SUCCESS(res)) {
+	if (!OVR_SUCCESS(res)) {
 		ERR("Could not get Oculus's desired Vulkan physical device");
 	}
 
 	// Check that Oculus and the game have both picked the same GPU
-	if(oculusRequiredDevice != tex->m_pPhysicalDevice) {
+	if (oculusRequiredDevice != tex->m_pPhysicalDevice) {
 		ERR("Oculus and the game are attempting to render to different GPUs. If you only have a single graphics\n"
-			"card, this is probably a bug and please report the issue. If you have multiple GPUs, try switching which\n"
-			"one the game is rendering to.");
+		    "card, this is probably a bug and please report the issue. If you have multiple GPUs, try switching which\n"
+		    "one the game is rendering to.");
 	}
 
 	// Create a command pool for it
@@ -147,13 +152,15 @@ found:
 	}
 }
 
-VkCompositor::~VkCompositor() {
+VkCompositor::~VkCompositor()
+{
 	// TODO free the command pool:
 	// vkDestroyCommandPool(device, (VkCommandPool) commandPool, nullptr);
 }
 
-void VkCompositor::Invoke(const vr::Texture_t * texture) {
-	const vr::VRVulkanTextureData_t *tex = (vr::VRVulkanTextureData_t*) texture->handle;
+void VkCompositor::Invoke(const vr::Texture_t* texture)
+{
+	const vr::VRVulkanTextureData_t* tex = (vr::VRVulkanTextureData_t*)texture->handle;
 
 	if (!tex) {
 		ERR("Cannot use NULL Vulkan image data (VRVulkanTextureData_t)");
@@ -161,7 +168,7 @@ void VkCompositor::Invoke(const vr::Texture_t * texture) {
 
 	//
 
-	ovrTextureSwapChainDesc &desc = chainDesc;
+	ovrTextureSwapChainDesc& desc = chainDesc;
 
 	bool usable = chain == NULL ? false : CheckChainCompatible(*tex, desc, texture->eColorSpace);
 
@@ -228,16 +235,14 @@ void VkCompositor::Invoke(const vr::Texture_t * texture) {
 		}
 
 		vkCmdPipelineBarrier(
-			commandBuffer,
-			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-			0,
-			0, nullptr,
-			0, nullptr,
-			barriers.size(), barriers.data()
-		);
+		    commandBuffer,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		    0,
+		    0, nullptr,
+		    0, nullptr,
+		    barriers.size(), barriers.data());
 
 		endSingleTimeCommands(tex->m_pDevice, (VkCommandPool)commandPool, commandBuffer, graphicsQueueFamilyId);
-
 	}
 
 	int currentIndex = 0;
@@ -246,7 +251,7 @@ void VkCompositor::Invoke(const vr::Texture_t * texture) {
 	VkImage dst = NULL;
 	ovr_GetTextureSwapChainBufferVk(OVSS, chain, currentIndex, &dst);
 
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands(tex->m_pDevice, (VkCommandPool) commandPool);
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands(tex->m_pDevice, (VkCommandPool)commandPool);
 
 	VkImageCopy region = {};
 	region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -262,28 +267,29 @@ void VkCompositor::Invoke(const vr::Texture_t * texture) {
 	region.extent = { tex->m_nWidth, tex->m_nHeight, 1 };
 
 	vkCmdCopyImage(commandBuffer,
-		// Valve defines a single correct image layout, which certainly
-		//  makes things easier here.
-		(VkImage) tex->m_nImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	    // Valve defines a single correct image layout, which certainly
+	    //  makes things easier here.
+	    (VkImage)tex->m_nImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 
-		// Set during the transition
-		dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	    // Set during the transition
+	    dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 
-		// Infromation about which subresource to copy, and which area to copy
-		1, &region);
+	    // Infromation about which subresource to copy, and which area to copy
+	    1, &region);
 
 	endSingleTimeCommands(tex->m_pDevice, (VkCommandPool)commandPool, commandBuffer, graphicsQueueFamilyId);
 }
 
-void VkCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const vr::VRTextureBounds_t * ptrBounds,
-	vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
+void VkCompositor::Invoke(ovrEyeType eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds,
+    vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov& layer)
+{
 
 	// Copy the texture across
 	Invoke(texture);
 
 	// Set the viewport up
-	vr::VRVulkanTextureData_t &tex = *(vr::VRVulkanTextureData_t*) texture->handle;
-	ovrRecti &viewport = layer.Viewport[eye];
+	vr::VRVulkanTextureData_t& tex = *(vr::VRVulkanTextureData_t*)texture->handle;
+	ovrRecti& viewport = layer.Viewport[eye];
 
 	// TODO deduplicate with dx11compositor, and use for all compositors
 	if (ptrBounds) {
@@ -294,8 +300,7 @@ void VkCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 			float newMax = bounds.vMin;
 			bounds.vMin = bounds.vMax;
 			bounds.vMax = newMax;
-		}
-		else {
+		} else {
 			submitVerticallyFlipped = false;
 		}
 
@@ -303,8 +308,7 @@ void VkCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 		viewport.Pos.y = (int)(bounds.vMin * tex.m_nHeight);
 		viewport.Size.w = (int)((bounds.uMax - bounds.uMin) * tex.m_nWidth);
 		viewport.Size.h = (int)((bounds.vMax - bounds.vMin) * tex.m_nHeight);
-	}
-	else {
+	} else {
 		viewport.Pos.x = viewport.Pos.y = 0;
 		viewport.Size.w = tex.m_nWidth;
 		viewport.Size.h = tex.m_nHeight;
@@ -313,28 +317,34 @@ void VkCompositor::Invoke(ovrEyeType eye, const vr::Texture_t * texture, const v
 	}
 }
 
-void VkCompositor::InvokeCubemap(const vr::Texture_t * textures) {
+void VkCompositor::InvokeCubemap(const vr::Texture_t* textures)
+{
 	OOVR_ABORT("VkCompositor::InvokeCubemap: Not yet supported!");
 }
 
-unsigned int VkCompositor::GetFlags() {
+unsigned int VkCompositor::GetFlags()
+{
 	return submitVerticallyFlipped ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
 }
 
-bool VkCompositor::CheckChainCompatible(const vr::VRVulkanTextureData_t &tex, const ovrTextureSwapChainDesc &chainDesc, vr::EColorSpace colourSpace) {
+bool VkCompositor::CheckChainCompatible(const vr::VRVulkanTextureData_t& tex, const ovrTextureSwapChainDesc& chainDesc, vr::EColorSpace colourSpace)
+{
 	bool usable = true;
-#define FAIL(name) { \
-	usable = false; \
-	OOVR_LOG("Resource mismatch: " #name); \
-}
-#define CHECK(name, chainName) \
-if(tex.name != chainDesc.chainName) FAIL(name);
+#define FAIL(name)                             \
+	{                                          \
+		usable = false;                        \
+		OOVR_LOG("Resource mismatch: " #name); \
+	}
+#define CHECK(name, chainName)           \
+	if (tex.name != chainDesc.chainName) \
+		FAIL(name);
 
 	CHECK(m_nWidth, Width);
 	CHECK(m_nHeight, Height);
 	CHECK(m_nSampleCount, SampleCount);
 
-	if (chainDesc.Format != vkToOvrFormat((VkFormat)tex.m_nFormat, colourSpace)) FAIL(Format);
+	if (chainDesc.Format != vkToOvrFormat((VkFormat)tex.m_nFormat, colourSpace))
+		FAIL(Format);
 #undef CHECK
 #undef FAIL
 
