@@ -53,6 +53,9 @@ void oovr_abort_raw(const char * file, long line, const char * func, const char 
 	stream << flush;
 
 	OOVR_MESSAGE(buff, title);
+#ifdef _WIN32
+	DebugBreak();
+#endif
 	exit(1);
 }
 
