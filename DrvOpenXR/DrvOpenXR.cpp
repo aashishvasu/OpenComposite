@@ -148,6 +148,8 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 
 void DrvOpenXR::ShutdownSession()
 {
+	temporaryGraphics.reset();
+
 	delete xr_gbl;
 	xr_gbl = nullptr;
 
