@@ -35,6 +35,15 @@ if (FAILED(res)) { \
 } \
 } while(0)
 
+#define OOVR_FAILED_VK_ABORT(expression)                                              \
+	do {                                                                              \
+		VkResult failed_vk_abort_result = (expression);                               \
+		if (failed_vk_abort_result < VK_SUCCESS) {                                    \
+			OOVR_ABORTF("Vulkan Call failed, aborting. %s:%d %s. Error code: %d\n%s", \
+			    __FILE__, __LINE__, __func__, failed_vk_abort_result, #expression);   \
+		}                                                                             \
+	} while (0)
+
 // General validation helpers
 #define OOVR_FALSE_ABORT(expression) do { if (!(expression)) { OOVR_ABORT("Expression is false unexpectedly: " #expression); } } while(0)
 

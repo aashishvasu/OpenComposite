@@ -6,15 +6,6 @@
 
 #include "TemporaryVk.h"
 
-#define OOVR_FAILED_VK_ABORT(expression)                                              \
-	do {                                                                              \
-		VkResult failed_vk_abort_result = (expression);                               \
-		if (failed_vk_abort_result < VK_SUCCESS) {                                    \
-			OOVR_ABORTF("Vulkan Call failed, aborting. %s:%d %s. Error code: %d\n%s", \
-			    __FILE__, __LINE__, __func__, failed_vk_abort_result, #expression);   \
-		}                                                                             \
-	} while (0)
-
 // TODO move this to the VK compositor maybe?
 static void parseExtensionsStr(std::string extensionsStr, std::vector<std::string>& store, std::vector<const char*>& cList)
 {
