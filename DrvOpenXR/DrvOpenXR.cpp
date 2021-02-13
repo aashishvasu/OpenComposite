@@ -35,9 +35,11 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #ifdef XR_VALIDATION_LAYER_PATH
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_EXPORT_TYPE", "text"));
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_API_LAYER_PATH", XR_VALIDATION_LAYER_PATH));
+	OOVR_LOGF("Set OpenXR Layer path: %s", XR_VALIDATION_LAYER_PATH);
 #endif
 #ifdef XR_VALIDATION_FILE_NAME
 	OOVR_FALSE_ABORT(SetEnvironmentVariableA("XR_CORE_VALIDATION_FILE_NAME", XR_VALIDATION_FILE_NAME));
+	OOVR_LOGF("Set OpenXR validation file path: %s", XR_VALIDATION_FILE_NAME);
 #endif
 
 	// Create the OpenXR instance - this is the overall handle that connects us to the runtime
@@ -62,6 +64,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #ifdef XR_VALIDATION_LAYER_PATH
 		"XR_APILAYER_LUNARG_core_validation",
 #endif
+		nullptr // Dummy value since MSVC gets upset if there's nothing in this array
 	};
 
 	XrInstanceCreateInfo createInfo{};
@@ -70,7 +73,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	createInfo.enabledExtensionNames = extensions;
 	createInfo.enabledExtensionCount = sizeof(extensions) / sizeof(const char*);
 	createInfo.enabledApiLayerNames = layers;
-	createInfo.enabledApiLayerCount = sizeof(layers) / sizeof(const char*);
+	createInfo.enabledApiLayerCount = (sizeof(layers) / sizeof(const char*)) - 1; // Subtract the dummy value
 
 	OOVR_FAILED_XR_ABORT(xrCreateInstance(&createInfo, &xr_instance));
 
