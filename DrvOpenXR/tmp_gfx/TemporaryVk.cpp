@@ -54,14 +54,13 @@ TemporaryVk::TemporaryVk()
 	OOVR_FAILED_VK_ABORT(vkCreateInstance(&createInfo, nullptr, &instance));
 
 	// Find the physical device we're supposed to use
-	VkPhysicalDevice physicalDev;
-	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanGraphicsDeviceKHR(xr_instance, xr_system, instance, &physicalDev));
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanGraphicsDeviceKHR(xr_instance, xr_system, instance, &physicalDevice));
 
 	// Find a suitable queue type on that device
 	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(physicalDev, &queueFamilyCount, nullptr);
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
 	std::vector<VkQueueFamilyProperties> queueFamilyProps(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(physicalDev, &queueFamilyCount, queueFamilyProps.data());
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProps.data());
 
 	OOVR_FALSE_ABORT(queueFamilyCount > 0); // Just use the first queue type
 	int queueFamilyIdx = 0;
@@ -90,12 +89,12 @@ TemporaryVk::TemporaryVk()
 	devCreateInfo.queueCreateInfoCount = 1;
 	devCreateInfo.pQueueCreateInfos = &queueInfo;
 
-	OOVR_FAILED_VK_ABORT(vkCreateDevice(physicalDev, &devCreateInfo, nullptr, &device));
+	OOVR_FAILED_VK_ABORT(vkCreateDevice(physicalDevice, &devCreateInfo, nullptr, &device));
 
 	// Setup our graphics binding
 	binding = XrGraphicsBindingVulkanKHR{ XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
 	binding.instance = instance;
-	binding.physicalDevice = physicalDev;
+	binding.physicalDevice = physicalDevice;
 	binding.device = device;
 	binding.queueFamilyIndex = queueFamilyIdx;
 	binding.queueIndex = 0;

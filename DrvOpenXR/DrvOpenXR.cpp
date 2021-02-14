@@ -102,10 +102,11 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	// This is when we have to choose what graphics API to use
 
 	if (!temporaryGraphics) {
-#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-		temporaryGraphics = std::make_unique<TemporaryD3D11>();
-#elif defined(SUPPORT_VK)
+#if defined(SUPPORT_VK)
+		// If we have Vulkan prioritise that, since we need it if the application uses Vulkan
 		temporaryGraphics = std::make_unique<TemporaryVk>();
+#elif defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+		temporaryGraphics = std::make_unique<TemporaryD3D11>();
 #else
 #error No available temporary graphics implementation
 #endif
@@ -174,6 +175,41 @@ void DrvOpenXR::FullShutdown()
 }
 
 #ifdef SUPPORT_VK
+void DrvOpenXR::VkGetPhysicalDevice(VkInstance instance, VkPhysicalDevice* out)
+{
+	*out = VK_NULL_HANDLE;
+
+	TemporaryVk* vk = GetTemporaryVk();
+	if(vk == nullptr)
+		OOVR_ABORT("Not using temporary Vulkan instance");
+
+	// Find the UUID of the physical device the temporary instance is running on
+	VkPhysicalDeviceIDProperties idProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES };
+	VkPhysicalDeviceProperties2 props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &idProps };
+	vkGetPhysicalDeviceProperties2(vk->physicalDevice, &props);
+
+	// Look through all the physical devices on the target instance and find the matching one
+	uint32_t devCount;
+	OOVR_FAILED_VK_ABORT(vkEnumeratePhysicalDevices(instance, &devCount, nullptr));
+	std::vector<VkPhysicalDevice> physicalDevices(devCount);
+	OOVR_FAILED_VK_ABORT(vkEnumeratePhysicalDevices(instance, &devCount, physicalDevices.data()));
+
+	for (VkPhysicalDevice phy : physicalDevices) {
+		VkPhysicalDeviceIDProperties devIdProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES };
+		VkPhysicalDeviceProperties2 devProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &devIdProps };
+		vkGetPhysicalDeviceProperties2(phy, &devProps);
+
+		if (memcmp(devIdProps.deviceUUID, idProps.deviceUUID, sizeof(devIdProps.deviceUUID)) != 0)
+			continue;
+
+		// Found it
+		*out = phy;
+		return;
+	}
+
+	OOVR_ABORT("Could not find matching Vulkan physical device for instance");
+}
+
 TemporaryVk* DrvOpenXR::GetTemporaryVk()
 {
 	return temporaryGraphics->GetAsVk();
