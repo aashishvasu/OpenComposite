@@ -172,3 +172,10 @@ void DrvOpenXR::FullShutdown()
 		xr_instance = XR_NULL_HANDLE;
 	}
 }
+
+#ifdef SUPPORT_VK
+TemporaryVk* DrvOpenXR::GetTemporaryVk()
+{
+	return temporaryGraphics->GetAsVk();
+}
+#endif

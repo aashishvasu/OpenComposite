@@ -15,6 +15,8 @@ public:
 
 	const void* GetGraphicsBinding() const override { return &binding; }
 
+	TemporaryVk* GetAsVk() override { return this; }
+
 private:
 	XrGraphicsBindingVulkanKHR binding = {};
 

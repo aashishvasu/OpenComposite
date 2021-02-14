@@ -13,4 +13,6 @@ public:
 	virtual ~TemporaryGraphics() = default;
 
 	virtual const void* GetGraphicsBinding() const = 0;
+
+	virtual class TemporaryVk* GetAsVk() { return nullptr; }
 };

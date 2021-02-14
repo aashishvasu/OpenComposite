@@ -3,4 +3,7 @@
 
 namespace DrvOpenXR {
 IBackend* CreateOpenXRBackend();
-};
+#ifdef SUPPORT_VK
+class TemporaryVk* GetTemporaryVk();
+#endif
+}; // namespace DrvOpenXR
