@@ -66,6 +66,14 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 #endif
 			break;
 		}
+		case vr::TextureType_Vulkan: {
+			// On Vulkan, we keep the initial graphics API around, and copy the frames into it
+			// There's a variety of issues that come from using the application's VrInstance in the session, such
+			// as it providing a VkQueue rather than the queue index. Stuff like this is by no means insurmountable, but
+			// since we're doing a texture copy anyway there's probably little performance harm in copying between
+			// instances like this, and should hopefully avoid finding a show-stopper pitfall later.
+			break;
+		}
 		default:
 			OOVR_ABORTF("Invalid/unknown texture type %d", tex->eType);
 		}

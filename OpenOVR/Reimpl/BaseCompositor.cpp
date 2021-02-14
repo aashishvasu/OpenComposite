@@ -33,6 +33,11 @@ using namespace std;
 
 #endif
 
+// FIXME find a nice way to clean this up
+#ifdef SUPPORT_VK
+#include "../../DrvOpenXR/pub/DrvOpenXR.h"
+#endif
+
 #include "Drivers/Backend.h"
 #include "Misc/ScopeGuard.h"
 
@@ -204,7 +209,10 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 #endif
 #ifdef SUPPORT_VK
 	case TextureType_Vulkan: {
-		comp = new VkCompositor(texture);
+		auto* vk = DrvOpenXR::GetTemporaryVk();
+		if (vk == nullptr)
+			OOVR_ABORT("Not using temporary Vulkan instance");
+		comp = new VkCompositor(texture, vk);
 		break;
 	}
 #endif

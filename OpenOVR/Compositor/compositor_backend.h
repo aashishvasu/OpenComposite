@@ -17,9 +17,9 @@
 	#endif
 #endif
 #ifdef SUPPORT_VK
-	// TODO Turtle1331 uncomment
-	// #include "glcompositor.h"
+#include "vkcompositor.h"
 #endif
 #ifdef SUPPORT_GL
-	// #include "vkcompositor.h"
+// TODO Turtle1331 uncomment
+// #include "glcompositor.h"
 #endif

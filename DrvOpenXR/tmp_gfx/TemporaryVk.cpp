@@ -82,6 +82,15 @@ TemporaryVk::TemporaryVk()
 	std::vector<const char*> deviceExtensionsCstr;
 	parseExtensionsStr(deviceExtensionsStr, deviceExtensionsStore, deviceExtensionsCstr);
 
+	// Needed if the app ends up using Vulkan
+	deviceExtensionsCstr.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
+#ifdef _WIN32
+	// Don't import vulkan_win32 just for this constant, so hardcode the string
+	deviceExtensionsCstr.push_back(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
+#else
+	deviceExtensionsCstr.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
+#endif
+
 	VkDeviceCreateInfo devCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 	devCreateInfo.enabledExtensionCount = deviceExtensionsCstr.size();
 	devCreateInfo.ppEnabledExtensionNames = deviceExtensionsCstr.data();
@@ -98,6 +107,9 @@ TemporaryVk::TemporaryVk()
 	binding.device = device;
 	binding.queueFamilyIndex = queueFamilyIdx;
 	binding.queueIndex = 0;
+
+	// Get the queue for later potential use by the VkCompositor
+	vkGetDeviceQueue(device, queueFamilyIdx, 0, &queue);
 }
 
 TemporaryVk::~TemporaryVk()
