@@ -348,7 +348,8 @@ source_group(Interfaces\\Declarations REGULAR_EXPRESSION OpenOVR/Reimpl/CVR*)
 
 # === OCOVR ===
 add_library(OCOVR SHARED
-	OCOVR/dllmain.cpp
+	OCOVR/windows.cpp
+	OCOVR/openvr_api.cpp
 
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
