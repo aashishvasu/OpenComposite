@@ -6,6 +6,12 @@
 
 XrBackend::~XrBackend()
 {
+	// First clear out the compositors, since they might try and access the OpenXR instance
+	// in their destructor.
+	for (std::unique_ptr<Compositor>& c : compositors) {
+		c.reset();
+	}
+
 	DrvOpenXR::FullShutdown();
 }
 

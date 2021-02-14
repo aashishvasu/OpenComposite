@@ -127,7 +127,7 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 		ShutdownSession();
 	}
 
-	if (graphicsBinding != temporaryGraphics->GetGraphicsBinding())
+	if (temporaryGraphics && graphicsBinding != temporaryGraphics->GetGraphicsBinding())
 		temporaryGraphics.reset();
 
 	XrSessionCreateInfo sessionInfo{};
@@ -149,8 +149,6 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 
 void DrvOpenXR::ShutdownSession()
 {
-	temporaryGraphics.reset();
-
 	delete xr_gbl;
 	xr_gbl = nullptr;
 
@@ -161,6 +159,10 @@ void DrvOpenXR::ShutdownSession()
 
 	OOVR_FAILED_XR_ABORT(xrDestroySession(xr_session));
 	xr_session = XR_NULL_HANDLE;
+
+	// Destroy the graphics after destroying the session, otherwise when the runtime goes to destroy it's swapchain
+	// it will be sad, in a probably SEGFAULT-y way.
+	temporaryGraphics.reset();
 }
 
 void DrvOpenXR::FullShutdown()
@@ -180,7 +182,7 @@ void DrvOpenXR::VkGetPhysicalDevice(VkInstance instance, VkPhysicalDevice* out)
 	*out = VK_NULL_HANDLE;
 
 	TemporaryVk* vk = GetTemporaryVk();
-	if(vk == nullptr)
+	if (vk == nullptr)
 		OOVR_ABORT("Not using temporary Vulkan instance");
 
 	// Find the UUID of the physical device the temporary instance is running on
