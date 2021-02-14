@@ -5,7 +5,7 @@
 #pragma once
 
 // FIXME Make it so that this header can be used in the Vulkan compositor - unfortunate and we should probably fix that at some point
-#include "../pub/DrvOpenXR.h"
+#include "pub/DrvOpenXR.h"
 
 #include "../OpenOVR/Misc/xrutil.h"
 #include "../OpenOVR/logging.h"
