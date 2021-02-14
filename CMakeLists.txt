@@ -36,15 +36,22 @@ target_include_directories(OpenVR INTERFACE SplitOpenVRHeaders) # TODO make this
 
 # === Vulkan ===
 add_library(Vulkan INTERFACE)
-target_include_directories(Vulkan INTERFACE libs/vulkan/Include) # TODO make this private and put the public headers elsewhere
-if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib/vulkan-1.lib)
-else()
-target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib32/vulkan-1.lib)
-endif()
 
 if (WIN32)
+	# On Windows, use the bundled copy
+	target_include_directories(Vulkan INTERFACE libs/vulkan/Include) # TODO make this private and put the public headers elsewhere
+	if ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+		target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib/vulkan-1.lib)
+	else ()
+		target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib32/vulkan-1.lib)
+	endif ()
+
 	target_compile_definitions(Vulkan INTERFACE -DVK_USE_PLATFORM_WIN32_KHR)
+else ()
+	# On Linux, use the system copy
+	find_library(Vulkan REQUIRED)
+	target_include_directories(Vulkan INTERFACE ${Vulkan_INCLUDE_DIR})
+	target_link_libraries(Vulkan INTERFACE ${Vulkan_LIBRARY})
 endif ()
 
 # === OpenXR ===
@@ -86,12 +93,12 @@ target_include_directories(OpenXR PUBLIC ${XrDir}/include)
 if (WIN32)
 	target_compile_definitions(OpenXR PRIVATE -DXR_OS_WINDOWS -DXR_USE_PLATFORM_WIN32
 	-DXR_USE_GRAPHICS_API_D3D11 -DXR_USE_GRAPHICS_API_D3D12)
+	target_link_libraries(OpenXR PUBLIC advapi32 pathcch)
 else()
 	# TODO Turtle1331 should we include -DXR_USE_PLATFORM_(XLIB|XCB|WAYLAND) here?
 	target_compile_definitions(OpenXR PRIVATE -DXR_OS_LINUX
 	-DXR_USE_GRAPHICS_API_OPENGL -DXR_USE_GRAPHICS_API_VULKAN)
 endif()
-target_link_libraries(OpenXR PUBLIC advapi32 pathcch)
 target_link_libraries(OpenXR PUBLIC Vulkan)
 
 # === glm ===
@@ -360,6 +367,14 @@ add_library(OCOVR SHARED
 	${OVR_RESOURCES}
 )
 target_link_libraries(OCOVR OCCore DrvOpenXR)
+
+# If we're on Linux, compile everything as position-independent
+if (WIN32)
+else ()
+	target_compile_options(DrvOpenXR PRIVATE -fPIC)
+	target_compile_options(OpenXR PRIVATE -fPIC)
+	target_compile_options(OCCore PRIVATE -fPIC)
+endif ()
 
 # Required because the compositor header needs the platform-specific structures enabled via defines
 target_compile_definitions(OCOVR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
