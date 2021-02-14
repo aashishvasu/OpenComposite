@@ -139,6 +139,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
     *peError = VRInitError_None;
 
 	if (eApplicationType == VRApplication_Bootstrapper) {
+#ifdef _WIN32
 		char szFileName[MAX_PATH];
 		GetModuleFileNameA(NULL, szFileName, MAX_PATH);
 		string filename = szFileName;
@@ -153,6 +154,9 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 		}
 
 		OOVR_ABORT("VRApplication_Bootstrapper currently only supported for vrstartup.exe");
+#else
+		LINUX_STUBBED();
+#endif
 	}
 
 	if (eApplicationType == VRApplication_Utility) {

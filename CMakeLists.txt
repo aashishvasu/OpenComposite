@@ -347,8 +347,13 @@ source_group(Interfaces REGULAR_EXPRESSION OpenOVR/Reimpl/Base*)
 source_group(Interfaces\\Declarations REGULAR_EXPRESSION OpenOVR/Reimpl/CVR*)
 
 # === OCOVR ===
+if (WIN32)
+	set(OCOVR_PLAT_SRC windows.cpp)
+else ()
+	set(OCOVR_PLAT_SRC linux.cpp)
+endif ()
 add_library(OCOVR SHARED
-	OCOVR/windows.cpp
+	OCOVR/${OCOVR_PLAT_SRC}
 	OCOVR/openvr_api.cpp
 
 	# Resources don't get nicely included in a library file
