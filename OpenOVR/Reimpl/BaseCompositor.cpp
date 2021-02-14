@@ -483,25 +483,26 @@ void BaseCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSh
 	STUBBED();
 }
 
-uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char* pchValue, uint32_t unBufferSize)
+uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(char* pchValue, uint32_t unBufferSize)
 {
 #if defined(SUPPORT_VK)
-	// Whaddya know, the Oculus and Valve methods work almost identically...
-	OOVR_FAILED_OVR_ABORT(ovr_GetInstanceExtensionsVk(*ovr::luid, pchValue, &unBufferSize));
-	return unBufferSize;
+	// Whaddya know, the OpenXR, Oculus and Valve methods work almost identically...
+	uint32_t size;
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanInstanceExtensionsKHR(xr_instance, xr_system, unBufferSize, &size, pchValue));
+	return size;
 #else
-	STUBBED();
+	OOVR_ABORT("Vulkan support disabled");
 #endif
 }
 
 uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T* pPhysicalDevice, char* pchValue, uint32_t unBufferSize)
 {
 #if defined(SUPPORT_VK)
-	// Use the default LUID, even if another physical device is passed in. TODO.
-	OOVR_FAILED_OVR_ABORT(ovr_GetDeviceExtensionsVk(*ovr::luid, pchValue, &unBufferSize));
-	return unBufferSize;
+	uint32_t size;
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanDeviceExtensionsKHR(xr_instance, xr_system, unBufferSize, &size, pchValue));
+	return size;
 #else
-	STUBBED();
+	OOVR_ABORT("Vulkan support disabled");
 #endif
 }
 
