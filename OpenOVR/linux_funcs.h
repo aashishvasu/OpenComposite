@@ -5,5 +5,5 @@
 #pragma once
 
 void ZeroMemory(void* data, size_t len);
-int strncpy_s(char* dest, size_t dest_size, char const* src, size_t max);
-int strcpy_s(char* dest, size_t dest_size, char const* src);
+void strncpy_s(char* dest, size_t dest_size, char const* src, size_t max);
+void strcpy_s(char* dest, size_t dest_size, char const* src);
