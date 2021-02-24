@@ -20,10 +20,11 @@ public:
 
 #if defined(BASE_IMPL) || defined(GENFILE)
 
-#define STUBBED() { \
-	std::string str = "Hit stubbed file at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
-	OOVR_ABORT(str.c_str()); \
-}
+#define STUBBED()                                                                                                            \
+	do {                                                                                                                     \
+		std::string str = "Hit stubbed file at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
+		OOVR_ABORT(str.c_str());                                                                                             \
+	} while (0)
 
 #endif
 

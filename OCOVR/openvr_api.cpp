@@ -30,7 +30,7 @@ static EVRApplicationType current_apptype;
 
 static alternativeCoreFactory_t alternativeCoreFactory = nullptr;
 
-void ERR(string msg) {
+OC_NORETURN void ERR(string msg) {
 	char buff[4096];
 	snprintf(buff, sizeof(buff), "OpenComposite DLLMain ERROR: %s", msg.c_str());
 	OOVR_ABORT_T(buff, "OpenComposite Error");

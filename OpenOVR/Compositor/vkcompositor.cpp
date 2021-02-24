@@ -15,13 +15,10 @@
 using namespace std;
 
 #define ERR(msg)                                                                                                                                         \
-	{                                                                                                                                                    \
+	do {                                                                                                                                                 \
 		std::string str = "Hit Vulkan-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
-		OOVR_LOG(str.c_str());                                                                                                                           \
-		OOVR_MESSAGE(str.c_str(), "Errored func!");                                                                                                      \
-		/**((int*)NULL) = 0;*/                                                                                                                           \
-		throw str;                                                                                                                                       \
-	}
+		OOVR_ABORT(str.c_str());                                                                                                                         \
+	} while (0)
 
 // Start recording into a new command buffer that will only be executed once.
 static VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool)
@@ -300,13 +297,13 @@ bool VkCompositor::CheckChainCompatible(const vr::VRVulkanTextureData_t& tex, co
 {
 	bool usable = true;
 #define FAIL(name)                             \
-	{                                          \
+	do {                                       \
 		usable = false;                        \
 		OOVR_LOG("Resource mismatch: " #name); \
-	}
+	} while (0)
 #define CHECK(name, chainName)           \
 	if (tex.name != chainDesc.chainName) \
-		FAIL(name);
+	FAIL(name)
 
 	CHECK(m_nWidth, width);
 	CHECK(m_nHeight, height);
