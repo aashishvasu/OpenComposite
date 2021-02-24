@@ -19,7 +19,9 @@ set(XR_VALIDATION_FILE_NAME "" CACHE STRING "A filename to set XR_CORE_VALIDATIO
 # Support Vulkan on Linux instead of DirectX
 if (WIN32)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11 -DSUPPORT_VK)
-else()
+else ()
+	# TODO add -DSUPPORT_GL once we've got that working again
+	#  (Putting XR_STUBBED(); here so this shows up if you search for it)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
 endif()
 
