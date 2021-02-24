@@ -23,6 +23,21 @@ else()
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
 endif()
 
+# For all projects, set the symbol visibility to private on Linux
+# If we don't then if an application declares a function with the same name as an OpenComposite function
+# the application's one will be used instead. This has some nasty effects - for example, when using the
+# global installation both libopenvr_api.so and OpenComposite will define VR_InitInternal2. What's supposed
+# to happen is that libopenvr_api calls a VRClient interface method which in turn calls OpenComposite's version
+# of VR_InitInternal2. But since libopenvr_api was loaded first it's function will be used, leading to
+# a stack overflow.
+# In general using private symbols is a great idea, and it's something we'd want to do anyway.
+# There is also -Bsymbolic set when linking the final shared library, see the bottom of this file
+# FIXME the Vulkan functions still get exported, hopefully they won't fight with the application's ones.
+if (WIN32)
+else ()
+    add_definitions(-fvisibility=hidden)
+endif ()
+
 # === Runtime Switcher ===
 include_external_msproject(
 	RuntimeSwitcher ${CMAKE_SOURCE_DIR}/RuntimeSwitcher/RuntimeSwitcher.csproj
@@ -374,6 +389,13 @@ else ()
 	target_compile_options(DrvOpenXR PRIVATE -fPIC)
 	target_compile_options(OpenXR PRIVATE -fPIC)
 	target_compile_options(OCCore PRIVATE -fPIC)
+endif ()
+
+# The -Bsymbolic makes this work on exported functions - otherwise those will still use the first-defined one.
+# See the comment at the top about -fvisibility=hidden
+if (WIN32)
+else ()
+	target_link_options(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
 endif ()
 
 # Required because the compositor header needs the platform-specific structures enabled via defines
