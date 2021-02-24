@@ -31,6 +31,7 @@ private:
     const std::shared_ptr<{iface.basename()}> base;
 public:
     virtual void** _GetStatFuncList() override;
+    virtual void Delete() override;
     {cname}();
     // Interface methods:
 """.replace("    ", "\t").strip())
@@ -107,6 +108,9 @@ std::shared_ptr<{cls}> GetCreate{getter_name}() {{
 
         # Generate the fntable
         _build_fntable(fi, ver)
+
+        # Generate the deleter (see BaseCommon.h for the rationale here)
+        fi.write(f"void {cname}::Delete() {{ delete this; }}\n")
 
 
 def _build_fntable(fi, ver: InterfaceDef):

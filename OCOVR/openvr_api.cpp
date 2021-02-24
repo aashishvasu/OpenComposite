@@ -13,6 +13,7 @@
 #include "Misc/Config.h"
 #include <map>
 #include <memory>
+#include <functional>
 
 // Specific to OCOVR
 #include "Drivers/Backend.h"
@@ -38,7 +39,11 @@ void ERR(string msg) {
 class _InheritCVRLayout { virtual void _ignore() = 0; };
 class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {};
 
-static map<string, unique_ptr<CVRCorrectLayout>> interfaces;
+// If we don't set up our own deleter, then at least on linux it'll get the layout mixed up and call a random function
+// Also for the basis of this typedef, see: https://stackoverflow.com/a/26276805
+using correct_layout_unique = std::unique_ptr<CVRCorrectLayout, std::function<void(CVRCorrectLayout*)> >;
+
+static map<string, correct_layout_unique> interfaces;
 
 VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
 	if (!running) {
@@ -100,7 +105,9 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 
 	CVRCorrectLayout *impl = (CVRCorrectLayout*) CreateInterfaceByName(interfaceVersion);
 	if (impl) {
-		unique_ptr<CVRCorrectLayout> ptr(impl);
+		correct_layout_unique ptr(impl, [](CVRCorrectLayout* cl) {
+			cl->Delete();
+		});
 		interfaces[interfaceVersion] = move(ptr);
 		return impl;
 	}
