@@ -2,6 +2,11 @@
 
 #if defined(SUPPORT_VK)
 
+// Required for the close(2) call for the texture shared memory on Linux
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include "../../DrvOpenXR/tmp_gfx/TemporaryVk.h"
 #include "vkcompositor.h"
 
@@ -453,32 +458,42 @@ void VkCompositor::MapMemoryToApp(VkDeviceMemory& rtMem, VkDeviceMemory& appMem,
 }
 
 #else
-VkDeviceMemory VkCompositor::MapMemoryToApp(VkDeviceMemory mem, int bestTypeId)
+void VkCompositor::MapMemoryToApp(VkDeviceMemory& rtMem, VkDeviceMemory& appMem, int memTypeIdx, VkDeviceSize size)
 {
-#error "untested, please implement"
-	// Export a FD representing the memory on the runtime side
-	auto vkGetMemoryFdKHR = (PFN_vkGetMemoryFdKHR)vkGetDeviceProcAddr(target->device, "vkGetMemoryFdKhr");
+	// Allocate the host-side memory
+	VkExportMemoryAllocateInfo exportInfo = { VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO };
+	exportInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+
+	VkMemoryAllocateInfo hostAlloc = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &exportInfo };
+	hostAlloc.memoryTypeIndex = memTypeIdx;
+	hostAlloc.allocationSize = size;
+
+	OOVR_FAILED_VK_ABORT(vkAllocateMemory(target->device, &hostAlloc, nullptr, &rtMem));
+
+	// Export a handle representing the memory on the runtime side
+	auto vkGetMemoryFdKHR = (PFN_vkGetMemoryFdKHR)vkGetDeviceProcAddr(target->device, "vkGetMemoryFdKHR");
 	OOVR_FALSE_ABORT(vkGetMemoryFdKHR != nullptr);
 
-	VkMemoryGetFdInfoKHR exportInfo = { VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR };
-	exportInfo.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-	exportInfo.memory = mem;
-	int fd;
-	OOVR_FAILED_VK_ABORT(vkGetMemoryFdKHR(target->device, &exportInfo, &fd));
+	VkMemoryGetFdInfoKHR getHandle = { VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR };
+	getHandle.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+	getHandle.memory = rtMem;
+	int fd = -1;
+	OOVR_FAILED_VK_ABORT(vkGetMemoryFdKHR(target->device, &getHandle, &fd));
+	OOVR_FALSE_ABORT(fd != -1);
 
 	// Import the memory on the app side
-	// Note: this transfers ownership of the FD, so we don't have to close it
-	VkImportMemoryFdInfoKHR import = { VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR };
-	import.handleType = exportInfo.handleType;
-	import.fd = fd;
+	VkImportMemoryFdInfoKHR importMem = { VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR };
+	importMem.handleType = getHandle.handleType;
+	importMem.fd = fd;
 
-	VkMemoryAllocateInfo importAllocate = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &import };
-	importAllocate.memoryTypeIndex = bestTypeId;
-	importAllocate.allocationSize = importAllocate.allocationSize;
+	VkMemoryAllocateInfo importAllocate = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &importMem };
+	importAllocate.memoryTypeIndex = memTypeIdx;
+	importAllocate.allocationSize = size;
 
-	VkDeviceMemory appMem;
 	OOVR_FAILED_VK_ABORT(vkAllocateMemory(appDevice, &importAllocate, nullptr, &appMem));
-	return appMem;
+
+	// There seems to be conflicting information on whether we should close this or not - the documentation says that
+	close(fd); // Just ignore the error if present, can't do anything about it
 }
 #endif
 
