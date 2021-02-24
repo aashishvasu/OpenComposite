@@ -22,7 +22,7 @@ if (WIN32)
 else ()
 	# TODO add -DSUPPORT_GL once we've got that working again
 	#  (Putting XR_STUBBED(); here so this shows up if you search for it)
-	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK)
 endif()
 
 # For all projects, set the symbol visibility to private on Linux
