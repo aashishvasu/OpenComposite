@@ -32,7 +32,7 @@ void oovr_log_raw_format(const char *file, long line, const char *func, const ch
 	va_end(args);
 }
 
-void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title, ...) {
+OC_NORETURN void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title, ...) {
 	if (title == nullptr) {
 		title = "OpenComposite Error - info in log";
 		OOVR_LOG("Abort!");

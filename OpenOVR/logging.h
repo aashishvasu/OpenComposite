@@ -1,14 +1,21 @@
 #pragma once
 
+// Not strictly a logging thing, but makes clion happy about calling OOVR_ABORT and not returning
+#ifdef _WIN32
+#define OC_NORETURN __declspec(noreturn)
+#else
+#define OC_NORETURN __attribute__((noreturn))
+#endif
+
 void oovr_log_raw(const char *file, long line, const char *func, const char *msg);
 void oovr_log_raw_format(const char *file, long line, const char *func, const char *msg, ...);
 #define OOVR_LOG(msg) oovr_log_raw(__FILE__, __LINE__, __FUNCTION__, msg)
 #define OOVR_LOGF(...) oovr_log_raw_format(__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
-void oovr_abort_raw(const char *file, long line, const char *func, const char *msg, const char *title = nullptr, ...);
-#define OOVR_ABORT(msg) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg); throw msg; } while(0)
-#define OOVR_ABORT_T(msg, title) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, title); throw msg; } while(0)
-#define OOVR_ABORTF(msg, ...) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, __VA_ARGS__); throw msg; } while(0)
+OC_NORETURN void oovr_abort_raw(const char *file, long line, const char *func, const char *msg, const char *title = nullptr, ...);
+#define OOVR_ABORT(msg) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg); } while(0)
+#define OOVR_ABORT_T(msg, title) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, title); } while(0)
+#define OOVR_ABORTF(msg, ...) do { oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, __VA_ARGS__); } while(0)
 
 // Log once function - useful for warning that a function called many times isn't implemented, while using
 // a workaround to make something mostly work.
