@@ -27,8 +27,9 @@ XrViewConfigurationView& xr_main_view(XruEye view_id)
 XrExt::XrExt()
 {
 #define XR_BIND(name) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name))
+#define XR_BIND_OPT(name) xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name)
 
-	XR_BIND(xrGetVisibilityMaskKHR);
+	XR_BIND_OPT(xrGetVisibilityMaskKHR);
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	XR_BIND(xrGetD3D11GraphicsRequirementsKHR);

@@ -17,6 +17,7 @@
 #endif
 
 #include <memory>
+#include <set>
 #include <string>
 
 static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
@@ -42,6 +43,18 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	OOVR_LOGF("Set OpenXR validation file path: %s", XR_VALIDATION_FILE_NAME);
 #endif
 
+	// Enumerate the available extensions
+	uint32_t availableExtensionsCount;
+	OOVR_FAILED_XR_ABORT(xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr));
+	std::vector<XrExtensionProperties> extensionProperties;
+	extensionProperties.resize(availableExtensionsCount, { XR_TYPE_EXTENSION_PROPERTIES });
+	OOVR_FAILED_XR_ABORT(xrEnumerateInstanceExtensionProperties(nullptr,
+	    extensionProperties.size(), &availableExtensionsCount, extensionProperties.data()));
+	std::set<std::string> availableExtensions;
+	for (const XrExtensionProperties& ext : extensionProperties) {
+		availableExtensions.insert(ext.extensionName);
+	}
+
 	// Create the OpenXR instance - this is the overall handle that connects us to the runtime
 	// https://www.khronos.org/registry/OpenXR/specs/1.0/refguide/openxr-10-reference-guide.pdf
 	XrApplicationInfo appInfo{};
@@ -49,16 +62,18 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	appInfo.applicationVersion = 1;
 	appInfo.apiVersion = XR_CURRENT_API_VERSION;
 
-	const char* const extensions[] = {
+	std::vector<const char*> extensions;
 #ifdef SUPPORT_DX
-		"XR_KHR_D3D11_enable",
+	extensions.push_back("XR_KHR_D3D11_enable");
 #endif
 #if defined(SUPPORT_VK)
-		"XR_KHR_vulkan_enable",
+	extensions.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
 #endif
-		"XR_EXT_debug_utils",
-		"XR_KHR_visibility_mask",
-	};
+	extensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+	// If the visibility mask is available use it, otherwise no big deal
+	if (availableExtensions.count(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME))
+		extensions.push_back(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
 
 	const char* const layers[] = {
 #ifdef XR_VALIDATION_LAYER_PATH
@@ -70,8 +85,8 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	XrInstanceCreateInfo createInfo{};
 	createInfo.type = XR_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.applicationInfo = appInfo;
-	createInfo.enabledExtensionNames = extensions;
-	createInfo.enabledExtensionCount = sizeof(extensions) / sizeof(const char*);
+	createInfo.enabledExtensionNames = extensions.data();
+	createInfo.enabledExtensionCount = extensions.size();
 	createInfo.enabledApiLayerNames = layers;
 	createInfo.enabledApiLayerCount = (sizeof(layers) / sizeof(const char*)) - 1; // Subtract the dummy value
 
