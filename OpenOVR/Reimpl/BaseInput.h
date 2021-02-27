@@ -1,7 +1,10 @@
 #pragma once
-#include "BaseCommon.h"
 
-#include "Misc/json/json.h"
+// Make this usable from DrvOpenXR to refresh the inputs after swapping sessions
+// FIXME don't do that, it's ugly and slows down the build when modifying headers
+#include "../BaseCommon.h"
+
+#include "../Misc/json/json.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -154,10 +157,10 @@ struct OOVR_VRSkeletalSummaryData_t {
 };
 
 struct OOVR_InputBindingInfo_t {
-	char rchDevicePathName[128];
-	char rchInputPathName[128];
-	char rchModeName[128];
-	char rchSlotName[128];
+	char rchDevicePathName[128]; // Corresponds to ActionSource.svrDevicePathName
+	char rchInputPathName[128]; // Corresponds to ActionSource.svrInputPathName
+	char rchModeName[128]; // Corresponds to ActionSource.mode in string form, eg 'button'
+	char rchSlotName[128]; // Corresponds to ActionSource.slot
 
 	/**
 	 * The type of the physical input that the user actuates. For example a button bound to the thumbstick click
@@ -324,7 +327,7 @@ public:
 	virtual EVRInputError GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t* pOriginInfo, uint32_t unOriginInfoSize);
 
 	/** Retrieves useful information about the bindings for an action */
-	virtual EVRInputError GetActionBindingInfo(VRActionHandle_t action, OOVR_InputBindingInfo_t* pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t* punReturnedBindingInfoCount);
+	virtual EVRInputError GetActionBindingInfo(VRActionHandle_t action, OOVR_InputBindingInfo_t* bindingInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t* punReturnedBindingInfoCount);
 
 	/** Shows the current binding for the action in-headset */
 	virtual EVRInputError ShowActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle);
@@ -352,7 +355,36 @@ public:
 	 */
 	virtual EVRInputError GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath, char* pchVariantArray, uint32_t unVariantArraySize);
 
+public: // INTERNAL FUNCTIONS
+	/**
+	 * Bind all the inputs to the current OpenXR session. This must be called after swapping the session to keep
+	 * the inputs working.
+	 */
+	void BindInputsForSession();
+
 private:
+	enum class ActionRequirement {
+		Suggested = 0, // default
+		Mandatory,
+		Optional,
+	};
+
+	enum class ActionType {
+		Boolean = 0,
+		Vector1,
+		Vector2,
+		Vector3,
+		Vibration,
+		Pose,
+		Skeleton,
+	};
+
+	enum class ActionSetUsage {
+		LeftRight = 0, // User can bind each side separately
+		Single, // What's bound to one controller is bound to the other
+		Hidden, // Not shown to the user
+	};
+
 	// Represents an action set. This is a set of controls that can be configured
 	// independently - as I understand it, these are to be used for different portions
 	// of a game. You might have one action set for shooting, one for driving, and so on.
@@ -361,14 +393,82 @@ private:
 	// or not).
 	// See https://github.com/ValveSoftware/openvr/wiki/Action-manifest#action-sets
 	struct ActionSet {
-		std::string name;
-		std::string usage;
+		std::string fullName; // Eg '/actions/main'
+		std::string name; // Eg 'main'
+		ActionSetUsage usage = ActionSetUsage::LeftRight;
+
+		XrActionSet xr = XR_NULL_HANDLE;
 	};
 
+	enum class ActionSourceMode {
+		// Some may be missing, there's no documentation on this that I could find
+		BUTTON,
+		DPAD,
+		NONE, // What? Occurs in NMS, probably more experimentation is required
+		JOYSTICK,
+		TRIGGER,
+	};
+
+	/**
+	 * Represents an action source, as declared in the default mappings JSON (NOT the actions manifest).
+	 *
+	 * This describes a specific control on a specific device (eg, the 'a' button on the left hand),
+	 * the 'output' (physical mode of interaction, such as clicking a button) and which Action it maps to.
+	 * <p/>
+	 * TODO document how this maps to OpenXR.
+	 * <p/>
+	 * This is defined like so in the JSON (one of these could define many ActionSources if they had
+	 * multiple other inputs aside from 'click'):
+	 *
+	 * @code
+	 * {
+     *   "inputs": {
+     *     "click": {
+     *       "output": "/actions/main/in/Test1"
+     *     }
+     *   },
+     *   "mode": "button",
+     *   "path": "/user/hand/left/input/trackpad"
+     * }
+     * @endcode
+	 */
+	// TODO delete this and move the documentation to OOVR_InputBindingInfo_t
 	struct ActionSource {
+		std::string svrPathName; // Full SteamVR path name for this input, eg '/user/hand/left/input/trackpad'
+		std::string svrDevicePathName; // The device path from svrPathName, eg '/user/hand/left'
+		std::string svrInputPathName; // The input path from svrPathName, eg '/input/trigger'
+		ActionSourceMode mode; // The 'mode' that this input is operating in, such as to toggle a joystick between analogue and dpad mode
+
+		// The 'slot' such as 'click' in the example above, defines what type of physical action the user must take to
+		// trigger this (eg touch vs press for a capacitive button).
+		// TODO convert this to an enum
+		std::string slot;
 	};
+
 	struct Action {
+		std::string fullName; // Full name as set in the JSON file, eg '/actions/main/in/Test1'
+		std::string shortName; // The last part of the name, eg 'Test1'
+		ActionRequirement requirement = ActionRequirement::Suggested;
+		bool haptic = false;
+		ActionType type = ActionType::Boolean;
+		ActionSet* set = nullptr;
+		std::string setName; // The name of the action set - set before we've enumerated the action sets, eg 'main'
+
+		XrAction xr = XR_NULL_HANDLE;
 	};
+
 	struct InputValue {
 	};
+
+	bool hasLoadedActions = false;
+	std::map<std::string, std::unique_ptr<ActionSet> > actionSets;
+	std::map<std::string, std::unique_ptr<Action> > actions;
+
+	std::string bindingsPath;
+
+	void LoadBindingsSet(const std::string& filepath, const class InteractionProfile&);
+
+	// Utility functions
+	static Action* cast_AH(VRActionHandle_t);
+	static ActionSet* cast_ASH(VRActionSetHandle_t);
 };

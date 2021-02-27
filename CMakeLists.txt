@@ -195,6 +195,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Keyboard/KeyboardLayout.cpp
 	OpenOVR/Misc/Keyboard/SudoFontMeta.cpp
 	OpenOVR/Misc/Keyboard/VRKeyboard.cpp
+	OpenOVR/Misc/Input/InteractionProfile.cpp
 	OpenOVR/OpenOVR.cpp
 	OpenOVR/Reimpl/BaseApplications.cpp
 	OpenOVR/Reimpl/BaseChaperone.cpp
@@ -257,6 +258,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Keyboard/KeyboardLayout.h
 	OpenOVR/Misc/Keyboard/SudoFontMeta.h
 	OpenOVR/Misc/Keyboard/VRKeyboard.h
+	OpenOVR/Misc/Input/InteractionProfile.h
 	OpenOVR/Misc/lodepng.h
 	OpenOVR/Misc/ScopeGuard.h
 	OpenOVR/Reimpl/BaseApplications.h

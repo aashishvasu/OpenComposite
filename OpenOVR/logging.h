@@ -75,3 +75,7 @@ if (!OVR_SUCCESS(expression)) { \
 // Yay for there not being a PI constant in the standard
 // (technically it has absolutely nothing to do with logging but this is a convenient place to put it)
 const extern float math_pi;
+
+// Again unrelated and just putting it here because everything can use it. This makes using
+// strcpy_s more convenient on arrays in a cross-platform way.
+#define strcpy_arr(dest, src) strcpy_s(dest, sizeof(dest), src)

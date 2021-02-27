@@ -13,22 +13,20 @@
 #include <iostream>
 #include <locale>
 #include <map>
-#include <thread>
-Json::Value _actionManifest;
-Json::Value _bindingsJson;
 
-using namespace std;
+#include "Misc/Input/InteractionProfile.h"
+
 using namespace vr;
 
 // This is a duplicate from BaseClientCore.cpp
-static bool ReadJson(wstring path, Json::Value& result)
+static bool ReadJson(const std::wstring& path, Json::Value& result)
 {
 #ifndef _WIN32
 	typedef std::codecvt_utf8<wchar_t> convert_type;
 	std::wstring_convert<convert_type, wchar_t> converter;
-	ifstream in(converter.to_bytes(path), ios::binary);
+	std::ifstream in(converter.to_bytes(path), std::ios::binary);
 #else
-	ifstream in(path, ios::binary);
+	std::ifstream in(path, std::ios::binary);
 #endif
 	if (in) {
 		std::stringstream contents;
@@ -61,10 +59,10 @@ static std::string dirnameOf(const std::string& fname)
 }
 
 // Case-insensitively compares two strings
-static bool iequals(const string& a, const string& b)
+static bool iequals(const std::string& a, const std::string& b)
 {
 	// from https://stackoverflow.com/a/4119881
-	unsigned int sz = a.size();
+	size_t sz = a.size();
 	if (b.size() != sz)
 		return false;
 	for (unsigned int i = 0; i < sz; ++i)
@@ -73,20 +71,417 @@ static bool iequals(const string& a, const string& b)
 	return true;
 }
 
+static void stringSplit(const std::string& str, std::vector<std::string>& items)
+{
+	items.clear();
+
+	for (size_t i = 0; i < str.size();) {
+		size_t nextStroke = str.find('/', i);
+
+		// If the path starts with a stroke, ignore it - that's a very common case
+		if (nextStroke == 0) {
+			i++;
+			continue;
+		}
+
+		// No more strokes in the string? This is the last bit
+		if (nextStroke == std::string::npos) {
+			items.push_back(str.substr(i));
+			break;
+		}
+
+		items.push_back(str.substr(i, nextStroke - i));
+
+		// Skip to one past the next stroke
+		i = nextStroke + 1;
+	}
+}
+
+// Converts an arbitrary application-supplied string to one we can use with OpenXR
+static std::string escapePathString(const std::string& str)
+{
+	std::vector<char> out;
+	out.reserve(str.length() + 10);
+	for (char c : str) {
+		// Valid list of characters, see the OpenXR spec part 6.2
+		if (('a' <= c && c <= 'z') || ('0' <= c && c <= '9') || c == '-' || c == '_' || c == '.' || c == '/') {
+			out.push_back(c);
+			continue;
+		}
+
+		// Special-case uppercase letters by prefixing them with an underscore and lowering them
+		// This will nicely convert CamelCase to snake_case, though THIS_CASE becomes ugly.
+		if ('A' <= c && c <= 'Z') {
+			out.push_back('_');
+			out.push_back(c - 'A' + 'a');
+			continue;
+		}
+
+		// Just print out the hex code
+		char hex[3];
+		snprintf(hex, sizeof(hex), "%02x", c);
+		out.push_back('.');
+		out.push_back(hex[0]);
+		out.push_back(hex[1]);
+	}
+
+	return std::string(out.data(), out.size());
+}
+
+static std::string pathFromParts(const std::initializer_list<std::string>& parts)
+{
+	std::string str;
+	for (const std::string& part : parts) {
+		str += "/";
+		str += part;
+	}
+	return str;
+}
+
 // ---
 
 EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath)
 {
-	STUBBED();
+	//////////////
+	//// Load the actions from the manifest file
+	//////////////
+
+	if (hasLoadedActions)
+		OOVR_ABORT("Cannot re-load actions!");
+	hasLoadedActions = true;
+
+	Json::Value root;
+	// It says 'open or parse', but really it ignores parse errors - TODO catch those
+	if (!ReadJson(utf8to16(pchActionManifestPath), root))
+		OOVR_ABORT("Failed to open or parse input manifest");
+
+	// Parse the actions
+	for (Json::Value item : root["actions"]) {
+		Action action = {};
+		action.fullName = item["name"].asString();
+
+		// Split the full name by stroke ('/') characters
+		// They have four parts: the first is always 'actions', the second is the action set name, the third is
+		// either 'in' or 'out' (in for inputs, out for haptics) and the last is the action's short name.
+		std::vector<std::string> parts;
+		stringSplit(action.fullName, parts);
+
+		if (parts.size() != 4)
+			OOVR_ABORTF("Invalid action name '%s' - wrong number of parts %d", action.fullName.c_str(), parts.size());
+
+		if (parts.at(0) != "actions")
+			OOVR_ABORTF("Invalid action name '%s' - bad first parts '%s'", action.fullName.c_str(), parts.at(0).c_str());
+
+		action.setName = parts.at(1);
+		action.shortName = parts.at(3);
+
+		std::string inOut = parts.at(2);
+		if (inOut == "in")
+			action.haptic = false;
+		else if (inOut == "out")
+			action.haptic = true;
+		else
+			OOVR_ABORTF("Invalid action name '%s' - bad in/out value '%s'", action.fullName.c_str(), inOut.c_str());
+
+		// Parse the requirement
+		// TODO default to optional
+		std::string requirement = item["requirement"].asString();
+		if (requirement == "mandatory")
+			action.requirement = ActionRequirement::Mandatory;
+		else if (requirement == "suggested")
+			action.requirement = ActionRequirement::Suggested;
+		else if (requirement == "optional")
+			action.requirement = ActionRequirement::Optional;
+		else
+			OOVR_ABORTF("Invalid action requirement value '%s' for action '%s'", requirement.c_str(), action.fullName.c_str());
+
+		// Parse the type
+		std::string type = item["type"].asString();
+		if (type == "boolean")
+			action.type = ActionType::Boolean;
+		else if (type == "vector1")
+			action.type = ActionType::Vector1;
+		else if (type == "vector2")
+			action.type = ActionType::Vector2;
+		else if (type == "vector3")
+			action.type = ActionType::Vector3;
+		else if (type == "vibration")
+			action.type = ActionType::Vibration;
+		else if (type == "pose")
+			action.type = ActionType::Pose;
+		else if (type == "skeleton")
+			action.type = ActionType::Skeleton;
+		else
+			OOVR_ABORTF("Invalid action type '%s' for action '%s'", type.c_str(), action.fullName.c_str());
+
+		if (actions.count(action.fullName))
+			OOVR_ABORTF("Duplicate action name '%s'", action.fullName.c_str());
+
+		actions[action.fullName] = std::make_unique<Action>(action);
+	}
+
+	// Parse the action sets
+	for (Json::Value item : root["action_sets"]) {
+		ActionSet set = {};
+
+		set.fullName = item["name"].asString();
+
+		// Split the full name by stroke ('/') characters
+		// They have four parts: the first is always 'actions', the second is the action set name, the third is
+		// either 'in' or 'out' (in for inputs, out for haptics) and the last is the action's short name.
+		std::vector<std::string> parts;
+		stringSplit(set.fullName, parts);
+
+		if (parts.size() != 2)
+			OOVR_ABORTF("Invalid action set name '%s' - wrong number of parts %d", set.fullName.c_str(), parts.size());
+
+		if (parts.at(0) != "actions")
+			OOVR_ABORTF("Invalid action name '%s' - bad first parts '%s'", set.fullName.c_str(), parts.at(0).c_str());
+
+		set.name = parts.at(1);
+
+		// Find the usage
+		std::string usage = item["usage"].asString();
+		if (usage == "leftright")
+			set.usage = ActionSetUsage::LeftRight;
+		else if (usage == "single")
+			set.usage = ActionSetUsage::Single;
+		else if (usage == "hidden")
+			set.usage = ActionSetUsage::Hidden;
+		else
+			OOVR_ABORTF("Invalid action set usage '%s' for action set '%s'", usage.c_str(), set.name.c_str());
+
+		// Register it
+		actionSets[set.name] = std::make_unique<ActionSet>(set);
+	}
+
+	// Make sure all the actions have a corresponding set
+	for (auto& pair : actions) {
+		Action& action = *pair.second;
+
+		auto item = actionSets.find(action.setName);
+		if (item == actionSets.end())
+			OOVR_ABORTF("Invalid action set '%s' for action '%s'", action.setName.c_str(), action.fullName.c_str());
+
+		action.set = item->second.get();
+	}
+
+	// Find the default bindings file
+	// TODO load all of them, and let the OpenXR runtime choose which one to use
+	std::string bestPath;
+	int bestPriority = -1;
+	for (Json::Value item : root["default_bindings"]) {
+		std::string type = item["type"].asString();
+
+		// Given the type of controller, find a priority for it
+		int priority;
+
+		if (iequals(type, "oculus_touch"))
+			priority = 3;
+		else if (iequals(type, "rift")) // This came from the previous code, where's it from?
+			priority = 2;
+		else if (iequals(type, "generic"))
+			priority = 1;
+		else
+			priority = 0;
+
+		if (priority > bestPriority)
+			bestPath = item["binding_url"].asString();
+	}
+
+	if (bestPath.empty())
+		OOVR_ABORT("No compatible binding action specified!");
+
+	bindingsPath = dirnameOf(pchActionManifestPath) + "/" + bestPath;
+
+	//////////////////////////
+	/// Now we've got everything done, load the actions into OpenXR
+	//////////////////////////
+
+	for (auto& pair : actionSets) {
+		ActionSet& as = *pair.second;
+
+		XrActionSetCreateInfo createInfo = { XR_TYPE_ACTION_SET_CREATE_INFO };
+		std::string safeName = escapePathString(as.name);
+		strcpy_arr(createInfo.actionSetName, safeName.c_str());
+		strcpy_arr(createInfo.localizedActionSetName, as.name.c_str()); // TODO localisation
+
+		OOVR_FAILED_XR_ABORT(xrCreateActionSet(xr_instance, &createInfo, &as.xr));
+	}
+
+	for (auto& pair : actions) {
+		Action& act = *pair.second;
+
+		XrActionCreateInfo info = { XR_TYPE_ACTION_CREATE_INFO };
+		std::string safeName = escapePathString(act.shortName);
+		strcpy_arr(info.actionName, safeName.c_str());
+		strcpy_arr(info.localizedActionName, act.shortName.c_str()); // TODO localisation
+
+		switch (act.type) {
+		case ActionType::Boolean:
+			info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+			break;
+		case ActionType::Vector1:
+			info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
+			break;
+		case ActionType::Vector2:
+			info.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
+			break;
+		case ActionType::Vector3:
+			STUBBED(); // Not XR_STUBBED since this didn't work before, and I've certainly never heard of a use for it
+			break;
+		case ActionType::Vibration:
+			info.actionType = XR_ACTION_TYPE_VIBRATION_OUTPUT;
+			break;
+		case ActionType::Pose:
+			info.actionType = XR_ACTION_TYPE_POSE_INPUT;
+			break;
+		case ActionType::Skeleton:
+			STUBBED(); // Not XR_STUBBED since AFAIK this didn't work before, and since OpenXR doesn't do skeletal stuff we'll have to sort this our ourselves
+			break;
+		default:
+			OOVR_ABORTF("Bad action type while remapping action %s: %d", act.fullName.c_str(), act.type);
+		}
+
+		OOVR_FAILED_XR_ABORT(xrCreateAction(act.set->xr, &info, &act.xr));
+	}
+
+	// Read the default bindings file, and load it into OpenXR
+	LoadBindingsSet(bindingsPath, OculusTouchInteractionProfile());
+
+	// Attach everything to the current session
+	BindInputsForSession();
+
+	return vr::VRInputError_None;
 }
+
+void BaseInput::BindInputsForSession()
+{
+	// If there aren't any action sets it probably means the session was swapped before the app loaded it's manifest file
+	if (actionSets.empty())
+		return;
+
+	// Now attach the action sets to the OpenXR session, making them immutable (including attaching suggested bindings)
+	std::vector<XrActionSet> sets;
+	for (auto& pair : actionSets) {
+		ActionSet& as = *pair.second;
+		sets.push_back(as.xr);
+	}
+
+	XrSessionActionSetsAttachInfo attachInfo = { XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
+	attachInfo.actionSets = sets.data();
+	attachInfo.countActionSets = sets.size();
+	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session, &attachInfo));
+}
+
+void BaseInput::LoadBindingsSet(const std::string& bindingsPath, const InteractionProfile& profile)
+{
+	Json::Value bindingsRoot;
+	if (!ReadJson(utf8to16(bindingsPath), bindingsRoot)) {
+		OOVR_ABORTF("Failed to read and parse JSON binding descriptor: %s", bindingsPath.c_str());
+	}
+
+	// TODO aliases, if anyone uses them
+	if (!bindingsRoot["alias_info"].empty())
+		OOVR_LOGF("WARNING: Ignoring alias_info from binding descriptor %s", bindingsPath.c_str());
+
+	const Json::Value& bindingsJson = bindingsRoot["bindings"];
+	if (!bindingsJson.isObject())
+		OOVR_ABORTF("Invalid bindings file %s, missing or invalid bindings object", bindingsPath.c_str());
+
+	std::vector<XrActionSuggestedBinding> bindings;
+	for (const std::string& setFullName : bindingsJson.getMemberNames()) {
+		const Json::Value setJson = bindingsJson[setFullName];
+
+		std::string prefix = "/actions/";
+		if (strncmp(prefix.c_str(), setFullName.c_str(), prefix.size()) != 0) {
+			OOVR_ABORTF("Invalid action set name '%s' in bindings file '%s' - missing or bad prefix", setFullName.c_str(), bindingsPath.c_str());
+		}
+		std::string setName = setFullName.substr(prefix.size());
+
+		auto setIter = actionSets.find(setName);
+		if (setIter == actionSets.end())
+			OOVR_ABORTF("Missing action set '%s' in bindings file '%s'", setName.c_str(), bindingsPath.c_str());
+		const ActionSet& set = *setIter->second;
+
+		for (const auto& srcJson : setJson["sources"]) {
+			std::string importBasePath = srcJson["path"].asString();
+
+			const Json::Value& inputsJson = srcJson["inputs"];
+			for (const std::string& inputName : inputsJson.getMemberNames()) {
+				const Json::Value item = inputsJson[inputName];
+
+				std::string actionName = item["output"].asString();
+				auto actionIter = actions.find(actionName);
+				if (actionIter == actions.end())
+					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
+				const Action& action = *actionIter->second;
+
+				// There's probably some differences, but it looks like the SteamVR paths will 'just work' with OpenXR
+				// FIXME this doesn't with with binding boolean actions to analogue inputs
+				std::string pathStr = importBasePath + "/" + inputName;
+
+				if (!profile.IsInputPathValid(pathStr)) {
+					OOVR_LOGF("WARNING: Built invalid input path %s for profile %s from action %s, skipping",
+					    pathStr.c_str(), profile.GetPath().c_str(), actionName.c_str());
+					continue;
+				}
+
+				OOVR_LOGF("Bind %s to %s", action.fullName.c_str(), pathStr.c_str());
+				XrPath path;
+				OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
+				bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
+			}
+		}
+	}
+
+	// If there aren't any bindings, that makes it simple
+	// If we didn't return then xrSuggestInteractionProfileBindings would fail
+	if (bindings.empty()) {
+		return;
+	}
+
+	// Load the bindings we just built into the runtime
+	XrPath interactionProfilePath;
+	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.GetPath().c_str(), &interactionProfilePath));
+
+	XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+	suggestedBindings.interactionProfile = interactionProfilePath;
+	suggestedBindings.suggestedBindings = bindings.data();
+	suggestedBindings.countSuggestedBindings = bindings.size();
+	OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
+}
+
 EVRInputError BaseInput::GetActionSetHandle(const char* pchActionSetName, VRActionSetHandle_t* pHandle)
 {
-	STUBBED();
+	*pHandle = k_ulInvalidActionSetHandle;
+
+	std::string prefix = "/actions/";
+	if (strncmp(prefix.c_str(), pchActionSetName, prefix.size()) != 0) {
+		OOVR_ABORTF("Invalid action set name '%s' - missing or bad prefix", pchActionSetName);
+	}
+	std::string setName = pchActionSetName + prefix.size();
+
+	auto item = actionSets.find(setName);
+	if (item == actionSets.end())
+		return VRInputError_NameNotFound;
+
+	*pHandle = (VRActionSetHandle_t)item->second.get();
+	return VRInputError_None;
 }
+
 EVRInputError BaseInput::GetActionHandle(const char* pchActionName, VRActionHandle_t* pHandle)
 {
-	STUBBED();
+	*pHandle = k_ulInvalidActionHandle;
+
+	auto item = actions.find(pchActionName);
+	if (item == actions.end())
+		return VRInputError_NameNotFound;
+
+	*pHandle = (VRActionHandle_t)item->second.get();
+	return VRInputError_None;
 }
+
 EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VRInputValueHandle_t* pHandle)
 {
 	STUBBED();
@@ -95,7 +490,23 @@ EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VR
 EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t* pSets,
     uint32_t unSizeOfVRSelectedActionSet_t, uint32_t unSetCount)
 {
-	STUBBED();
+	OOVR_FALSE_ABORT(sizeof(*pSets) == unSizeOfVRSelectedActionSet_t);
+
+	// TODO support multiple action sets at once
+	OOVR_FALSE_ABORT(unSetCount == 1);
+
+	// TODO use all the other VRActiveActionSet properties
+	ActionSet* as = cast_ASH(pSets->ulActionSet);
+
+	XrActiveActionSet aas = {};
+	aas.actionSet = as->xr;
+
+	XrActionsSyncInfo syncInfo = { XR_TYPE_ACTIONS_SYNC_INFO };
+	syncInfo.activeActionSets = &aas;
+	syncInfo.countActiveActionSets = 1;
+	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
+
+	return VRInputError_None;
 }
 
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,
@@ -230,11 +641,77 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 }
 
 /** Retrieves useful information about the bindings for an action */
-EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOVR_InputBindingInfo_t* pOriginInfo,
+EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOVR_InputBindingInfo_t* bindingInfo,
     uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t* punReturnedBindingInfoCount)
 {
+	memset(bindingInfo, 0, unBindingInfoSize * unBindingInfoCount);
+	if (punReturnedBindingInfoCount)
+		*punReturnedBindingInfoCount = 0;
 
-	STUBBED();
+	OOVR_FALSE_ABORT(unBindingInfoSize == sizeof(OOVR_InputBindingInfo_t));
+
+	// FIXME support any number of sources
+	// TODO does this support passing in unBindingInfoSize=0 and reading the required size? Check with SteamVR.
+	const Action* action = cast_AH(actionHandle);
+
+	XrBoundSourcesForActionEnumerateInfo enumInfo = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
+	enumInfo.action = action->xr;
+	uint32_t sourcesCount;
+	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &enumInfo, 0, &sourcesCount, nullptr));
+	std::vector<XrPath> boundActionPaths(sourcesCount);
+	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &enumInfo, boundActionPaths.size(), &sourcesCount, boundActionPaths.data()));
+
+	// TODO should we return an error if there are no sources bound?
+
+	int count = boundActionPaths.size();
+	if (count > unBindingInfoCount)
+		count = unBindingInfoCount;
+	if (punReturnedBindingInfoCount)
+		*punReturnedBindingInfoCount = count;
+
+	for (int i = 0; i < count; i++) {
+		OOVR_InputBindingInfo_t& info = bindingInfo[i];
+		XrPath path = boundActionPaths.at(i);
+
+		uint32_t pathLen;
+		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, path, 0, &pathLen, nullptr));
+		std::vector<char> chars(pathLen);
+		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, path, chars.size(), &pathLen, chars.data()));
+		std::string pathStr(chars.data(), chars.size());
+
+		std::vector<std::string> parts;
+		stringSplit(pathStr, parts);
+
+		// The last part of the string - which is something like '/user/hand/right/input/a/click' - is the mode
+		strcpy_arr(info.rchModeName, parts.back().c_str());
+
+		// Hardcode the first three parts of the string as being the device path, and the 4th and 5th ones as
+		// being the input path.
+		std::string devicePath = pathFromParts({ parts.at(0), parts.at(1), parts.at(2) });
+		std::string inputPath = pathFromParts({ parts.at(3), parts.at(4) });
+		strcpy_arr(info.rchDevicePathName, devicePath.c_str());
+		strcpy_arr(info.rchInputPathName, inputPath.c_str());
+
+		// FIXME replace this initial hacky thing
+		switch (action->type) {
+		case ActionType::Boolean:
+			strcpy_arr(bindingInfo->rchModeName, "button");
+			strcpy_arr(bindingInfo->rchInputSourceType, "button");
+			break;
+		case ActionType::Vector1:
+			strcpy_arr(bindingInfo->rchModeName, "trigger");
+			strcpy_arr(bindingInfo->rchInputSourceType, "trigger");
+			break;
+		case ActionType::Vector2:
+			strcpy_arr(bindingInfo->rchModeName, "joystick");
+			strcpy_arr(bindingInfo->rchInputSourceType, "joystick");
+			break;
+		default:
+			OOVR_ABORTF("Unimplemented action type %d for %s", action->type, pathStr.c_str());
+		}
+	}
+
+	return VRInputError_None;
 }
 
 EVRInputError BaseInput::ShowActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle)
@@ -271,4 +748,14 @@ EVRInputError BaseInput::OpenBindingUI(const char* pchAppKey, VRActionSetHandle_
 EVRInputError BaseInput::GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath, char* pchVariantArray, uint32_t unVariantArraySize)
 {
 	STUBBED();
+}
+
+BaseInput::Action* BaseInput::cast_AH(VRActionHandle_t handle)
+{
+	return (Action*)handle;
+}
+
+BaseInput::ActionSet* BaseInput::cast_ASH(VRActionSetHandle_t handle)
+{
+	return (ActionSet*)handle;
 }

@@ -5,6 +5,8 @@
 #include "DrvOpenXR.h"
 
 #include "../OpenOVR/Misc/xr_ext.h"
+#include "../OpenOVR/Reimpl/BaseInput.h"
+#include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "XrBackend.h"
 #include "tmp_gfx/TemporaryGraphics.h"
 
@@ -160,6 +162,11 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
 	xr_gbl = new XrSessionGlobals();
+
+	// If required, re-setup the input system for this new session
+	BaseInput* input = GetUnsafeBaseInput();
+	if (input)
+		input->BindInputsForSession();
 }
 
 void DrvOpenXR::ShutdownSession()
