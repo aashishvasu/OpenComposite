@@ -121,7 +121,20 @@ void XrBackend::WaitForTrackingData()
 
 	for (int eye = 0; eye < XruEyeCount; eye++) {
 		projectionViews[eye].fov = views[eye].fov;
-		projectionViews[eye].pose = views[eye].pose;
+
+		XrPosef pose = views[eye].pose;
+
+		// Make sure we at least have halfway-sane values if the runtime isn't providing them. In particular
+		// if the runtime gives us an invalid orientation, that'd otherwise cause XR_ERROR_POSE_INVALID errors later.
+		if ((viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT) == 0) {
+			pose.orientation = XrQuaternionf{ 0, 0, 0, 1 };
+		}
+		if ((viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) == 0) {
+			// About 1.75m up above the origin
+			pose.position = XrVector3f{ 0, 1.75, 0 };
+		}
+
+		projectionViews[eye].pose = pose;
 	}
 
 	// If we're not on the game's graphics API yet, don't actually mark us as having started the frame.
