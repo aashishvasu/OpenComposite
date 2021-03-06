@@ -4,6 +4,10 @@
 
 #include "XrBackend.h"
 
+// FIXME find a better way to send the OnPostFrame call?
+#include "../OpenOVR/Reimpl/BaseSystem.h"
+#include "../OpenOVR/Reimpl/static_bases.gen.h"
+
 XrBackend::~XrBackend()
 {
 	// First clear out the compositors, since they might try and access the OpenXR instance
@@ -201,6 +205,11 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	info.layerCount = sizeof(headers) / sizeof(void*);
 
 	OOVR_FAILED_XR_ABORT(xrEndFrame(xr_session, &info));
+
+	BaseSystem* sys = GetUnsafeBaseSystem();
+	if (sys) {
+		sys->_OnPostFrame();
+	}
 }
 
 IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)

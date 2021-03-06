@@ -400,8 +400,10 @@ void BaseSystem::_OnPostFrame()
 	}
 #endif
 
+#ifndef OC_XR_PORT
 	CheckControllerEvents(leftHandIndex, lastLeftHandState);
 	CheckControllerEvents(rightHandIndex, lastRightHandState);
+#endif
 
 #ifndef OC_XR_PORT
 	// Not exactly an event, but this is a convenient place to put it
@@ -418,6 +420,22 @@ void BaseSystem::_OnPostFrame()
 	//  event from firing despite another event also being changed in the same poll call
 	lastStatus = status;
 #endif
+
+	// Poll for OpenXR events
+	// TODO filter by session?
+	while (true) {
+		XrEventDataBuffer ev = { XR_TYPE_EVENT_DATA_BUFFER };
+		XrResult res;
+		OOVR_FAILED_XR_ABORT(res = xrPollEvent(xr_instance, &ev));
+
+		if (res == XR_EVENT_UNAVAILABLE)
+			break;
+
+		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
+			auto* changed = (XrEventDataSessionStateChanged*)&ev;
+			// TODO do something with the new state information
+		}
+	}
 }
 
 void BaseSystem::_EnqueueEvent(const VREvent_t& e)
