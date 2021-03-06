@@ -9,7 +9,8 @@ using namespace std;
 
 static ofstream stream;
 
-void oovr_log_raw(const char *file, long line, const char *func, const char *msg) {
+void oovr_log_raw(const char* file, long line, const char* func, const char* msg)
+{
 	if (!stream.is_open()) {
 		stream.open("openovr_log");
 	}
@@ -20,7 +21,8 @@ void oovr_log_raw(const char *file, long line, const char *func, const char *msg
 	// Do we need to close the stream or something? What about multiple threads?
 }
 
-void oovr_log_raw_format(const char *file, long line, const char *func, const char *msg, ...) {
+void oovr_log_raw_format(const char* file, long line, const char* func, const char* msg, ...)
+{
 	va_list args;
 	va_start(args, msg);
 
@@ -32,12 +34,12 @@ void oovr_log_raw_format(const char *file, long line, const char *func, const ch
 	va_end(args);
 }
 
-OC_NORETURN void oovr_abort_raw(const char * file, long line, const char * func, const char * msg, const char *title, ...) {
+OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, const char* msg, const char* title, ...)
+{
 	if (title == nullptr) {
 		title = "OpenComposite Error - info in log";
 		OOVR_LOG("Abort!");
-	}
-	else {
+	} else {
 		OOVR_LOG(title);
 	}
 
@@ -59,17 +61,18 @@ OC_NORETURN void oovr_abort_raw(const char * file, long line, const char * func,
 	exit(1);
 }
 
-void oovr_message_raw(const char *message, const char *title) {
+void oovr_message_raw(const char* message, const char* title)
+{
 	// Save to log file
 	oovr_log_raw_format("logging.h", 14, "OOVR_MESSAGE", "%s: %s", title, message);
 
-	#ifdef WIN32
-		// Display a message box on Windows
-		MessageBoxA(NULL, message, title, MB_OK);
-	#else
-		// Print to stderr on Linux
-		cerr << "OOVR_MESSAGE: " << title << ": " << message;
-	#endif
+#ifdef WIN32
+	// Display a message box on Windows
+	MessageBoxA(NULL, message, title, MB_OK);
+#else
+	// Print to stderr on Linux
+	cerr << "OOVR_MESSAGE: " << title << ": " << message;
+#endif
 }
 
 const float math_pi = 3.14159265358979323846f;
