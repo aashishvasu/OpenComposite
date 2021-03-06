@@ -63,12 +63,11 @@ OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, c
 
 void oovr_message_raw(const char* message, const char* title)
 {
-	// Save to log file
-	oovr_log_raw_format("logging.h", 14, "OOVR_MESSAGE", "%s: %s", title, message);
+	// No need to log this, it will have already been done by the caller
 
 #ifdef WIN32
 	// Display a message box on Windows
-	MessageBoxA(NULL, message, title, MB_OK);
+	MessageBoxA(nullptr, message, title, MB_OK);
 #else
 	// Print to stderr on Linux
 	cerr << "OOVR_MESSAGE: " << title << ": " << message;
