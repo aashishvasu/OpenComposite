@@ -427,7 +427,6 @@ void BaseInput::LoadBindingsSet(const std::string& bindingsPath, const Interacti
 					continue;
 				}
 
-				OOVR_LOGF("Bind %s to %s", action.fullName.c_str(), pathStr.c_str());
 				XrPath path;
 				OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
 				bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
@@ -512,8 +511,30 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	STUBBED();
+	Action* act = cast_AH(action);
+
+	ZeroMemory(pActionData, unActionDataSize);
+	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
+
+	// TODO implement ulRestrictToDevice
+	OOVR_FALSE_ABORT(ulRestrictToDevice == vr::k_ulInvalidInputValueHandle);
+
+	XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
+	getInfo.action = act->xr;
+
+	XrActionStateBoolean state = { XR_TYPE_ACTION_STATE_BOOLEAN };
+
+	OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, &getInfo, &state));
+
+	pActionData->bState = state.currentState;
+	pActionData->bActive = state.isActive;
+	pActionData->bChanged = state.changedSinceLastSync;
+	// TODO implement fUpdateTime
+	// TODO implement activeOrigin
+
+	return VRInputError_None;
 }
+
 EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
