@@ -6,6 +6,7 @@
 
 #include "XrDriverPrivate.h"
 
+#include "XrController.h"
 #include "XrHMD.h"
 
 #include <memory>
@@ -14,10 +15,13 @@ class XrBackend : public IBackend {
 public:
 	DECLARE_BACKEND_FUNCS(virtual, override);
 
-	virtual ~XrBackend() override;
+	XrBackend();
+	~XrBackend() override;
 
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
+	std::unique_ptr<XrController> hand_left = std::make_unique<XrController>();
+	std::unique_ptr<XrController> hand_right = std::make_unique<XrController>();
 
 	void CheckOrInitCompositors(const vr::Texture_t* tex);
 	std::unique_ptr<Compositor> compositors[XruEyeCount];

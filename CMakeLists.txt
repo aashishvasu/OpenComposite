@@ -144,6 +144,9 @@ add_library(DrvOpenXR STATIC
 	DrvOpenXR/XrHMD.cpp
 	DrvOpenXR/XrHMD.h
 
+	DrvOpenXR/XrController.cpp
+	DrvOpenXR/XrController.h
+
 	DrvOpenXR/tmp_gfx/TemporaryGraphics.cpp
 	DrvOpenXR/tmp_gfx/TemporaryGraphics.h
 	DrvOpenXR/tmp_gfx/TemporaryD3D11.cpp

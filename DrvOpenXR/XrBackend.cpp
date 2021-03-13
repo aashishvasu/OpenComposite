@@ -8,6 +8,19 @@
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 
+XrBackend::XrBackend()
+{
+	memset(projectionViews, 0, sizeof(projectionViews));
+
+	// setup the device indexes
+	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
+		ITrackedDevice* dev = GetDevice(i);
+
+		if (dev)
+			dev->InitialiseDevice(i);
+	}
+}
+
 XrBackend::~XrBackend()
 {
 	// First clear out the compositors, since they might try and access the OpenXR instance
@@ -30,6 +43,10 @@ ITrackedDevice* XrBackend::GetDevice(
 	switch (index) {
 	case vr::k_unTrackedDeviceIndex_Hmd:
 		return GetPrimaryHMD();
+	case 1:
+		return hand_left.get();
+    case 2:
+        return hand_right.get();
 	default:
 		return nullptr;
 	}
