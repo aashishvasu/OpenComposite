@@ -4,6 +4,7 @@
 // FIXME don't do that, it's ugly and slows down the build when modifying headers
 #include "../BaseCommon.h"
 
+#include "../Misc/Input/InteractionProfile.h"
 #include "../Misc/json/json.h"
 #include <map>
 #include <string>
@@ -362,6 +363,14 @@ public: // INTERNAL FUNCTIONS
 	 */
 	void BindInputsForSession();
 
+	/**
+	 * Called to implement BaseSystem::GetControllerState. The documentation for that reads:
+	 *
+	 * Fills the supplied struct with the current state of the controller. Returns false if the controller index
+	 * is invalid.
+	 */
+	bool GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* controllerState);
+
 private:
 	enum class ActionRequirement {
 		Suggested = 0, // default
@@ -466,7 +475,22 @@ private:
 
 	std::string bindingsPath;
 
-	void LoadBindingsSet(const std::string& filepath, const class InteractionProfile&);
+	XrActionSet legacyInputsSet = XR_NULL_HANDLE;
+
+	void LoadBindingsSet(const std::string& bindingsPath, const struct InteractionProfile&, std::vector<XrActionSuggestedBinding>& bindings);
+
+	void AddLegacyBindings(InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
+
+	struct LegacyControllerActions {
+		XrAction system; // Oculus button
+		XrAction menu, menuTouch; // Upper button on touch controller - B/Y
+		XrAction btnA, btnATouch; // Lower button on touch controller - A/X
+
+		XrAction stickX, stickY, stickBtn, stickBtnTouch; // Axis0
+		XrAction trigger, triggerTouch; // Axis1
+		XrAction grip; // Axis2
+	};
+	LegacyControllerActions legacyControllers[2] = {};
 
 	// Utility functions
 	static Action* cast_AH(VRActionHandle_t);

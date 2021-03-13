@@ -132,7 +132,14 @@ void BackendManager::ForceBoundsVisible(bool status){
 }
 
 // ITrackedDevice
-bool ITrackedDevice::GetControllerState(vr::VRControllerState_t *state) {
+bool ITrackedDevice::GetControllerState(vr::VRControllerState_t* state)
+{
+	// TODO does the length ever change?
+	ZeroMemory(state, sizeof(*state));
+
+#ifndef OC_XR_PORT
+#error Probably never used, remove
+#endif
 
 	// Provide a default implementation for devices that don't supply controller state
 	return false;

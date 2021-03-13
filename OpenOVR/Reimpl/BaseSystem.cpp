@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseCompositor.h"
+#include "BaseInput.h"
 #include "BaseOverlay.h"
 #include "BaseSystem.h"
 #include "Drivers/Backend.h"
@@ -553,15 +554,23 @@ HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType 
 
 bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* controllerState, uint32_t controllerStateSize)
 {
-#ifdef OC_XR_PORT
-	// Only support IVRInput-based stuff for now
-	XR_STUBBED();
-#else
 	if (sizeof(VRControllerState_t) != controllerStateSize)
 		OOVR_ABORT("Bad controller state size - was the host compiled with an older version of OpenVR?");
 
 	memset(controllerState, 0, controllerStateSize);
 
+#ifdef OC_XR_PORT
+	if (!inputSystem) {
+		inputSystem = GetBaseInput();
+	}
+
+	// TODO since we can only bind the manifest once, and some games may never call it or may
+	//  try reading the controller state first, wait until the first frame has been submitted (returning
+	//  blank controller states until then) and only then load an empty manifest.
+	OOVR_FALSE_ABORT(inputSystem);
+
+	return inputSystem->GetLegacyControllerState(controllerDeviceIndex, controllerState);
+#else
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(controllerDeviceIndex);
 
 	if (!dev)

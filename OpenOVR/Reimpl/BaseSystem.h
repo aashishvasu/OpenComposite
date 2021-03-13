@@ -30,6 +30,9 @@ private:
 
 	bool blockingInputsUntilRelease[2] = { false, false };
 
+	// The input subsystem. This is used for the old-style inputs and haptics.
+	std::shared_ptr<class BaseInput> inputSystem;
+
 public:
 	// To be called by other base classes
 	void _OnPostFrame();
