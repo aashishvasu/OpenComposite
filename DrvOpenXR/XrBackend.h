@@ -20,8 +20,8 @@ public:
 
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
-	std::unique_ptr<XrController> hand_left = std::make_unique<XrController>();
-	std::unique_ptr<XrController> hand_right = std::make_unique<XrController>();
+	std::unique_ptr<XrController> hand_left = std::make_unique<XrController>(XrController::XCT_LEFT);
+	std::unique_ptr<XrController> hand_right = std::make_unique<XrController>(XrController::XCT_RIGHT);
 
 	void CheckOrInitCompositors(const vr::Texture_t* tex);
 	std::unique_ptr<Compositor> compositors[XruEyeCount];

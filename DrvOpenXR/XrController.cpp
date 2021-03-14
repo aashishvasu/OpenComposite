@@ -1,5 +1,10 @@
 #include "XrController.h"
 
+XrController::XrController(XrController::XrControllerType type)
+    : type(type)
+{
+}
+
 // properties
 bool XrController::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
@@ -19,21 +24,9 @@ int32_t XrController::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty p
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
 
-	// These are for the old input system, which we don't initially need
-	switch (prop) {
-	case vr::Prop_Axis0Type_Int32:
-	case vr::Prop_Axis1Type_Int32:
-	case vr::Prop_Axis2Type_Int32:
-	case vr::Prop_Axis3Type_Int32:
-	case vr::Prop_Axis4Type_Int32:
-		XR_STUBBED();
-	default:
-		break;
-	}
-
-	/*
+	// Continue to pretend to be a CV1
 	// Don't apply the inputs to the tracking object
-	if (IsTouchController()) {
+	if (type == XCT_LEFT || type == XCT_RIGHT) {
 		switch (prop) {
 		case vr::Prop_Axis0Type_Int32:
 			// TODO find out which of these SteamVR returns and do likewise
@@ -47,9 +40,11 @@ int32_t XrController::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty p
 		case vr::Prop_Axis3Type_Int32:
 		case vr::Prop_Axis4Type_Int32:
 			return vr::k_eControllerAxis_None;
+
+		default:
+			break;
 		}
 	}
-	 */
 
 	return XrTrackedDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
 }
@@ -88,27 +83,27 @@ uint32_t XrController::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty
 		return (uint32_t)strlen(out) + 1;                                                              \
 	}
 
-	/*
-	switch (device) {
-	case EOculusTrackedObject::LTouch:
+	// Just say we're a CV1, regardless of what actual device is connected
+	switch (type) {
+	case XCT_LEFT:
 		PROP(vr::Prop_RenderModelName_String, "renderLeftHand");
 		PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1 (Left Controller)");
 		PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Left"); // TODO is this different CV1 vs S?
 		break;
-	case EOculusTrackedObject::RTouch:
+	case XCT_RIGHT:
 		PROP(vr::Prop_RenderModelName_String, "renderRightHand");
 		PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1 (Right Controller)");
 		PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Right");
 		break;
-	case EOculusTrackedObject::Object0:
+	case XCT_TRACKED_OBJECT:
 		PROP(vr::Prop_RenderModelName_String, "renderObject0");
 
 		// This is made up, and not at all verified with SteamVR
 		PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1 (Tracked Object 0)");
 		break;
+	default:
+		OOVR_ABORTF("Invalid controller type %d", type);
 	}
-	 */
-	STUBBED();
 
 	PROP(vr::Prop_ControllerType_String, "oculus_touch");
 
