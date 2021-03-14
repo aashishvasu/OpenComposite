@@ -372,11 +372,37 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	return vr::VRInputError_None;
 }
 
+void BaseInput::LoadEmptyManifest()
+{
+	OOVR_LOG("Loading virtual empty manifest");
+
+	if (hasLoadedActions)
+		OOVR_ABORT("Cannot re-load actions!");
+	hasLoadedActions = true;
+	usingLegacyInput = true;
+
+	// TODO deduplicate with the regular manifest loader
+	std::vector<XrActionSuggestedBinding> bindings;
+	OculusTouchInteractionProfile profile;
+	AddLegacyBindings(profile, bindings);
+
+	// Load the bindings into the runtime
+	XrPath interactionProfilePath;
+	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.GetPath().c_str(), &interactionProfilePath));
+	XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+
+	suggestedBindings.interactionProfile = interactionProfilePath;
+	suggestedBindings.suggestedBindings = bindings.data();
+	suggestedBindings.countSuggestedBindings = bindings.size();
+	OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
+
+	// Attach everything to the current session
+	BindInputsForSession();
+}
+
 void BaseInput::BindInputsForSession()
 {
-	// If there aren't any action sets it probably means the session was swapped before the app loaded it's manifest file
-	if (actionSets.empty())
-		return;
+	// Note: even if actionSets is empty, we always still want to load the legacy set.
 
 	// Now attach the action sets to the OpenXR session, making them immutable (including attaching suggested bindings)
 	std::vector<XrActionSet> sets;
@@ -616,6 +642,19 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
 
 	return VRInputError_None;
+}
+
+void BaseInput::InternalUpdate()
+{
+	if (!usingLegacyInput)
+		return;
+
+	XrActiveActionSet aas = { legacyInputsSet };
+
+	XrActionsSyncInfo syncInfo = { XR_TYPE_ACTIONS_SYNC_INFO };
+	syncInfo.activeActionSets = &aas;
+	syncInfo.countActiveActionSets = 1;
+	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
 }
 
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,
@@ -865,7 +904,7 @@ EVRInputError BaseInput::GetComponentStateForBinding(const char* pchRenderModelN
 
 bool BaseInput::IsUsingLegacyInput()
 {
-	STUBBED();
+	return usingLegacyInput;
 }
 
 // Interestingly enough this was added to IVRInput_007 without bumping the version number - that's fine since it's

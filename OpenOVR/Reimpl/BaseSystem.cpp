@@ -437,6 +437,21 @@ void BaseSystem::_OnPostFrame()
 			// TODO do something with the new state information
 		}
 	}
+
+	// Create the input system, if the game hasn't already done so
+	// See the comment in GetControllerState for the rationale here
+	if (!inputSystem) {
+		inputSystem = GetBaseInput();
+
+		if (!inputSystem) {
+			inputSystem = GetCreateBaseInput();
+			inputSystem->LoadEmptyManifest();
+		}
+	}
+
+	if(inputSystem) {
+		inputSystem->InternalUpdate();
+	}
 }
 
 void BaseSystem::_EnqueueEvent(const VREvent_t& e)
@@ -564,10 +579,12 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 		inputSystem = GetBaseInput();
 	}
 
-	// TODO since we can only bind the manifest once, and some games may never call it or may
+	// Since we can only bind the manifest once, and some games may never call it or may
 	//  try reading the controller state first, wait until the first frame has been submitted (returning
 	//  blank controller states until then) and only then load an empty manifest.
-	OOVR_FALSE_ABORT(inputSystem);
+	if (!inputSystem) {
+		return true;
+	}
 
 	return inputSystem->GetLegacyControllerState(controllerDeviceIndex, controllerState);
 #else

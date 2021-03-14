@@ -364,6 +364,20 @@ public: // INTERNAL FUNCTIONS
 	void BindInputsForSession();
 
 	/**
+	 * Similar to setting the manifest, but doesn't actually load one. Equivalent to passing in a blank manifest.
+	 *
+	 * Used for games that don't use the input system.
+	 */
+	void LoadEmptyManifest();
+
+	/**
+	 * Update the input stuff, called by BaseSystem.
+	 *
+	 * Currently, it updates the OpenXR stuff if the game is running in legacy mode.
+	 */
+	void InternalUpdate();
+
+	/**
 	 * Called to implement BaseSystem::GetControllerState. The documentation for that reads:
 	 *
 	 * Fills the supplied struct with the current state of the controller. Returns false if the controller index
@@ -470,6 +484,7 @@ private:
 	};
 
 	bool hasLoadedActions = false;
+	bool usingLegacyInput = false;
 	std::map<std::string, std::unique_ptr<ActionSet> > actionSets;
 	std::map<std::string, std::unique_ptr<Action> > actions;
 
