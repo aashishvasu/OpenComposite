@@ -656,14 +656,16 @@ void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceI
 		return;
 
 	if (unControllerDeviceIndex == leftHandIndex || unControllerDeviceIndex == rightHandIndex) {
-		static Haptics haptics;
-
-#ifdef OC_XR_PORT
-		XR_STUBBED();
-#else
-		haptics.StartSimplePulse(unControllerDeviceIndex == leftHandIndex ? ovrControllerType_LTouch : ovrControllerType_RTouch, usDurationMicroSec);
+#ifndef OC_XR_PORT
+#error remove the Haptics class if we know we're not going to need it again
 #endif
 
+		// Similar to GetControllerState, wait until the input system is ready
+		if (!inputSystem) {
+			return;
+		}
+
+		inputSystem->TriggerLegacyHapticPulse(unControllerDeviceIndex, (uint64_t)usDurationMicroSec * 1000);
 		return;
 	}
 

@@ -513,9 +513,9 @@ void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrAct
 		ctrl = {};
 
 		std::string side = i == 0 ? "left" : "right";
-		std::string prefix = "/user/hand/" + side + "/input/";
+		std::string prefix = "/user/hand/" + side + "/";
 
-		auto create = [&](XrAction* out, const std::string& path, const std::string& name, const std::string& humanName, XrActionType type) {
+		auto createSpecial = [&](XrAction* out, const std::string& path, const std::string& name, const std::string& humanName, XrActionType type) {
 			XrActionCreateInfo info = { XR_TYPE_ACTION_CREATE_INFO };
 			info.actionType = type;
 
@@ -540,6 +540,10 @@ void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrAct
 			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, realPath.c_str(), &binding.binding));
 
 			bindings.push_back(binding);
+		};
+
+		auto create = [&](XrAction* out, const std::string& path, const std::string& name, const std::string& humanName, XrActionType type) {
+			createSpecial(out, "input/" + path, name, humanName, type);
 		};
 
 #define BOOL_WITH_CAP(member, path, name, humanName)                                                             \
@@ -577,7 +581,9 @@ void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrAct
 		create(&ctrl.stickX, "thumbstick/x", "thumbstick-x", "Thumbstick X axis", XR_ACTION_TYPE_FLOAT_INPUT);
 		create(&ctrl.stickY, "thumbstick/y", "thumbstick-y", "Thumbstick Y axis", XR_ACTION_TYPE_FLOAT_INPUT);
 
-		// TODO grip and aim pose, haptics
+		createSpecial(&ctrl.haptic, "output/haptic", "haptic", "Haptics", XR_ACTION_TYPE_VIBRATION_OUTPUT);
+
+		// TODO grip and aim pose
 	}
 }
 
@@ -1012,4 +1018,27 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 #endif
 
 	return true;
+}
+
+void BaseInput::TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDeviceIndex, uint64_t durationNanos)
+{
+	// TODO dedup with GetLegacyControllerState
+	// TODO check the device IDs - and don't hardcode left=1 right=2 here, but find it out from the device or something
+	// (note that left=0 and right=1 for legacyControllers - the above refers to the device index.
+	LegacyControllerActions& ctrl = legacyControllers[0];
+
+	if (!ctrl.haptic) {
+		OOVR_LOG_ONCE("Cannot trigger haptic pulse, no haptic action present");
+		return;
+	}
+
+	XrHapticActionInfo info = { XR_TYPE_HAPTIC_ACTION_INFO };
+	info.action = ctrl.haptic;
+
+	XrHapticVibration vibration = { XR_TYPE_HAPTIC_VIBRATION };
+	vibration.frequency = XR_FREQUENCY_UNSPECIFIED;
+	vibration.duration = durationNanos;
+	vibration.amplitude = 1;
+
+	OOVR_FAILED_XR_ABORT(xrApplyHapticFeedback(xr_session, &info, (XrHapticBaseHeader*)&vibration));
 }

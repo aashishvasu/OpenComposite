@@ -385,6 +385,8 @@ public: // INTERNAL FUNCTIONS
 	 */
 	bool GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* controllerState);
 
+	void TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDeviceIndex, uint64_t durationNanos);
+
 private:
 	enum class ActionRequirement {
 		Suggested = 0, // default
@@ -504,6 +506,8 @@ private:
 		XrAction stickX, stickY, stickBtn, stickBtnTouch; // Axis0
 		XrAction trigger, triggerTouch; // Axis1
 		XrAction grip; // Axis2
+
+		XrAction haptic;
 	};
 	LegacyControllerActions legacyControllers[2] = {};
 
