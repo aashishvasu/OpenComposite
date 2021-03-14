@@ -387,6 +387,8 @@ public: // INTERNAL FUNCTIONS
 
 	void TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDeviceIndex, uint64_t durationNanos);
 
+	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space);
+
 private:
 	enum class ActionRequirement {
 		Suggested = 0, // default
@@ -513,6 +515,12 @@ private:
 		XrAction grip; // Axis2
 
 		XrAction haptic;
+
+		// Note: the 'grip' pose runs along the axis of the Touch controller, the 'aim' pose comes
+		// straight out the front if you're holding it neutral. They correspond to the old Oculus
+		// and SteamVR poses.
+		XrAction gripPoseAction, aimPoseAction;
+		XrSpace gripPoseSpace, aimPoseSpace;
 	};
 	LegacyControllerActions legacyControllers[2] = {};
 

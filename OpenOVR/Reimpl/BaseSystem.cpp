@@ -449,7 +449,7 @@ void BaseSystem::_OnPostFrame()
 		}
 	}
 
-	if(inputSystem) {
+	if (inputSystem) {
 		inputSystem->InternalUpdate();
 	}
 }

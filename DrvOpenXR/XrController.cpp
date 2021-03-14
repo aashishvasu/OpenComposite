@@ -1,5 +1,9 @@
 #include "XrController.h"
 
+// HACK: grab the pose from BaseInput
+#include "../OpenOVR/Reimpl/BaseInput.h"
+#include "../OpenOVR/Reimpl/static_bases.gen.h"
+
 XrController::XrController(XrController::XrControllerType type)
     : type(type)
 {
@@ -120,4 +124,26 @@ ITrackedDevice::HandType XrController::GetHand()
 	default:
 		return HAND_NONE;
 	}
+}
+
+void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t* pose, ETrackingStateType trackingState)
+{
+	// Default to an invalid pose
+	ZeroMemory(pose, sizeof(*pose));
+	pose->bDeviceIsConnected = true;
+	pose->bPoseIsValid = false;
+	pose->eTrackingResult = vr::TrackingResult_Running_OutOfRange;
+
+	BaseInput* input = GetUnsafeBaseInput();
+	if (input == nullptr)
+		return;
+
+	// TODO do something with TrackingState
+	XrSpace space = XR_NULL_HANDLE;
+	input->GetHandSpace(DeviceIndex(), space);
+
+	if (!space)
+		return;
+
+	PoseFromSpace(pose, space, origin);
 }

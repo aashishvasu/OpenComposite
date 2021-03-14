@@ -3,6 +3,8 @@
 #include "BaseInput.h"
 #include <string>
 
+#include <convert.h>
+
 #include "Drivers/Backend.h"
 #include "static_bases.gen.h"
 #include <algorithm>
@@ -583,7 +585,8 @@ void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrAct
 
 		createSpecial(&ctrl.haptic, "output/haptic", "haptic", "Haptics", XR_ACTION_TYPE_VIBRATION_OUTPUT);
 
-		// TODO grip and aim pose
+		create(&ctrl.gripPoseAction, "grip/pose", "grip-pose", "Grip Pose", XR_ACTION_TYPE_POSE_INPUT);
+		create(&ctrl.aimPoseAction, "aim/pose", "aim-pose", "Aim Pose", XR_ACTION_TYPE_POSE_INPUT);
 	}
 }
 
@@ -1060,4 +1063,30 @@ int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 	default:
 		return -1;
 	}
+}
+
+void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
+{
+	space = XR_NULL_HANDLE;
+
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(index);
+	if (!dev)
+		return;
+
+	ITrackedDevice::HandType hand = dev->GetHand();
+	LegacyControllerActions& ctrl = legacyControllers[hand];
+
+	// Refs here so we can easily fiddle with them
+	XrAction action = ctrl.aimPoseAction;
+	XrSpace& actionSpace = ctrl.aimPoseSpace;
+
+	// Create the action space if necessary
+	if (!actionSpace) {
+		XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
+		info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
+		info.action = action;
+		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &actionSpace));
+	}
+
+	space = actionSpace;
 }
