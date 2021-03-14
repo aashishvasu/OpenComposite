@@ -30,6 +30,12 @@ class ITrackedDevice {
 public:
 	virtual ~ITrackedDevice();
 
+	enum HandType {
+		HAND_LEFT,
+		HAND_RIGHT,
+		HAND_NONE,
+	};
+
 	virtual void GetPose(
 		vr::ETrackingUniverseOrigin origin,
 		vr::TrackedDevicePose_t* pose,
@@ -74,6 +80,11 @@ public:
 
 	/** Triggers a haptic event, running at the given frequency for and given amplitude. This will be called again to stop the action. */
 	virtual int32_t TriggerHapticVibrationAction(float fFrequency, float fAmplitude);
+
+	/**
+	 * Get the hand represented by this device, if any. Used mainly for the input system.
+	 */
+	virtual HandType GetHand();
 
 	///////
 	vr::TrackedDeviceIndex_t DeviceIndex();

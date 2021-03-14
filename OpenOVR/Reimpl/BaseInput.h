@@ -498,6 +498,11 @@ private:
 
 	void AddLegacyBindings(InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
 
+	/**
+	 * Convert a tracked device index to 0=left 1=right -1=other
+	 */
+	static int DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx);
+
 	struct LegacyControllerActions {
 		XrAction system; // Oculus button
 		XrAction menu, menuTouch; // Upper button on touch controller - B/Y

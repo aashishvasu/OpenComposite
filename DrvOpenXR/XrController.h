@@ -12,6 +12,8 @@ public:
 
 	explicit XrController(XrControllerType type);
 
+	HandType GetHand() override;
+
 	// properties
 	bool GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL) override;
 	int32_t GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL) override;

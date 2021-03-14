@@ -946,9 +946,10 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 
 	// TODO for performance reasons, is it worth grabbing the results once and reusing them until xrSyncActions is called?
 
-	// TODO check the device IDs - and don't hardcode left=1 right=2 here, but find it out from the device or something
-	// (note that left=0 and right=1 for legacyControllers - the above refers to the device index.
-	LegacyControllerActions& ctrl = legacyControllers[0];
+	int hand = DeviceIndexToHandId(controllerDeviceIndex);
+	if (hand == -1)
+		return false;
+	LegacyControllerActions& ctrl = legacyControllers[hand];
 
 	auto bindButton = [state](XrAction action, XrAction touch, int shift) {
 		XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
@@ -1022,10 +1023,10 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 
 void BaseInput::TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDeviceIndex, uint64_t durationNanos)
 {
-	// TODO dedup with GetLegacyControllerState
-	// TODO check the device IDs - and don't hardcode left=1 right=2 here, but find it out from the device or something
-	// (note that left=0 and right=1 for legacyControllers - the above refers to the device index.
-	LegacyControllerActions& ctrl = legacyControllers[0];
+	int hand = DeviceIndexToHandId(controllerDeviceIndex);
+	if (hand == -1)
+		return;
+	LegacyControllerActions& ctrl = legacyControllers[hand];
 
 	if (!ctrl.haptic) {
 		OOVR_LOG_ONCE("Cannot trigger haptic pulse, no haptic action present");
@@ -1041,4 +1042,22 @@ void BaseInput::TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDevi
 	vibration.amplitude = 1;
 
 	OOVR_FAILED_XR_ABORT(xrApplyHapticFeedback(xr_session, &info, (XrHapticBaseHeader*)&vibration));
+}
+
+int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
+{
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(idx);
+	if (!dev)
+		return false;
+
+	ITrackedDevice::HandType hand = dev->GetHand();
+
+	switch (hand) {
+	case ITrackedDevice::HAND_LEFT:
+		return 0;
+	case ITrackedDevice::HAND_RIGHT:
+		return 1;
+	default:
+		return -1;
+	}
 }

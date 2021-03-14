@@ -168,6 +168,12 @@ int32_t ITrackedDevice::TriggerHapticVibrationAction(float fFrequency, float fAm
 	return 0;
 }
 
+ITrackedDevice::HandType ITrackedDevice::GetHand()
+{
+	// By default don't attach to the input system.
+	return HAND_NONE;
+}
+
 // properties
 
 bool ITrackedDevice::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError * pErrorL) {
