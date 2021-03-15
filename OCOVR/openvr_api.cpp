@@ -126,10 +126,65 @@ VR_INTERFACE char * VR_GetStringForHmdError(int err) {
 	OOVR_ABORT("Stub");
 }
 
-VR_INTERFACE const char *VR_CALLTYPE VR_GetVRInitErrorAsEnglishDescription(EVRInitError error) {
+VR_INTERFACE const char* VR_CALLTYPE VR_GetVRInitErrorAsEnglishDescription(EVRInitError error)
+{
 	switch (error) {
 	case VRInitError_None:
 		return "None";
+
+		// Copied over from SteamVR, so these won't cause issues by not matching their SteamVR equivilents:
+		// clang-format off
+	case 100: return "Installation Not Found (100)";
+	case 101: return "Installation Corrupt (101)";
+	case 102: return "vrclient Shared Lib Not Found (102)";
+	case 103: return "File Not Found (103)";
+	case 104: return "Factory Function Not Found (104)";
+	case 105: return "Interface Not Found (105)";
+	case 106: return "Invalid Interface (106)";
+	case 107: return "User Config Directory Invalid (107)";
+	case 108: return "Hmd Not Found (108)";
+	case 109: return "Not Initialized (109)";
+	case 110: return "Installation path could not be located (110)";
+	case 111: return "Config path could not be located (111)";
+	case 112: return "Log path could not be located (112)";
+	case 113: return "Unable to write path registry (113)";
+	case 114: return "App info manager init failed (114)";
+	case 115: return "Internal Retry (115)";
+	case 116: return "User Canceled Init (116)";
+	case 117: return "Another app was already launching (117)";
+	case 118: return "Settings manager init failed (118)";
+	case 119: return "VR system shutting down (119)";
+	case 120: return "Too many tracked objects (120)";
+	case 121: return "Not starting vrserver for background app (121)";
+	case 122: return "The requested interface is incompatible with the compositor and the compositor is running (122)";
+	case 123: return "This interface is not available to utility applications (123)";
+	case 124: return "vrserver internal error (124)";
+	case 125: return "Hmd DriverId is invalid (125)";
+	case 126: return "Hmd Not Found Presence Failed (126)";
+	case 127: return "VR Monitor Not Found (127)";
+	case 128: return "VR Monitor startup failed (128)";
+	case 129: return "Low Power Watchdog Not Supported (129)";
+	case 130: return "Invalid Application Type (130)";
+	case 131: return "Not available to watchdog apps (131)";
+	case 132: return "Watchdog disabled in settings (132)";
+	case 133: return "VR Dashboard Not Found (133)";
+	case 134: return "VR Dashboard startup failed (134)";
+	case 135: return "VR Home Not Found (135)";
+	case 136: return "VR home startup failed (136)";
+	case 137: return "Rebooting In Progress (137)";
+	case 138: return "Firmware Update In Progress (138)";
+	case 139: return "Firmware Recovery In Progress (139)";
+	case 140: return "USB Service Busy (140)";
+	case 141: return "VRInitError_Init_VRWebHelperStartupFailed";
+	case 142: return "VRInitError_Init_TrackerManagerInitFailed";
+	case 143: return "VRInitError_Init_AlreadyRunning";
+	case 144: return "VRInitError_Init_FailedForVrMonitor";
+	case 145: return "VRInitError_Init_PropertyManagerInitFailed";
+	case 146: return "VRInitError_Init_WebServerFailed";
+		// clang-format on
+
+	default:
+		return "VRInitError_Init_IllegalTypeTransition";
 	}
 	OOVR_ABORT(("Init desc: Unknown value " + to_string(error)).c_str());
 }
