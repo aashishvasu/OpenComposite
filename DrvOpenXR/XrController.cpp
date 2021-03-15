@@ -1,6 +1,7 @@
 #include "XrController.h"
 
 // HACK: grab the pose from BaseInput
+#include "../OpenOVR/Misc/xrmoreutils.h"
 #include "../OpenOVR/Reimpl/BaseInput.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 
@@ -145,5 +146,5 @@ void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 	if (!space)
 		return;
 
-	PoseFromSpace(pose, space, origin);
+	xr_utils::PoseFromSpace(pose, space, origin);
 }

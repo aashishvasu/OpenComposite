@@ -6,6 +6,7 @@
 
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/convert.h"
+#include "../OpenOVR/Misc/xrmoreutils.h"
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 {
@@ -217,7 +218,7 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 {
 	// TODO use ETrackingStateType
 
-	PoseFromSpace(pose, xr_gbl->viewSpace, origin);
+	xr_utils::PoseFromSpace(pose, xr_gbl->viewSpace, origin);
 }
 
 // Properties

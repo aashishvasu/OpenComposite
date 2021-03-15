@@ -195,6 +195,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/debug_helper.cpp
 	OpenOVR/Misc/Haptics.cpp
 	OpenOVR/Misc/xrutil.cpp
+	OpenOVR/Misc/xrmoreutils.cpp
 	OpenOVR/Misc/Keyboard/KeyboardLayout.cpp
 	OpenOVR/Misc/Keyboard/SudoFontMeta.cpp
 	OpenOVR/Misc/Keyboard/VRKeyboard.cpp
