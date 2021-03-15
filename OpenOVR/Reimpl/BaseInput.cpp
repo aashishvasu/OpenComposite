@@ -993,7 +993,7 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 
 	// Read the buttons
 
-	bindButton(ctrl.system, nullptr, vr::k_EButton_System);
+	bindButton(ctrl.system, XR_NULL_HANDLE, vr::k_EButton_System);
 	bindButton(ctrl.btnA, ctrl.btnATouch, vr::k_EButton_A);
 	bindButton(ctrl.menu, ctrl.menuTouch, vr::k_EButton_ApplicationMenu);
 	bindButton(ctrl.stickBtn, ctrl.stickBtnTouch, vr::k_EButton_SteamVR_Touchpad);
@@ -1003,8 +1003,8 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 #ifndef XR_STUBBED
 #error todo
 #endif
-	bindButton(nullptr, ctrl.triggerTouch, vr::k_EButton_SteamVR_Trigger);
-	bindButton(nullptr, nullptr, vr::k_EButton_Axis2);
+	bindButton(XR_NULL_HANDLE, ctrl.triggerTouch, vr::k_EButton_SteamVR_Trigger);
+	bindButton(XR_NULL_HANDLE, XR_NULL_HANDLE, vr::k_EButton_Axis2);
 
 	// Read the analogue values
 	auto readFloat = [](XrAction action) -> float {
