@@ -206,7 +206,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		std::string requirement = item["requirement"].asString();
 		if (requirement == "mandatory")
 			action.requirement = ActionRequirement::Mandatory;
-		else if (requirement == "suggested")
+		else if (requirement == "suggested" || requirement.empty()) // Default
 			action.requirement = ActionRequirement::Suggested;
 		else if (requirement == "optional")
 			action.requirement = ActionRequirement::Optional;
