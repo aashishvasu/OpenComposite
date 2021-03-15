@@ -1089,6 +1089,10 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
 {
 	space = XR_NULL_HANDLE;
 
+	// If the manifest isn't loaded yet (still on the first frame) return null
+	if (!hasLoadedActions)
+		return;
+
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(index);
 	if (!dev)
 		return;
