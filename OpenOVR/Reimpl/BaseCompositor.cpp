@@ -185,7 +185,8 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 	switch (texture->eType) {
 #ifdef SUPPORT_GL
 	case TextureType_OpenGL: {
-		comp = new GLCompositor(fovTextureSize);
+		// Double-cast to avoid a CLion warning
+		comp = new GLCompositor((GLuint)(intptr_t)texture->handle);
 		break;
 	}
 #endif
@@ -225,10 +226,6 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 	default:
 		string err = "[BaseCompositor::Submit] Unsupported texture type: " + to_string(texture->eType);
 		OOVR_ABORT(err.c_str());
-	}
-
-	if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX && texture->eType != TextureType_Vulkan) {
-		OOVR_ABORT("Failed to create texture.");
 	}
 
 	return comp;

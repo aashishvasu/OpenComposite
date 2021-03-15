@@ -42,6 +42,10 @@ XrExt::XrExt()
 	XR_BIND(xrGetVulkanGraphicsDeviceKHR);
 #endif
 
+#ifdef SUPPORT_GL
+	XR_BIND(xrGetOpenGLGraphicsRequirementsKHR);
+#endif
+
 #undef XR_BIND
 }
 

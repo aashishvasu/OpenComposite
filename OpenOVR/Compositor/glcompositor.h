@@ -4,18 +4,20 @@
 
 class GLCompositor : public Compositor {
 public:
-	GLCompositor(OVR::Sizei size);
-
-	unsigned int GetFlags() override;
+	explicit GLCompositor(GLuint initialTexture);
 
 	// Override
-	virtual void Invoke(const vr::Texture_t* texture) override;
+	void Invoke(const vr::Texture_t* texture) override;
 
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
-	    vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov& layer) override;
+	void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
+	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport) override;
 
-	virtual void InvokeCubemap(const vr::Texture_t* textures) override;
+	void InvokeCubemap(const vr::Texture_t* textures) override;
 
 private:
+	void CheckCreateSwapChain(GLuint image);
+
 	GLuint fboId = 0;
+
+	std::vector<GLuint> images;
 };

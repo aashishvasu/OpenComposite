@@ -11,13 +11,18 @@
 #endif
 
 #ifdef SUPPORT_GL
-#include <GL/glx.h>
+#include <GL/gl.h>
 #define XR_USE_GRAPHICS_API_OPENGL
 #endif
 
 #ifdef SUPPORT_VK
 #include <vulkan/vulkan.h>
 #define XR_USE_GRAPHICS_API_VULKAN
+#endif
+
+#ifdef _WIN32
+#define XR_OS_WINDOWS
+#define XR_USE_PLATFORM_WIN32
 #endif
 
 #include <openxr/openxr_platform.h>

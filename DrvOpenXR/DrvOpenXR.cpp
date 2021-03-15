@@ -71,6 +71,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #if defined(SUPPORT_VK)
 	extensions.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
 #endif
+#if defined(SUPPORT_GL)
+	extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+#endif
 	extensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	// If the visibility mask is available use it, otherwise no big deal

@@ -4,6 +4,8 @@
 
 #include "XrBackend.h"
 
+#include <openxr/openxr_platform.h>
+
 // FIXME find a better way to send the OnPostFrame call?
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
@@ -45,8 +47,8 @@ ITrackedDevice* XrBackend::GetDevice(
 		return GetPrimaryHMD();
 	case 1:
 		return hand_left.get();
-    case 2:
-        return hand_right.get();
+	case 2:
+		return hand_right.get();
 	default:
 		return nullptr;
 	}
@@ -99,6 +101,34 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			// as it providing a VkQueue rather than the queue index. Stuff like this is by no means insurmountable, but
 			// since we're doing a texture copy anyway there's probably little performance harm in copying between
 			// instances like this, and should hopefully avoid finding a show-stopper pitfall later.
+			break;
+		}
+		case vr::TextureType_OpenGL: {
+#ifdef SUPPORT_GL
+			// The spec requires that we call this before starting a session using OpenGL. Unfortunately we
+			// can't actually do anything with this information, since the game has already created the context.
+			XrGraphicsRequirementsOpenGLKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR };
+			OOVR_FAILED_XR_ABORT(xr_ext->xrGetOpenGLGraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements));
+
+			// Platform-specific OpenGL context stuff:
+#ifdef _WIN32
+			XrGraphicsBindingOpenGLWin32KHR binding = { XR_TYPE_GRAPHICS_BINDING_OPENGL_WIN32_KHR };
+			binding.hGLRC = wglGetCurrentContext();
+			binding.hDC = wglGetCurrentDC();
+
+			if (!binding.hGLRC || !binding.hDC) {
+				OOVR_ABORTF("Null OpenGL GLRC or DC: %p,%p", (void*)binding.hGLRC, (void*)binding.hDC);
+			}
+
+			DrvOpenXR::SetupSession(&binding);
+#else
+			OOVR_ABORT("TODO port OpenGL setup to Linux");
+#endif
+			// End of platform-specific code
+
+#else
+			OOVR_ABORT("Application is trying to submit an OpenGL texture, which OpenComposite supports but is disabled in this build");
+#endif
 			break;
 		}
 		default:

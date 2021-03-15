@@ -18,11 +18,10 @@ set(XR_VALIDATION_FILE_NAME "" CACHE STRING "A filename to set XR_CORE_VALIDATIO
 # Platform-dependent flags
 # Support Vulkan on Linux instead of DirectX
 if (WIN32)
-	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11 -DSUPPORT_VK)
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11 -DSUPPORT_VK -DSUPPORT_GL)
 else ()
-	# TODO add -DSUPPORT_GL once we've got that working again
 	#  (Putting XR_STUBBED(); here so this shows up if you search for it)
-	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK)
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
 endif()
 
 # For all projects, set the symbol visibility to private on Linux
@@ -113,8 +112,8 @@ target_include_directories(OpenXR PUBLIC ${XrDir}/include)
 # Platform-dependent flags
 if (WIN32)
 	target_compile_definitions(OpenXR PRIVATE -DXR_OS_WINDOWS -DXR_USE_PLATFORM_WIN32
-	-DXR_USE_GRAPHICS_API_D3D11 -DXR_USE_GRAPHICS_API_D3D12)
-	target_link_libraries(OpenXR PUBLIC advapi32 pathcch)
+	-DXR_USE_GRAPHICS_API_D3D11 -DXR_USE_GRAPHICS_API_D3D12 -DXR_USE_GRAPHICS_API_OPENGL)
+	target_link_libraries(OpenXR PUBLIC advapi32 pathcch OpenGL32)
 else()
 	# TODO Turtle1331 should we include -DXR_USE_PLATFORM_(XLIB|XCB|WAYLAND) here?
 	target_compile_definitions(OpenXR PRIVATE -DXR_OS_LINUX

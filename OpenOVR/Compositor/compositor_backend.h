@@ -20,6 +20,5 @@
 #include "vkcompositor.h"
 #endif
 #ifdef SUPPORT_GL
-// TODO Turtle1331 uncomment
-// #include "glcompositor.h"
+#include "glcompositor.h"
 #endif
