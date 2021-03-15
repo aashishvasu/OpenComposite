@@ -70,6 +70,23 @@ static bool iequals(const std::string& a, const std::string& b)
 	return true;
 }
 
+// ASCII-only to-lower-case - for use with strings in maps, since steamvr is case-independent (In which
+// locale you might wonder? Good question).
+static std::string lowerStr(const std::string& in)
+{
+	std::string out;
+	out.reserve(in.size());
+
+	for (char c : in) {
+		if (c >= 'A' && c <= 'Z') {
+			c = (char)(c - 'A' + 'a');
+		}
+		out.push_back(c);
+	}
+
+	return out;
+}
+
 static void stringSplit(const std::string& str, std::vector<std::string>& items)
 {
 	items.clear();
@@ -159,7 +176,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	// Parse the actions
 	for (Json::Value item : root["actions"]) {
 		Action action = {};
-		action.fullName = item["name"].asString();
+		action.fullName = lowerStr(item["name"].asString());
 
 		// Split the full name by stroke ('/') characters
 		// They have four parts: the first is always 'actions', the second is the action set name, the third is
@@ -225,7 +242,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	for (Json::Value item : root["action_sets"]) {
 		ActionSet set = {};
 
-		set.fullName = item["name"].asString();
+		set.fullName = lowerStr(item["name"].asString());
 
 		// Split the full name by stroke ('/') characters
 		// They have four parts: the first is always 'actions', the second is the action set name, the third is
@@ -260,6 +277,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	for (auto& pair : actions) {
 		Action& action = *pair.second;
 
+		// TODO in the OpenVR samples, they don't declare their action set. Are they automatically created?!
 		auto item = actionSets.find(action.setName);
 		if (item == actionSets.end())
 			OOVR_ABORTF("Invalid action set '%s' for action '%s'", action.setName.c_str(), action.fullName.c_str());
@@ -436,8 +454,10 @@ void BaseInput::LoadBindingsSet(const std::string& bindingsPath, const struct In
 	if (!bindingsJson.isObject())
 		OOVR_ABORTF("Invalid bindings file %s, missing or invalid bindings object", bindingsPath.c_str());
 
-	for (const std::string& setFullName : bindingsJson.getMemberNames()) {
+	for (std::string setFullName : bindingsJson.getMemberNames()) {
 		const Json::Value setJson = bindingsJson[setFullName];
+
+		setFullName = lowerStr(setFullName);
 
 		std::string prefix = "/actions/";
 		if (strncmp(prefix.c_str(), setFullName.c_str(), prefix.size()) != 0) {
@@ -451,13 +471,13 @@ void BaseInput::LoadBindingsSet(const std::string& bindingsPath, const struct In
 		const ActionSet& set = *setIter->second;
 
 		for (const auto& srcJson : setJson["sources"]) {
-			std::string importBasePath = srcJson["path"].asString();
+			std::string importBasePath = lowerStr(srcJson["path"].asString());
 
 			const Json::Value& inputsJson = srcJson["inputs"];
 			for (const std::string& inputName : inputsJson.getMemberNames()) {
 				const Json::Value item = inputsJson[inputName];
 
-				std::string actionName = item["output"].asString();
+				std::string actionName = lowerStr(item["output"].asString());
 				auto actionIter = actions.find(actionName);
 				if (actionIter == actions.end())
 					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
@@ -600,7 +620,7 @@ EVRInputError BaseInput::GetActionSetHandle(const char* pchActionSetName, VRActi
 	}
 	std::string setName = pchActionSetName + prefix.size();
 
-	auto item = actionSets.find(setName);
+	auto item = actionSets.find(lowerStr(setName));
 	if (item == actionSets.end())
 		return VRInputError_NameNotFound;
 
@@ -612,7 +632,7 @@ EVRInputError BaseInput::GetActionHandle(const char* pchActionName, VRActionHand
 {
 	*pHandle = k_ulInvalidActionHandle;
 
-	auto item = actions.find(pchActionName);
+	auto item = actions.find(lowerStr(pchActionName));
 	if (item == actions.end())
 		return VRInputError_NameNotFound;
 
