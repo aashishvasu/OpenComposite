@@ -401,11 +401,14 @@ add_library(OCOVR SHARED
 )
 
 # Require that all symbols are defined on Linux - this is always done on Windows
+# Also on Linux, put all the static libraries in a group to avoid ordering problems
 if (NOT WIN32)
 	target_link_options(OCOVR PRIVATE -Wl,--no-undefined)
+	target_link_libraries(OCOVR PUBLIC -Wl,--start-group OCCore DrvOpenXR -Wl,--end-group)
+else ()
+	# On Windows this isn't a problem since the linker knows how to figure this stuff out
+	target_link_libraries(OCOVR OCCore DrvOpenXR)
 endif ()
-
-target_link_libraries(OCOVR OCCore DrvOpenXR)
 
 # If we're on Linux, compile everything as position-independent
 if (WIN32)
@@ -422,7 +425,7 @@ else ()
 	target_link_options(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
 
 	# Oh, and we need dlopen
-	target_link_libraries(OCOVR -ldl)
+	target_link_libraries(OCOVR PUBLIC -ldl)
 endif ()
 
 # Required because the compositor header needs the platform-specific structures enabled via defines
