@@ -67,7 +67,14 @@ else ()
 	# On Linux, use the system copy
 	find_library(Vulkan REQUIRED)
 	target_include_directories(Vulkan INTERFACE ${Vulkan_INCLUDE_DIR})
-	target_link_libraries(Vulkan INTERFACE ${Vulkan_LIBRARY})
+
+	# We have to include the vulkan library, since the linker is now set to fail if we use undefined symbols
+	# On Gentoo at least, it seems there's nothing in Vulkan_LIBRARIES
+	if ("${Vulkan_LIBRARIES}")
+		target_link_libraries(Vulkan INTERFACE ${Vulkan_LIBRARIES})
+	else ()
+		target_link_libraries(Vulkan INTERFACE -lvulkan)
+	endif ()
 
 	# Unfortunately we also need to link against the std::filesystem implementation
 	# FIXME this hardcodes the GNU C++ library, make it work with LLVM's libc++
@@ -155,7 +162,7 @@ add_library(DrvOpenXR STATIC
 )
 target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub)
 target_include_directories(DrvOpenXR PRIVATE DrvOpenXR)
-target_link_libraries(DrvOpenXR OpenVR OpenXR glm)
+target_link_libraries(DrvOpenXR PUBLIC OpenVR OpenXR glm)
 target_compile_definitions(DrvOpenXR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS} -D_CRT_SECURE_NO_WARNINGS)
 source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)
 
@@ -392,6 +399,12 @@ add_library(OCOVR SHARED
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
 )
+
+# Require that all symbols are defined on Linux - this is always done on Windows
+if (NOT WIN32)
+	target_link_options(OCOVR PRIVATE -Wl,--no-undefined)
+endif ()
+
 target_link_libraries(OCOVR OCCore DrvOpenXR)
 
 # If we're on Linux, compile everything as position-independent
@@ -407,6 +420,9 @@ endif ()
 if (WIN32)
 else ()
 	target_link_options(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
+
+	# Oh, and we need dlopen
+	target_link_libraries(OCOVR -ldl)
 endif ()
 
 # Required because the compositor header needs the platform-specific structures enabled via defines
