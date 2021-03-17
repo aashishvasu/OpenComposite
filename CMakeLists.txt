@@ -70,7 +70,7 @@ elseif (ANDROID)
 	target_include_directories(Vulkan INTERFACE libs/vulkan/Include)
 else ()
 	# On Linux, use the system copy
-	find_library(Vulkan REQUIRED)
+	find_library(Vulkan vulkan REQUIRED)
 	target_include_directories(Vulkan INTERFACE ${Vulkan_INCLUDE_DIR})
 
 	# We have to include the vulkan library, since the linker is now set to fail if we use undefined symbols
