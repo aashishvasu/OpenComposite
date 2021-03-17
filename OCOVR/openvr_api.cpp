@@ -25,6 +25,7 @@ using namespace std;
 // Binary-compatible openvr_api.dll implementation
 static bool running;
 static bool running_ovr; // are we in an apptype which uses LibOVR?
+static bool proton_hack = false; // Are we in the special proton status check mode?
 static uint32_t current_init_token = 1;
 static EVRApplicationType current_apptype;
 
@@ -221,6 +222,16 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 #endif
 	}
 
+	// HACK for Proton: it calls InitInternal then (if successful) calls ShutdownInternal - just to see if the runtime is available
+#ifndef _WIN32
+    OOVR_FALSE_ABORT(!proton_hack);
+	if (eApplicationType == VRApplication_Background) {
+		proton_hack = true;
+		// Don't mark us as running or anything, so VR_GetGenericInterface will still fail
+		return 0;
+	}
+#endif
+
 	if (eApplicationType == VRApplication_Utility) {
 		return current_init_token;
 	}
@@ -285,6 +296,13 @@ VR_INTERFACE const char *VR_CALLTYPE VR_RuntimePath() {
 }
 
 VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
+	if (proton_hack) {
+		proton_hack = false;
+		return;
+	}
+
+	OOVR_LOG("OpenComposite shutdown");
+
 	// Reset interfaces
 	// Do this first, while the OVR session is still available in case they
 	//  need to use it for cleanup.
