@@ -23,6 +23,7 @@
 #include <string>
 
 static XrBackend* currentBackend;
+static bool initialised = false;
 static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
 // The application must fill this out
@@ -32,8 +33,6 @@ extern "C" XrInstanceCreateInfoAndroidKHR* OpenComposite_Android_Create_Info = n
 
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
-	static bool initialised = false;
-
 	// TODO handle something like Unity which stops and restarts the instance
 	if (initialised) {
 		OOVR_ABORT("Cannot double-initialise OpenXR");
@@ -212,6 +211,9 @@ void DrvOpenXR::FullShutdown()
 		OOVR_FAILED_XR_ABORT(xrDestroyInstance(xr_instance));
 		xr_instance = XR_NULL_HANDLE;
 	}
+
+	initialised = false;
+	currentBackend = nullptr;
 }
 
 #ifdef SUPPORT_VK
