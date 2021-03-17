@@ -48,6 +48,21 @@ public:
 
 	// Set by XrBackend
 	XrTime nextPredictedFrameTime = 0;
+
+	/**
+	 * The latest time we've observed from the runtime. This will be set before a frame is submitted, so for
+	 * stuff that needs a time (but it probably doesn't matter much) this can be used.
+	 *
+	 * For stuff where the next frame time is ideal but some valid time is required, see GetBestTime().
+	 *
+	 * Note that due to poor implementation, this may lag a long way before nextPredictedFrameTime.
+	 */
+	XrTime latestTime = 0;
+
+	/**
+	 * Returns nextPredictedFrameTime if available, otherwise returns latestTime.
+	 */
+	XrTime GetBestTime();
 };
 
 XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin);

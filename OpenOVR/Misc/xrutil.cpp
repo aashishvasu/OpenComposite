@@ -68,6 +68,11 @@ XrSessionGlobals::XrSessionGlobals()
 	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &viewSpace));
 }
 
+XrTime XrSessionGlobals::GetBestTime()
+{
+	return nextPredictedFrameTime ? nextPredictedFrameTime : latestTime;
+}
+
 XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin)
 {
 	switch (origin) {

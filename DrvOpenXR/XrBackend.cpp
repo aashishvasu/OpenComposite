@@ -366,6 +366,8 @@ void XrBackend::PumpEvents()
 			OOVR_FALSE_ABORT(changed->session == xr_session);
 			sessionState = changed->state;
 
+			xr_gbl->latestTime = changed->time;
+
 			OOVR_LOGF("Switch to OpenXR state %d", sessionState);
 
 			switch (sessionState) {
@@ -406,6 +408,31 @@ void XrBackend::WaitForSessionActive()
 		const int durationMs = 250;
 
 		OOVR_LOGF("Session in non-active state %d, waiting %dms ...", sessionState, durationMs);
+
+#ifdef _WIN32
+		Sleep(durationMs);
+#else
+		struct timespec ts = { 0, durationMs * 1000000 };
+		nanosleep(&ts, &ts);
+#endif
+
+		PumpEvents();
+	}
+}
+
+void XrBackend::OnSessionCreated()
+{
+	sessionState = XR_SESSION_STATE_UNKNOWN;
+	sessionActive = false;
+
+	PumpEvents();
+
+	// Wait until we transition to the idle state.
+	// This sets the time, so OpenXR calls which use that will work correctly.
+	while (sessionState == XR_SESSION_STATE_UNKNOWN) {
+		const int durationMs = 250;
+
+		OOVR_LOGF("No session transition yet received, waiting %dms ...", durationMs);
 
 #ifdef _WIN32
 		Sleep(durationMs);

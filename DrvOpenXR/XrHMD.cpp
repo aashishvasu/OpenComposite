@@ -4,9 +4,9 @@
 
 #include "XrHMD.h"
 
+#include "../OpenOVR/Misc/xrmoreutils.h"
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/convert.h"
-#include "../OpenOVR/Misc/xrmoreutils.h"
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 {
@@ -23,7 +23,7 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
+	locateInfo.displayTime = xr_gbl->GetBestTime();
 	locateInfo.space = xr_gbl->floorSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
@@ -83,7 +83,7 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
+	locateInfo.displayTime = xr_gbl->GetBestTime();
 	locateInfo.space = xr_gbl->floorSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
@@ -129,7 +129,7 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 {
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
+	locateInfo.displayTime = xr_gbl->GetBestTime();
 	locateInfo.space = xr_gbl->viewSpace;
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };

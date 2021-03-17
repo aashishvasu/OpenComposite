@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 
+static XrBackend* currentBackend;
 static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
 IBackend* DrvOpenXR::CreateOpenXRBackend()
@@ -132,13 +133,15 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #endif
 	}
 
+	// Build a backend that works with OpenXR
+	currentBackend = new XrBackend();
+
 	// FIXME HACK HACK HACK hardcode D3D11 now, since xrCreateSession returns XR_ERROR_GRAPHICS_DEVICE_INVALID if
 	//  you don't pass it a graphics binding. Unfortunately we don't know what graphics API the game is using (much
 	//  less have a handle to it) until it submits it's first frame.
 	SetupSession(temporaryGraphics->GetGraphicsBinding());
 
-	// Build a backend that works with OpenXR
-	return new XrBackend();
+	return currentBackend;
 }
 
 void DrvOpenXR::SetupSession(const void* graphicsBinding)
@@ -163,6 +166,8 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 	BaseInput* input = GetUnsafeBaseInput();
 	if (input)
 		input->BindInputsForSession();
+
+	currentBackend->OnSessionCreated();
 }
 
 void DrvOpenXR::ShutdownSession()
