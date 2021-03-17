@@ -25,6 +25,11 @@
 static XrBackend* currentBackend;
 static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
+// The application must fill this out
+#if ANDROID
+extern "C" XrInstanceCreateInfoAndroidKHR* OpenComposite_Android_Create_Info = nullptr;
+#endif
+
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
 	static bool initialised = false;
@@ -75,6 +80,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #if defined(SUPPORT_GL)
 	extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
 #endif
+#if defined(ANDROID)
+	extensions.push_back(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME);
+#endif
 	extensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	// If the visibility mask is available use it, otherwise no big deal
@@ -95,6 +103,15 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	createInfo.enabledExtensionCount = extensions.size();
 	createInfo.enabledApiLayerNames = layers;
 	createInfo.enabledApiLayerCount = (sizeof(layers) / sizeof(const char*)) - 1; // Subtract the dummy value
+
+#if ANDROID
+	if (!OpenComposite_Android_Create_Info) {
+		OOVR_ABORT("Cannot create OpenXR instance - OpenComposite_Android_Create_Info not set");
+	}
+	XrInstanceCreateInfoAndroidKHR androidInfo = *OpenComposite_Android_Create_Info;
+	androidInfo.next = nullptr;
+	createInfo.next = &androidInfo;
+#endif
 
 	OOVR_FAILED_XR_ABORT(xrCreateInstance(&createInfo, &xr_instance));
 

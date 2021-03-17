@@ -7,10 +7,17 @@
 
 using namespace std;
 
+#ifdef ANDROID
+#include <android/log.h>
+#else
 static ofstream stream;
+#endif
 
 void oovr_log_raw(const char* file, long line, const char* func, const char* msg)
 {
+#ifdef ANDROID
+	__android_log_print(ANDROID_LOG_INFO, "OpenComposite", "%s:%d \t %s", func, line, msg);
+#else
 	if (!stream.is_open()) {
 		stream.open("openovr_log");
 	}
@@ -25,6 +32,7 @@ void oovr_log_raw(const char* file, long line, const char* func, const char* msg
 #endif
 
 	// Do we need to close the stream or something? What about multiple threads?
+#endif
 }
 
 void oovr_log_raw_format(const char* file, long line, const char* func, const char* msg, ...)
@@ -58,7 +66,11 @@ OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, c
 	oovr_log_raw(file, line, func, buff);
 
 	// Ensure everything gets written
+#ifdef ANDROID
+	__android_log_print(ANDROID_LOG_ERROR, "OpenComposite", "ERROR: %s:%d \t %s", func, line, buff);
+#else
 	stream << flush;
+#endif
 
 	OOVR_MESSAGE(buff, title);
 #ifdef _WIN32

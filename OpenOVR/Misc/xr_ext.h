@@ -25,6 +25,10 @@
 #define XR_USE_PLATFORM_WIN32
 #endif
 
+#ifdef ANDROID
+#include <jni.h>
+#endif
+
 #include <openxr/openxr_platform.h>
 
 #include <vector>

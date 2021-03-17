@@ -4,6 +4,8 @@
 
 #ifdef SUPPORT_VK
 
+#include <string>
+
 #include "TemporaryVk.h"
 
 // TODO move this to the VK compositor maybe?

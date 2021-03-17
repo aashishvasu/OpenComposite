@@ -19,6 +19,8 @@ set(XR_VALIDATION_FILE_NAME "" CACHE STRING "A filename to set XR_CORE_VALIDATIO
 # Support Vulkan on Linux instead of DirectX
 if (WIN32)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11 -DSUPPORT_VK -DSUPPORT_GL)
+elseif (ANDROID)
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK) # TODO implement GLES: SUPPORT_GLES
 else ()
 	#  (Putting XR_STUBBED(); here so this shows up if you search for it)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
@@ -63,6 +65,9 @@ if (WIN32)
 	endif ()
 
 	target_compile_definitions(Vulkan INTERFACE -DVK_USE_PLATFORM_WIN32_KHR)
+elseif (ANDROID)
+	# Let the system sort out the linkage, we'll just use our included headers
+	target_include_directories(Vulkan INTERFACE libs/vulkan/Include)
 else ()
 	# On Linux, use the system copy
 	find_library(Vulkan REQUIRED)
@@ -87,6 +92,10 @@ endif ()
 set(XrDir libs/openxr-sdk)
 set(XrDirLoader libs/openxr-sdk/src/loader)
 set(XrDirCommon libs/openxr-sdk/src/common)
+if (ANDROID)
+	# Whatever consumes this library must then link to an OpenXR loader, such as the Oculus one
+	add_library(OpenXR STATIC scripts/empty.c) # Doesn't do anything
+else ()
 add_library(OpenXR STATIC
 	${XrDirLoader}/api_layer_interface.cpp
 	${XrDirLoader}/api_layer_interface.hpp
@@ -114,6 +123,7 @@ add_library(OpenXR STATIC
 	${XrDir}/src/external/jsoncpp/src/lib_json/json_value.cpp
 	${XrDir}/src/external/jsoncpp/src/lib_json/json_writer.cpp
 )
+endif()
 target_include_directories(OpenXR PRIVATE ${XrDirCommon} ${XrDir}/src ${XrDir}/src/external/jsoncpp/include)
 target_include_directories(OpenXR PUBLIC ${XrDir}/include)
 # Platform-dependent flags
@@ -127,6 +137,10 @@ else()
 	-DXR_USE_GRAPHICS_API_OPENGL -DXR_USE_GRAPHICS_API_VULKAN)
 endif()
 target_link_libraries(OpenXR PUBLIC Vulkan)
+
+if (ANDROID)
+	target_compile_definitions(OpenXR PUBLIC -DXR_USE_PLATFORM_ANDROID)
+endif()
 
 # === glm ===
 # Since we used to use LibOVR's maths library, we need a replacement
@@ -392,13 +406,21 @@ if (WIN32)
 else ()
 	set(OCOVR_PLAT_SRC linux.cpp)
 endif ()
-add_library(OCOVR SHARED
+set(OCOVR_SRC_ALL
 	OCOVR/${OCOVR_PLAT_SRC}
 	OCOVR/openvr_api.cpp
 
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
 )
+
+# On Android, build a static library so it can be linked into the target application
+# This is required since we can't build the openxr loader on android.
+if (ANDROID)
+	add_library(OCOVR STATIC ${OCOVR_SRC_ALL})
+else ()
+	add_library(OCOVR SHARED ${OCOVR_SRC_ALL})
+endif ()
 
 # Require that all symbols are defined on Linux - this is always done on Windows
 # Also on Linux, put all the static libraries in a group to avoid ordering problems
