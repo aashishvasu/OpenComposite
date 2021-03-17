@@ -40,15 +40,15 @@ enum OOVR_VROverlayFlags {
 	// Indicates that the overlay should dim/brighten to show gamepad focus
 	VROverlayFlags_ShowGamepadFocus = 5,
 
-	// When in VROverlayInputMethod_Mouse you can optionally enable sending VRScroll_t 
+	// When in VROverlayInputMethod_Mouse you can optionally enable sending VRScroll_t
 	VROverlayFlags_SendVRScrollEvents = 6,
 	VROverlayFlags_SendVRTouchpadEvents = 7,
 
-	// If set this will render a vertical scroll wheel on the primary controller, 
+	// If set this will render a vertical scroll wheel on the primary controller,
 	//  only needed if not using VROverlayFlags_SendVRScrollEvents but you still want to represent a scroll wheel
 	VROverlayFlags_ShowTouchPadScrollWheel = 8,
 
-	// If this is set ownership and render access to the overlay are transferred 
+	// If this is set ownership and render access to the overlay are transferred
 	// to the new scene process on a call to IVRApplications::LaunchInternalProcess
 	VROverlayFlags_TransferOwnershipToInternalProcess = 9,
 
@@ -139,6 +139,15 @@ typedef union {
 struct OOVR_VROverlayIntersectionMaskPrimitive_t {
 	OOVR_EVROverlayIntersectionMaskPrimitiveType m_nPrimitiveType;
 	OOVR_VROverlayIntersectionMaskPrimitive_Data_t m_Primitive;
+};
+
+/** Defines the project used in an overlay that is using SetOverlayTransformProjection */
+struct OOVR_VROverlayProjection_t {
+	/** Tangent of the sides of the frustum */
+	float fLeft;
+	float fRight;
+	float fTop;
+	float fBottom;
 };
 
 // Avoid importing LibOVR just for this
@@ -364,6 +373,11 @@ public:
 
 	/** Gets cursor hotspot/transform for the specified overlay */
 	virtual EVROverlayError GetOverlayTransformCursor(VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvHotspot);
+
+	/** Sets the overlay as a projection overlay */
+	virtual EVROverlayError SetOverlayTransformProjection(VROverlayHandle_t ulOverlayHandle,
+		ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t* pmatTrackingOriginToOverlayTransform,
+		const OOVR_VROverlayProjection_t *pProjection, EVREye eEye);
 
 	/** Shows the VR overlay.  For dashboard overlays, only the Dashboard Manager is allowed to call this. */
 	virtual EVROverlayError ShowOverlay(VROverlayHandle_t ulOverlayHandle);

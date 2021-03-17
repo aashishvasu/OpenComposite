@@ -17,6 +17,7 @@ GEN_INTERFACE("Overlay", "021")
 GEN_INTERFACE("Overlay", "022")
 // Version 023 never appears in a public release
 GEN_INTERFACE("Overlay", "024")
+GEN_INTERFACE("Overlay", "025")
 
 #include "GVROverlay.gen.h"
 

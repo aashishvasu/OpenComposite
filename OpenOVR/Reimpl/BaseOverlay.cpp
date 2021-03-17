@@ -547,6 +547,12 @@ EVROverlayError BaseOverlay::SetOverlayTransformCursor(VROverlayHandle_t ulCurso
 EVROverlayError BaseOverlay::GetOverlayTransformCursor(VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvHotspot) {
 	STUBBED();
 }
+EVROverlayError BaseOverlay::SetOverlayTransformProjection(VROverlayHandle_t ulOverlayHandle,
+    ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t* pmatTrackingOriginToOverlayTransform,
+    const OOVR_VROverlayProjection_t* pProjection, EVREye eEye)
+{
+	STUBBED();
+}
 EVROverlayError BaseOverlay::ShowOverlay(VROverlayHandle_t ulOverlayHandle) {
 	USEH();
 	overlay->visible = true;
