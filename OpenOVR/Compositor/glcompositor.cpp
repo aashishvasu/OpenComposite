@@ -16,8 +16,8 @@ typedef void(APIENTRY PFNGLCOPYIMAGESUBDATAPROC)(GLuint srcName, GLenum srcTarge
     GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth);
 #endif
 
-static PFNGLGETTEXTURELEVELPARAMETERIVPROC* glGetTextureLevelParameteriv = nullptr;
-static PFNGLCOPYIMAGESUBDATAPROC* glCopyImageSubData = nullptr;
+static PFNGLGETTEXTURELEVELPARAMETERIVPROC glGetTextureLevelParameteriv = nullptr;
+static PFNGLCOPYIMAGESUBDATAPROC glCopyImageSubData = nullptr;
 
 GLCompositor::GLCompositor(GLuint initialTexture)
 {
