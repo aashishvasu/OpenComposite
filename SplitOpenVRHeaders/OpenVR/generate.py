@@ -129,6 +129,42 @@ def write(target, result, usingiface, interface_checker, out_dir):
 	filename = target + ".h"
 	outfile = out_dir + filename
 
+	# Process the file line-by-line to remove the include guard - we've added a pragma once
+	lines = result.split("\n")
+	hit_include_guard = False
+	hit_include_guard_end = False
+	for i in range(len(lines) - 1, 0, -1):
+		line = lines[i]
+
+		# Filter out the _OPENVR_API include guard, and _INCLUDE_ include guards
+		if "_OPENVR_API" in line or "_INCLUDE_" in line:
+			# Only count the ifdef itself that set the flag
+			if "#ifndef" in line:
+				assert not hit_include_guard
+				hit_include_guard = True
+
+			# And also keep track of whether we've found the end of the include guard
+			if "#endif" in line:
+				assert not hit_include_guard_end
+				hit_include_guard_end = True
+
+			del lines[i]
+			continue
+
+	# If we've got an unterminated include guard, remove the last ifdef:
+	if hit_include_guard and not hit_include_guard_end:
+		for i in range(len(lines) - 1, 0, -1):
+			line = lines[i]
+			if line == "#endif":
+				# Replace it with a comment, in case this ever does the wrong thing
+				lines[i] = "// Uncommented include guard ifdef was here, removed while splitting"
+				break
+			elif line:
+				# Stop on any non-empty lines
+				break
+
+	result = "\n".join(lines)
+
 	# Don't delete this file, since it gets overwritten
 	if filename in files_to_delete:
 		files_to_delete.remove(filename)
@@ -210,14 +246,13 @@ def split_header(headerfile, interface_checker=None, out_dir="interfaces/", impo
 
 		if niceline == "namespace vr":
 			outbuff.write("%%REPLACE%NS%START%%\n")
-		# Filter out the _OPENVR_API include guard, and _INCLUDE_ include guards
-		elif "_OPENVR_API" not in line and "_INCLUDE_" not in line:
+		else:
 			outbuff.write(line)
 
 	# Write the last interface
 	if targetfile:
 		write(targetfile, outbuff.getvalue(), usingiface, interface_checker, out_dir)
-	
+
 	return imports
 
 # Go through the list backwards, and not overwriting interfaces which
@@ -239,7 +274,7 @@ def driver_filter(fi, iface):
 	# print(fi)
 	if name in driver_files:
 		return "driver_" + fi
-	
+
 	return False
 
 for version in driver_versions[::-1]:
