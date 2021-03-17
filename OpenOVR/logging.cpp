@@ -18,6 +18,12 @@ void oovr_log_raw(const char* file, long line, const char* func, const char* msg
 	//stream << file << ":" << line << ":" << func << "\t- " << msg << endl;
 	stream << func << ":" << line << "\t- " << (msg ? msg : "NULL") << endl;
 
+	// Write it to stdout
+	// TODO on Windows, write it into the debug log
+#ifndef _WIN32
+	printf("[OC] %s:%ld \t %s\n", func, line, msg);
+#endif
+
 	// Do we need to close the stream or something? What about multiple threads?
 }
 
@@ -70,7 +76,7 @@ void oovr_message_raw(const char* message, const char* title)
 	MessageBoxA(nullptr, message, title, MB_OK);
 #else
 	// Print to stderr on Linux
-	cerr << "OOVR_MESSAGE: " << title << ": " << message;
+	cerr << "OOVR_MESSAGE: " << title << ": " << message << endl;
 #endif
 }
 
