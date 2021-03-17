@@ -4,6 +4,11 @@
 
 #include "XrBackend.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 #include <openxr/openxr_platform.h>
 
 // FIXME find a better way to send the OnPostFrame call?
@@ -147,10 +152,11 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 void XrBackend::WaitForTrackingData()
 {
+	// Make sure the OpenXR session is active before doing anything else
+	WaitForSessionActive();
+
 	XrFrameWaitInfo waitInfo{ XR_TYPE_FRAME_WAIT_INFO };
 	XrFrameState state{ XR_TYPE_FRAME_STATE };
-
-	// TODO start session
 
 	OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session, &waitInfo, &state));
 	xr_gbl->nextPredictedFrameTime = state.predictedDisplayTime;
@@ -234,6 +240,9 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	if (!renderingFrame)
 		return;
 	renderingFrame = false;
+
+	// Make sure the OpenXR session is active before doing anything else
+	WaitForSessionActive();
 
 	XrFrameEndInfo info{ XR_TYPE_FRAME_END_INFO };
 	info.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
@@ -359,7 +368,52 @@ void XrBackend::PumpEvents()
 
 			OOVR_LOGF("Switch to OpenXR state %d", sessionState);
 
-			// TODO if we get XR_SESSION_STATE_STOPPING, then end (but don't destroy!) the session
+			switch (sessionState) {
+			case XR_SESSION_STATE_READY: {
+				OOVR_LOG("Hit ready state, begin session...");
+				// Start the session running - this means we're supposed to start submitting frames
+				XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
+				beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+				OOVR_FAILED_XR_ABORT(xrBeginSession(xr_session, &beginInfo));
+				sessionActive = true;
+				break;
+			}
+			case XR_SESSION_STATE_STOPPING: {
+				// End the session. The session is still valid and we can still query some information
+				// from it, but we're not allowed to submit frames anymore. This is done when the engagement
+				// sensor detects the user has taken off the headset, for example.
+				OOVR_FAILED_XR_ABORT(xrEndSession(xr_session));
+				sessionActive = false;
+			}
+			default:
+				// suppress clion warning about missing branches
+				break;
+			}
 		}
+	}
+}
+
+void XrBackend::WaitForSessionActive()
+{
+	if (sessionActive)
+		return;
+
+	// Check if it's become active before this function was called, but after the last PumpEvents call
+	// If so the loop will be skipped.
+	PumpEvents();
+
+	while (!sessionActive) {
+		const int durationMs = 250;
+
+		OOVR_LOGF("Session in non-active state %d, waiting %dms ...", sessionState, durationMs);
+
+#ifdef _WIN32
+		Sleep(durationMs);
+#else
+		struct timespec ts = { 0, durationMs * 1000000 };
+		nanosleep(&ts, &ts);
+#endif
+
+		PumpEvents();
 	}
 }

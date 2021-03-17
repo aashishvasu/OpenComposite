@@ -28,6 +28,22 @@ public:
 	 */
 	XrSessionState sessionState = XR_SESSION_STATE_UNKNOWN;
 
+	/**
+	 * Whether the session is active or not. This cannot be determined from just the session state, since
+	 * we're allowed to send frames after calling xrBeginSession but before the event comes through. Same
+	 * with ending the session - we're allowed to submit frames after we receive the stopping event, until
+	 * we call xrEndSession.
+	 */
+	bool sessionActive = false;
+
+	/**
+	 * Wait until the session is active, and we're allowed to submit frames.
+	 *
+	 * This blocks checking frequently if the session isn't active, and must be used before
+	 * any of xrWaitFrames, xrBeginFrame or xrEndFrame are called.
+	 */
+	void WaitForSessionActive();
+
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
 	std::unique_ptr<XrController> hand_left = std::make_unique<XrController>(XrController::XCT_LEFT);

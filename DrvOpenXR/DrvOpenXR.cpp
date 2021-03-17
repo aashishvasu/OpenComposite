@@ -156,13 +156,6 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 	sessionInfo.next = graphicsBinding;
 	OOVR_FAILED_XR_ABORT(xrCreateSession(xr_instance, &sessionInfo, &xr_session));
 
-	// Start the session running
-	// FIXME we're not supposed to do this right away, and instead listen for an XrEventDataSessionStateChanged event
-	// FIXME this only works on the Oculus runtime due to an implementation detail, and isn't portable
-	XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
-	beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	OOVR_FAILED_XR_ABORT(xrBeginSession(xr_session, &beginInfo));
-
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
 	xr_gbl = new XrSessionGlobals();
 
@@ -179,8 +172,6 @@ void DrvOpenXR::ShutdownSession()
 
 	// Hey it turns out that xrDestroySession can be called whenever - how convenient
 	// OOVR_FAILED_XR_ABORT(xrRequestExitSession(xr_session));
-	// // Like with xrBeginSession, we're really not supposed to call this until xrRequestExitSession is done
-	// OOVR_FAILED_XR_ABORT(xrEndSession(xr_session));
 
 	OOVR_FAILED_XR_ABORT(xrDestroySession(xr_session));
 	xr_session = XR_NULL_HANDLE;
