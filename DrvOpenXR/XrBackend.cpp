@@ -257,6 +257,8 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	if (sys) {
 		sys->_OnPostFrame();
 	}
+
+	PumpEvents();
 }
 
 IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)
@@ -336,4 +338,28 @@ bool XrBackend::AreBoundsVisible()
 void XrBackend::ForceBoundsVisible(bool status)
 {
 	STUBBED();
+}
+
+void XrBackend::PumpEvents()
+{
+	// Poll for OpenXR events
+	// TODO filter by session?
+	while (true) {
+		XrEventDataBuffer ev = { XR_TYPE_EVENT_DATA_BUFFER };
+		XrResult res;
+		OOVR_FAILED_XR_ABORT(res = xrPollEvent(xr_instance, &ev));
+
+		if (res == XR_EVENT_UNAVAILABLE)
+			break;
+
+		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
+			auto* changed = (XrEventDataSessionStateChanged*)&ev;
+			OOVR_FALSE_ABORT(changed->session == xr_session);
+			sessionState = changed->state;
+
+			OOVR_LOGF("Switch to OpenXR state %d", sessionState);
+
+			// TODO if we get XR_SESSION_STATE_STOPPING, then end (but don't destroy!) the session
+		}
+	}
 }

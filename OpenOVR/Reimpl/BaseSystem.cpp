@@ -422,21 +422,7 @@ void BaseSystem::_OnPostFrame()
 	lastStatus = status;
 #endif
 
-	// Poll for OpenXR events
-	// TODO filter by session?
-	while (true) {
-		XrEventDataBuffer ev = { XR_TYPE_EVENT_DATA_BUFFER };
-		XrResult res;
-		OOVR_FAILED_XR_ABORT(res = xrPollEvent(xr_instance, &ev));
-
-		if (res == XR_EVENT_UNAVAILABLE)
-			break;
-
-		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
-			auto* changed = (XrEventDataSessionStateChanged*)&ev;
-			// TODO do something with the new state information
-		}
-	}
+	// Note: OpenXR event handling is now in XrBackend
 
 	// Create the input system, if the game hasn't already done so
 	// See the comment in GetControllerState for the rationale here

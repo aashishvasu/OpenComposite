@@ -18,6 +18,16 @@ public:
 	XrBackend();
 	~XrBackend() override;
 
+	/**
+	 * Process all the available OpenXR events.
+	 */
+	void PumpEvents();
+
+	/**
+	 * The current state of the OpenXR session, or XR_SESSION_STATE_UNKNOWN if there is no session.
+	 */
+	XrSessionState sessionState = XR_SESSION_STATE_UNKNOWN;
+
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
 	std::unique_ptr<XrController> hand_left = std::make_unique<XrController>(XrController::XCT_LEFT);
