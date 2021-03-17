@@ -167,5 +167,7 @@ def _get_global_context():
         return _global_ctx
 
     _global_ctx = dict()
-    libparse.read_context(_global_ctx, _proj_root / "SplitOpenVRHeaders/OpenVR/interfaces/vrtypes.h", "vr")
+    headers_dir = _proj_root / "SplitOpenVRHeaders/OpenVR/interfaces"
+    libparse.read_context(_global_ctx, headers_dir / "public_vrtypes.h", "vr")
+    libparse.read_context(_global_ctx, headers_dir / "vrtypes.h", "vr")
     return _global_ctx
