@@ -23,6 +23,10 @@
 
 #endif
 
+#ifdef SUPPORT_GLES
+#include <EGL/egl.h>
+#endif
+
 #ifdef SUPPORT_VK
 #include <vulkan/vulkan.h>
 #define XR_USE_GRAPHICS_API_VULKAN

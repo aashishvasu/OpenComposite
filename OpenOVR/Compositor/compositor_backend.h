@@ -22,3 +22,6 @@
 #ifdef SUPPORT_GL
 #include "glcompositor.h"
 #endif
+#ifdef SUPPORT_GLES
+#include "glescompositor.h"
+#endif

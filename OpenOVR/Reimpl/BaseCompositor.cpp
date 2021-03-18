@@ -183,10 +183,16 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 	Compositor* comp = nullptr;
 
 	switch (texture->eType) {
-#ifdef SUPPORT_GL
+#if defined(SUPPORT_GL)
 	case TextureType_OpenGL: {
 		// Double-cast to avoid a CLion warning
 		comp = new GLCompositor((GLuint)(intptr_t)texture->handle);
+		break;
+	}
+#elif defined(SUPPORT_GLES)
+	case TextureType_OpenGL: {
+		// Double-cast to avoid a CLion warning
+		comp = new GLESCompositor();
 		break;
 	}
 #endif

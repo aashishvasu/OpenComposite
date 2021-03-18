@@ -471,6 +471,10 @@ void VkCompositor::MapMemoryToApp(VkDeviceMemory& rtMem, VkDeviceMemory& appMem,
 	auto vkGetMemoryFdKHR = (PFN_vkGetMemoryFdKHR)vkGetDeviceProcAddr(target->device, "vkGetMemoryFdKHR");
 	OOVR_FALSE_ABORT(vkGetMemoryFdKHR != nullptr);
 
+	// Note: mapping memory when running natively on the Quest 2 makes this always return -1 which
+	// is VK_ERROR_OUT_OF_HOST_MEMORY but I suspect it's lying and there's some other reason. If we
+	// do end up needing Vulkan on Android, we can probably just make the game use our Vulkan instance
+	// and do away with the shared memory thing.
 	VkMemoryGetFdInfoKHR getHandle = { VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR };
 	getHandle.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
 	getHandle.memory = rtMem;

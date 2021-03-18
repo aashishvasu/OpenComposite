@@ -9,6 +9,10 @@
 #include <Windows.h>
 #endif
 
+#if defined(SUPPORT_GL) && !defined(_WIN32)
+#include <GL/glx.h>
+#endif
+
 #include <openxr/openxr_platform.h>
 
 // FIXME find a better way to send the OnPostFrame call?

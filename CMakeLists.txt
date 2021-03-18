@@ -20,7 +20,7 @@ set(XR_VALIDATION_FILE_NAME "" CACHE STRING "A filename to set XR_CORE_VALIDATIO
 if (WIN32)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11 -DSUPPORT_VK -DSUPPORT_GL)
 elseif (ANDROID)
-	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK) # TODO implement GLES: SUPPORT_GLES
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GLES)
 else ()
 	#  (Putting XR_STUBBED(); here so this shows up if you search for it)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
@@ -139,7 +139,7 @@ endif()
 target_link_libraries(OpenXR PUBLIC Vulkan)
 
 if (ANDROID)
-	target_compile_definitions(OpenXR PUBLIC -DXR_USE_PLATFORM_ANDROID)
+	target_compile_definitions(OpenXR PUBLIC -DXR_USE_PLATFORM_ANDROID -DXR_USE_GRAPHICS_API_OPENGL_ES)
 endif()
 
 # === glm ===
@@ -207,6 +207,7 @@ add_library(OCCore STATIC
 	OpenOVR/Compositor/dx10compositor.cpp
 	OpenOVR/Compositor/dx12compositor.cpp
 	OpenOVR/Compositor/glcompositor.cpp
+	OpenOVR/Compositor/glescompositor.cpp
 	OpenOVR/Compositor/vkcompositor.cpp
 	OpenOVR/convert.cpp
 	OpenOVR/logging.cpp
