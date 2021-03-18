@@ -11,8 +11,8 @@
 
 // On Linux these seem to already be defined
 #ifdef _WIN32
-typedef void(APIENTRY PFNGLGETTEXTURELEVELPARAMETERIVPROC)(GLuint texture, GLint level, GLenum pname, GLint* params);
-typedef void(APIENTRY PFNGLCOPYIMAGESUBDATAPROC)(GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ,
+typedef void(APIENTRY* PFNGLGETTEXTURELEVELPARAMETERIVPROC)(GLuint texture, GLint level, GLenum pname, GLint* params);
+typedef void(APIENTRY* PFNGLCOPYIMAGESUBDATAPROC)(GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ,
     GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth);
 #endif
 
@@ -23,8 +23,8 @@ GLCompositor::GLCompositor(GLuint initialTexture)
 {
 	if (!glGetTextureLevelParameteriv) {
 #if _WIN32
-		glGetTextureLevelParameteriv = (PFNGLGETTEXTURELEVELPARAMETERIVPROC*)wglGetProcAddress("glGetTextureLevelParameteriv");
-		glCopyImageSubData = (PFNGLCOPYIMAGESUBDATAPROC*)wglGetProcAddress("glCopyImageSubData");
+		glGetTextureLevelParameteriv = (PFNGLGETTEXTURELEVELPARAMETERIVPROC)wglGetProcAddress("glGetTextureLevelParameteriv");
+		glCopyImageSubData = (PFNGLCOPYIMAGESUBDATAPROC)wglGetProcAddress("glCopyImageSubData");
 #else
 		LINUX_STUBBED();
 #endif
