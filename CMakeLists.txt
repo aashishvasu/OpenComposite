@@ -386,8 +386,12 @@ target_include_directories(OCCore PUBLIC OpenOVR) # TODO make this private and p
 target_include_directories(OCCore PRIVATE BundledLibs)
 target_compile_definitions(OCCore PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
 
-find_package(OpenGL REQUIRED) # for glGetError()
-target_link_libraries(OCCore OpenVR OpenXR Vulkan glm ${OPENGL_LIBRARIES})
+target_link_libraries(OCCore OpenVR OpenXR Vulkan glm)
+
+if (NOT WIN32 AND NOT ANDROID)
+	find_package(OpenGL REQUIRED) # for glGetError()
+	target_link_libraries(OCCore ${OPENGL_LIBRARIES})
+endif ()
 
 # Set up precompiled headers for OCCore
 if (WIN32)
