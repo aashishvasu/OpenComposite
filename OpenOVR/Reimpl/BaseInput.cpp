@@ -17,16 +17,24 @@
 
 using namespace vr;
 
+// On Android, the application must supply a function to load the contents of a file
+#ifdef ANDROID
+extern std::string (*OpenComposite_Android_Load_Input_File)(const char* path);
+#endif
+
 // This is a duplicate from BaseClientCore.cpp
 static bool ReadJson(const std::wstring& path, Json::Value& result)
 {
 #ifndef _WIN32
 	typedef std::codecvt_utf8<wchar_t> convert_type;
 	std::wstring_convert<convert_type, wchar_t> converter;
-	std::ifstream in(converter.to_bytes(path), std::ios::binary);
+	const std::string real_path = converter.to_bytes(path);
 #else
-	std::ifstream in(path, std::ios::binary);
+	const std::wstring& real_path = path;
 #endif
+
+#ifndef ANDROID
+	std::ifstream in(real_path, std::ios::binary);
 	if (in) {
 		std::stringstream contents;
 		contents << in.rdbuf();
@@ -36,6 +44,12 @@ static bool ReadJson(const std::wstring& path, Json::Value& result)
 		result = Json::Value(Json::ValueType::objectValue);
 		return false;
 	}
+#else
+	std::string contents = OpenComposite_Android_Load_Input_File(real_path.c_str());
+	Json::Reader reader;
+	reader.parse(contents, result, false);
+	return true;
+#endif
 }
 
 // Convert a UTF-8 string to a UTF-16 (wide) string
