@@ -79,6 +79,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #if defined(SUPPORT_GL)
 	extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
 #endif
+#if defined(SUPPORT_GLES)
+	extensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
+#endif
 #if defined(ANDROID)
 	extensions.push_back(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME);
 #endif

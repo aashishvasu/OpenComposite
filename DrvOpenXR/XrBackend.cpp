@@ -15,6 +15,13 @@
 
 #include <openxr/openxr_platform.h>
 
+// On Android, the app has to pass the OpenGLES setup data through
+#ifdef ANDROID
+extern "C" {
+extern XrGraphicsBindingOpenGLESAndroidKHR* OpenComposite_Android_GLES_Binding_Info;
+}
+#endif
+
 // FIXME find a better way to send the OnPostFrame call?
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
@@ -162,6 +169,22 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			DrvOpenXR::SetupSession(&binding);
 #endif
 			// End of platform-specific code
+
+#elif defined(SUPPORT_GLES)
+			// The spec requires that we call this before starting a session using OpenGL. We could actually handle this properly
+			// on android since the app has to be modified to work with us, but for now don't bother.
+			XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR };
+			OOVR_FAILED_XR_ABORT(xr_ext->xrGetOpenGLESGraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements));
+
+			if (!OpenComposite_Android_GLES_Binding_Info)
+				OOVR_ABORT("App is trying to use GLES, but OpenComposite_Android_GLES_Binding_Info global is not set.\n"
+				           "Please ensure this is set by the application.");
+
+			XrGraphicsBindingOpenGLESAndroidKHR binding = *OpenComposite_Android_GLES_Binding_Info;
+			OOVR_FALSE_ABORT(binding.type == XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR);
+			binding.next = nullptr;
+
+			DrvOpenXR::SetupSession(&binding);
 
 #else
 			OOVR_ABORT("Application is trying to submit an OpenGL texture, which OpenComposite supports but is disabled in this build");

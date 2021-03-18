@@ -46,6 +46,10 @@ XrExt::XrExt()
 	XR_BIND(xrGetOpenGLGraphicsRequirementsKHR);
 #endif
 
+#ifdef SUPPORT_GLES
+	XR_BIND(xrGetOpenGLESGraphicsRequirementsKHR);
+#endif
+
 #undef XR_BIND
 }
 

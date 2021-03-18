@@ -71,6 +71,9 @@ public:
 #ifdef SUPPORT_GL
 	PFN_xrGetOpenGLGraphicsRequirementsKHR xrGetOpenGLGraphicsRequirementsKHR = nullptr;
 #endif
+#ifdef SUPPORT_GLES
+	PFN_xrGetOpenGLESGraphicsRequirementsKHR xrGetOpenGLESGraphicsRequirementsKHR = nullptr;
+#endif
 
 	PFN_xrGetVisibilityMaskKHR xrGetVisibilityMaskKHR = nullptr;
 };
