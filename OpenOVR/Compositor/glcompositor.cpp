@@ -19,15 +19,20 @@ typedef void(APIENTRY* PFNGLCOPYIMAGESUBDATAPROC)(GLuint srcName, GLenum srcTarg
 static PFNGLGETTEXTURELEVELPARAMETERIVPROC glGetTextureLevelParameteriv = nullptr;
 static PFNGLCOPYIMAGESUBDATAPROC glCopyImageSubData = nullptr;
 
+static void* getGlProcAddr(const char* name)
+{
+#ifdef _WIN32
+	return (void*)wglGetProcAddress(name);
+#else
+	return (void*)glXGetProcAddress((const GLubyte*)name);
+#endif
+}
+
 GLCompositor::GLCompositor(GLuint initialTexture)
 {
 	if (!glGetTextureLevelParameteriv) {
-#if _WIN32
-		glGetTextureLevelParameteriv = (PFNGLGETTEXTURELEVELPARAMETERIVPROC)wglGetProcAddress("glGetTextureLevelParameteriv");
-		glCopyImageSubData = (PFNGLCOPYIMAGESUBDATAPROC)wglGetProcAddress("glCopyImageSubData");
-#else
-		LINUX_STUBBED();
-#endif
+		glGetTextureLevelParameteriv = (PFNGLGETTEXTURELEVELPARAMETERIVPROC)getGlProcAddr("glGetTextureLevelParameteriv");
+		glCopyImageSubData = (PFNGLCOPYIMAGESUBDATAPROC)getGlProcAddr("glCopyImageSubData");
 		if (!glGetTextureLevelParameteriv)
 			OOVR_ABORT("Could not get function glGetTextureLevelParameteriv");
 

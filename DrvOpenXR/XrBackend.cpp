@@ -127,7 +127,35 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 			DrvOpenXR::SetupSession(&binding);
 #else
-			OOVR_ABORT("TODO port OpenGL setup to Linux");
+			// Only support xlib for now (same as Monado)
+			// TODO wayland
+			// TODO xcb
+
+			// Unfortunately we're in a bit of a sticky situation here. We can't (as far as I can tell) get
+			// the GLXFBConfig from the context or drawable, and the display might give us multiple, so
+			// we can't pass it onto the runtime. If we have it we can use it to find the visual info, but
+			// otherwise we can't find that either.
+			//    GLXFBConfig config = some_magic_function();
+			//    XVisualInfo* vi = glXGetVisualFromFBConfig(glXGetCurrentDisplay(), config);
+			//    uint32_t visualid = vi->visualid;
+			// So... FIXME FIXME FIXME HAAAAACK! Just pass in invalid values and hope the runtime doesn't notice!
+			// Monado doesn't (and hopefully in the future, won't) use these values, so it ought to work for now.
+			//
+			// Note: on re-reading the spec it does appear there's no requirement that the config is the one used
+			//  to create the context. That seems a bit odd so we could be technically compliant by just grabbing
+			//  the first one, but it's probably better (IMO) to pass null and make the potential future issue
+			//  obvious rather than wasting lots of time of the poor person who has to track it down.
+			GLXFBConfig config = nullptr;
+			uint32_t visualid = 0xffffffff;
+
+			XrGraphicsBindingOpenGLXlibKHR binding = { XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR };
+			binding.xDisplay = glXGetCurrentDisplay();
+			binding.visualid = visualid;
+			binding.glxFBConfig = config;
+			binding.glxDrawable = glXGetCurrentDrawable();
+			binding.glxContext = glXGetCurrentContext();
+
+			DrvOpenXR::SetupSession(&binding);
 #endif
 			// End of platform-specific code
 

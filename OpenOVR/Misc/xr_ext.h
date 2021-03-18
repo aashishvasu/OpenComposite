@@ -13,6 +13,14 @@
 #ifdef SUPPORT_GL
 #include <GL/gl.h>
 #define XR_USE_GRAPHICS_API_OPENGL
+
+#ifndef _WIN32
+// Currently just support XLIB
+#define XR_USE_PLATFORM_XLIB
+#include <GL/glx.h>
+//#define XR_USE_PLATFORM_XCB
+#endif
+
 #endif
 
 #ifdef SUPPORT_VK
