@@ -22,7 +22,6 @@ if (WIN32)
 elseif (ANDROID)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GLES)
 else ()
-	#  (Putting XR_STUBBED(); here so this shows up if you search for it)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
 endif()
 
