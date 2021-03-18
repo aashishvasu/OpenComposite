@@ -31,7 +31,14 @@ void GLESCompositor::Invoke(const vr::Texture_t* texture)
 	// We don't have to pass in currentIndex since it uses the oldest acquired-but-not-waited-on
 	// image, so we should be careful with concurrency here.
 	XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-	OOVR_FAILED_XR_ABORT(xrWaitSwapchainImage(chain, &waitInfo));
+
+	// If the compositor is being slow, keep trying until we get through. We're not allowed to just
+	// fail since the image has been acquired.
+	// TODO make this stuff common across compositors, so this logic applies to all of them.
+	XrResult res;
+	do {
+		OOVR_FAILED_XR_ABORT(res = xrWaitSwapchainImage(chain, &waitInfo));
+	} while (res == XR_TIMEOUT_EXPIRED);
 
 	// Actually copy the image across
 	GLuint dst = images.at(currentIndex);
@@ -120,6 +127,8 @@ void GLESCompositor::CheckCreateSwapChain(GLuint image)
 	if (memcmp(&desc, &createInfo, sizeof(desc)) == 0) {
 		return;
 	}
+
+	OOVR_LOGF("Target modified, recreating swapchain");
 
 	// Make sure our format is supported
 	uint32_t formatCount;
