@@ -18,9 +18,7 @@
 using namespace vr;
 
 // On Android, the application must supply a function to load the contents of a file
-#ifdef ANDROID
-extern std::string (*OpenComposite_Android_Load_Input_File)(const char* path);
-#endif
+#include "Misc/android_api.h"
 
 // This is a duplicate from BaseClientCore.cpp
 static bool ReadJson(const std::wstring& path, Json::Value& result)

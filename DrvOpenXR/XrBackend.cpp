@@ -16,11 +16,7 @@
 #include <openxr/openxr_platform.h>
 
 // On Android, the app has to pass the OpenGLES setup data through
-#ifdef ANDROID
-extern "C" {
-extern XrGraphicsBindingOpenGLESAndroidKHR* OpenComposite_Android_GLES_Binding_Info;
-}
-#endif
+#include "../OpenOVR/Misc/android_api.h"
 
 // FIXME find a better way to send the OnPostFrame call?
 #include "../OpenOVR/Reimpl/BaseSystem.h"

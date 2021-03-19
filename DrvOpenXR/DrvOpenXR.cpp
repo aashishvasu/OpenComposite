@@ -7,6 +7,7 @@
 #include "../OpenOVR/Misc/xr_ext.h"
 #include "../OpenOVR/Reimpl/BaseInput.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
+#include "../OpenOVR/Misc/android_api.h"
 #include "XrBackend.h"
 #include "tmp_gfx/TemporaryGraphics.h"
 
@@ -25,11 +26,6 @@
 static XrBackend* currentBackend;
 static bool initialised = false;
 static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
-
-// The application must fill this out
-#if ANDROID
-extern "C" XrInstanceCreateInfoAndroidKHR* OpenComposite_Android_Create_Info = nullptr;
-#endif
 
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
