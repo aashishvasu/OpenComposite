@@ -41,7 +41,7 @@ public:
     fi.write("\n")
 
     for func in iface.functions:
-        fi.write(f"\t{func.return_type} {func.name}({func.args_str()});\n")
+        fi.write(f"\t{func.return_type} {func.name}({func.args_str()}) override;\n")
 
     fi.write("};\n")
 
