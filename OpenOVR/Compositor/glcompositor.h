@@ -17,6 +17,13 @@ public:
 private:
 	void CheckCreateSwapChain(GLuint image);
 
+	/**
+	 * 'Normalise' an OpenGL internalFormat. glCopyImageSubData doesn't need exactly the same
+	 * types, so if the game uses a format the runtime doesn't perfectly support we can cover
+	 * up using this. For now we just convert base formats (eg GL_RGBA) to sized formats (eg GL_RGBA8).
+	 */
+	static GLuint NormaliseFormat(GLuint format);
+
 	GLuint fboId = 0;
 
 	std::vector<GLuint> images;

@@ -130,10 +130,13 @@ void GLCompositor::InvokeCubemap(const vr::Texture_t* textures)
 
 void GLCompositor::CheckCreateSwapChain(GLuint image)
 {
-	GLsizei width, height, format;
+	GLsizei width, height, rawFormat;
 	glGetTextureLevelParameteriv(image, 0, GL_TEXTURE_WIDTH, &width);
 	glGetTextureLevelParameteriv(image, 0, GL_TEXTURE_HEIGHT, &height);
-	glGetTextureLevelParameteriv(image, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
+	glGetTextureLevelParameteriv(image, 0, GL_TEXTURE_INTERNAL_FORMAT, &rawFormat);
+
+	// See the comment for NormaliseFormat as to why we're doing this
+	GLuint format = NormaliseFormat(rawFormat);
 
 	// Build out the info describing the swapchain we need
 	XrSwapchainCreateInfo desc = { XR_TYPE_SWAPCHAIN_CREATE_INFO };
@@ -183,6 +186,16 @@ void GLCompositor::CheckCreateSwapChain(GLuint image)
 	images.clear();
 	for (const XrSwapchainImageOpenGLKHR& img : handles) {
 		images.push_back(img.image);
+	}
+}
+
+GLuint GLCompositor::NormaliseFormat(GLuint format)
+{
+	switch (format) {
+	case GL_RGBA:
+		return GL_RGBA8;
+	default:
+		return format;
 	}
 }
 
