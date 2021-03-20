@@ -37,14 +37,6 @@ public:
 	bool sessionActive = false;
 
 	/**
-	 * Wait until the session is active, and we're allowed to submit frames.
-	 *
-	 * This blocks checking frequently if the session isn't active, and must be used before
-	 * any of xrWaitFrames, xrBeginFrame or xrEndFrame are called.
-	 */
-	void WaitForSessionActive();
-
-	/**
 	 * To be called after xrCreateSession. Should only be used by DrvOpenXR.
 	 */
 	void OnSessionCreated();

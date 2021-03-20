@@ -203,8 +203,11 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 void XrBackend::WaitForTrackingData()
 {
-	// Make sure the OpenXR session is active before doing anything else
-	WaitForSessionActive();
+	// Make sure the OpenXR session is active before doing anything else, and if not then skip
+	if (!sessionActive) {
+		renderingFrame = false;
+		return;
+	}
 
 	XrFrameWaitInfo waitInfo{ XR_TYPE_FRAME_WAIT_INFO };
 	XrFrameState state{ XR_TYPE_FRAME_STATE };
@@ -293,7 +296,10 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	renderingFrame = false;
 
 	// Make sure the OpenXR session is active before doing anything else
-	WaitForSessionActive();
+	// Note that if the session becomes ready after WaitGetTrackingPoses was called, then
+	// renderingFrame will still be false so this won't be a problem in that case.
+	if (!sessionActive)
+		return;
 
 	XrFrameEndInfo info{ XR_TYPE_FRAME_END_INFO };
 	info.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
@@ -443,31 +449,6 @@ void XrBackend::PumpEvents()
 				break;
 			}
 		}
-	}
-}
-
-void XrBackend::WaitForSessionActive()
-{
-	if (sessionActive)
-		return;
-
-	// Check if it's become active before this function was called, but after the last PumpEvents call
-	// If so the loop will be skipped.
-	PumpEvents();
-
-	while (!sessionActive) {
-		const int durationMs = 250;
-
-		OOVR_LOGF("Session in non-active state %d, waiting %dms ...", sessionState, durationMs);
-
-#ifdef _WIN32
-		Sleep(durationMs);
-#else
-		struct timespec ts = { 0, durationMs * 1000000 };
-		nanosleep(&ts, &ts);
-#endif
-
-		PumpEvents();
 	}
 }
 
