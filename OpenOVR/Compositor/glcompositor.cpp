@@ -1,10 +1,19 @@
 #include "stdafx.h"
 
-#ifdef SUPPORT_GL
-
+#if defined(SUPPORT_GL) || defined(SUPPORT_GLES)
 #include "glcompositor.h"
+#endif
 
+// Import GL or GLES
+#ifdef SUPPORT_GL
 #include <GL/gl.h>
+#endif
+#ifdef SUPPORT_GLES
+#include <GLES3/gl32.h>
+#endif
+
+// OpenGL compositor
+#ifdef SUPPORT_GL
 
 #include <algorithm>
 #include <string>
@@ -41,7 +50,27 @@ GLCompositor::GLCompositor(GLuint initialTexture)
 	}
 }
 
-void GLCompositor::Invoke(const vr::Texture_t* texture)
+void GLCompositor::ReadSwapchainImages()
+{
+	// Enumerate all the swapchain images
+	uint32_t imageCount;
+	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, 0, &imageCount, nullptr));
+	auto handles = std::vector<XrSwapchainImageOpenGLKHR>(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_KHR });
+	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)handles.data()));
+
+	images.clear();
+	for (const XrSwapchainImageOpenGLKHR& img : handles) {
+		images.push_back(img.image);
+	}
+}
+
+#endif
+
+// BaseGLCompositor
+
+#if defined(SUPPORT_GL) || defined(SUPPORT_GLES)
+
+void GLBaseCompositor::Invoke(const vr::Texture_t* texture)
 {
 	// Clear any pre-existing OpenGL errors
 	while (glGetError() != GL_NO_ERROR) {
@@ -61,7 +90,14 @@ void GLCompositor::Invoke(const vr::Texture_t* texture)
 	// We don't have to pass in currentIndex since it uses the oldest acquired-but-not-waited-on
 	// image, so we should be careful with concurrency here.
 	XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-	OOVR_FAILED_XR_ABORT(xrWaitSwapchainImage(chain, &waitInfo));
+
+	// If the compositor is being slow, keep trying until we get through. We're not allowed to just
+	// fail since the image has been acquired.
+	// TODO make this stuff common across compositors, so this logic applies to all of them.
+	XrResult res;
+	do {
+		OOVR_FAILED_XR_ABORT(res = xrWaitSwapchainImage(chain, &waitInfo));
+	} while (res == XR_TIMEOUT_EXPIRED);
 
 	// Actually copy the image across
 	GLuint dst = images.at(currentIndex);
@@ -82,7 +118,7 @@ void GLCompositor::Invoke(const vr::Texture_t* texture)
 	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo));
 }
 
-void GLCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds,
+void GLBaseCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds,
     vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
 {
 	// Copy the texture over
@@ -123,17 +159,18 @@ void GLCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VR
 	}
 }
 
-void GLCompositor::InvokeCubemap(const vr::Texture_t* textures)
+void GLBaseCompositor::InvokeCubemap(const vr::Texture_t* textures)
 {
 	OOVR_ABORT("GLCompositor::InvokeCubemap: Not yet supported!");
 }
 
-void GLCompositor::CheckCreateSwapChain(GLuint image)
+void GLBaseCompositor::CheckCreateSwapChain(GLuint image)
 {
 	GLsizei width, height, rawFormat;
-	glGetTextureLevelParameteriv(image, 0, GL_TEXTURE_WIDTH, &width);
-	glGetTextureLevelParameteriv(image, 0, GL_TEXTURE_HEIGHT, &height);
-	glGetTextureLevelParameteriv(image, 0, GL_TEXTURE_INTERNAL_FORMAT, &rawFormat);
+	glBindTexture(GL_TEXTURE_2D, image); // Sadly even GLES3.2 doesn't have glGetTextureLevelParameteriv which takes the image directly
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &rawFormat);
 
 	// See the comment for NormaliseFormat as to why we're doing this
 	GLuint format = NormaliseFormat(rawFormat);
@@ -178,18 +215,10 @@ void GLCompositor::CheckCreateSwapChain(GLuint image)
 	OOVR_FAILED_XR_ABORT(xrCreateSwapchain(xr_session, &desc, &chain));
 
 	// Enumerate all the swapchain images
-	uint32_t imageCount;
-	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, 0, &imageCount, nullptr));
-	auto handles = std::vector<XrSwapchainImageOpenGLKHR>(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_KHR });
-	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)handles.data()));
-
-	images.clear();
-	for (const XrSwapchainImageOpenGLKHR& img : handles) {
-		images.push_back(img.image);
-	}
+	ReadSwapchainImages();
 }
 
-GLuint GLCompositor::NormaliseFormat(GLuint format)
+GLuint GLBaseCompositor::NormaliseFormat(GLuint format)
 {
 	switch (format) {
 	case GL_RGBA:

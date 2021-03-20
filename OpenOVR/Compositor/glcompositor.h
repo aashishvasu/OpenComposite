@@ -2,9 +2,9 @@
 
 #include "compositor.h"
 
-class GLCompositor : public Compositor {
+class GLBaseCompositor : public Compositor {
 public:
-	explicit GLCompositor(GLuint initialTexture);
+	explicit GLBaseCompositor() = default;
 
 	// Override
 	void Invoke(const vr::Texture_t* texture) override;
@@ -14,7 +14,12 @@ public:
 
 	void InvokeCubemap(const vr::Texture_t* textures) override;
 
-private:
+protected:
+	/**
+	 * Read the runtime-created swapchain names to [images] using the GL or GLES OpenXR structs.
+	 */
+	virtual void ReadSwapchainImages() = 0;
+
 	void CheckCreateSwapChain(GLuint image);
 
 	/**
@@ -28,3 +33,13 @@ private:
 
 	std::vector<GLuint> images;
 };
+
+#ifdef SUPPORT_GL
+class GLCompositor : public GLBaseCompositor {
+public:
+	explicit GLCompositor(GLuint initialTexture);
+
+protected:
+	void ReadSwapchainImages() override;
+};
+#endif

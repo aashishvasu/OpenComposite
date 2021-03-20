@@ -19,7 +19,7 @@
 #ifdef SUPPORT_VK
 #include "vkcompositor.h"
 #endif
-#ifdef SUPPORT_GL
+#if defined(SUPPORT_GL) || defined(SUPPORT_GLES)
 #include "glcompositor.h"
 #endif
 #ifdef SUPPORT_GLES
