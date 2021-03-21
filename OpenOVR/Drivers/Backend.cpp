@@ -131,6 +131,11 @@ void BackendManager::ForceBoundsVisible(bool status){
 	return backend->ForceBoundsVisible(status);
 }
 
+void BackendManager::PumpEvents()
+{
+	return backend->PumpEvents();
+}
+
 // ITrackedDevice
 bool ITrackedDevice::GetControllerState(vr::VRControllerState_t* state)
 {

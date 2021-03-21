@@ -10,4 +10,9 @@ extern XrGraphicsBindingOpenGLESAndroidKHR* OpenComposite_Android_GLES_Binding_I
 
 extern std::string (*OpenComposite_Android_Load_Input_File)(const char* path);
 
+/**
+ * Poll for OpenXR events. Call this regularly while sleeping.
+ */
+extern "C" void OpenComposite_Android_EventPoll();
+
 #endif

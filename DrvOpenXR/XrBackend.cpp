@@ -16,7 +16,9 @@
 #include <openxr/openxr_platform.h>
 
 // On Android, the app has to pass the OpenGLES setup data through
+#ifdef ANDROID
 #include "../OpenOVR/Misc/android_api.h"
+#endif
 
 // FIXME find a better way to send the OnPostFrame call?
 #include "../OpenOVR/Reimpl/BaseSystem.h"
@@ -291,6 +293,10 @@ void XrBackend::StoreEyeTexture(
 
 void XrBackend::SubmitFrames(bool showSkybox)
 {
+	// Always pump events, even if the session isn't active - this is what makes the session active
+	// in the first place.
+	PumpEvents();
+
 	if (!renderingFrame)
 		return;
 	renderingFrame = false;
@@ -323,8 +329,6 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	if (sys) {
 		sys->_OnPostFrame();
 	}
-
-	PumpEvents();
 }
 
 IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)
@@ -443,6 +447,7 @@ void XrBackend::PumpEvents()
 				// sensor detects the user has taken off the headset, for example.
 				OOVR_FAILED_XR_ABORT(xrEndSession(xr_session));
 				sessionActive = false;
+				renderingFrame = false;
 			}
 			default:
 				// suppress clion warning about missing branches
@@ -476,3 +481,11 @@ void XrBackend::OnSessionCreated()
 		PumpEvents();
 	}
 }
+
+// On Android, add an event poll function for use while sleeping
+#ifdef ANDROID
+void OpenComposite_Android_EventPoll()
+{
+	BackendManager::Instance().PumpEvents();
+}
+#endif

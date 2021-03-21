@@ -189,6 +189,9 @@ PREPEND bool AreBoundsVisible() APPEND; \
 /** Set the boundaries to be visible or not (although setting this to false shouldn't affect \
  * what happens if the player moves their hands too close and shows it that way) **/ \
 PREPEND void ForceBoundsVisible(bool status) APPEND; \
+/** Capture OpenXR events. This should normally be done every frame, but this can be \
+ * used to poll for events more frequently than that, such as on android while suspended. */ \
+PREPEND void PumpEvents() APPEND; \
 
 
 /**
