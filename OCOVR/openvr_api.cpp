@@ -264,13 +264,26 @@ VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent()
 	if (running)
 		return true;
 
-	// TODO properly test this
+	// At this point, we should NOT be running OpenXR, so setup a new session just for this
+	OOVR_FALSE_ABORT(xr_instance == XR_NULL_HANDLE);
+
+	// FIXME copied from DrvOpenXR
+	XrApplicationInfo appInfo{};
+	strcpy_arr(appInfo.applicationName, "OpenComposite"); // TODO vary by application
+	appInfo.applicationVersion = 1;
+	appInfo.apiVersion = XR_CURRENT_API_VERSION;
+	XrInstanceCreateInfo createInfo{ XR_TYPE_INSTANCE_CREATE_INFO };
+	createInfo.applicationInfo = appInfo;
+	XrInstance tmp_instance;
+	OOVR_FAILED_XR_ABORT(xrCreateInstance(&createInfo, &tmp_instance));
 
 	XrSystemGetInfo systemInfo{};
 	systemInfo.type = XR_TYPE_SYSTEM_GET_INFO;
 	systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 	XrSystemId id;
-	XrResult res = xrGetSystem(xr_instance, &systemInfo, &id);
+	XrResult res = xrGetSystem(tmp_instance, &systemInfo, &id);
+
+	OOVR_FAILED_XR_ABORT(xrDestroyInstance(tmp_instance));
 
 	if (res == XR_SUCCESS)
 		return true;
