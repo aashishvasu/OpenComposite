@@ -482,6 +482,9 @@ private:
 		std::string setName; // The name of the action set - set before we've enumerated the action sets, eg 'main'
 
 		XrAction xr = XR_NULL_HANDLE;
+
+		// Only used in the case of Pose actions
+		XrSpace actionSpace = XR_NULL_HANDLE;
 	};
 
 	struct InputValue {
@@ -496,7 +499,7 @@ private:
 
 	XrActionSet legacyInputsSet = XR_NULL_HANDLE;
 
-	void LoadBindingsSet(const std::string& bindingsPath, const struct InteractionProfile&, std::vector<XrActionSuggestedBinding>& bindings);
+	void LoadBindingsSet(const std::string& bindingsPath, const class InteractionProfile&, std::vector<XrActionSuggestedBinding>& bindings);
 
 	void AddLegacyBindings(InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
 
@@ -527,4 +530,5 @@ private:
 	// Utility functions
 	static Action* cast_AH(VRActionHandle_t);
 	static ActionSet* cast_ASH(VRActionSetHandle_t);
+	static vr::TrackedDeviceIndex_t cast_IVH(VRInputValueHandle_t);
 };

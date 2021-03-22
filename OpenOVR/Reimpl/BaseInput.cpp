@@ -14,6 +14,7 @@
 #include <map>
 
 #include "Misc/Input/InteractionProfile.h"
+#include "Misc/xrmoreutils.h"
 
 using namespace vr;
 
@@ -447,6 +448,12 @@ void BaseInput::LoadEmptyManifest()
 
 void BaseInput::BindInputsForSession()
 {
+	// Since the session has changed, any actionspaces we previously created are now invalid
+	for (auto& pair : actions) {
+		if (pair.second->actionSpace)
+			pair.second->actionSpace = XR_NULL_HANDLE;
+	}
+
 	// Note: even if actionSets is empty, we always still want to load the legacy set.
 
 	// Now attach the action sets to the OpenXR session, making them immutable (including attaching suggested bindings)
@@ -667,7 +674,27 @@ EVRInputError BaseInput::GetActionHandle(const char* pchActionName, VRActionHand
 
 EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VRInputValueHandle_t* pHandle)
 {
-	STUBBED();
+	*(uint64_t*)pHandle = 0;
+
+	ITrackedDevice::HandType handType;
+
+	if (!strcmp("/user/hand/left", pchInputSourcePath)) {
+		handType = ITrackedDevice::HAND_LEFT;
+	} else if (!strcmp("/user/hand/right", pchInputSourcePath)) {
+		handType = ITrackedDevice::HAND_RIGHT;
+	} else {
+		OOVR_ABORTF("Unknown input source '%s'", pchInputSourcePath);
+	}
+
+	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
+		ITrackedDevice* dev = BackendManager::Instance().GetDevice(i);
+		if (dev && dev->GetHand() == handType) {
+			*(uint64_t*)pHandle = i;
+			return VRInputError_None;
+		}
+	}
+
+	OOVR_ABORTF("Missing device for input source %d '%s'", handType, pchInputSourcePath);
 }
 
 EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t* pSets,
@@ -741,12 +768,90 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	STUBBED();
+	Action* act = cast_AH(action);
+
+	ZeroMemory(pActionData, unActionDataSize);
+	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
+
+	// TODO implement ulRestrictToDevice
+	OOVR_FALSE_ABORT(ulRestrictToDevice == vr::k_ulInvalidInputValueHandle);
+
+	XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
+	getInfo.action = act->xr;
+
+	switch (act->type) {
+	case ActionType::Vector1: {
+		XrActionStateFloat state = { XR_TYPE_ACTION_STATE_FLOAT };
+		OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session, &getInfo, &state));
+
+		pActionData->x = state.currentState;
+		pActionData->y = 0;
+		pActionData->z = 0;
+		pActionData->bActive = state.isActive;
+		break;
+	}
+	case ActionType::Vector2: {
+		XrActionStateVector2f state = { XR_TYPE_ACTION_STATE_VECTOR2F };
+		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, &getInfo, &state));
+
+		pActionData->x = state.currentState.x;
+		pActionData->y = state.currentState.y;
+		pActionData->z = 0;
+		pActionData->bActive = state.isActive;
+		break;
+	}
+	case ActionType::Vector3:
+		OOVR_ABORTF("Input type vector3 unsupported: %s", act->fullName.c_str());
+		break;
+	default:
+		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
+		break;
+	}
+
+	// TODO implement the deltas
+	// TODO implement activeOrigin
+
+	return VRInputError_None;
 }
+
 EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow,
     InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice)
 {
-	STUBBED();
+	Action* act = cast_AH(action);
+
+	ZeroMemory(pActionData, unActionDataSize);
+	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
+
+	// TODO implement ulRestrictToDevice
+	OOVR_FALSE_ABORT(ulRestrictToDevice == vr::k_ulInvalidInputValueHandle);
+
+	if (act->type != ActionType::Pose)
+		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
+
+	// Create the action space if it doesn't already exist
+	if (!act->actionSpace) {
+		XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
+		info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
+		info.action = act->xr;
+		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &act->actionSpace));
+	}
+
+	// Get the info, which only says if it's active or not
+	XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
+	getInfo.action = act->xr;
+	XrActionStatePose state = { XR_TYPE_ACTION_STATE_POSE };
+	OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session, &getInfo, &state));
+
+	pActionData->bActive = state.isActive;
+
+	if (state.isActive) {
+		xr_utils::PoseFromSpace(&pActionData->pose, act->actionSpace, eOrigin);
+	}
+
+	// TODO implement the deltas
+	// TODO implement activeOrigin
+
+	return VRInputError_None;
 }
 
 EVRInputError BaseInput::GetPoseActionDataRelativeToNow(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow, InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice)
