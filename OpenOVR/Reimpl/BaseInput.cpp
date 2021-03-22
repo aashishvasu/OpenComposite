@@ -289,10 +289,23 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	for (auto& pair : actions) {
 		Action& action = *pair.second;
 
-		// TODO in the OpenVR samples, they don't declare their action set. Are they automatically created?!
+		// In the OpenVR samples, they don't declare their action set. Are they automatically created?!
+		// Also Vivecraft unfortunately does this, so we do have to support it.
 		auto item = actionSets.find(action.setName);
-		if (item == actionSets.end())
-			OOVR_ABORTF("Invalid action set '%s' for action '%s'", action.setName.c_str(), action.fullName.c_str());
+		if (item == actionSets.end()) {
+			OOVR_LOGF("Invalid action set '%s' for action '%s', creating implicit set", action.setName.c_str(), action.fullName.c_str());
+
+			// Create this set
+			ActionSet set{};
+			set.name = action.setName;
+			set.fullName = "/actions/" + set.name;
+			set.usage = ActionSetUsage::LeftRight; // Just assume these default sets are in leftright mode, FIXME validate against steamvr
+			actionSets[set.name] = std::make_unique<ActionSet>(set);
+
+			// Now grab it and it should be there
+			item = actionSets.find(action.setName);
+			OOVR_FALSE_ABORT(item != actionSets.end());
+		}
 
 		action.set = item->second.get();
 	}
