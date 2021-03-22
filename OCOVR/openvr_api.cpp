@@ -8,12 +8,12 @@
 // Needed for the system-wide usage of this DLL (when renamed to vrclient[_x64].dll)
 #include "Reimpl/GVRClientCore.gen.h"
 
-#include "steamvr_abi.h"
-#include "Misc/debug_helper.h"
 #include "Misc/Config.h"
+#include "Misc/debug_helper.h"
+#include "steamvr_abi.h"
+#include <functional>
 #include <map>
 #include <memory>
-#include <functional>
 
 // Specific to OCOVR
 #include "Drivers/Backend.h"
@@ -31,14 +31,18 @@ static EVRApplicationType current_apptype;
 
 static alternativeCoreFactory_t alternativeCoreFactory = nullptr;
 
-OC_NORETURN void ERR(string msg) {
+OC_NORETURN void ERR(string msg)
+{
 	char buff[4096];
 	snprintf(buff, sizeof(buff), "OpenComposite DLLMain ERROR: %s", msg.c_str());
 	OOVR_ABORT_T(buff, "OpenComposite Error");
 }
 
-class _InheritCVRLayout { virtual void _ignore() = 0; };
-class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {};
+class _InheritCVRLayout {
+	virtual void _ignore() = 0;
+};
+class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {
+};
 
 // If we don't set up our own deleter, then at least on linux it'll get the layout mixed up and call a random function
 // Also for the basis of this typedef, see: https://stackoverflow.com/a/26276805
@@ -46,7 +50,8 @@ using correct_layout_unique = std::unique_ptr<CVRCorrectLayout, std::function<vo
 
 static map<string, correct_layout_unique> interfaces;
 
-VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVersion, EVRInitError * error) {
+VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersion, EVRInitError* error)
+{
 	if (!running) {
 		OOVR_LOGF("[INFO] VR_GetGenericInterface called while OOVR not running, setting error=NotInitialized, for interfaceVersion=%s", interfaceVersion);
 		*error = VRInitError_Init_NotInitialized;
@@ -62,14 +67,14 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 	// First check if they're getting the 'FnTable' version of this interface.
 	// This is a table of methods, but critically they *don't* take a 'this' pointer,
 	//  so we can't cheat and return the vtable.
-	const char *fnTableStr = "FnTable:";
+	const char* fnTableStr = "FnTable:";
 	if (!strncmp(fnTableStr, interfaceVersion, strlen(fnTableStr))) {
-		const char *baseInterface = interfaceVersion + strlen(fnTableStr);
+		const char* baseInterface = interfaceVersion + strlen(fnTableStr);
 
 		// Get the C++ interface
 		// Note we can't directly cast to CVRCommon, as we'll then be referring to the OpenVR interface
 		// vtable - look up how vtables work with multiple inheritance if you're confused about this.
-		CVRCorrectLayout *interfaceClass = (CVRCorrectLayout*) VR_GetGenericInterface(baseInterface, error);
+		CVRCorrectLayout* interfaceClass = (CVRCorrectLayout*)VR_GetGenericInterface(baseInterface, error);
 
 		// If the interface is NULL, then error will have been set and we can return null too.
 		if (!interfaceClass) {
@@ -104,7 +109,7 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 		OOVR_ABORT("Illegal interface for apptype - see log");
 	}
 
-	CVRCorrectLayout *impl = (CVRCorrectLayout*) CreateInterfaceByName(interfaceVersion);
+	CVRCorrectLayout* impl = (CVRCorrectLayout*)CreateInterfaceByName(interfaceVersion);
 	if (impl) {
 		correct_layout_unique ptr(impl, [](CVRCorrectLayout* cl) {
 			cl->Delete();
@@ -119,11 +124,13 @@ VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface(const char * interfaceVers
 #undef INTERFACE
 }
 
-VR_INTERFACE uint32_t VR_CALLTYPE VR_GetInitToken() {
+VR_INTERFACE uint32_t VR_CALLTYPE VR_GetInitToken()
+{
 	return current_init_token;
 }
 
-VR_INTERFACE char * VR_GetStringForHmdError(int err) {
+VR_INTERFACE char* VR_GetStringForHmdError(int err)
+{
 	OOVR_ABORT("Stub");
 }
 
@@ -190,16 +197,19 @@ VR_INTERFACE const char* VR_CALLTYPE VR_GetVRInitErrorAsEnglishDescription(EVRIn
 	OOVR_ABORT(("Init desc: Unknown value " + to_string(error)).c_str());
 }
 
-VR_INTERFACE const char *VR_CALLTYPE VR_GetVRInitErrorAsSymbol(EVRInitError error) {
+VR_INTERFACE const char* VR_CALLTYPE VR_GetVRInitErrorAsSymbol(EVRInitError error)
+{
 	OOVR_ABORT("Stub");
 }
 
-VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError * peError, EVRApplicationType eApplicationType) {
+VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError* peError, EVRApplicationType eApplicationType)
+{
 	return VR_InitInternal2(peError, eApplicationType, NULL);
 }
 
-VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRApplicationType eApplicationType, const char * pStartupInfo) {
-    *peError = VRInitError_None;
+VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApplicationType eApplicationType, const char* pStartupInfo)
+{
+	*peError = VRInitError_None;
 
 	if (eApplicationType == VRApplication_Bootstrapper) {
 #ifdef _WIN32
@@ -224,7 +234,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError * peError, EVRAp
 
 	// HACK for Proton: it calls InitInternal then (if successful) calls ShutdownInternal - just to see if the runtime is available
 #ifndef _WIN32
-    OOVR_FALSE_ABORT(!proton_hack);
+	OOVR_FALSE_ABORT(!proton_hack);
 	if (eApplicationType == VRApplication_Background) {
 		proton_hack = true;
 		// Don't mark us as running or anything, so VR_GetGenericInterface will still fail
@@ -295,20 +305,24 @@ VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent()
 	OOVR_ABORTF("Failed to probe for OpenXR systems: return status %d", res);
 }
 
-VR_INTERFACE bool VR_CALLTYPE VR_IsInterfaceVersionValid(const char * pchInterfaceVersion) {
+VR_INTERFACE bool VR_CALLTYPE VR_IsInterfaceVersionValid(const char* pchInterfaceVersion)
+{
 	return true; // Kinda dodgy
 }
 
-VR_INTERFACE bool VR_CALLTYPE VR_IsRuntimeInstalled() {
+VR_INTERFACE bool VR_CALLTYPE VR_IsRuntimeInstalled()
+{
 	// TODO in future check that the Oculus Runtime is installed
 	return true;
 }
 
-VR_INTERFACE const char *VR_CALLTYPE VR_RuntimePath() {
+VR_INTERFACE const char* VR_CALLTYPE VR_RuntimePath()
+{
 	OOVR_ABORT("Stub");
 }
 
-VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
+VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal()
+{
 	if (proton_hack) {
 		proton_hack = false;
 		return;
@@ -327,7 +341,8 @@ VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal() {
 	running = false;
 }
 
-VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pReturnCode) {
+VR_INTERFACE void* VRClientCoreFactory(const char* pInterfaceName, int* pReturnCode)
+{
 	if (alternativeCoreFactory) {
 	use_alt:
 		return alternativeCoreFactory(pInterfaceName, pReturnCode);
@@ -347,10 +362,10 @@ VR_INTERFACE void * VRClientCoreFactory(const char * pInterfaceName, int * pRetu
 
 	string name = pInterfaceName;
 
-#define CLIENT_VER(ver) \
-	if(IVRClientCore_ ## ver::IVRClientCore_Version == name) { \
-		static CVRClientCore_ ## ver inst; \
-		return &inst; \
+#define CLIENT_VER(ver)                                       \
+	if (IVRClientCore_##ver::IVRClientCore_Version == name) { \
+		static CVRClientCore_##ver inst;                      \
+		return &inst;                                         \
 	}
 
 	CLIENT_VER(002);
