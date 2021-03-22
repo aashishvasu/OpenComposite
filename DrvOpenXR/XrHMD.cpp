@@ -232,6 +232,8 @@ bool XrHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ET
 		return false;
 	case vr::Prop_HasDriverDirectModeComponent_Bool:
 		return true; // Who knows what this is used for? It's in HL:A anyway.
+	default:
+		break;
 	}
 
 	return XrTrackedDevice::GetBoolTrackedDeviceProperty(prop, pErrorL);
@@ -266,6 +268,8 @@ float XrHMD::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::
 #else
 		return ovr::hmdToEyeViewPose[ovrEye_Left].Position.z;
 #endif
+	default:
+		break;
 	}
 
 	return XrTrackedDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
