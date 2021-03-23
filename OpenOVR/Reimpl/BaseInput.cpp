@@ -1036,9 +1036,19 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 
 	STUBBED();
 }
-EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t* pOriginInfo, uint32_t unOriginInfoSize)
+
+EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t* info, uint32_t unOriginInfoSize)
 {
-	STUBBED();
+	memset(info, 0, unOriginInfoSize);
+	OOVR_FALSE_ABORT(unOriginInfoSize == sizeof(InputOriginInfo_t));
+
+	TrackedDeviceIndex_t dev = cast_IVH(origin);
+
+	info->trackedDeviceIndex = dev;
+	info->devicePath = origin; // TODO is this how it's supposed to work?
+	strcpy_arr(info->rchRenderModelComponentName, "getorigintrackeddeviceinfo_testing"); // TODO figure out how this should work
+
+	return VRInputError_None;
 }
 
 /** Retrieves useful information about the bindings for an action */
