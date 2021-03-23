@@ -547,6 +547,35 @@ void BaseInput::LoadBindingsSet(const std::string& bindingsPath, const struct In
 				bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
 			}
 		}
+
+		for (const auto& item : setJson["poses"]) {
+			std::string specPath = lowerStr(item["path"].asString());
+
+			std::string actionName = lowerStr(item["output"].asString());
+			auto actionIter = actions.find(actionName);
+			if (actionIter == actions.end())
+				OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
+			const Action& action = *actionIter->second;
+
+			// Translate over the paths - TODO find out what all the valid ones are
+			std::string pathStr;
+			if (specPath == "/user/hand/left/pose/raw") {
+				pathStr = "/user/hand/left/input/aim/pose";
+			} else if (specPath == "/user/hand/right/pose/raw") {
+				pathStr = "/user/hand/right/input/aim/pose";
+			} else {
+				OOVR_LOGF("WARNING: Ignoring unknown pose path '%s'", specPath.c_str());
+				continue;
+			}
+
+			if (!profile.IsInputPathValid(pathStr)) {
+				OOVR_ABORTF("Built invalid input path %s from pose action %s", pathStr.c_str(), actionName.c_str());
+			}
+
+			XrPath path;
+			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
+			bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
+		}
 	}
 
 	// If there aren't any bindings, that makes it simple
