@@ -452,6 +452,15 @@ void XrBackend::PumpEvents()
 				sessionActive = false;
 				renderingFrame = false;
 			}
+			case XR_SESSION_STATE_EXITING:
+			case XR_SESSION_STATE_LOSS_PENDING: {
+				// If the headset is unplugged or the user decides to exit the app
+				// TODO just kill the app after awhile, unless it sends a message to stop that - read the OpenVR wiki docs for more info
+				VREvent_t quit = { VREvent_Quit };
+				auto system = GetBaseSystem();
+				if (system)
+					system->_EnqueueEvent(quit);
+			}
 			default:
 				// suppress clion warning about missing branches
 				break;
