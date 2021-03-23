@@ -97,6 +97,16 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 		return NULL;
 	}
 
+	// Hack (kinda) for Vivecraft
+	// They actually used our API! I think they were the only application that ever did so (though only to detect
+	//  if OC was present or not, and it seems that information is no longer used).
+	// We've got rid of it to clean up the code generation, so just say we don't support it for now.
+	if (!strcmp("IVROCSystem_001", interfaceVersion)) {
+		if (error)
+			*error = VRInitError_Init_InterfaceNotFound;
+		return nullptr;
+	}
+
 	bool valid_apptypes_success;
 	uint64_t valid_apptypes = GetInterfaceFlagsByName(interfaceVersion, "APPTYPE", &valid_apptypes_success);
 
