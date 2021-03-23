@@ -19,6 +19,11 @@ BackendManager & BackendManager::Instance() {
 	return *instance;
 }
 
+BackendManager* BackendManager::InstancePtr()
+{
+	return instance.get();
+}
+
 void BackendManager::Reset() {
 	instance.reset();
 }

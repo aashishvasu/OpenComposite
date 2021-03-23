@@ -219,6 +219,7 @@ class BackendManager {
 public:
 	static void Create(IBackend*);
 	static BackendManager& Instance();
+	static BackendManager* InstancePtr();
 	static void Reset();
 
 	// main methods
@@ -236,6 +237,9 @@ public:
 
 	// Returns global, absolute high-resolution time in seconds.
 	float GetTimeInSeconds();
+
+	// Get the current backend instance
+	inline IBackend* GetBackendInstance() { return backend.get(); }
 
 private:
 	BackendManager();

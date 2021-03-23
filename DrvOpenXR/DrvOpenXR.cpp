@@ -4,10 +4,10 @@
 
 #include "DrvOpenXR.h"
 
+#include "../OpenOVR/Misc/android_api.h"
 #include "../OpenOVR/Misc/xr_ext.h"
 #include "../OpenOVR/Reimpl/BaseInput.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
-#include "../OpenOVR/Misc/android_api.h"
 #include "XrBackend.h"
 #include "tmp_gfx/TemporaryGraphics.h"
 
@@ -187,6 +187,16 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 
 void DrvOpenXR::ShutdownSession()
 {
+	BackendManager* instance = BackendManager::InstancePtr();
+	// Is it already being shut down?
+	// Note that this is indirectly called by the XrBackend destructor, which will have
+	// already called this function in that case.
+	if (instance) {
+		auto* backend = (XrBackend*)instance->GetBackendInstance();
+		if (backend)
+			backend->PrepareForSessionShutdown();
+	}
+
 	delete xr_gbl;
 	xr_gbl = nullptr;
 
