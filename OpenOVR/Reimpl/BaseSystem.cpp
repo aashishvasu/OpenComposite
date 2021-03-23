@@ -361,7 +361,7 @@ const char* BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error)
 
 bool BaseSystem::IsInputAvailable()
 {
-	return xr_session_state == XR_SESSION_STATE_FOCUSED;
+	return BackendManager::Instance().IsInputAvailable();
 }
 
 bool BaseSystem::IsSteamVRDrawingControllers()

@@ -192,6 +192,8 @@ PREPEND void ForceBoundsVisible(bool status) APPEND; \
 /** Capture OpenXR events. This should normally be done every frame, but this can be \
  * used to poll for events more frequently than that, such as on android while suspended. */ \
 PREPEND void PumpEvents() APPEND; \
+/** Returns true if the runtime is focused and receiving input */ \
+PREPEND bool IsInputAvailable() APPEND; \
 
 
 /**

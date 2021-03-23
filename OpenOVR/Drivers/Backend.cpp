@@ -136,6 +136,11 @@ void BackendManager::PumpEvents()
 	return backend->PumpEvents();
 }
 
+bool BackendManager::IsInputAvailable()
+{
+	return backend->IsInputAvailable();
+}
+
 // ITrackedDevice
 bool ITrackedDevice::GetControllerState(vr::VRControllerState_t* state)
 {

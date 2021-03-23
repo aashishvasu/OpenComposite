@@ -410,6 +410,11 @@ void XrBackend::ForceBoundsVisible(bool status)
 	STUBBED();
 }
 
+bool XrBackend::IsInputAvailable()
+{
+	return sessionState == XR_SESSION_STATE_FOCUSED;
+}
+
 void XrBackend::PumpEvents()
 {
 	// Poll for OpenXR events

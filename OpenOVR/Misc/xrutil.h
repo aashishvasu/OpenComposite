@@ -69,7 +69,6 @@ XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin);
 
 extern XrInstance xr_instance;
 extern XrSession xr_session;
-extern XrSessionState xr_session_state;
 extern XrSystemId xr_system;
 XrViewConfigurationView& xr_main_view(XruEye view_id);
 extern XrSessionGlobals* xr_gbl;

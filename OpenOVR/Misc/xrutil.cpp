@@ -7,7 +7,6 @@
 
 XrInstance xr_instance = XR_NULL_HANDLE;
 XrSession xr_session = XR_NULL_HANDLE;
-XrSessionState xr_session_state = XR_SESSION_STATE_UNKNOWN;
 XrSystemId xr_system = XR_NULL_SYSTEM_ID;
 XrViewConfigurationView xr_main_views[XruEyeCount] = {};
 XrSessionGlobals* xr_gbl = nullptr;
