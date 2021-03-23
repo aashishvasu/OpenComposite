@@ -499,6 +499,12 @@ private:
 
 	XrActionSet legacyInputsSet = XR_NULL_HANDLE;
 
+	/**
+	 * The list of subaction paths anything can be bound to - this basically just means 'everything' and contains
+	 * both the left and right hand paths as defined in the OpenXR spec.
+	 */
+	std::vector<XrPath> allSubactionPaths;
+
 	void LoadBindingsSet(const std::string& bindingsPath, const class InteractionProfile&, std::vector<XrActionSuggestedBinding>& bindings);
 
 	void AddLegacyBindings(InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
@@ -509,6 +515,9 @@ private:
 	static int DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx);
 
 	struct LegacyControllerActions {
+		std::string handPath; // eg /user/hand/left
+		XrPath handPathXr;
+
 		XrAction system; // Oculus button
 		XrAction menu, menuTouch; // Upper button on touch controller - B/Y
 		XrAction btnA, btnATouch; // Lower button on touch controller - A/X
@@ -531,4 +540,6 @@ private:
 	static Action* cast_AH(VRActionHandle_t);
 	static ActionSet* cast_ASH(VRActionSetHandle_t);
 	static vr::TrackedDeviceIndex_t cast_IVH(VRInputValueHandle_t);
+	static VRInputValueHandle_t devToIVH(vr::TrackedDeviceIndex_t index);
+	VRInputValueHandle_t activeOriginToIVH(XrPath path);
 };

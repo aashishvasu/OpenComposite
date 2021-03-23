@@ -173,6 +173,19 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 {
 	OOVR_LOGF("Loading manifest file '%s'", pchActionManifestPath);
 
+	// Initialise the subaction path constants
+	std::vector<std::string> subactionPathNames = {
+		"/user/hand/left",
+		"/user/hand/right",
+	};
+
+	allSubactionPaths.clear();
+	for (const std::string& str : subactionPathNames) {
+		XrPath path;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
+		allSubactionPaths.push_back(path);
+	}
+
 	//////////////
 	//// Load the actions from the manifest file
 	//////////////
@@ -391,6 +404,10 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			OOVR_ABORTF("Bad action type while remapping action %s: %d", act.fullName.c_str(), act.type);
 		}
 
+		// Listen on all the subactions
+		info.subactionPaths = allSubactionPaths.data();
+		info.countSubactionPaths = allSubactionPaths.size();
+
 		OOVR_FAILED_XR_ABORT(xrCreateAction(act.set->xr, &info, &act.xr));
 	}
 
@@ -567,7 +584,8 @@ void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrAct
 		ctrl = {};
 
 		std::string side = i == 0 ? "left" : "right";
-		std::string prefix = "/user/hand/" + side + "/";
+		ctrl.handPath = "/user/hand/" + side;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, ctrl.handPath.c_str(), &ctrl.handPathXr));
 
 		auto createSpecial = [&](XrAction* out, const std::string& path, const std::string& name, const std::string& humanName, XrActionType type) {
 			XrActionCreateInfo info = { XR_TYPE_ACTION_CREATE_INFO };
@@ -582,7 +600,7 @@ void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrAct
 			OOVR_FAILED_XR_ABORT(xrCreateAction(legacyInputsSet, &info, out));
 
 			// Bind the action to a suggested binding
-			std::string realPath = prefix + path;
+			std::string realPath = ctrl.handPath + "/" + path;
 			if (!profile.IsInputPathValid(realPath)) {
 				OOVR_LOGF("Skipping legacy input binding %s, not supported by profile", realPath.c_str());
 				return;
@@ -689,7 +707,7 @@ EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VR
 	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
 		ITrackedDevice* dev = BackendManager::Instance().GetDevice(i);
 		if (dev && dev->GetHand() == handType) {
-			*(uint64_t*)pHandle = i;
+			*pHandle = devToIVH(i);
 			return VRInputError_None;
 		}
 	}
@@ -746,21 +764,34 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
-	// TODO implement ulRestrictToDevice
-	OOVR_FALSE_ABORT(ulRestrictToDevice == vr::k_ulInvalidInputValueHandle);
-
 	XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
 	getInfo.action = act->xr;
 
-	XrActionStateBoolean state = { XR_TYPE_ACTION_STATE_BOOLEAN };
+	// Unfortunately to implement activeOrigin we have to loop through and query each action state
+	for (XrPath subactionPath : allSubactionPaths) {
+		// TODO what's the performance cost of this?
+		VRInputValueHandle_t ao = activeOriginToIVH(subactionPath);
+		if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle && ao != ulRestrictToDevice)
+			continue;
 
-	OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, &getInfo, &state));
+		getInfo.subactionPath = subactionPath;
+		XrActionStateBoolean state = { XR_TYPE_ACTION_STATE_BOOLEAN };
+		OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, &getInfo, &state));
 
-	pActionData->bState = state.currentState;
-	pActionData->bActive = state.isActive;
-	pActionData->bChanged = state.changedSinceLastSync;
-	// TODO implement fUpdateTime
-	// TODO implement activeOrigin
+		// If the subaction isn't set, or it was set but not active, or it was set
+		// but the state was false and it's not now, then override it.
+		if (!(state.isActive > pActionData->bActive || state.currentState > pActionData->bState))
+			continue;
+
+		pActionData->bState = state.currentState;
+		pActionData->bActive = state.isActive;
+		pActionData->bChanged = state.changedSinceLastSync;
+		// TODO implement fUpdateTime
+		pActionData->activeOrigin = ao;
+	}
+
+	// Note it's possible we didn't set any output if this action isn't bound to anything, just leave the
+	//  struct at it's default values.
 
 	return VRInputError_None;
 }
@@ -836,20 +867,32 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &act->actionSpace));
 	}
 
-	// Get the info, which only says if it's active or not
-	XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
-	getInfo.action = act->xr;
-	XrActionStatePose state = { XR_TYPE_ACTION_STATE_POSE };
-	OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session, &getInfo, &state));
+	// Unfortunately to implement activeOrigin we have to loop through and query each action state
+	for (XrPath subactionPath : allSubactionPaths) {
+		// TODO what's the performance cost of this?
+		VRInputValueHandle_t ao = activeOriginToIVH(subactionPath);
+		if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle && ao != ulRestrictToDevice)
+			continue;
 
-	pActionData->bActive = state.isActive;
+		// Get the info, which only says if it's active or not
+		XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
+		getInfo.action = act->xr;
+		XrActionStatePose state = { XR_TYPE_ACTION_STATE_POSE };
+		OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session, &getInfo, &state));
 
-	if (state.isActive) {
-		xr_utils::PoseFromSpace(&pActionData->pose, act->actionSpace, eOrigin);
+		pActionData->bActive = state.isActive;
+		pActionData->activeOrigin = ao;
+
+		if (state.isActive) {
+			xr_utils::PoseFromSpace(&pActionData->pose, act->actionSpace, eOrigin);
+		}
+
+		// TODO implement the deltas
+
+		// Stop as soon as we find the first available input
+		if (state.isActive)
+			break;
 	}
-
-	// TODO implement the deltas
-	// TODO implement activeOrigin
 
 	return VRInputError_None;
 }
@@ -1087,6 +1130,52 @@ BaseInput::Action* BaseInput::cast_AH(VRActionHandle_t handle)
 BaseInput::ActionSet* BaseInput::cast_ASH(VRActionSetHandle_t handle)
 {
 	return (ActionSet*)handle;
+}
+
+TrackedDeviceIndex_t BaseInput::cast_IVH(VRInputValueHandle_t handle)
+{
+	if (handle == vr::k_ulInvalidInputValueHandle)
+		OOVR_ABORT("Called cast_IVH for invalid input value handle");
+
+	// -1000 to undo what we added - see GetInputSourceHandle
+	return ((TrackedDeviceIndex_t)handle) - 1000;
+}
+
+VRInputValueHandle_t BaseInput::devToIVH(vr::TrackedDeviceIndex_t index)
+{
+	// Add 1000 so any valid device doesn't equal k_ulInvalidInputValueHandle
+	return index + 1000;
+}
+
+VRInputValueHandle_t BaseInput::activeOriginToIVH(XrPath path)
+{
+	if (path == XR_NULL_PATH)
+		return vr::k_ulInvalidInputValueHandle;
+
+	// Find the hand for this path
+	int ctrlId = -1;
+	for (int hand = 0; hand < ARRAYSIZE(legacyControllers); hand++) {
+		if (legacyControllers[hand].handPathXr == path) {
+			ctrlId = hand;
+			break;
+		}
+	}
+
+	if (ctrlId == -1) {
+		uint32_t len;
+		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, path, 0, &len, nullptr));
+		std::vector<char> str(len);
+		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, path, len, &len, str.data()));
+		OOVR_ABORTF("Unknown active origin path '%s'", str.data());
+	}
+
+	// Convert it into a device index
+	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
+		if (DeviceIndexToHandId(i) == ctrlId)
+			return i;
+	}
+
+	OOVR_ABORTF("Cannot find controller tracking ID by handId=%d", ctrlId);
 }
 
 bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* state)
