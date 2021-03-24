@@ -541,6 +541,8 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, std::v
 			OOVR_ABORTF("Missing action set '%s' in bindings file '%s'", setName.c_str(), bindingsPath.c_str());
 		const ActionSet& set = *setIter->second;
 
+		// TODO combine these loops for sources, poses and haptics
+
 		for (const auto& srcJson : setJson["sources"]) {
 			std::string importBasePath = lowerStr(srcJson["path"].asString());
 
@@ -609,6 +611,24 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, std::v
 				OOVR_LOGF("WARNING: Ignoring unknown pose path '%s'", specPath.c_str());
 				continue;
 			}
+
+			if (!profile.IsInputPathValid(pathStr)) {
+				OOVR_ABORTF("Built invalid input path %s from pose action %s", pathStr.c_str(), actionName.c_str());
+			}
+
+			XrPath path;
+			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
+			bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
+		}
+
+		for (const auto& item : setJson["haptics"]) {
+			std::string pathStr = lowerStr(item["path"].asString());
+
+			std::string actionName = lowerStr(item["output"].asString());
+			auto actionIter = actions.find(actionName);
+			if (actionIter == actions.end())
+				OOVR_ABORTF("Missing haptic action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
+			const Action& action = *actionIter->second;
 
 			if (!profile.IsInputPathValid(pathStr)) {
 				OOVR_ABORTF("Built invalid input path %s from pose action %s", pathStr.c_str(), actionName.c_str());
@@ -1106,7 +1126,37 @@ EVRInputError BaseInput::DecompressSkeletalBoneData(const void* pvCompressedBuff
 EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, float fStartSecondsFromNow, float fDurationSeconds,
     float fFrequency, float fAmplitude, VRInputValueHandle_t ulRestrictToDevice)
 {
-	STUBBED();
+	Action* act = cast_AH(action);
+
+	if (act->type != ActionType::Vibration) {
+		OOVR_ABORTF("Cannot trigger vibration on non-vibration (type=%d) action '%s'", act->type, act->fullName.c_str());
+	}
+
+	// TODO check the subaction stuff works properly
+	XrPath subactionPath = XR_NULL_PATH;
+	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle) {
+		TrackedDeviceIndex_t idx = cast_IVH(ulRestrictToDevice);
+		ITrackedDevice* dev = BackendManager::Instance().GetDevice(idx);
+		if (dev && dev->GetHand() != ITrackedDevice::HAND_NONE) {
+			LegacyControllerActions& ctrl = legacyControllers[dev->GetHand()];
+			subactionPath = ctrl.handPathXr;
+		}
+	}
+
+	XrHapticActionInfo info = { XR_TYPE_HAPTIC_ACTION_INFO };
+	info.action = act->xr;
+	info.subactionPath = subactionPath;
+
+	// TODO implement fStartSecondsFromNow - just assume most games leave it at or very close to zero
+
+	XrHapticVibration vibration = { XR_TYPE_HAPTIC_VIBRATION };
+	vibration.frequency = XR_FREQUENCY_UNSPECIFIED; // TODO we should maybe implement this?
+	vibration.duration = (int)(fDurationSeconds * 1000000000.0f);
+	vibration.amplitude = fAmplitude;
+
+	OOVR_FAILED_XR_ABORT(xrApplyHapticFeedback(xr_session, &info, (XrHapticBaseHeader*)&vibration));
+
+	return VRInputError_None;
 }
 
 EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t digitalActionHandle,
