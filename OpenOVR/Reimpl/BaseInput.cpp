@@ -762,22 +762,45 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 
 	OOVR_FALSE_ABORT(sizeof(*pSets) == unSizeOfVRSelectedActionSet_t);
 
-	// TODO support multiple action sets at once
-	OOVR_FALSE_ABORT(unSetCount == 1);
+	// Make sure all the ActionSets have the same priority, since we don't have any way around that right now
+	if (unSetCount > 1) {
+		int priority = pSets[0].nPriority;
+		for (int i = 1; i < unSetCount; i++) {
+			if (pSets[i].nPriority != priority) {
+				ActionSet* as1 = cast_ASH(pSets[0].ulActionSet);
+				ActionSet* curAs = cast_ASH(pSets[1].ulActionSet);
+				OOVR_ABORTF("Active action set %s (%d) and %s (%d) have different priorities, this is not yet supported",
+				    as1->fullName.c_str(), curAs->fullName.c_str());
+			}
+		}
+	}
 
-	// TODO use all the other VRActiveActionSet properties
-	ActionSet* as = cast_ASH(pSets->ulActionSet);
+	std::vector<XrActiveActionSet> aas(unSetCount + 1);
 
-	const int as_count = 2;
-	XrActiveActionSet aas[as_count];
-	ZeroMemory(aas, sizeof(aas));
+	for (int i = 0; i < unSetCount; i++) {
+		VRActiveActionSet_t& set = pSets[i];
 
-	aas[0].actionSet = as->xr;
-	aas[1].actionSet = legacyInputsSet;
+		ActionSet* as = cast_ASH(set.ulActionSet);
+		aas[i].actionSet = as->xr;
+
+		if (set.ulRestrictedToDevice != vr::k_ulInvalidInputValueHandle) {
+			OOVR_ABORTF("Active action set %s has ulRestrictedToDevice set, not yet implemented",
+			    as->fullName.c_str());
+
+			// Once we've got something to test it with, it should look something like this:
+			// index = cast_IVH(set.ulRestrictedToDevice);
+			// ITrackedDevice::HandType hand = dev->GetHand();
+			// LegacyControllerActions& ctrl = legacyControllers[hand];
+			// aas[i].subactionPath = ctrl.pathXr;
+		}
+	}
+
+	// Ad the last set, the legacy input set
+	aas.at(unSetCount).actionSet = legacyInputsSet;
 
 	XrActionsSyncInfo syncInfo = { XR_TYPE_ACTIONS_SYNC_INFO };
-	syncInfo.activeActionSets = aas;
-	syncInfo.countActiveActionSets = as_count;
+	syncInfo.activeActionSets = aas.data();
+	syncInfo.countActiveActionSets = aas.size();
 	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
 
 	return VRInputError_None;
