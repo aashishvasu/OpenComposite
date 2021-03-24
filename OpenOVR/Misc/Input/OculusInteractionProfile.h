@@ -15,8 +15,12 @@ public:
 
 	bool IsInputPathValid(const std::string& inputPath) const override { return validInputPathsSet.count(inputPath) > 0; }
 
+	const std::vector<VirtualInputFactory>& GetVirtualInputs() const override;
+
 private:
 	std::string path;
 	std::vector<std::string> validInputPaths;
 	std::set<std::string> validInputPathsSet;
+
+	std::vector<VirtualInputFactory> virtualInputs;
 };

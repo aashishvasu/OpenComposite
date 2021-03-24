@@ -6,6 +6,8 @@
 
 #include "OculusInteractionProfile.h"
 
+#include "AnalogueToDigitalInput.h"
+
 OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 {
 	path = "/interaction_profiles/oculus/touch_controller";
@@ -40,7 +42,7 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	};
 
 	for (const char** str = paths; *str; str++) {
-		validInputPaths.push_back(*str);
+		validInputPaths.emplace_back(*str);
 	}
 
 	for (const char** str = perHandPaths; *str; str++) {
@@ -49,4 +51,20 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	}
 
 	validInputPathsSet.insert(validInputPaths.begin(), validInputPaths.end());
+
+	// Setup the virtual inputs
+	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/left/input/trigger/value", "/user/hand/left/input/trigger/click"));
+	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/right/input/trigger/value", "/user/hand/right/input/trigger/click"));
+	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/left/input/squeeze/value", "/user/hand/left/input/grip/click"));
+	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/right/input/squeeze/value", "/user/hand/right/input/grip/click"));
+	// TODO add a way to remap the values for grip->squeeze, if an application does support handling that itself
+	// TODO remap application_menu
+
+	// Called last now that all our overridden functions will return their final values
+	PostSetup();
+}
+
+const std::vector<VirtualInputFactory>& OculusTouchInteractionProfile::GetVirtualInputs() const
+{
+	return virtualInputs;
 }

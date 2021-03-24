@@ -352,6 +352,11 @@ public: // INTERNAL FUNCTIONS
 	 */
 	inline uint64_t GetSyncSerial() const { return syncSerial; }
 
+	/**
+	 * Converts a hand path (/user/hand/left or /user/hand/right) into an input value handle.
+	 */
+	VRInputValueHandle_t HandPathToIVH(const std::string& path);
+
 private:
 	enum class ActionRequirement {
 		Suggested = 0, // default
@@ -436,6 +441,11 @@ private:
 	};
 
 	struct Action {
+		// Since the list of VirtualInputs cannot be copied (only moved) we might as well make the
+		// whole struct non-copyable to make the error messages easier to follow.
+		Action() = default;
+		Action(const Action&) = delete;
+
 		std::string fullName; // Full name as set in the JSON file, eg '/actions/main/in/Test1'
 		std::string shortName; // The last part of the name, eg 'Test1'
 		ActionRequirement requirement = ActionRequirement::Suggested;
@@ -445,6 +455,9 @@ private:
 		std::string setName; // The name of the action set - set before we've enumerated the action sets, eg 'main'
 
 		XrAction xr = XR_NULL_HANDLE;
+
+		// Any virtual inputs bound to this action are attached here
+		std::vector<std::unique_ptr<VirtualInput> > virtualInputs;
 
 		// Only used in the case of Pose actions
 		XrSpace actionSpace = XR_NULL_HANDLE;
@@ -471,7 +484,7 @@ private:
 	 */
 	std::vector<XrPath> allSubactionPaths;
 
-	void LoadBindingsSet(const std::string& bindingsPath, const class InteractionProfile&, std::vector<XrActionSuggestedBinding>& bindings);
+	void LoadBindingsSet(const struct InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
 
 	void AddLegacyBindings(InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
 

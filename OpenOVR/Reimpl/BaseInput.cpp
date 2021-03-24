@@ -12,6 +12,7 @@
 #include <fstream>
 #include <locale>
 #include <map>
+#include <utility>
 
 #include "Misc/Input/OculusInteractionProfile.h"
 #include "Misc/xrmoreutils.h"
@@ -201,7 +202,8 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 	// Parse the actions
 	for (Json::Value item : root["actions"]) {
-		Action action = {};
+		std::unique_ptr<Action> actionPtr = std::make_unique<Action>();
+		Action& action = *actionPtr;
 		action.fullName = lowerStr(item["name"].asString());
 
 		// Split the full name by stroke ('/') characters
@@ -261,7 +263,8 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		if (actions.count(action.fullName))
 			OOVR_ABORTF("Duplicate action name '%s'", action.fullName.c_str());
 
-		actions[action.fullName] = std::make_unique<Action>(action);
+		std::string name = action.fullName; // Array index may be evaluated first iirc, so pull this out now
+		actions[name] = std::move(actionPtr);
 	}
 
 	// Parse the action sets
@@ -416,7 +419,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	// Read the default bindings file, and load it into OpenXR
 	std::vector<XrActionSuggestedBinding> bindings;
 	OculusTouchInteractionProfile profile;
-	LoadBindingsSet(bindingsPath, profile, bindings);
+	LoadBindingsSet(profile, bindings);
 
 	// Add our legacy bindings in - these are what power GetControllerState
 	AddLegacyBindings(profile, bindings);
@@ -433,6 +436,14 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 	// Attach everything to the current session
 	BindInputsForSession();
+
+	// Finish the setup for our VirtualInputs
+	for (const auto& actionPair : actions) {
+		const Action& action = *actionPair.second;
+		for (const std::unique_ptr<VirtualInput>& input : action.virtualInputs) {
+			input->PostInit();
+		}
+	}
 
 	return vr::VRInputError_None;
 }
@@ -499,7 +510,7 @@ void BaseInput::BindInputsForSession()
 	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session, &attachInfo));
 }
 
-void BaseInput::LoadBindingsSet(const std::string& bindingsPath, const struct InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings)
+void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings)
 {
 	Json::Value bindingsRoot;
 	if (!ReadJson(utf8to16(bindingsPath), bindingsRoot)) {
@@ -541,11 +552,31 @@ void BaseInput::LoadBindingsSet(const std::string& bindingsPath, const struct In
 				auto actionIter = actions.find(actionName);
 				if (actionIter == actions.end())
 					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
-				const Action& action = *actionIter->second;
+				Action& action = *actionIter->second;
 
 				// There's probably some differences, but it looks like the SteamVR paths will 'just work' with OpenXR
 				// FIXME this doesn't with with binding boolean actions to analogue inputs
 				std::string pathStr = importBasePath + "/" + inputName;
+
+				// Handle virtual paths - this creates the relevant virtual input for the specified path on this
+				// action set and binds the Action to it. Note we don't want to cache and reuse the same virtual input
+				// since if the runtime supports it the user may wish to rebind this action.
+				const VirtualInputFactory* virtFactory = profile.GetVirtualInput(pathStr);
+				if (virtFactory) {
+					VirtualInput::BindInfo info = {};
+					info.actionSet = action.set->xr;
+					info.actionSetName = action.setName;
+					info.openvrActionName = action.shortName;
+					info.localisedName = action.shortName; // TODO localisation
+
+					std::unique_ptr<VirtualInput> virt = virtFactory->BuildFor(info);
+					virt->AddSuggestedBindings(bindings);
+					action.virtualInputs.push_back(std::move(virt));
+
+					// Note that we leave around the native xr instance, in case it's also bound to a native input later
+
+					continue;
+				}
 
 				if (!profile.IsInputPathValid(pathStr)) {
 					OOVR_LOGF("WARNING: Built invalid input path %s for profile %s from action %s, skipping",
@@ -855,6 +886,15 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 		pActionData->activeOrigin = ao;
 	}
 
+	// Check the virtual inputs
+	for (const auto& virt : act->virtualInputs) {
+		OOVR_InputDigitalActionData_t tmp = {};
+		virt->GetDigitalActionData(&tmp);
+
+		if (tmp.bActive > pActionData->bActive || tmp.bState > pActionData->bState)
+			*pActionData = tmp;
+	}
+
 	// Note it's possible we didn't set any output if this action isn't bound to anything, just leave the
 	//  struct at it's default values.
 
@@ -942,6 +982,10 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		// Get the info, which only says if it's active or not
 		XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
 		getInfo.action = act->xr;
+		// Note we can't cleanly set subactionPath here, since the returned pose may be incorrect if the
+		//  runtime made the space from the other controller. It's unlikely to ever be a significant issue
+		//  though since it'll only occur if the pose is bound to multiple inputs.
+		// getInfo.subactionPath = subactionPath;
 		XrActionStatePose state = { XR_TYPE_ACTION_STATE_POSE };
 		OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session, &getInfo, &state));
 
@@ -1258,6 +1302,13 @@ VRInputValueHandle_t BaseInput::activeOriginToIVH(XrPath path)
 	}
 
 	OOVR_ABORTF("Cannot find controller tracking ID by handId=%d", ctrlId);
+}
+
+VRInputValueHandle_t BaseInput::HandPathToIVH(const std::string& path)
+{
+	XrPath xrPath;
+	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, path.c_str(), &xrPath));
+	return activeOriginToIVH(xrPath);
 }
 
 bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* state)
