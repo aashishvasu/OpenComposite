@@ -471,6 +471,13 @@ void BaseInput::BindInputsForSession()
 			pair.second->actionSpace = XR_NULL_HANDLE;
 	}
 
+	// Same goes for the actionspaces of the legacy controller pose actions
+	for (LegacyControllerActions& lca : legacyControllers) {
+		// No need to destroy it, the session it was attached to was destroyed
+		lca.gripPoseSpace = XR_NULL_HANDLE;
+		lca.aimPoseSpace = XR_NULL_HANDLE;
+	}
+
 	// Note: even if actionSets is empty, we always still want to load the legacy set.
 
 	// Now attach the action sets to the OpenXR session, making them immutable (including attaching suggested bindings)
@@ -882,7 +889,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
-	// TODO implement ulRestrictToDevice
+	// TODO test ulRestrictToDevice
 	OOVR_FALSE_ABORT(ulRestrictToDevice == vr::k_ulInvalidInputValueHandle);
 
 	if (act->type != ActionType::Pose)
