@@ -273,7 +273,9 @@ void XrBackend::StoreEyeTexture(
 	OOVR_FALSE_ABORT(compPtr.get() != nullptr);
 	Compositor& comp = *compPtr;
 
-	comp.Invoke((XruEye)eye, texture, bounds, submitFlags, layer);
+	// If the session is inactive, we may be unable to write to the surface
+	if (sessionActive)
+		comp.Invoke((XruEye)eye, texture, bounds, submitFlags, layer);
 
 	// TODO store view somewhere and use it for submitting our frame
 
