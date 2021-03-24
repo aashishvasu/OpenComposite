@@ -110,7 +110,9 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture)
 	// Abort if there was an OpenGL error
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR) {
-		OOVR_ABORTF("OpenGL texture copy failed with err %d", err);
+		// Just warn, so we can find it in the logs - I fear it may crash in unexpected corner-cases otherwise.
+		// OOVR_ABORTF("OpenGL texture copy failed with err %d", err);
+		OOVR_LOG_ONCE("WARNING: OpenGL texture copy failed!");
 	}
 
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
