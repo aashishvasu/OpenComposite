@@ -39,10 +39,10 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	XrFovf& fov = views[eEye].fov;
 
 	float twoNear = fNearZ * 2;
-	float tanL = fov.angleLeft;
-	float tanR = fov.angleRight;
-	float tanU = fov.angleUp;
-	float tanD = fov.angleDown;
+	float tanL = tanf(fov.angleLeft);
+	float tanR = tanf(fov.angleRight);
+	float tanU = tanf(fov.angleUp);
+	float tanD = tanf(fov.angleDown);
 	float horizontalFov = -tanL + tanR;
 	float verticalFov = tanU - tanD;
 
@@ -55,8 +55,8 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 		// https://docs.microsoft.com/en-us/windows/win32/dxtecharts/the-direct3d-transformation-pipeline
 		// https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
 		// Also copied from glm::perspectiveLH_ZO
-		m[0] = glm::vec4(1 / tanf(horizontalFov / 2), 0, (tanL + tanR) / horizontalFov, 0);
-		m[1] = glm::vec4(0, 1 / tanf(verticalFov / 2), (tanU + tanD) / verticalFov, 0);
+		m[0] = glm::vec4(2 / horizontalFov, 0, (tanL + tanR) / horizontalFov, 0);
+		m[1] = glm::vec4(0, 2 / verticalFov, (tanU + tanD) / verticalFov, 0);
 		m[2] = glm::vec4(0, 0, -fFarZ / (fFarZ - fNearZ), -(fFarZ * fNearZ) / (fFarZ - fNearZ));
 		m[3] = glm::vec4(0, 0, -1, 0);
 
