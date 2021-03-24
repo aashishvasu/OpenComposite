@@ -802,6 +802,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	syncInfo.activeActionSets = aas.data();
 	syncInfo.countActiveActionSets = aas.size();
 	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
+	syncSerial++;
 
 	return VRInputError_None;
 }
@@ -817,6 +818,7 @@ void BaseInput::InternalUpdate()
 	syncInfo.activeActionSets = &aas;
 	syncInfo.countActiveActionSets = 1;
 	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
+	syncSerial++;
 }
 
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,

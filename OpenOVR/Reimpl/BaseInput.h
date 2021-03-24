@@ -346,6 +346,12 @@ public: // INTERNAL FUNCTIONS
 
 	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space);
 
+	/**
+	 * Get a number that increments each time xrSyncActions is called. Can be used to check if a cached input value
+	 * is current or not.
+	 */
+	inline uint64_t GetSyncSerial() const { return syncSerial; }
+
 private:
 	enum class ActionRequirement {
 		Suggested = 0, // default
@@ -446,6 +452,9 @@ private:
 
 	struct InputValue {
 	};
+
+	// See GetSyncSerial
+	uint64_t syncSerial = 0;
 
 	bool hasLoadedActions = false;
 	bool usingLegacyInput = false;
