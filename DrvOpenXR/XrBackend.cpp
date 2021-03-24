@@ -453,6 +453,7 @@ void XrBackend::PumpEvents()
 				OOVR_FAILED_XR_ABORT(xrEndSession(xr_session));
 				sessionActive = false;
 				renderingFrame = false;
+				break;
 			}
 			case XR_SESSION_STATE_EXITING:
 			case XR_SESSION_STATE_LOSS_PENDING: {
@@ -462,6 +463,7 @@ void XrBackend::PumpEvents()
 				auto system = GetBaseSystem();
 				if (system)
 					system->_EnqueueEvent(quit);
+				break;
 			}
 			default:
 				// suppress clion warning about missing branches
