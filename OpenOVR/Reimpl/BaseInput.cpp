@@ -13,7 +13,7 @@
 #include <locale>
 #include <map>
 
-#include "Misc/Input/InteractionProfile.h"
+#include "Misc/Input/OculusInteractionProfile.h"
 #include "Misc/xrmoreutils.h"
 
 using namespace vr;

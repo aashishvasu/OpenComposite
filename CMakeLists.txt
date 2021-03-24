@@ -220,6 +220,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Keyboard/SudoFontMeta.cpp
 	OpenOVR/Misc/Keyboard/VRKeyboard.cpp
 	OpenOVR/Misc/Input/InteractionProfile.cpp
+	OpenOVR/Misc/Input/OculusInteractionProfile.cpp
 	OpenOVR/OpenOVR.cpp
 	OpenOVR/Reimpl/BaseApplications.cpp
 	OpenOVR/Reimpl/BaseChaperone.cpp
@@ -283,6 +284,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Keyboard/SudoFontMeta.h
 	OpenOVR/Misc/Keyboard/VRKeyboard.h
 	OpenOVR/Misc/Input/InteractionProfile.h
+	OpenOVR/Misc/Input/OculusInteractionProfile.h
 	OpenOVR/Misc/lodepng.h
 	OpenOVR/Misc/ScopeGuard.h
 	OpenOVR/Reimpl/BaseApplications.h
