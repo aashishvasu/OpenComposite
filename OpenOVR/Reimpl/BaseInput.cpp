@@ -1213,7 +1213,14 @@ TrackedDeviceIndex_t BaseInput::cast_IVH(VRInputValueHandle_t handle)
 		OOVR_ABORT("Called cast_IVH for invalid input value handle");
 
 	// -1000 to undo what we added - see GetInputSourceHandle
-	return ((TrackedDeviceIndex_t)handle) - 1000;
+	TrackedDeviceIndex_t dev = ((TrackedDeviceIndex_t)handle) - 1000;
+
+	// Make sure it's a valid handle
+	if (dev < 0 || dev > vr::k_unMaxTrackedDeviceCount) {
+		OOVR_ABORTF("Corrupt VRInputValueHandle - value %d", handle);
+	}
+
+	return dev;
 }
 
 VRInputValueHandle_t BaseInput::devToIVH(vr::TrackedDeviceIndex_t index)
@@ -1247,7 +1254,7 @@ VRInputValueHandle_t BaseInput::activeOriginToIVH(XrPath path)
 	// Convert it into a device index
 	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
 		if (DeviceIndexToHandId(i) == ctrlId)
-			return i;
+			return devToIVH(i);
 	}
 
 	OOVR_ABORTF("Cannot find controller tracking ID by handId=%d", ctrlId);
