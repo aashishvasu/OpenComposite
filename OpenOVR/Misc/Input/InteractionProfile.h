@@ -43,6 +43,12 @@ public:
 	 */
 	void PostInit();
 
+	/**
+	 * Should be called directly before xrSyncActions. Updates the data needed to write bChanged (or equivalents for
+	 * non-digital actions).
+	 */
+	void OnPreFrame();
+
 protected:
 	virtual void Update() = 0;
 
@@ -62,7 +68,7 @@ protected:
 	 * The good activeOrigin value for all our produced outputs. This will be applied by InteractionProfile and
 	 * subclasses don't need to set it.
 	 */
-	vr::VRInputValueHandle_t activeOrigin;
+	vr::VRInputValueHandle_t activeOrigin = vr::k_ulInvalidInputValueHandle;
 
 private:
 	/**

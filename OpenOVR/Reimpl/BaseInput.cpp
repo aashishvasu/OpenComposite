@@ -793,6 +793,14 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 
 	OOVR_FALSE_ABORT(sizeof(*pSets) == unSizeOfVRSelectedActionSet_t);
 
+	// First tell all the VirtualInputs to update, to process bChanged
+	for (const auto& actionPair : actions) {
+		const Action& action = *actionPair.second;
+		for (const std::unique_ptr<VirtualInput>& input : action.virtualInputs) {
+			input->OnPreFrame();
+		}
+	}
+
 	// Make sure all the ActionSets have the same priority, since we don't have any way around that right now
 	if (unSetCount > 1) {
 		int priority = pSets[0].nPriority;

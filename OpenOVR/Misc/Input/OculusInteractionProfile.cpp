@@ -58,7 +58,17 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/left/input/squeeze/value", "/user/hand/left/input/grip/click"));
 	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/right/input/squeeze/value", "/user/hand/right/input/grip/click"));
 	// TODO add a way to remap the values for grip->squeeze, if an application does support handling that itself
-	// TODO remap application_menu
+	// TODO implement the following inputs:
+	// joystick
+	// system (remapped from menu)
+
+	// TODO implement the poses through the interaction profile (the raw pose is hard-coded in BaseInput at the moment):
+	// pose/raw
+	// pose/base
+	// pose/handgrip
+	// pose/tip
+
+	// TODO long-click versions of the buttons
 
 	// Called last now that all our overridden functions will return their final values
 	PostSetup();

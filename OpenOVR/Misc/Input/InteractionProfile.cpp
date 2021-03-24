@@ -50,6 +50,13 @@ VirtualInput::VirtualInput(BindInfo info)
 {
 }
 
+void VirtualInput::OnPreFrame()
+{
+	// Make sure Update has been called this frame. This is necessary so that the
+	// implementation class can calculate what changes on a frame-to-frame level.
+	GetDigitalActionData(nullptr);
+}
+
 vr::EVRInputError VirtualInput::GetDigitalActionData(OOVR_InputDigitalActionData_t* pActionData)
 {
 	// Make sure we call update every time xrSyncActions is called, between those calls we
@@ -66,8 +73,10 @@ vr::EVRInputError VirtualInput::GetDigitalActionData(OOVR_InputDigitalActionData
 		}
 	}
 
+	// If null only do the update stuff above - this is used with OnPreFrame
 	static_assert(sizeof(digital) == sizeof(*pActionData), "digital action data size mismatch");
-	memcpy(pActionData, &digital, sizeof(digital));
+	if (pActionData)
+		memcpy(pActionData, &digital, sizeof(digital));
 
 	return vr::VRInputError_None;
 }

@@ -28,7 +28,7 @@ AnalogueToDigitalInput::AnalogueToDigitalInput(BindInfo info, std::string src)
 void AnalogueToDigitalInput::Update()
 {
 	ZeroMemory(&digital, sizeof(digital));
-	// TODO fUpdateTime
+	// TODO fUpdateTime when bChanged is written to
 
 	XrActionStateGetInfo info = { XR_TYPE_ACTION_STATE_GET_INFO };
 	info.action = action;
@@ -38,6 +38,7 @@ void AnalogueToDigitalInput::Update()
 	// If our source isn't active, leave the digital data in it's inactive all-zero state
 	if (!state.isActive) {
 		active = false;
+		lastActive = false;
 		return;
 	}
 
@@ -53,4 +54,7 @@ void AnalogueToDigitalInput::Update()
 	// TODO bChanged
 
 	digital.bState = active;
+	digital.bChanged = active != lastActive;
+
+	lastActive = active;
 }

@@ -23,4 +23,9 @@ private:
 	 * Whether the input is currently on or not, used for implementing hysteresis.
 	 */
 	bool active = false;
+
+	/**
+	 * Used for calculating bChanged
+	 */
+	bool lastActive = false;
 };
