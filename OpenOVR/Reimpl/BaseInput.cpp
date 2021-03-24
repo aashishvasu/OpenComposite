@@ -329,7 +329,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	std::string bestPath;
 	int bestPriority = -1;
 	for (Json::Value item : root["default_bindings"]) {
-		std::string type = item["type"].asString();
+		std::string type = item["controller_type"].asString();
 
 		// Given the type of controller, find a priority for it
 		int priority;
@@ -343,8 +343,10 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		else
 			priority = 0;
 
-		if (priority > bestPriority)
+		if (priority > bestPriority) {
 			bestPath = item["binding_url"].asString();
+			bestPriority = priority;
+		}
 	}
 
 	if (bestPath.empty())
@@ -465,6 +467,8 @@ void BaseInput::LoadEmptyManifest()
 
 void BaseInput::BindInputsForSession()
 {
+	OOVR_LOGF("Loading bindings file %s", bindingsPath.c_str());
+
 	// Since the session has changed, any actionspaces we previously created are now invalid
 	for (auto& pair : actions) {
 		if (pair.second->actionSpace)
