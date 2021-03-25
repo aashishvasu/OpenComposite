@@ -49,10 +49,15 @@ public:
 	 */
 	void OnPreFrame();
 
+	/**
+	 * Get a list of physical actions this virtual action contains, to be used in GetActionOrigins.
+	 */
+	const std::vector<XrAction>& GetActionsForOriginLookup() const;
+
 protected:
 	virtual void Update() = 0;
 
-	XrAction CreateAction(const std::string& pathSuffix, XrActionType type, const std::string& localisedNameSuffix) const;
+	XrAction CreateAction(const std::string& pathSuffix, XrActionType type, const std::string& localisedNameSuffix);
 
 	std::vector<XrActionSuggestedBinding> suggestedBindings;
 
@@ -63,6 +68,8 @@ protected:
 	uint64_t digitalSerial = 0;
 
 	OOVR_InputDigitalActionData_t digital = {};
+
+	std::vector<XrAction> actions;
 
 	/**
 	 * The good activeOrigin value for all our produced outputs. This will be applied by InteractionProfile and

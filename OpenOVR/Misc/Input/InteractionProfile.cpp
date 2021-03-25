@@ -81,7 +81,7 @@ vr::EVRInputError VirtualInput::GetDigitalActionData(OOVR_InputDigitalActionData
 	return vr::VRInputError_None;
 }
 
-XrAction VirtualInput::CreateAction(const std::string& pathSuffix, XrActionType type, const std::string& localisedNameSuffix) const
+XrAction VirtualInput::CreateAction(const std::string& pathSuffix, XrActionType type, const std::string& localisedNameSuffix)
 {
 	XrActionCreateInfo info = { XR_TYPE_ACTION_CREATE_INFO };
 
@@ -98,6 +98,7 @@ XrAction VirtualInput::CreateAction(const std::string& pathSuffix, XrActionType 
 
 	XrAction action = XR_NULL_HANDLE;
 	OOVR_FAILED_XR_ABORT(xrCreateAction(bindInfo.actionSet, &info, &action));
+	actions.push_back(action);
 	return action;
 }
 
@@ -127,4 +128,9 @@ void VirtualInput::PostInit()
 	BaseInput* input = GetUnsafeBaseInput();
 	activeOrigin = input->HandPathToIVH(first);
 	OOVR_FALSE_ABORT(activeOrigin != vr::k_ulInvalidInputValueHandle);
+}
+
+const std::vector<XrAction>& VirtualInput::GetActionsForOriginLookup() const
+{
+	return actions;
 }

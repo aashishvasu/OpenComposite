@@ -1162,8 +1162,60 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t digitalActionHandle,
     VR_ARRAY_COUNT(originOutCount) VRInputValueHandle_t* originsOut, uint32_t originOutCount)
 {
-	STUBBED();
+	ActionSet* set = cast_ASH(actionSetHandle);
+	Action* act = cast_AH(digitalActionHandle);
+
+	// TODO find something that passes in non-matching values and see what results it wants, or try it with SteamVR
+	if (act->set != set) {
+		OOVR_ABORTF("GetActionOrigins: set mismatch %s vs %s", set->name.c_str(), act->fullName.c_str());
+	}
+
+	ZeroMemory(originsOut, originOutCount * sizeof(*originsOut));
+
+	// Go through both the real action and any virtual actions, and add them all together
+	std::vector<XrAction> relevantActions;
+	relevantActions.emplace_back(act->xr);
+
+	for (const std::unique_ptr<VirtualInput>& virt : act->virtualInputs) {
+		std::vector<XrAction> virtActions = virt->GetActionsForOriginLookup();
+		relevantActions.insert(relevantActions.end(), virtActions.begin(), virtActions.end());
+	}
+
+	std::set<std::string> sources;
+	for (XrAction action : relevantActions) {
+		XrBoundSourcesForActionEnumerateInfo info = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
+		info.action = action;
+
+		// 20 will be more than enough, saves a second call
+		XrPath tmp[20];
+		uint32_t count;
+		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, ARRAYSIZE(tmp), &count, tmp));
+
+		// Now for each source find the /user/hand/abc substring that it starts with
+		char buff[XR_MAX_PATH_LENGTH + 1];
+		for (int i = 0; i < count; i++) {
+			uint32_t len;
+			OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, tmp[i], XR_MAX_PATH_LENGTH, &len, buff));
+
+			std::string path(buff, len);
+			int endOfHandPos = path.find('/', strlen("/user/hand/") + 1);
+			path.erase(endOfHandPos);
+			sources.insert(std::move(path));
+		}
+	}
+
+	// Copy out the sources
+	int i = 0;
+	for (const std::string& path : sources) {
+		if (i >= originOutCount)
+			return vr::VRInputError_MaxCapacityReached; // TODO check this is correct
+		GetInputSourceHandle(path.c_str(), &originsOut[i]);
+		i++;
+	}
+
+	return VRInputError_None;
 }
+
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize)
 {
 	STUBBED();
