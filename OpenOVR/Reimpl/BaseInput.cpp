@@ -1013,7 +1013,9 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		// Note we can't cleanly set subactionPath here, since the returned pose may be incorrect if the
 		//  runtime made the space from the other controller. It's unlikely to ever be a significant issue
 		//  though since it'll only occur if the pose is bound to multiple inputs.
-		// getInfo.subactionPath = subactionPath;
+		// Anyway we do have to have this, otherwise this will read from either controller's state and
+		//  we'll always read the first device as the active origin.
+		getInfo.subactionPath = subactionPath;
 		XrActionStatePose state = { XR_TYPE_ACTION_STATE_POSE };
 		OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session, &getInfo, &state));
 
