@@ -134,6 +134,7 @@ else()
 	# TODO Turtle1331 should we include -DXR_USE_PLATFORM_(XLIB|XCB|WAYLAND) here?
 	target_compile_definitions(OpenXR PRIVATE -DXR_OS_LINUX
 	-DXR_USE_GRAPHICS_API_OPENGL -DXR_USE_GRAPHICS_API_VULKAN)
+	target_link_libraries(OpenXR PUBLIC -ldl)
 endif()
 target_link_libraries(OpenXR PUBLIC Vulkan)
 
