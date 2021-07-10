@@ -1,0 +1,6 @@
+# Add an include for driver_ITrackedDeviceServerDriver_005.h just after the vrannotation.h include
+ins 5 1
+#include "driver_ITrackedDeviceServerDriver_005.h"
+
+# Delete the forward declarations
+del 10 4

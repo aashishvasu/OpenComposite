@@ -1,0 +1,49 @@
+# British English keyboard
+
+width 15
+
+# Number row
+key ` ¬ 0 0
+bank 1234567890-= !"£$%^&*()_+
+key \b \b
+.label back
+.spans_to_right true
+
+# Top row
+key \t \t 0 1 1.5 1
+.label tab
+key q Q 1.5 1
+bank wertyuiop[] WERTYUIOP{}
+
+# 2nd row
+key \c \c 0 2 1.83 1
+.label caps
+key a A
+bank sdfghjkl;'# SDFGHJKL:@~
+
+# Enter
+key \n \n 13.5 1
+.label entr
+.spans_to_right true
+key \n \n 13.83 2
+.label
+.spans_to_right true
+
+# 3nd row
+key \z \z 0 3 1.5 1
+.label shift
+
+key \\ | 1.5 3
+bank zxcvbnm,./ ZXCVBNM<>?
+
+key \z \z
+.label shift
+.spans_to_right true
+
+# 4th row
+key \s \z 3.5 4 6 1
+.label
+
+key \q \q 11.5 4
+.label done
+.spans_to_right true

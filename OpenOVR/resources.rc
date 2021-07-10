@@ -1,0 +1,11 @@
+#include "resources.h"
+
+// Other resource statements...
+
+RES_O_HAND_LEFT		RES_T_OBJ	"../assets/LeftHand.obj"
+RES_O_HAND_RIGHT	RES_T_OBJ	"../assets/RightHand.obj"
+
+RES_O_FNT_UBUNTU	RES_T_FNTMETA	"../assets/Ubuntu-30.sfn"
+RES_O_FNT_UBUNTU	RES_T_PNG	"../assets/Ubuntu-30-texture.png"
+
+RES_O_KB_EN_GB		RES_T_KBLAYOUT	"../assets/en_gb.kb"

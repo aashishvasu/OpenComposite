@@ -1,0 +1,11 @@
+Hand models
+
+Taken from https://developer.oculus.com/downloads/package/oculus-hand-models/
+Licence: CC-BY 4.0 (Attribution required)
+
+These Maya models were exported without modification as OBJs, from Maya 2016.
+
+Only normals were enabled
+
+The Ubuntu font has been packaged for use with the keyboard, and has been converted via SudoFont
+https://github.com/SudoMike/SudoFont
