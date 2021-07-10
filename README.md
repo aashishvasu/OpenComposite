@@ -1,3 +1,5 @@
+**NOTE: This is a fork of https://gitlab.com/znixian/OpenOVR. I just like using Github more.**
+
 # OpenComposite - Play SteamVR games without SteamVR!
 
 [![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
