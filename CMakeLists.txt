@@ -5,7 +5,7 @@ if (MSVC)
 	set(CMAKE_SYSTEM_VERSION 10.0.17134.0)
 endif ()
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10.2)
 project(OpenComposite)
 
 include(scripts/pch.cmake)
@@ -436,7 +436,7 @@ endif ()
 # Require that all symbols are defined on Linux - this is always done on Windows
 # Also on Linux, put all the static libraries in a group to avoid ordering problems
 if (NOT WIN32)
-	target_link_options(OCOVR PRIVATE -Wl,--no-undefined)
+	target_link_libraries(OCOVR PRIVATE -Wl,--no-undefined)
 	target_link_libraries(OCOVR PUBLIC -Wl,--start-group OCCore DrvOpenXR -Wl,--end-group)
 else ()
 	# On Windows this isn't a problem since the linker knows how to figure this stuff out
@@ -455,7 +455,7 @@ endif ()
 # See the comment at the top about -fvisibility=hidden
 if (WIN32)
 else ()
-	target_link_options(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
+	target_link_libraries(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
 
 	# Oh, and we need dlopen
 	target_link_libraries(OCOVR PUBLIC -ldl)
