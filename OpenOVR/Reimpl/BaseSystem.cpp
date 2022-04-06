@@ -231,7 +231,9 @@ vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::
 	} else if (unDeviceType == TrackedControllerRole_RightHand) {
 		return rightHandIndex;
 	}
-	STUBBED();
+
+	// This is what SteamVR does for unknown devices
+	return -1;
 }
 
 vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex)
