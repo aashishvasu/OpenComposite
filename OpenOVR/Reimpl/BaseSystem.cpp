@@ -356,7 +356,38 @@ uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 
 const char* BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error)
 {
-	STUBBED();
+#define ERR_CASE(err) \
+	case err:         \
+		return #err
+
+	switch (error) {
+		ERR_CASE(TrackedProp_Success);
+		ERR_CASE(TrackedProp_WrongDataType);
+		ERR_CASE(TrackedProp_WrongDeviceClass);
+		ERR_CASE(TrackedProp_BufferTooSmall);
+		ERR_CASE(TrackedProp_UnknownProperty);
+		ERR_CASE(TrackedProp_InvalidDevice);
+		ERR_CASE(TrackedProp_CouldNotContactServer);
+		ERR_CASE(TrackedProp_ValueNotProvidedByDevice);
+		ERR_CASE(TrackedProp_StringExceedsMaximumLength);
+		ERR_CASE(TrackedProp_NotYetAvailable);
+		ERR_CASE(TrackedProp_PermissionDenied);
+		ERR_CASE(TrackedProp_InvalidOperation);
+		ERR_CASE(TrackedProp_CannotWriteToWildcards);
+		ERR_CASE(TrackedProp_IPCReadFailure);
+		ERR_CASE(TrackedProp_OutOfMemory);
+		ERR_CASE(TrackedProp_InvalidContainer);
+
+	default: {
+		// Doesn't work across threads, but in practice shouldn't be an issue.
+		static char uknBuf[32];
+		memset(uknBuf, 0, sizeof(uknBuf));
+		snprintf(uknBuf, sizeof(uknBuf) - 1, "Unknown property error (%d)", (int)error);
+		return uknBuf;
+	}
+	}
+
+#undef ERR_CASE
 }
 
 bool BaseSystem::IsInputAvailable()
