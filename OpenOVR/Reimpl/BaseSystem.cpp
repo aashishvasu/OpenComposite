@@ -726,7 +726,25 @@ const char* BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId)
 
 const char* BaseSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType)
 {
-	STUBBED();
+#define AXIS_CASE(err) \
+	case err:          \
+		return #err
+
+	switch (eAxisType) {
+		AXIS_CASE(k_eControllerAxis_None);
+		AXIS_CASE(k_eControllerAxis_TrackPad);
+		AXIS_CASE(k_eControllerAxis_Joystick);
+		AXIS_CASE(k_eControllerAxis_Trigger);
+	default: {
+		// Doesn't work across threads, but in practice shouldn't be an issue.
+		static char uknBuf[48];
+		memset(uknBuf, 0, sizeof(uknBuf));
+		snprintf(uknBuf, sizeof(uknBuf) - 1, "Unknown EVRControllerAxisType (%d)", (int)eAxisType);
+		return uknBuf;
+	}
+	}
+
+#undef AXIS_CASE
 }
 
 bool BaseSystem::CaptureInputFocus()
