@@ -102,24 +102,24 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 	XrFovf& fov = views[eEye].fov;
 
 	/**
-     * With a straight passthrough:
-     *
-     * SteamVR Left:  -1.110925, 0.889498, -0.964926, 0.715264
-     * SteamVR Right: -1.110925, 0.889498, -0.715264, 0.964926
-     *
-     * For the Rift S:
-     * OpenXR Left: 1.000000, -1.150368, -0.965689, 1.035530
-     * SteamVR Left: -1.150368, 1.000000, -0.965689, 1.035530
-     *
-     * Via:
-     *   char buff[1024];
-     *   snprintf(buff, sizeof(buff), "eye=%d %f, %f, %f, %f", eye, *pfTop, *pfBottom, *pfLeft, *pfRight);
-     *   OOVR_LOG(buff);
-     *
-     * This suggests that SteamVR negates the top and left values, which obviously we need to match. OpenXR
-     * also negates the bottom and left value. Since it appears that SteamVR flips the top and bottom angles, we
-     * can just do that and it'll match.
-     */
+	 * With a straight passthrough:
+	 *
+	 * SteamVR Left:  -1.110925, 0.889498, -0.964926, 0.715264
+	 * SteamVR Right: -1.110925, 0.889498, -0.715264, 0.964926
+	 *
+	 * For the Rift S:
+	 * OpenXR Left: 1.000000, -1.150368, -0.965689, 1.035530
+	 * SteamVR Left: -1.150368, 1.000000, -0.965689, 1.035530
+	 *
+	 * Via:
+	 *   char buff[1024];
+	 *   snprintf(buff, sizeof(buff), "eye=%d %f, %f, %f, %f", eye, *pfTop, *pfBottom, *pfLeft, *pfRight);
+	 *   OOVR_LOG(buff);
+	 *
+	 * This suggests that SteamVR negates the top and left values, which obviously we need to match. OpenXR
+	 * also negates the bottom and left value. Since it appears that SteamVR flips the top and bottom angles, we
+	 * can just do that and it'll match.
+	 */
 
 	*pfTop = tanf(fov.angleDown);
 	*pfBottom = tanf(fov.angleUp);
