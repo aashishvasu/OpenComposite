@@ -108,6 +108,11 @@ XrPosef S2O_om34_pose(const vr::HmdMatrix34_t& in)
 	return pose;
 }
 
+glm::vec3 S2G_v3f(const vr::HmdVector3_t& in)
+{
+	return { in.v[0], in.v[1], in.v[2] };
+}
+
 XrVector3f G2X_v3f(const glm::vec3& vec)
 {
 	return XrVector3f{ vec.x, vec.y, vec.z };

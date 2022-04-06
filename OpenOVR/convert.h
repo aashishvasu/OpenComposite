@@ -10,6 +10,7 @@ void O2S_om34(const MfMatrix4f& in, vr::HmdMatrix34_t& out);
 
 void S2O_om44(const vr::HmdMatrix34_t& in, MfMatrix4f& out);
 XrPosef S2O_om34_pose(const vr::HmdMatrix34_t& in);
+glm::vec3 S2G_v3f(const vr::HmdVector3_t &in);
 
 XrVector3f G2X_v3f(const glm::vec3& vec);
 XrQuaternionf G2X_quat(const glm::quat& q);
