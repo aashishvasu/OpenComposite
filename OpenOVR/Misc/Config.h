@@ -14,15 +14,16 @@ public:
 	inline bool UseViewportStencil() const { return useViewportStencil; }
 	inline bool ForceConnectedTouch() const { return forceConnectedTouch; }
 	inline bool LogGetTrackedProperty() const { return logGetTrackedProperty; }
+	inline bool StopOnSoftAbort() const { return stopOnSoftAbort; }
 	inline bool EnableLayers() const { return enableLayers; }
 	inline bool DX10Mode() const { return dx10Mode; }
 	inline bool EnableAppRequestedCubemap() const { return enableAppRequestedCubemap; }
 
 private:
 	static int ini_handler(
-		void* user, const char* section,
-		const char* name, const char* value,
-		int lineno);
+	    void* user, const char* section,
+	    const char* name, const char* value,
+	    int lineno);
 
 	bool renderCustomHands = true;
 	vr::HmdColor_t handColour = vr::HmdColor_t{ 0.3f, 0.3f, 0.3f, 1 };
@@ -33,6 +34,7 @@ private:
 	bool useViewportStencil = false;
 	bool forceConnectedTouch = true;
 	bool logGetTrackedProperty = false;
+	bool stopOnSoftAbort = false;
 
 	// Default to false since this was preventing PAYDAY 2 from starting, need to investigate to find out
 	//  if this is game-specific, or if it's a problem with the layer system

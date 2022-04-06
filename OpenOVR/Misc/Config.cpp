@@ -114,6 +114,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, useViewportStencil);
 		CFGOPT(bool, forceConnectedTouch);
 		CFGOPT(bool, logGetTrackedProperty);
+		CFGOPT(bool, stopOnSoftAbort);
 		CFGOPT(bool, enableLayers);
 		CFGOPT(bool, dx10Mode);
 		CFGOPT(bool, enableAppRequestedCubemap);

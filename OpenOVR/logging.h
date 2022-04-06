@@ -13,6 +13,8 @@ void oovr_log_raw_format(const char* file, long line, const char* func, const ch
 #define OOVR_LOGF(...) oovr_log_raw_format(__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, const char* msg, const char* title = nullptr, ...);
+void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit_count, const char* msg, ...);
+
 #define OOVR_ABORT(msg)                                        \
 	do {                                                       \
 		oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg); \
@@ -24,6 +26,24 @@ OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, c
 #define OOVR_ABORTF(msg, ...)                                                        \
 	do {                                                                             \
 		oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, __VA_ARGS__); \
+	} while (0)
+
+/**
+ * Perform a 'soft abort'. If OpenComposite is in debug mode this will cause a normal (hard) abort, but
+ * otherwise will log a message once into the log and continue.
+ *
+ * This is designed to be used in a place where the game has requested some action that's not yet supported
+ * and OpenComposite wants to mark it for developer attention while investigating the game, but at the same
+ * time the game will probably continue working in a degraded state without this (for example, missing
+ * haptics).
+ *
+ * Previously hard aborts were used for this, and unsurprisingly it caused a lot of trouble where what
+ * should have been minor issues were making games crash at startup.
+ */
+#define OOVR_SOFT_ABORTF(msg, ...)                                                                      \
+	do {                                                                                                \
+		int soft_abort_hit_count = 0;                                                                   \
+		oovr_soft_abort_raw(__FILE__, __LINE__, __FUNCTION__, &soft_abort_hit_count, msg, __VA_ARGS__); \
 	} while (0)
 
 // Log once function - useful for warning that a function called many times isn't implemented, while using
