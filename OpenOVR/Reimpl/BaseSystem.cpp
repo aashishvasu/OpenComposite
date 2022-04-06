@@ -692,7 +692,36 @@ void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceI
 
 const char* BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId)
 {
-	STUBBED();
+#define BTN_CASE(err) \
+	case err:         \
+		return #err
+
+	switch (eButtonId) {
+		BTN_CASE(k_EButton_System);
+		BTN_CASE(k_EButton_ApplicationMenu);
+		BTN_CASE(k_EButton_Grip);
+		BTN_CASE(k_EButton_DPad_Left);
+		BTN_CASE(k_EButton_DPad_Up);
+		BTN_CASE(k_EButton_DPad_Right);
+		BTN_CASE(k_EButton_DPad_Down);
+		BTN_CASE(k_EButton_A);
+		BTN_CASE(k_EButton_ProximitySensor);
+		BTN_CASE(k_EButton_Axis0);
+		BTN_CASE(k_EButton_Axis1);
+		BTN_CASE(k_EButton_Axis2);
+		BTN_CASE(k_EButton_Axis3);
+		BTN_CASE(k_EButton_Axis4);
+
+	default: {
+		// Doesn't work across threads, but in practice shouldn't be an issue.
+		static char uknBuf[32];
+		memset(uknBuf, 0, sizeof(uknBuf));
+		snprintf(uknBuf, sizeof(uknBuf) - 1, "Unknown EVRButtonId (%d)", (int)eButtonId);
+		return uknBuf;
+	}
+	}
+
+#undef BTN_CASE
 }
 
 const char* BaseSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType)
