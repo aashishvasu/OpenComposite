@@ -55,11 +55,11 @@ static bool ReadJson(const std::wstring& path, Json::Value& result)
 // Convert a UTF-8 string to a UTF-16 (wide) string
 static std::wstring utf8to16(const std::string& t_str)
 {
-	//setup converter
+	// setup converter
 	typedef std::codecvt_utf8<wchar_t> convert_type;
 	std::wstring_convert<convert_type, wchar_t> converter;
 
-	//use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
+	// use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
 	return converter.from_bytes(t_str);
 }
 
@@ -757,7 +757,9 @@ EVRInputError BaseInput::GetActionSetHandle(const char* pchActionSetName, VRActi
 
 	std::string prefix = "/actions/";
 	if (strncmp(prefix.c_str(), pchActionSetName, prefix.size()) != 0) {
-		OOVR_ABORTF("Invalid action set name '%s' - missing or bad prefix", pchActionSetName);
+		OOVR_SOFT_ABORTF("Invalid action set name '%s' - missing or bad prefix", pchActionSetName);
+		// This is a bogus error, SteamVR will just make a new handle
+		return vr::VRInputError_NameNotFound;
 	}
 	std::string setName = pchActionSetName + prefix.size();
 
