@@ -19,6 +19,9 @@ void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 
 vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention)
 {
+	if (eEye < 0 || (int)eEye >= 2)
+		eEye = vr::Eye_Left;
+
 	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
 
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
@@ -78,6 +81,10 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 
 void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, float* pfTop, float* pfBottom)
 {
+	// This is how SteamVR seems to handle invalid eyes
+	if (eEye < 0 || (int)eEye >= 2)
+		eEye = vr::Eye_Left;
+
 	// TODO deduplicate with GetProjectionMatrix
 	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
 
