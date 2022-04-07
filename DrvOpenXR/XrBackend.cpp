@@ -378,7 +378,76 @@ void XrBackend::SubmitFrames(bool showSkybox)
 
 IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)
 {
-	STUBBED();
+	// Needed for rFactor2 loading screens
+	if (unTextureCount == 6)
+	{
+		if (!sessionActive || !renderingFrame || pTextures == nullptr)
+			return 0;
+
+		XrFrameWaitInfo waitInfo{ XR_TYPE_FRAME_WAIT_INFO };
+		XrFrameState state{ XR_TYPE_FRAME_STATE };
+
+		OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session, &waitInfo, &state));
+		xr_gbl->nextPredictedFrameTime = state.predictedDisplayTime;
+
+		XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
+		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session, &beginInfo));
+
+		static std::unique_ptr<Compositor> compositor = nullptr;
+
+		if (compositor == nullptr)
+			compositor.reset(BaseCompositor::CreateCompositorAPI(pTextures));
+
+		vr::VRTextureBounds_t bounds;
+		bounds.uMin = 0.0;
+		bounds.uMax = 1.0;
+		bounds.vMin = 1.0;
+		bounds.vMax = 0.0;
+
+		auto* src = (ID3D11Texture2D*)pTextures->handle;
+
+		D3D11_TEXTURE2D_DESC srcDesc;
+		src->GetDesc(&srcDesc);
+
+		compositor->Invoke(pTextures, &bounds);
+		XrCompositionLayerQuad layerQuad = { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		layerQuad.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
+		layerQuad.next = NULL;
+		layerQuad.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+		layerQuad.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
+		layerQuad.eyeVisibility = XR_EYE_VISIBILITY_BOTH;
+		layerQuad.pose = { { 0.f, 0.f, 0.f, 1.f },
+				{ 0.0f, 0.0f, -0.65f } };
+		layerQuad.size = { 1.0f, 1.0f / 1.333f };
+		layerQuad.subImage = {
+			compositor->GetSwapChain(),
+			{{ 0, 0 }, { (int32_t)srcDesc.Width, (int32_t)srcDesc.Height }},
+			0
+		};
+
+		XrCompositionLayerBaseHeader* layers[1];
+		layers[0] = (XrCompositionLayerBaseHeader*)&layerQuad;
+		XrFrameEndInfo info{ XR_TYPE_FRAME_END_INFO };
+		info.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+		info.displayTime = xr_gbl->nextPredictedFrameTime;
+		info.layers = layers;
+		info.layerCount = 1;
+
+		auto xrEndFrame_result = xrEndFrame(xr_session, &info);
+		if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
+			OOVR_LOG("XR_ERROR_CALL_ORDER_INVALID");
+		else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
+			OOVR_LOG("XR_ERROR_VALIDATION_FAILURE");
+		else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID) {
+			OOVR_LOG("XR_ERROR_SWAPCHAIN_RECT_INVALID");
+			OOVR_LOGF("subImage rect: %d %d %d %d", layerQuad.subImage.imageRect.offset.x, layerQuad.subImage.imageRect.offset.y, layerQuad.subImage.imageRect.extent.width, layerQuad.subImage.imageRect.extent.height);
+		}
+		else
+			OOVR_FAILED_XR_ABORT(xrEndFrame_result /*xrEndFrame(xr_session, &info)*/);
+	}
+
+
+	return 0;
 }
 
 void XrBackend::ClearSkyboxOverride()
