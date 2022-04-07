@@ -29,6 +29,25 @@ static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
 XrDebugUtilsMessengerEXT dbgMessenger;
 
+void DrvOpenXR::GetXRAppName(char (& appName)[128])
+{
+	char exeName[MAX_PATH + 1] = { 0 };
+	DWORD len = GetModuleFileNameA(NULL, exeName, MAX_PATH);
+	if (len > 0) {
+		std::string ocAppName{ "OpenComposite_" };
+		PathStripPathA(exeName);
+		ocAppName.append(exeName);
+		auto pos = ocAppName.find(".exe");
+		if (pos != std::string::npos && pos > 0)
+			ocAppName = ocAppName.substr(0, pos);
+		OOVR_LOGF("Setting application name to %s", ocAppName.c_str());
+		strcpy_arr(appName, ocAppName.c_str());
+	}
+	else {
+		strcpy_arr(appName, "OpenComposite");
+	}
+}
+
 XrBool32 debugCallback(
 	XrDebugUtilsMessageSeverityFlagsEXT              messageSeverity,
 	XrDebugUtilsMessageTypeFlagsEXT                  messageTypes,
@@ -73,7 +92,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	// Create the OpenXR instance - this is the overall handle that connects us to the runtime
 	// https://www.khronos.org/registry/OpenXR/specs/1.0/refguide/openxr-10-reference-guide.pdf
 	XrApplicationInfo appInfo{};
-	strcpy(appInfo.applicationName, "OpenComposite"); // TODO vary by application
+	GetXRAppName(appInfo.applicationName);
 	appInfo.applicationVersion = 1;
 	appInfo.apiVersion = XR_CURRENT_API_VERSION;
 

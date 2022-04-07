@@ -289,7 +289,7 @@ VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent()
 
 	// FIXME copied from DrvOpenXR
 	XrApplicationInfo appInfo{};
-	strcpy_arr(appInfo.applicationName, "OpenComposite"); // TODO vary by application
+	DrvOpenXR::GetXRAppName(appInfo.applicationName);
 	appInfo.applicationVersion = 1;
 	appInfo.apiVersion = XR_CURRENT_API_VERSION;
 	XrInstanceCreateInfo createInfo{ XR_TYPE_INSTANCE_CREATE_INFO };
