@@ -403,10 +403,10 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			info.actionType = XR_ACTION_TYPE_POSE_INPUT;
 			break;
 		case ActionType::Skeleton:
-			STUBBED(); // Not XR_STUBBED since AFAIK this didn't work before, and since OpenXR doesn't do skeletal stuff we'll have to sort this our ourselves
+			OOVR_SOFT_ABORTF("Warning: Unsupported action type - Skeleton"); // Not XR_STUBBED since AFAIK this didn't work before, and since OpenXR doesn't do skeletal stuff we'll have to sort this our ourselves
 			break;
 		default:
-			OOVR_ABORTF("Bad action type while remapping action %s: %d", act.fullName.c_str(), act.type);
+			OOVR_SOFT_ABORTF("Bad action type while remapping action %s: %d", act.fullName.c_str(), act.type);
 		}
 
 		// Listen on all the subactions
