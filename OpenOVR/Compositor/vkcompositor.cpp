@@ -88,7 +88,7 @@ VkCompositor::~VkCompositor()
 		vkFreeMemory(target->device, rtSharedMem, nullptr);
 }
 
-void VkCompositor::Invoke(const vr::Texture_t* texture)
+void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
 {
 	const vr::VRVulkanTextureData_t* tex = (vr::VRVulkanTextureData_t*)texture->handle;
 
@@ -245,7 +245,7 @@ void VkCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VR
 {
 
 	// Copy the texture across
-	Invoke(texture);
+	Invoke(texture, ptrBounds);
 
 	vr::VRVulkanTextureData_t& tex = *(vr::VRVulkanTextureData_t*)texture->handle;
 

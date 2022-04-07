@@ -9,7 +9,7 @@ public:
 	virtual ~DX11Compositor() override;
 
 	// Override
-	virtual void Invoke(const vr::Texture_t* texture) override;
+	virtual void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds) override;
 
 	virtual void InvokeCubemap(const vr::Texture_t* textures) override;
 	virtual bool SupportsCubemap() override { return true; }
@@ -20,7 +20,7 @@ public:
 	ID3D11Device* GetDevice() { return device; }
 
 protected:
-	void CheckCreateSwapChain(const vr::Texture_t* texture, bool cube);
+	void CheckCreateSwapChain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, bool cube);
 
 	void ThrowIfFailed(HRESULT test);
 

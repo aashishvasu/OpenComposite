@@ -50,7 +50,7 @@ DX11Compositor::~DX11Compositor()
 	device->Release();
 }
 
-void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cube)
+void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, bool cube)
 {
 	XrSwapchainCreateInfo& desc = createInfo;
 
@@ -58,6 +58,14 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cub
 
 	D3D11_TEXTURE2D_DESC srcDesc;
 	src->GetDesc(&srcDesc);
+
+	if (bounds)
+	{
+		if(std::fabs(bounds->uMax - bounds->uMin) > 0.1)
+			srcDesc.Width = uint32_t(float(srcDesc.Width) * std::fabs(bounds->uMax - bounds->uMin));
+		if (std::fabs(bounds->vMax - bounds->vMin) > 0.1)
+			srcDesc.Height = uint32_t(float(srcDesc.Height) * std::fabs(bounds->vMax - bounds->vMin));
+	}
 
 	if (cube) {
 		// LibOVR can only use square cubemaps, while SteamVR can use any shape
@@ -69,6 +77,15 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cub
 
 	if (!usable) {
 		OOVR_LOG("Generating new swap chain");
+
+		if(bounds)
+			OOVR_LOGF("Bounds: uMin %f uMax %f vMin %f vMax %f", bounds->uMin, bounds->uMax, bounds->vMin, bounds->vMax);
+		OOVR_LOGF("Texture desc format: %d", srcDesc.Format);
+		OOVR_LOGF("Texture desc bind flags: %d", srcDesc.BindFlags);
+		OOVR_LOGF("Texture desc MiscFlags: %d", srcDesc.MiscFlags);
+		OOVR_LOGF("Texture desc Usage: %d", srcDesc.Usage);
+		OOVR_LOGF("Texture desc width: %d", srcDesc.Width);
+		OOVR_LOGF("Texture desc height: %d", srcDesc.Height);
 
 		// First, delete the old chain if necessary
 		if (chain) {
@@ -114,6 +131,7 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cub
 		desc.mipCount = srcDesc.MipLevels;
 		desc.sampleCount = 1;
 		desc.arraySize = 1;
+		desc.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT | XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 
 		// TODO do we need to do anything wrt automatic mipmap generation?
 		desc.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
@@ -137,9 +155,21 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, bool cub
 	}
 }
 
-void DX11Compositor::Invoke(const vr::Texture_t* texture)
+void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
 {
-	CheckCreateSwapChain(texture, false);
+	auto* src = (ID3D11Texture2D*)texture->handle;
+
+	// OpenXR swap chain doesn't support weird formats like DXGI_FORMAT_BC1_TYPELESS
+	D3D11_TEXTURE2D_DESC srcDesc;
+	src->GetDesc(&srcDesc);
+	if (srcDesc.Format == 70) {
+		if (chain) {
+			xrDestroySwapchain(chain);
+		}
+		return;
+	}
+	
+	CheckCreateSwapChain(texture, bounds, false);
 
 	// First reserve an image from the swapchain
 	XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
@@ -149,12 +179,35 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture)
 	// Wait until the swapchain is ready - this makes sure the compositor isn't writing to it
 	// We don't have to pass in currentIndex since it uses the oldest acquired-but-not-waited-on
 	// image, so we should be careful with concurrency here.
+	// XR_TIMEOUT_EXPIRED is considered successful but swapchain still can't be used so need to handle that
 	XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-	OOVR_FAILED_XR_ABORT(xrWaitSwapchainImage(chain, &waitInfo));
+	XrResult res = xrWaitSwapchainImage(chain, &waitInfo);
+	OOVR_FAILED_XR_ABORT(res);
+
+	// Do we need an exit condition for this?
+	// From the OpenXR spec for xrWaitSwapChainImage:
+	// The runtime must eventually relinquish ownership of a swapchain image to the application and must not block indefinitely.
+	while (res == XR_TIMEOUT_EXPIRED) {
+		OOVR_FAILED_XR_ABORT(res = xrWaitSwapchainImage(chain, &waitInfo));
+	}
 
 	// Copy the source to the destination image
-	context->CopyResource(imagesHandles[currentIndex].texture, (ID3D11Texture2D*)texture->handle);
-
+	D3D11_BOX sourceRegion;
+	if (bounds) {
+		sourceRegion.left = bounds->uMin == 0.0f ? 0 : createInfo.width;
+		sourceRegion.right = bounds->uMin == 0.0f ? createInfo.width : createInfo.width * 2;
+	}
+	else {
+		sourceRegion.left = 0;
+		sourceRegion.right = createInfo.width;
+	}
+	sourceRegion.top = 0;
+	sourceRegion.bottom = createInfo.height;
+	sourceRegion.front = 0;
+	sourceRegion.back = 1;
+	
+	context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, (ID3D11Texture2D*)texture->handle, 0, &sourceRegion);
+		
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
 	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo));
@@ -162,7 +215,7 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture)
 
 void DX11Compositor::InvokeCubemap(const vr::Texture_t* textures)
 {
-	CheckCreateSwapChain(&textures[0], true);
+	CheckCreateSwapChain(&textures[0], nullptr, true);
 
 #ifdef OC_XR_PORT
 	ID3D11Texture2D* tex = nullptr;
@@ -208,7 +261,7 @@ void DX11Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::
 {
 
 	// Copy the texture across
-	Invoke(texture);
+	Invoke(texture, ptrBounds);
 
 	// Set the viewport up
 	// TODO deduplicate with dx11compositor, and use for all compositors
@@ -224,10 +277,10 @@ void DX11Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::
 			std::swap(bounds.vMin, bounds.vMax);
 		}
 
-		viewport.offset.x = (int)(bounds.uMin * createInfo.width);
-		viewport.offset.y = (int)(bounds.vMin * createInfo.height);
-		viewport.extent.width = (int)((bounds.uMax - bounds.uMin) * createInfo.width);
-		viewport.extent.height = (int)((bounds.vMax - bounds.vMin) * createInfo.height);
+		viewport.offset.x = 0;
+		viewport.offset.y = 0;
+		viewport.extent.width = createInfo.width;
+		viewport.extent.height = createInfo.height;
 	} else {
 		viewport.offset.x = viewport.offset.y = 0;
 		viewport.extent.width = createInfo.width;
@@ -304,6 +357,7 @@ bool DX11Compositor::GetFormatInfo(DXGI_FORMAT format, DX11Compositor::DxgiForma
 		DEF_FMT_UNORM(DXGI_FORMAT_B5G5R5A1_UNORM, 16, 5, 4)
 		DEF_FMT_UNORM(DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, 32, 10, 4)
 		DEF_FMT_UNORM(DXGI_FORMAT_B4G4R4A4_UNORM, 16, 4, 4)
+		DEF_FMT(DXGI_FORMAT_BC1, 64, 16, 4)
 
 	default:
 		// Unknown type

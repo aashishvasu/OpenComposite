@@ -9,8 +9,6 @@
 #include <atlbase.h>
 #pragma warning(pop)
 
-#include "OVR_CAPI_D3D.h"
-
 static ID3D11Texture2D *tex10to11(ID3D10Texture2D *in) {
 	OOVR_FALSE_ABORT(in != nullptr);
 
@@ -46,7 +44,7 @@ DX10Compositor::DX10Compositor(ID3D10Texture2D *initial) : DX11Compositor(tex10t
 		&customContextState));
 }
 
-void DX10Compositor::Invoke(const vr::Texture_t * texture) {
+void DX10Compositor::Invoke(const vr::Texture_t * texture, const vr::VRTextureBounds_t* bounds) {
 	CComQIPtr<ID3D11Texture2D> src = static_cast<IUnknown*>(texture->handle);
 	OOVR_FALSE_ABORT(src != nullptr);
 
@@ -54,7 +52,7 @@ void DX10Compositor::Invoke(const vr::Texture_t * texture) {
 	tex.handle = src;
 	tex.eColorSpace = texture->eColorSpace;
 	tex.eType = texture->eType;
-	DX11Compositor::Invoke(&tex);
+	DX11Compositor::Invoke(&tex, bounds);
 }
 
 void DX10Compositor::LoadSubmitContext() {

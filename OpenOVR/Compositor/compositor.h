@@ -24,7 +24,7 @@ public:
 	virtual ~Compositor();
 
 	// Only copy a texture - this can be used for overlays and such
-	virtual void Invoke(const vr::Texture_t* texture) = 0;
+	virtual void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds) = 0;
 
 	virtual void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
 	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport)

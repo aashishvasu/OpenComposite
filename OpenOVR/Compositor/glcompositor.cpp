@@ -70,7 +70,7 @@ void GLCompositor::ReadSwapchainImages()
 
 #if defined(SUPPORT_GL) || defined(SUPPORT_GLES)
 
-void GLBaseCompositor::Invoke(const vr::Texture_t* texture)
+void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
 {
 	// Clear any pre-existing OpenGL errors
 	while (glGetError() != GL_NO_ERROR) {
@@ -124,7 +124,7 @@ void GLBaseCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr
     vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
 {
 	// Copy the texture over
-	Invoke(texture);
+	Invoke(texture, ptrBounds);
 
 	// TODO the image is vertically flipped; fix it
 

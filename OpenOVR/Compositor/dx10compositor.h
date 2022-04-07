@@ -8,7 +8,7 @@ class DX10Compositor : public DX11Compositor {
 public:
 	DX10Compositor(ID3D10Texture2D* td);
 
-	virtual void Invoke(const vr::Texture_t* texture) override;
+	virtual void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds) override;
 
 	virtual void LoadSubmitContext() override;
 	virtual void ResetSubmitContext() override;
