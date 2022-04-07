@@ -220,12 +220,8 @@ void DX11Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::
 		vr::VRTextureBounds_t bounds = *ptrBounds;
 
 		if (bounds.vMin > bounds.vMax) {
-			submitVerticallyFlipped = true;
-			float newMax = bounds.vMin;
-			bounds.vMin = bounds.vMax;
-			bounds.vMax = newMax;
-		} else {
-			submitVerticallyFlipped = false;
+			std::swap(layer.fov.angleUp, layer.fov.angleDown);
+			std::swap(bounds.vMin, bounds.vMax);
 		}
 
 		viewport.offset.x = (int)(bounds.uMin * createInfo.width);
@@ -236,15 +232,7 @@ void DX11Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::
 		viewport.offset.x = viewport.offset.y = 0;
 		viewport.extent.width = createInfo.width;
 		viewport.extent.height = createInfo.height;
-
-		submitVerticallyFlipped = false;
 	}
-}
-
-unsigned int DX11Compositor::GetFlags()
-{
-	ERR("TODO");
-	// return submitVerticallyFlipped ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
 }
 
 bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC& inputDesc, vr::EColorSpace colourSpace)

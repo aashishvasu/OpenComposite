@@ -287,12 +287,6 @@ void VkCompositor::InvokeCubemap(const vr::Texture_t* textures)
 	OOVR_ABORT("VkCompositor::InvokeCubemap: Not yet supported!");
 }
 
-unsigned int VkCompositor::GetFlags()
-{
-	// Since we don't have layer flags anymore, we can probably get rid of this function in all compositors
-	XR_STUBBED();
-}
-
 bool VkCompositor::CheckChainCompatible(const vr::VRVulkanTextureData_t& tex, const XrSwapchainCreateInfo& chainDesc, vr::EColorSpace colourSpace)
 {
 	bool usable = true;

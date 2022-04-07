@@ -16,8 +16,6 @@ public:
 
 	void InvokeCubemap(const vr::Texture_t* textures) override;
 
-	unsigned int GetFlags() override;
-
 private:
 	static bool CheckChainCompatible(const vr::VRVulkanTextureData_t& tex, const XrSwapchainCreateInfo& chainDesc, vr::EColorSpace colourSpace);
 

@@ -17,8 +17,6 @@ public:
 	virtual void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
 	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport) override;
 
-	unsigned int GetFlags() override;
-
 	ID3D11Device* GetDevice() { return device; }
 
 protected:
@@ -30,8 +28,6 @@ protected:
 
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* context = nullptr;
-
-	bool submitVerticallyFlipped = false;
 
 	std::vector<XrSwapchainImageD3D11KHR> imagesHandles;
 

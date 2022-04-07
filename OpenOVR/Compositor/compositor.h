@@ -35,8 +35,6 @@ public:
 
 	virtual XrSwapchain GetSwapChain() { return chain; };
 
-	virtual unsigned int GetFlags() { return 0; }
-
 	/**
 	 * Loads and unloads some context required for submitting textures to LibOVR. LoadSubmitContext is
 	 *  called before calling either Invoke or ovr_CommitTextureSwapChain, and ResetSubmitContext after
