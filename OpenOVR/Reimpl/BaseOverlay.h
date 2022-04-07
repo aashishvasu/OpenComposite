@@ -178,7 +178,7 @@ private:
 	VROverlayHandle_t highQualityOverlay;
 
 	// List of layers, with the first being reserved for the main scene
-	std::vector<ovrLayerHeader_*> layerHeaders;
+	std::vector<XrCompositionLayerBaseHeader*> layerHeaders;
 
 	// Virtual Keyboard
 	std::unique_ptr<VRKeyboard> keyboard;
@@ -200,7 +200,7 @@ public:
 	~BaseOverlay();
 
 	// Builds the collection of layers to be submitted to LibOVR
-	int _BuildLayers(ovrLayerHeader_ *sceneLayer, ovrLayerHeader_ const* const*& result);
+	int _BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompositionLayerBaseHeader const* const*& result);
 
 	// If an overlay needs input, this grabs the input and returns whether the input should preceed to the application
 	bool _HandleOverlayInput(vr::EVREye role, vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t state);

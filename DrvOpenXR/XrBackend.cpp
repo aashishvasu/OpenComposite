@@ -22,6 +22,7 @@
 
 // FIXME find a better way to send the OnPostFrame call?
 #include "../OpenOVR/Reimpl/BaseSystem.h"
+#include "../OpenOVR/Reimpl/BaseOverlay.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "../OpenOVR/convert.h"
 
@@ -241,7 +242,7 @@ void XrBackend::WaitForTrackingData()
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
-	locateInfo.space = xr_gbl->floorSpace; // Should make no difference to the FOV
+	locateInfo.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
 	XrViewState viewState = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
@@ -330,17 +331,43 @@ void XrBackend::SubmitFrames(bool showSkybox)
 
 	// Pass in a projection layer, otherwise nothing will show up on the screen
 	XrCompositionLayerProjection mainLayer{ XR_TYPE_COMPOSITION_LAYER_PROJECTION };
-	mainLayer.space = xr_gbl->floorSpace; // Shouldn't matter what space we use, so long it matches views->pose
+	mainLayer.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
 	mainLayer.views = projectionViews;
 	mainLayer.viewCount = 2;
 
-	XrCompositionLayerBaseHeader* headers[] = {
-		(XrCompositionLayerBaseHeader*)&mainLayer,
-	};
-	info.layers = headers;
-	info.layerCount = sizeof(headers) / sizeof(void*);
+	XrCompositionLayerBaseHeader const* const* headers;
+	XrCompositionLayerBaseHeader* app_layer = (XrCompositionLayerBaseHeader*)&mainLayer;
+	int layer_count = 0;
 
-	OOVR_FAILED_XR_ABORT(xrEndFrame(xr_session, &info));
+	BaseOverlay* overlay = GetUnsafeBaseOverlay();
+
+	for (int i = 0; i < mainLayer.viewCount; ++i) {
+		XrCompositionLayerProjectionView& layer = projectionViews[i];
+		layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+	}
+
+	if (overlay)
+	{
+		layer_count = overlay->_BuildLayers(app_layer, headers);
+	}
+	else {
+		layer_count = 1;
+		headers = &app_layer;
+	}
+
+	info.layers = headers;
+	info.layerCount = layer_count;
+
+	auto xrEndFrame_result = xrEndFrame(xr_session, &info);
+	if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
+		OOVR_LOG("XR_ERROR_CALL_ORDER_INVALID");
+	else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
+		OOVR_LOG("XR_ERROR_VALIDATION_FAILURE");
+	else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID) {
+		OOVR_LOG("XR_ERROR_SWAPCHAIN_RECT_INVALID");
+	}
+	else
+		OOVR_FAILED_XR_ABORT(xrEndFrame_result);
 
 	BaseSystem* sys = GetUnsafeBaseSystem();
 	if (sys) {
