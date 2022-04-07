@@ -820,7 +820,31 @@ void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel)
 void BaseSystem::ResetSeatedZeroPose()
 {
 #ifdef OC_XR_PORT
-	XR_STUBBED();
+	if (xr_gbl->usingApplicationGraphicsAPI)
+	{
+		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
+		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
+		//OOVR_LOG("xrLocateSpace");
+		XrResult err = xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location);
+		OOVR_FAILED_XR_ABORT(err);
+
+		static XrReferenceSpaceCreateInfo spaceInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr, XR_REFERENCE_SPACE_TYPE_LOCAL, {{0.0f, 0.0f, 0.0f, 1.0f},{0.0f, 0.0f, 0.0f}} };
+		XrVector3f rotatedPos;
+		auto rot = yRotation(location.pose.orientation, spaceInfo.poseInReferenceSpace.orientation);
+		rotate_vector_by_quaternion(location.pose.position, rot, rotatedPos);
+		spaceInfo.poseInReferenceSpace.position.x += rotatedPos.x;
+		spaceInfo.poseInReferenceSpace.position.y += rotatedPos.y;
+		spaceInfo.poseInReferenceSpace.position.z += rotatedPos.z;
+
+		spaceInfo.poseInReferenceSpace.orientation.y = rot.y;
+		spaceInfo.poseInReferenceSpace.orientation.w = rot.w;
+
+		spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+		auto oldSpace = xr_gbl->seatedSpace;
+		OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &xr_gbl->seatedSpace));
+		xrDestroySpace(oldSpace);
+	}
+	//XR_STUBBED();
 #else
 	// TODO should this only work when seated or whatever?
 	ovr_RecenterTrackingOrigin(*ovr::session);

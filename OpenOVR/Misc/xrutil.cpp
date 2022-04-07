@@ -89,3 +89,63 @@ XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin)
 		OOVR_ABORTF("Unknown ETrackingUniverseOrigin type %d", origin);
 	}
 }
+
+XrSpace xr_space_from_ref_space_type(XrReferenceSpaceType spaceType)
+{
+	switch (spaceType) {
+	case XR_REFERENCE_SPACE_TYPE_VIEW:
+		return xr_gbl->viewSpace;
+	case XR_REFERENCE_SPACE_TYPE_UNBOUNDED_MSFT:
+	case XR_REFERENCE_SPACE_TYPE_LOCAL:
+		return xr_gbl->seatedSpace;
+	case XR_REFERENCE_SPACE_TYPE_STAGE:
+		return xr_gbl->floorSpace;
+	default:
+		OOVR_ABORTF("Unknown XrReferenceSpaceType type %d", spaceType);
+	}
+}
+
+XrQuaternionf yRotation(XrQuaternionf &q)
+{
+	float theta = atan2(q.y, q.w);
+	return {0.f, sin(theta), 0.f, cos(theta)};
+}
+
+XrQuaternionf yRotation(XrQuaternionf &q, XrQuaternionf &r)
+{
+	float theta = atan2(q.y, q.w);
+	theta += atan2(r.y, r.w);
+	return { 0.f, sin(theta), 0.f, cos(theta) };
+}
+	
+float v3_dot(const XrVector3f &a, const XrVector3f &b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+XrVector3f v3_cross(const XrVector3f &a, const XrVector3f &b)
+{
+	return XrVector3f{ a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
+}
+
+XrVector3f operator*(float a, const XrVector3f &b) {
+	return { b.x * a, b.y * a, b.z * a };
+}
+
+XrVector3f operator+(const XrVector3f &a, const XrVector3f &b) {
+	return { b.x + a.x, b.y + a.y, b.z + a.z };
+}
+
+void rotate_vector_by_quaternion(const XrVector3f& v, const XrQuaternionf& q, XrVector3f& vprime)
+{
+	// Extract the vector part of the quaternion
+	XrVector3f u{ q.x, q.y, q.z };
+
+	// Extract the scalar part of the quaternion
+	float s = q.w;
+
+	// Do the math
+	vprime = 2.0f * v3_dot(u, v) * u
+		+ (s*s - v3_dot(u, u)) * v
+		+ 2.0f * s * v3_cross(u, v);
+}
