@@ -202,10 +202,21 @@ vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMe
 	auto* arr = new vr::HmdVector2_t[mask.indexCountOutput];
 	result.pVertexData = arr;
 
-	for (int i = 0; i < mask.indexCountOutput; i++) {
+	float ftop, fbottom, fleft, fright;
+	GetProjectionRaw(eEye, &fleft, &fright, &ftop, &fbottom);
+
+	for (uint32_t i = 0; i < mask.indexCountOutput; i++) {
 		int index = mask.indices[i];
 		XrVector2f v = mask.vertices[index];
-		arr[i] = vr::HmdVector2_t{ v.x, v.y };
+		
+		if (oovr_global_configuration.EnableHiddenMeshFix())
+		{
+			arr[i] = vr::HmdVector2_t{ (v.x - fleft) / (fright - fleft), (v.y - ftop) / (fbottom - ftop) };
+		}
+		else
+		{
+			arr[i] = vr::HmdVector2_t{ v.x, v.y };
+		}
 	}
 
 	if (type == vr::k_eHiddenAreaMesh_LineLoop) {

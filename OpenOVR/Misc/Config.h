@@ -18,6 +18,7 @@ public:
 	inline bool EnableLayers() const { return enableLayers; }
 	inline bool DX10Mode() const { return dx10Mode; }
 	inline bool EnableAppRequestedCubemap() const { return enableAppRequestedCubemap; }
+	inline bool EnableHiddenMeshFix() const { return enableHiddenMeshFix; }
 
 private:
 	static int ini_handler(
@@ -42,6 +43,7 @@ private:
 
 	bool dx10Mode = false;
 	bool enableAppRequestedCubemap = true;
+	bool enableHiddenMeshFix = false;
 };
 
 extern Config oovr_global_configuration;
