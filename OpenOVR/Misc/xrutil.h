@@ -47,7 +47,7 @@ public:
 	XrSpace viewSpace;
 
 	// Set by XrBackend
-	XrTime nextPredictedFrameTime = 0;
+	XrTime nextPredictedFrameTime = 1;
 	bool usingApplicationGraphicsAPI = false;
 
 	/**
@@ -57,8 +57,10 @@ public:
 	 * For stuff where the next frame time is ideal but some valid time is required, see GetBestTime().
 	 *
 	 * Note that due to poor implementation, this may lag a long way before nextPredictedFrameTime.
+	 *
+	 * Zero or negative values for XrTime will result in XR_ERROR_TIME_INVALID so initialise to 1.
 	 */
-	XrTime latestTime = 0;
+	XrTime latestTime = 1;
 
 	/**
 	 * Returns nextPredictedFrameTime if available, otherwise returns latestTime.
