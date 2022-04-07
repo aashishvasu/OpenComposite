@@ -27,6 +27,18 @@ static XrBackend* currentBackend;
 static bool initialised = false;
 static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
+XrDebugUtilsMessengerEXT dbgMessenger;
+
+XrBool32 debugCallback(
+	XrDebugUtilsMessageSeverityFlagsEXT              messageSeverity,
+	XrDebugUtilsMessageTypeFlagsEXT                  messageTypes,
+	const XrDebugUtilsMessengerCallbackDataEXT*      callbackData,
+	void*                                            userData)
+{
+	OOVR_LOGF("debugCallback %s", callbackData->message);
+	return XR_FALSE;
+}
+
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
 	// TODO handle something like Unity which stops and restarts the instance
@@ -112,6 +124,15 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #endif
 
 	OOVR_FAILED_XR_ABORT(xrCreateInstance(&createInfo, &xr_instance));
+
+	XrDebugUtilsMessengerCreateInfoEXT dbgCreateInfo{};
+	dbgCreateInfo.type = XR_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	dbgCreateInfo.messageSeverities = XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	dbgCreateInfo.messageTypes = XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
+	dbgCreateInfo.next = NULL;
+	dbgCreateInfo.userData = NULL;
+	dbgCreateInfo.userCallback = debugCallback;
+	OOVR_FAILED_XR_ABORT(xrCreateDebugUtilsMessengerEXT(xr_instance, &dbgCreateInfo, &dbgMessenger));
 
 	// Load the function pointers for the extension functions
 	xr_ext = new XrExt();
@@ -215,6 +236,8 @@ void DrvOpenXR::FullShutdown()
 {
 	if (xr_session)
 		ShutdownSession();
+
+	xrDestroyDebugUtilsMessengerEXT(dbgMessenger);
 
 	if (xr_instance) {
 		OOVR_FAILED_XR_ABORT(xrDestroyInstance(xr_instance));
