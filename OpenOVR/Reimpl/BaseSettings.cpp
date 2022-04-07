@@ -125,6 +125,12 @@ void  BaseSettings::SetFloat(const char * pchSection, const char * pchSettingsKe
 			return;
 		}
 	}
+	if (section == kk::k_pch_SteamVR_Section) {
+		if (key == kk::k_pch_SteamVR_IpdOffset_Float) {
+			OOVR_LOGF("Warning: Unsupported key - SetFloat %s %s %f", pchSection, pchSettingsKey, flValue);
+			return;
+		}
+	}
 	
 	STUBBED();
 }
@@ -187,6 +193,9 @@ float  BaseSettings::GetFloat(const char * pchSection, const char * pchSettingsK
 		}
 		else if (key == kk::k_pch_SteamVR_IPD_Float) {
 			return BaseSystem::SGetIpd();
+		}
+		else if (key == kk::k_pch_SteamVR_IpdOffset_Float) {
+			return 0.0f;
 		}
 	} 
 	else if (section == kk::k_pch_CollisionBounds_Section)

@@ -487,7 +487,10 @@ void BaseSystem::_BlockInputsUntilReleased()
 float BaseSystem::SGetIpd()
 {
 #ifdef OC_XR_PORT
-	XR_STUBBED();
+	IHMD* dev = BackendManager::Instance().GetPrimaryHMD();
+	float ipd = dev->GetIPD();
+	OOVR_LOGF("IPD: %f", ipd);
+	return ipd;
 #else
 	ovrPosef& left = ovr::hmdToEyeViewPose[ovrEye_Left];
 	ovrPosef& right = ovr::hmdToEyeViewPose[ovrEye_Right];

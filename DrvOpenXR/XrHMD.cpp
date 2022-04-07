@@ -228,6 +228,22 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 	xr_utils::PoseFromSpace(pose, xr_gbl->viewSpace, origin);
 }
 
+float XrHMD::GetIPD()
+{
+	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
+	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	locateInfo.displayTime = xr_gbl->GetBestTime();
+	locateInfo.space = xr_gbl->viewSpace;
+
+	XrViewState state = { XR_TYPE_VIEW_STATE };
+	uint32_t viewCount = 0;
+	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
+	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
+	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
+
+	return views[vr::Eye_Right].pose.position.x - views[vr::Eye_Left].pose.position.x;
+}
+
 // Properties
 bool XrHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
