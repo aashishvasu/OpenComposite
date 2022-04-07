@@ -87,6 +87,20 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	std::set<std::string> availableExtensions;
 	for (const XrExtensionProperties& ext : extensionProperties) {
 		availableExtensions.insert(ext.extensionName);
+		OOVR_LOGF("Extension: %s", ext.extensionName);
+	}
+
+	uint32_t availableLayersCount;
+	OOVR_FAILED_XR_ABORT(xrEnumerateApiLayerProperties(0, &availableLayersCount, nullptr));
+	OOVR_LOGF("Num layers available: %d ", availableLayersCount);
+	std::vector<XrApiLayerProperties> layerProperties;
+	layerProperties.resize(availableLayersCount, { XR_TYPE_API_LAYER_PROPERTIES });
+	OOVR_FAILED_XR_ABORT(xrEnumerateApiLayerProperties(
+		layerProperties.size(), &availableLayersCount, layerProperties.data()));
+	std::set<std::string> availableLayers;
+	for (const XrApiLayerProperties& layer : layerProperties) {
+		availableLayers.insert(layer.layerName);
+		OOVR_LOGF("Layer: %s", layer.layerName);
 	}
 
 	// Create the OpenXR instance - this is the overall handle that connects us to the runtime
