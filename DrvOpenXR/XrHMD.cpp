@@ -7,6 +7,8 @@
 #include "../OpenOVR/Misc/xrmoreutils.h"
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/convert.h"
+#include "../OpenOVR/Misc/Config.h"
+
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 {
@@ -27,7 +29,9 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 	locateInfo.displayTime = xr_gbl->GetBestTime();
-	locateInfo.space = xr_gbl->floorSpace; // Should make no difference to the FOV
+	
+	// View space is available first when starting up
+	locateInfo.space = xr_gbl->viewSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
@@ -91,7 +95,9 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 	locateInfo.displayTime = xr_gbl->GetBestTime();
-	locateInfo.space = xr_gbl->floorSpace; // Should make no difference to the FOV
+	
+	// View space is available first when starting up
+	locateInfo.space = xr_gbl->viewSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
@@ -120,6 +126,9 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 	 * also negates the bottom and left value. Since it appears that SteamVR flips the top and bottom angles, we
 	 * can just do that and it'll match.
 	 */
+
+	if (fov.angleDown == 0.0f && fov.angleUp == 0.0f)
+		OOVR_LOG("Warning! FOV is 0");
 
 	*pfTop = tanf(fov.angleDown);
 	*pfBottom = tanf(fov.angleUp);
