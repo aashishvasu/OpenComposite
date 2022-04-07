@@ -175,7 +175,12 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 
 bool XrHMD::GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulFrameCounter)
 {
-	STUBBED();
+	// TODO: Use frame time statistics to give proper data
+	OOVR_LOG_ONCE("Warning: static value returned");
+	if (pfSecondsSinceLastVsync)
+		*pfSecondsSinceLastVsync = 0.011f;
+
+	return false;
 }
 
 vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMeshType type)
