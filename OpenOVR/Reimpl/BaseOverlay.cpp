@@ -708,7 +708,7 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 	USEH();
 	overlay->texture = *pTexture;
 
-	if (!oovr_global_configuration.EnableLayers())
+	if (!oovr_global_configuration.EnableLayers() || !xr_gbl->usingApplicationGraphicsAPI)
 		return VROverlayError_None;
 
 #ifdef OC_XR_PORT

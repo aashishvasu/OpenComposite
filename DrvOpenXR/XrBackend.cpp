@@ -120,6 +120,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			DrvOpenXR::SetupSession(&d3dInfo);
 
 			dev->Release();
+			xr_gbl->usingApplicationGraphicsAPI = true;
 #else
 			OOVR_ABORT("Application is trying to submit a D3D11 texture, which OpenComposite supports but is disabled in this build");
 #endif
