@@ -452,7 +452,7 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 
 void XrBackend::ClearSkyboxOverride()
 {
-	OOVR_LOG_ONCE("Warning: No implementation!");
+	OOVR_SOFT_ABORTF("No implementation");
 }
 
 /* Misc compositor */
@@ -477,12 +477,12 @@ bool XrBackend::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32_t un
 /* #if defined(SUPPORT_DX) */
 IBackend::openvr_enum_t XrBackend::GetMirrorTextureD3D11(vr::EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView)
 {
-	OOVR_LOG_ONCE("Warning: No implementation!");
+	OOVR_SOFT_ABORTF("No implementation");
 	return 0;
 }
 void XrBackend::ReleaseMirrorTextureD3D11(void* pD3D11ShaderResourceView)
 {
-	OOVR_LOG_ONCE("Warning: No implementation!");
+	OOVR_SOFT_ABORTF("No implementation");
 }
 /* #endif */
 /** Returns the points of the Play Area. */
@@ -516,14 +516,14 @@ bool XrBackend::GetPlayAreaPoints(vr::HmdVector3_t* points, int* count)
 /** Determine whether the bounds are showing right now **/
 bool XrBackend::AreBoundsVisible()
 {
-	OOVR_LOG_ONCE("Warning: No implementation!");
+	OOVR_SOFT_ABORTF("No implementation");
 	return false;
 }
 /** Set the boundaries to be visible or not (although setting this to false shouldn't affect
  * what happens if the player moves their hands too close and shows it that way) **/
 void XrBackend::ForceBoundsVisible(bool status)
 {
-	OOVR_LOG_ONCE("Warning: No implementation!");
+	OOVR_SOFT_ABORTF("No implementation");
 }
 
 bool XrBackend::IsInputAvailable()
