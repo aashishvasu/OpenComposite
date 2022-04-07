@@ -143,16 +143,32 @@ bool XrHMD::ComputeDistortion(vr::EVREye eEye, float fU, float fV, vr::Distortio
 
 vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 {
-	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
-	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->GetBestTime();
-	locateInfo.space = xr_gbl->viewSpace;
+	static XrTime time = 0;
+	static XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
 
-	XrViewState state = { XR_TYPE_VIEW_STATE };
-	uint32_t viewCount = 0;
-	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
-	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
+	if (time != xr_gbl->GetBestTime())
+	{
+		XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
+		locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+		locateInfo.displayTime = xr_gbl->GetBestTime();
+		locateInfo.space = xr_gbl->viewSpace;
+
+		uint32_t viewCount = 0;
+		XrViewState viewState = { XR_TYPE_VIEW_STATE };
+		XrResult res_xrLocateViews = xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views);
+		if (res_xrLocateViews == XR_ERROR_SESSION_NOT_RUNNING) 
+		{
+			return vr::HmdMatrix34_t();
+		}
+
+		OOVR_FAILED_XR_ABORT(res_xrLocateViews);
+		OOVR_FALSE_ABORT(viewCount == XruEyeCount);
+
+		if (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT && viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT)
+		{
+			time = xr_gbl->GetBestTime();
+		}
+	}
 
 	return G2S_m34(X2G_om34_pose(views[eEye].pose));
 }
