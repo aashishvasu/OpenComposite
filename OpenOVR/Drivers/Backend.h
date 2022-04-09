@@ -121,7 +121,7 @@ public:
 	*/
 	virtual vr::HmdMatrix34_t GetEyeToHeadTransform(vr::EVREye eEye) = 0;
 
-	virtual float GetIPD() { return 0.064f; }
+	virtual float GetIPD() = 0;
 
 	/** Returns the number of elapsed seconds since the last recorded vsync event. This
 	*	will come from a vsync timer event in the timer if possible or from the application-reported
