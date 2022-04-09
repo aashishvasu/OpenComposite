@@ -27,8 +27,6 @@ static XrBackend* currentBackend;
 static bool initialised = false;
 static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
-XrDebugUtilsMessengerEXT dbgMessenger;
-
 #ifdef _WIN32
 std::string GetExeName()
 {
@@ -70,7 +68,10 @@ void DrvOpenXR::GetXRAppName(char (& appName)[128])
 	}
 }
 
-XrBool32 debugCallback(
+#ifdef _DEBUG
+static XrDebugUtilsMessengerEXT dbgMessenger = NULL;
+
+static XrBool32 debugCallback(
 	XrDebugUtilsMessageSeverityFlagsEXT              messageSeverity,
 	XrDebugUtilsMessageTypeFlagsEXT                  messageTypes,
 	const XrDebugUtilsMessengerCallbackDataEXT*      callbackData,
@@ -79,6 +80,7 @@ XrBool32 debugCallback(
 	OOVR_LOGF("debugCallback %s", callbackData->message);
 	return XR_FALSE;
 }
+#endif
 
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
@@ -186,8 +188,16 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	dbgCreateInfo.messageTypes = XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
 	dbgCreateInfo.next = NULL;
 	dbgCreateInfo.userData = NULL;
+#ifdef _DEBUG
+	if(dbgMessenger != NULL){
+		xrDestroyDebugUtilsMessengerEXT(dbgMessenger);
+		dbgMessenger = NULL;
+	}
 	dbgCreateInfo.userCallback = debugCallback;
 	OOVR_FAILED_XR_ABORT(xrCreateDebugUtilsMessengerEXT(xr_instance, &dbgCreateInfo, &dbgMessenger));
+#else
+	dbgCreateInfo.userCallback = NULL;
+#endif
 
 	// Load the function pointers for the extension functions
 	xr_ext = new XrExt();
@@ -292,7 +302,12 @@ void DrvOpenXR::FullShutdown()
 	if (xr_session)
 		ShutdownSession();
 
-	xrDestroyDebugUtilsMessengerEXT(dbgMessenger);
+#ifdef _DEBUG
+	if(dbgMessenger != NULL){
+		xrDestroyDebugUtilsMessengerEXT(dbgMessenger);
+		dbgMessenger = NULL;
+	}
+#endif
 
 	if (xr_instance) {
 		OOVR_FAILED_XR_ABORT(xrDestroyInstance(xr_instance));
