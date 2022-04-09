@@ -76,7 +76,7 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
 {
 	XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
 	XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
-	xrLocateSpace(xr_gbl->viewSpace, xr_space_from_tracking_origin(toOrigin), xr_gbl->nextPredictedFrameTime, &location);
+	OOVR_FAILED_XR_ABORT(xrLocateSpace(xr_gbl->viewSpace, xr_space_from_tracking_origin(toOrigin), xr_gbl->nextPredictedFrameTime, &location));
 
 	// TODO: Add hand controllers
 	if (poseArrayCount > 0) {
