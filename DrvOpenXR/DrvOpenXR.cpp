@@ -29,13 +29,35 @@ static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
 XrDebugUtilsMessengerEXT dbgMessenger;
 
+#ifdef _WIN32
+std::string GetExeName()
+{
+	char exePath[MAX_PATH + 1] = { 0 };
+	DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
+	PathStripPathA(exePath);
+	return {exePath};
+}
+#else
+#include <libgen.h>         // basename
+#include <unistd.h>         // readlink
+#include <linux/limits.h>   // PATH_MAX
+
+std::string GetExeName()
+{
+	char exePath[PATH_MAX + 1] = { 0 };
+	ssize_t count = readlink("/proc/self/exe", exePath, PATH_MAX);
+	if (count != -1) {
+		return {basename(exePath)};
+	}
+	return {""};
+}
+#endif
+
 void DrvOpenXR::GetXRAppName(char (& appName)[128])
 {
-	char exeName[MAX_PATH + 1] = { 0 };
-	DWORD len = GetModuleFileNameA(NULL, exeName, MAX_PATH);
-	if (len > 0) {
+	std::string exeName = GetExeName();
+	if (exeName.size() > 0) {
 		std::string ocAppName{ "OpenComposite_" };
-		PathStripPathA(exeName);
 		ocAppName.append(exeName);
 		auto pos = ocAppName.find(".exe");
 		if (pos != std::string::npos && pos > 0)
