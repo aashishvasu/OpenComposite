@@ -146,6 +146,10 @@ bool BackendManager::IsInputAvailable()
 	return backend->IsInputAvailable();
 }
 
+bool BackendManager::IsGraphicsConfigured()
+{
+	return backend->IsGraphicsConfigured();
+}
 // ITrackedDevice
 bool ITrackedDevice::GetControllerState(vr::VRControllerState_t* state)
 {

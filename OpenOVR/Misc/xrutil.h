@@ -48,7 +48,6 @@ public:
 
 	// Set by XrBackend
 	XrTime nextPredictedFrameTime = 1;
-	bool usingApplicationGraphicsAPI = false;
 
 	/**
 	 * The latest time we've observed from the runtime. This will be set before a frame is submitted, so for

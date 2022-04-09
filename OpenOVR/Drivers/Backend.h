@@ -196,7 +196,8 @@ PREPEND void ForceBoundsVisible(bool status) APPEND; \
 PREPEND void PumpEvents() APPEND; \
 /** Returns true if the runtime is focused and receiving input */ \
 PREPEND bool IsInputAvailable() APPEND; \
-
+/** Returns true if the application graphics device is being used */ \
+PREPEND bool IsGraphicsConfigured() APPEND; \
 
 /**
  * Backend is similar in concept to the OpenVR driver API, however it is

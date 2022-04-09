@@ -9,6 +9,7 @@
 #include "static_bases.gen.h"
 #include "Misc/Config.h"
 #include "Misc/ScopeGuard.h"
+#include "Drivers/Backend.h"
 
 using namespace std;
 using glm::vec3;
@@ -708,7 +709,7 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 	USEH();
 	overlay->texture = *pTexture;
 
-	if (!oovr_global_configuration.EnableLayers() || !xr_gbl->usingApplicationGraphicsAPI)
+	if (!oovr_global_configuration.EnableLayers() || !BackendManager::Instance().IsGraphicsConfigured())
 		return VROverlayError_None;
 
 #ifdef OC_XR_PORT

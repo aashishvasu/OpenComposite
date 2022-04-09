@@ -823,7 +823,7 @@ void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel)
 void BaseSystem::ResetSeatedZeroPose()
 {
 #ifdef OC_XR_PORT
-	if (xr_gbl->usingApplicationGraphicsAPI)
+	if (BackendManager::Instance().IsGraphicsConfigured())
 	{
 		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
 		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
