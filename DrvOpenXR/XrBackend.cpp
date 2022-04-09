@@ -403,11 +403,6 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		bounds.vMin = 1.0;
 		bounds.vMax = 0.0;
 
-		auto* src = (ID3D11Texture2D*)pTextures->handle;
-
-		D3D11_TEXTURE2D_DESC srcDesc;
-		src->GetDesc(&srcDesc);
-
 		compositor->Invoke(pTextures, &bounds);
 		XrCompositionLayerQuad layerQuad = { XR_TYPE_COMPOSITION_LAYER_QUAD };
 		layerQuad.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
@@ -420,9 +415,10 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		layerQuad.size = { 1.0f, 1.0f / 1.333f };
 		layerQuad.subImage = {
 			compositor->GetSwapChain(),
-			{{ 0, 0 }, { (int32_t)srcDesc.Width, (int32_t)srcDesc.Height }},
-			0
-		};
+			{ { 0, 0 },
+				{ (int32_t)compositor->GetSrcSize().width,
+					(int32_t)compositor->GetSrcSize().height } },
+			0};
 
 		XrCompositionLayerBaseHeader* layers[1];
 		layers[0] = (XrCompositionLayerBaseHeader*)&layerQuad;

@@ -652,15 +652,12 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 
 	overlay->compositor->Invoke(&overlay->texture, nullptr);
 
-	auto* src = (ID3D11Texture2D*)pTexture->handle;
-
-	D3D11_TEXTURE2D_DESC srcDesc;
-	src->GetDesc(&srcDesc);
-
 	overlay->layerQuad.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
 	overlay->layerQuad.subImage = {
 		overlay->compositor->GetSwapChain(),
-		{{ 0, 0 }, { (int32_t)srcDesc.Width, (int32_t)srcDesc.Height }},
+		{ { 0, 0 },
+			{ (int32_t)overlay->compositor->GetSrcSize().width,
+				(int32_t)overlay->compositor->GetSrcSize().height } },
 		0
 	};
 
