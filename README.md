@@ -36,6 +36,15 @@ The games that I can confirm it works with are as follows:
 - VTOL VR
 - PAYDAY 2 VR
 
+OpenXR supported games (WMR and Oculus headsets):
+- Assetto Corsa
+- Assetto Corsa Competizione
+- DCS World
+- Dirt Rally 2
+- Euro Truck Sim 2
+- IL-2
+- rFactor 2
+
 It probably works in quite a few other games, but I have not tried them.
 
 ## Downloading and installation
