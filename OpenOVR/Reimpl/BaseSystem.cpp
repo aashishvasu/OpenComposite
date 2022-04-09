@@ -486,17 +486,10 @@ void BaseSystem::_BlockInputsUntilReleased()
 
 float BaseSystem::SGetIpd()
 {
-#ifdef OC_XR_PORT
 	IHMD* dev = BackendManager::Instance().GetPrimaryHMD();
 	float ipd = dev->GetIPD();
 	OOVR_LOGF("IPD: %f", ipd);
 	return ipd;
-#else
-	ovrPosef& left = ovr::hmdToEyeViewPose[ovrEye_Left];
-	ovrPosef& right = ovr::hmdToEyeViewPose[ovrEye_Right];
-
-	return abs(left.Position.x - right.Position.x);
-#endif
 }
 
 void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerState_t& last)
@@ -822,12 +815,10 @@ void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel)
 // Tracking origin stuff
 void BaseSystem::ResetSeatedZeroPose()
 {
-#ifdef OC_XR_PORT
 	if (BackendManager::Instance().IsGraphicsConfigured())
 	{
 		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
 		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
-		//OOVR_LOG("xrLocateSpace");
 		XrResult err = xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location);
 		OOVR_FAILED_XR_ABORT(err);
 
@@ -847,12 +838,4 @@ void BaseSystem::ResetSeatedZeroPose()
 		OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &xr_gbl->seatedSpace));
 		xrDestroySpace(oldSpace);
 	}
-	//XR_STUBBED();
-#else
-	// TODO should this only work when seated or whatever?
-	ovr_RecenterTrackingOrigin(*ovr::session);
-
-	if (usingDualOriginMode)
-		_ResetFakeSeatedHeight();
-#endif
 }
