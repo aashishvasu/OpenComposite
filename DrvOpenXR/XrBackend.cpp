@@ -360,11 +360,11 @@ void XrBackend::SubmitFrames(bool showSkybox)
 
 	auto xrEndFrame_result = xrEndFrame(xr_session, &info);
 	if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
-		OOVR_LOG("XR_ERROR_CALL_ORDER_INVALID");
+		OOVR_SOFT_ABORTF("XR_ERROR_CALL_ORDER_INVALID");
 	else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
-		OOVR_LOG("XR_ERROR_VALIDATION_FAILURE");
+		OOVR_SOFT_ABORTF("XR_ERROR_VALIDATION_FAILURE");
 	else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID) {
-		OOVR_LOG("XR_ERROR_SWAPCHAIN_RECT_INVALID");
+		OOVR_SOFT_ABORTF("XR_ERROR_SWAPCHAIN_RECT_INVALID");
 	}
 	else
 		OOVR_FAILED_XR_ABORT(xrEndFrame_result);
@@ -434,15 +434,19 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 
 		auto xrEndFrame_result = xrEndFrame(xr_session, &info);
 		if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
-			OOVR_LOG("XR_ERROR_CALL_ORDER_INVALID");
+			OOVR_SOFT_ABORTF("XR_ERROR_CALL_ORDER_INVALID");
 		else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
-			OOVR_LOG("XR_ERROR_VALIDATION_FAILURE");
+			OOVR_SOFT_ABORTF("XR_ERROR_VALIDATION_FAILURE");
 		else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID) {
 			OOVR_LOG("XR_ERROR_SWAPCHAIN_RECT_INVALID");
-			OOVR_LOGF("subImage rect: %d %d %d %d", layerQuad.subImage.imageRect.offset.x, layerQuad.subImage.imageRect.offset.y, layerQuad.subImage.imageRect.extent.width, layerQuad.subImage.imageRect.extent.height);
+			OOVR_SOFT_ABORTF("subImage rect: %d %d %d %d", layerQuad.subImage.imageRect.offset.x, layerQuad.subImage.imageRect.offset.y, layerQuad.subImage.imageRect.extent.width, layerQuad.subImage.imageRect.extent.height);
 		}
 		else
 			OOVR_FAILED_XR_ABORT(xrEndFrame_result /*xrEndFrame(xr_session, &info)*/);
+	}
+	else
+	{
+		OOVR_SOFT_ABORTF("Unsupported texture count");
 	}
 
 
