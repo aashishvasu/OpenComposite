@@ -162,7 +162,7 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	// OpenXR swap chain doesn't support weird formats like DXGI_FORMAT_BC1_TYPELESS
 	D3D11_TEXTURE2D_DESC srcDesc;
 	src->GetDesc(&srcDesc);
-	if (srcDesc.Format == 70) {
+	if (srcDesc.Format == DXGI_FORMAT_BC1_TYPELESS) {
 		if (chain) {
 			xrDestroySwapchain(chain);
 		}
