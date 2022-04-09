@@ -43,7 +43,7 @@ private:
 
 	bool dx10Mode = false;
 	bool enableAppRequestedCubemap = true;
-	bool enableHiddenMeshFix = false;
+	bool enableHiddenMeshFix = true;
 };
 
 extern Config oovr_global_configuration;
