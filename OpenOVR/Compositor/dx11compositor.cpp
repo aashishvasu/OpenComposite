@@ -181,15 +181,13 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	// image, so we should be careful with concurrency here.
 	// XR_TIMEOUT_EXPIRED is considered successful but swapchain still can't be used so need to handle that
 	XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-	XrResult res = xrWaitSwapchainImage(chain, &waitInfo);
-	OOVR_FAILED_XR_ABORT(res);
+	waitInfo.timeout = 500000000; // time out in nano seconds - 500ms
+	XrResult res;
+	OOVR_FAILED_XR_ABORT(res = xrWaitSwapchainImage(chain, &waitInfo));
 
-	// Do we need an exit condition for this?
-	// From the OpenXR spec for xrWaitSwapChainImage:
-	// The runtime must eventually relinquish ownership of a swapchain image to the application and must not block indefinitely.
-	while (res == XR_TIMEOUT_EXPIRED) {
-		OOVR_FAILED_XR_ABORT(res = xrWaitSwapchainImage(chain, &waitInfo));
-	}
+	if(res == XR_TIMEOUT_EXPIRED)
+		OOVR_ABORTF("xrWaitSwapchainImage timeout");
+		
 
 	// Copy the source to the destination image
 	D3D11_BOX sourceRegion;
