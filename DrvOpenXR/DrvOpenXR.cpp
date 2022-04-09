@@ -190,7 +190,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	dbgCreateInfo.next = NULL;
 	dbgCreateInfo.userData = NULL;
 	if(dbgMessenger != NULL){
-		xrDestroyDebugUtilsMessengerEXT(dbgMessenger);
+		OOVR_FAILED_XR_ABORT(xrDestroyDebugUtilsMessengerEXT(dbgMessenger));
 		dbgMessenger = NULL;
 	}
 	dbgCreateInfo.userCallback = debugCallback;
@@ -302,7 +302,7 @@ void DrvOpenXR::FullShutdown()
 
 #ifdef _DEBUG
 	if(dbgMessenger != NULL){
-		xrDestroyDebugUtilsMessengerEXT(dbgMessenger);
+		OOVR_FAILED_XR_ABORT(xrDestroyDebugUtilsMessengerEXT(dbgMessenger));
 		dbgMessenger = NULL;
 	}
 #endif
