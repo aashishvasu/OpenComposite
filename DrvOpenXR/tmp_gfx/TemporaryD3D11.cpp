@@ -6,7 +6,7 @@
 
 #include "TemporaryD3D11.h"
 
-IDXGIAdapter1* d3d_get_adapter(LUID& adapter_luid)
+static IDXGIAdapter1* d3d_get_adapter(const LUID& adapter_luid)
 {
 	// Turn the LUID into a specific graphics device adapter
 	IDXGIAdapter1* final_adapter = nullptr;
@@ -39,9 +39,11 @@ TemporaryD3D11::TemporaryD3D11()
 	XrResult res = xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements);
 	OOVR_FAILED_XR_ABORT(res);
 
-	// TODO use the proper adapter
 	IDXGIAdapter1* adapter = d3d_get_adapter(graphicsRequirements.adapterLuid);
 	D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
+
+	if(graphicsRequirements.minFeatureLevel > D3D_FEATURE_LEVEL_11_0)
+		featureLevels[0] = graphicsRequirements.minFeatureLevel;
 
 	// Such a horrid hack - of all the ugly things we do in OpenComposite, this has to be one of the worst.
 	HRESULT createDeviceRes = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, 0,
