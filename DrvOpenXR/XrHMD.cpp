@@ -30,7 +30,11 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 	locateInfo.displayTime = xr_gbl->GetBestTime();
 	
-	// View space is available first when starting up
+	// View space is available first when starting up, depending on the runtime implementation. We quickly get accurate
+	// values from xrLocateViews, but that doesn't help if the app only calls GetProjectionMatrix once and stores the
+	// bad values.
+	// TODo A better way to solve this would be to submit a few blank frames when we're using the temporary device to
+	// let this value settle, along with any other similar data.
 	locateInfo.space = xr_gbl->viewSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
