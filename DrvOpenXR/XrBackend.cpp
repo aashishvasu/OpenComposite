@@ -389,6 +389,12 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session, &waitInfo, &state));
 		xr_gbl->nextPredictedFrameTime = state.predictedDisplayTime;
 
+		// This submits a frame when a skybox override is set. This is designed around rFactor2 where the skybox is used as
+		// a loading screen and is frequently updated, and most other games probably behave in a similar manner. It'd be
+		// ideal to run a separate thread while the skybox override is set to submit frames if IVRCompositor->Submit is not
+		// being called frequently enough, and that'd need to be carefully synchronised with the main submit thread. That's
+		// not yet implemented since it's not currently worth the hassle, but if someone in the future wants to do it:
+		// TODO submit skybox frames in their own thread. 
 		XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
 		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session, &beginInfo));
 
