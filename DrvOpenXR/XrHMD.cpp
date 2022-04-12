@@ -131,6 +131,8 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 	 * can just do that and it'll match.
 	 */
 
+	// Unfortunately this can occur on WMR, from the data not being valid very early on. See the comments in
+	// GetProjectionMatrix for a further discussion of this.
 	if (fov.angleDown == 0.0f && fov.angleUp == 0.0f)
 		OOVR_LOG("Warning! FOV is 0");
 
