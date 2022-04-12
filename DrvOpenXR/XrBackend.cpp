@@ -74,9 +74,13 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
     vr::TrackedDevicePose_t* poseArray,
     uint32_t poseArrayCount)
 {
-	// TODO: Add hand controllers
-	if (poseArrayCount > 0) {
-		XrBackend::GetPrimaryHMD()->GetPose(toOrigin, &poseArray[0], ETrackingStateType::TrackingStateType_Rendering);
+	for(uint32_t i = 0; i < poseArrayCount; ++i){
+		ITrackedDevice* dev = GetDevice(i);
+		if (dev) {
+			dev->GetPose(toOrigin, &poseArray[i], ETrackingStateType::TrackingStateType_Rendering);
+		}else{
+			poseArray[i] = BackendManager::InvalidPose();
+		}
 	}
 }
 
