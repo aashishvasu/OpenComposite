@@ -488,7 +488,12 @@ float BaseSystem::SGetIpd()
 {
 	IHMD* dev = BackendManager::Instance().GetPrimaryHMD();
 	float ipd = dev->GetIPD();
-	OOVR_LOGF("IPD: %f", ipd);
+	static float lastIpd = NAN;
+	if(ipd != lastIpd)
+	{
+		lastIpd = ipd;
+		OOVR_LOGF("IPD: %f", ipd);
+	}
 	return ipd;
 }
 
