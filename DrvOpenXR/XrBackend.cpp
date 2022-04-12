@@ -74,22 +74,9 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
     vr::TrackedDevicePose_t* poseArray,
     uint32_t poseArrayCount)
 {
-	XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
-	XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
-	OOVR_FAILED_XR_ABORT(xrLocateSpace(xr_gbl->viewSpace, xr_space_from_tracking_origin(toOrigin), xr_gbl->nextPredictedFrameTime, &location));
-
 	// TODO: Add hand controllers
 	if (poseArrayCount > 0) {
-		poseArray->bDeviceIsConnected = true;
-		poseArray->bPoseIsValid = true;
-		poseArray->eTrackingResult = TrackingResult_Running_OK;
-		poseArray->mDeviceToAbsoluteTracking = G2S_m34(X2G_om34_pose(location.pose));
-		poseArray->vAngularVelocity.v[0] = 0.0f;
-		poseArray->vAngularVelocity.v[1] = 0.0f;
-		poseArray->vAngularVelocity.v[2] = 0.0f;
-		poseArray->vVelocity.v[0] = 0.0f;
-		poseArray->vVelocity.v[1] = 0.0f;
-		poseArray->vVelocity.v[2] = 0.0f;
+		XrBackend::GetPrimaryHMD()->GetPose(toOrigin, &poseArray[0], ETrackingStateType::TrackingStateType_Rendering);
 	}
 }
 

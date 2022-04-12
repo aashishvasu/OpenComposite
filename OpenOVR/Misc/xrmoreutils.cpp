@@ -20,6 +20,4 @@ void xr_utils::PoseFromSpace(vr::TrackedDevicePose_t* pose, XrSpace space, vr::E
 	pose->bPoseIsValid = (info.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0;
 	pose->mDeviceToAbsoluteTracking = G2S_m34(X2G_om34_pose(info.pose));
 	pose->eTrackingResult = pose->bPoseIsValid ? vr::TrackingResult_Running_OK : vr::TrackingResult_Running_OutOfRange;
-
-	// OOVR_LOGF("Pose for %d: %d %f", DeviceIndex(), info.locationFlags, pose->mDeviceToAbsoluteTracking.m[2][3]);
 }
