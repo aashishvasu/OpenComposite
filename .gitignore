@@ -47,3 +47,6 @@
 /.idea
 /RuntimeSwitcher.DotSettings.user
 /RuntimeSwitcher/.idea
+
+# clangd cache
+.cache/

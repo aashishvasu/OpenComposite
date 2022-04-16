@@ -315,6 +315,11 @@ VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent()
 	OOVR_ABORTF("Failed to probe for OpenXR systems: return status %d", res);
 }
 
+// Necessary for Proton games on Linux: https://github.com/ValveSoftware/Proton/blob/22f40122788d5f65389f59144705309ce9d6d403/vrclient_x64/vrclient_x64/vrclient_main.c#L267
+// If this symbol isn't found, games will get VRInitError_Init_InterfaceNotFound - too tired to remember if it's the Proton vrclient that's doing this or openvr_api that's doing this.
+// Either way you need this.
+VR_INTERFACE uint32_t VR_CALLTYPE HmdSystemFactory(){ STUBBED(); }
+
 VR_INTERFACE bool VR_CALLTYPE VR_IsInterfaceVersionValid(const char* pchInterfaceVersion)
 {
 	return true; // Kinda dodgy

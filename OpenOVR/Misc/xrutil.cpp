@@ -108,14 +108,14 @@ XrSpace xr_space_from_ref_space_type(XrReferenceSpaceType spaceType)
 XrQuaternionf yRotation(XrQuaternionf &q)
 {
 	float theta = atan2(q.y, q.w);
-	return {0.f, sin(theta), 0.f, cos(theta)};
+	return {0.f, sinf(theta), 0.f, cosf(theta)};
 }
 
 XrQuaternionf yRotation(XrQuaternionf &q, XrQuaternionf &r)
 {
 	float theta = atan2(q.y, q.w);
 	theta += atan2(r.y, r.w);
-	return { 0.f, sin(theta), 0.f, cos(theta) };
+	return { 0.f, sinf(theta), 0.f, cosf(theta) };
 }
 	
 float v3_dot(const XrVector3f &a, const XrVector3f &b)
