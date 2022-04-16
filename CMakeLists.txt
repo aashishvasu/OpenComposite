@@ -25,6 +25,16 @@ else ()
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
 endif()
 
+set(FORCE_COLORED_OUTPUT            OFF CACHE BOOL "Always produce ANSI-colored output (GNU/Clang only).")
+
+if(FORCE_COLORED_OUTPUT)
+	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+		add_compile_options(-fdiagnostics-color=always)
+	elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		add_compile_options(-fcolor-diagnostics)
+	endif()
+endif()
+
 # For all projects, set the symbol visibility to private on Linux
 # If we don't then if an application declares a function with the same name as an OpenComposite function
 # the application's one will be used instead. This has some nasty effects - for example, when using the

@@ -46,6 +46,9 @@ void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit
 		oovr_soft_abort_raw(__FILE__, __LINE__, __FUNCTION__, &soft_abort_hit_count, msg, __VA_ARGS__); \
 	} while (0)
 
+// Work on GCC since it needs some varargs, and the actual value doesn't matter
+#define OOVR_SOFT_ABORT(msg) OOVR_SOFT_ABORTF(msg, nullptr)
+
 // Log once function - useful for warning that a function called many times isn't implemented, while using
 // a workaround to make something mostly work.
 #define OOVR_LOG_ONCE(msg)                                                                         \
