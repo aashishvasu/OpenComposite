@@ -119,6 +119,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, dx10Mode);
 		CFGOPT(bool, enableAppRequestedCubemap);
 		CFGOPT(bool, enableHiddenMeshFix);
+		CFGOPT(bool, invertUsingShaders);
 	}
 
 #undef CFGOPT

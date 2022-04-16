@@ -29,7 +29,13 @@ protected:
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* context = nullptr;
 
+	ID3D11ShaderResourceView* quad_texture_view;
+	ID3D11SamplerState* quad_sampleState;
+	ID3D11VertexShader* fs_vshader;
+	ID3D11PixelShader* fs_pshader;
+
 	std::vector<XrSwapchainImageD3D11KHR> imagesHandles;
+	std::vector<ID3D11RenderTargetView*> swapchain_rtvs;
 
 	struct DxgiFormatInfo {
 		/// The different versions of this format, set to DXGI_FORMAT_UNKNOWN if absent.
