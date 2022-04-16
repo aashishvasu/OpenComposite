@@ -27,38 +27,38 @@ XrViewConfigurationView& xr_main_view(XruEye view_id)
 XrExt::XrExt(XrGraphicsApiSupportedFlags apis)
 {
 #define XR_BIND(name, function) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function))
-#define XR_BIND_OPT(name) xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name)
+#define XR_BIND_OPT(name, function) xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function)
 
-	XR_BIND_OPT(xrGetVisibilityMaskKHR);
+	XR_BIND_OPT(xrGetVisibilityMaskKHR, pfnXrGetVisibilityMaskKHR);
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	if(apis & XR_SUPPORTED_GRAPHCIS_API_D3D11)
 	{
-		XR_BIND(xrGetD3D11GraphicsRequirementsKHR, pXrGetD3D11GraphicsRequirementsKHR);
+		XR_BIND(xrGetD3D11GraphicsRequirementsKHR, pfnXrGetD3D11GraphicsRequirementsKHR);
 	}
 #endif
 
 #ifdef SUPPORT_VK
 	if(apis & XR_SUPPORTED_GRAPHCIS_API_VK)
 	{
-		XR_BIND(xrGetVulkanGraphicsRequirementsKHR, pXrGetVulkanGraphicsRequirementsKHR);
-		XR_BIND(xrGetVulkanInstanceExtensionsKHR, pXrGetVulkanInstanceExtensionsKHR);
-		XR_BIND(xrGetVulkanDeviceExtensionsKHR, pXrGetVulkanDeviceExtensionsKHR);
-		XR_BIND(xrGetVulkanGraphicsDeviceKHR, pXrGetVulkanGraphicsDeviceKHR);
+		XR_BIND(xrGetVulkanGraphicsRequirementsKHR, pfnXrGetVulkanGraphicsRequirementsKHR);
+		XR_BIND(xrGetVulkanInstanceExtensionsKHR, pfnXrGetVulkanInstanceExtensionsKHR);
+		XR_BIND(xrGetVulkanDeviceExtensionsKHR, pfnXrGetVulkanDeviceExtensionsKHR);
+		XR_BIND(xrGetVulkanGraphicsDeviceKHR, pfnXrGetVulkanGraphicsDeviceKHR);
 	}
 #endif
 
 #ifdef SUPPORT_GL
 	if(apis & XR_SUPPORTED_GRAPHCIS_API_GL)
 	{
-		XR_BIND(xrGetOpenGLGraphicsRequirementsKHR, pXrGetOpenGLGraphicsRequirementsKHR);
+		XR_BIND(xrGetOpenGLGraphicsRequirementsKHR, pfnXrGetOpenGLGraphicsRequirementsKHR);
 	}
 #endif
 
 #ifdef SUPPORT_GLES
 	if(apis & XR_SUPPORTED_GRAPHCIS_API_GLES)
 	{
-		XR_BIND(xrGetOpenGLESGraphicsRequirementsKHR, pXrGetOpenGLESGraphicsRequirementsKHR);
+		XR_BIND(xrGetOpenGLESGraphicsRequirementsKHR, pfnXrGetOpenGLESGraphicsRequirementsKHR);
 	}
 #endif
 

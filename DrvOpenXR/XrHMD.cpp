@@ -191,7 +191,7 @@ bool XrHMD::GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulF
 
 vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMeshType type)
 {
-	if (xr_ext->xrGetVisibilityMaskKHR == nullptr) {
+	if (!xr_ext->xrGetVisibilityMaskKHR_Available()) {
 		// This is what the docs say we should return if the mask is unavailable
 		return vr::HiddenAreaMesh_t{ nullptr, 0 };
 	}

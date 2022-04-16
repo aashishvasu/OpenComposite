@@ -70,60 +70,79 @@ class XrExt {
 public:
 	XrExt(XrGraphicsApiSupportedFlags apis);
 
+	bool xrGetVisibilityMaskKHR_Available() { return pfnXrGetVisibilityMaskKHR != nullptr; }
+	XrResult xrGetVisibilityMaskKHR(
+		XrSession               session,
+		XrViewConfigurationType viewConfigurationType,
+		uint32_t                viewIndex,
+		XrVisibilityMaskTypeKHR visibilityMaskType,
+		XrVisibilityMaskKHR*    visibilityMask)
+	{
+		OOVR_FALSE_ABORT(pfnXrGetVisibilityMaskKHR);
+		return pfnXrGetVisibilityMaskKHR(session, viewConfigurationType, viewIndex, visibilityMaskType, visibilityMask);
+	}
+
 #ifdef SUPPORT_DX
+	bool xrGetD3D11GraphicsRequirementsKHR_Available() { return pfnXrGetD3D11GraphicsRequirementsKHR != nullptr; }
 	XrResult xrGetD3D11GraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsD3D11KHR* graphicsRequirements){
-		OOVR_FALSE_ABORT(pXrGetD3D11GraphicsRequirementsKHR);
-		return pXrGetD3D11GraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
+		OOVR_FALSE_ABORT(pfnXrGetD3D11GraphicsRequirementsKHR);
+		return pfnXrGetD3D11GraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
 #ifdef SUPPORT_VK
+	bool xrGetVulkanInstanceExtensionsKHR_Available() { return pfnXrGetVulkanInstanceExtensionsKHR != nullptr; }
 	XrResult xrGetVulkanInstanceExtensionsKHR(XrInstance instance, XrSystemId systemId, uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer){
-		OOVR_FALSE_ABORT(pXrGetVulkanInstanceExtensionsKHR);
-		return pXrGetVulkanInstanceExtensionsKHR(instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
+		OOVR_FALSE_ABORT(pfnXrGetVulkanInstanceExtensionsKHR);
+		return pfnXrGetVulkanInstanceExtensionsKHR(instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
 	}
+	bool xrGetVulkanDeviceExtensionsKHR_Available() { return pfnXrGetVulkanDeviceExtensionsKHR != nullptr; }
 	XrResult xrGetVulkanDeviceExtensionsKHR( XrInstance instance, XrSystemId systemId, uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer){
-		OOVR_FALSE_ABORT(pXrGetVulkanDeviceExtensionsKHR);
-		return pXrGetVulkanDeviceExtensionsKHR( instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
+		OOVR_FALSE_ABORT(pfnXrGetVulkanDeviceExtensionsKHR);
+		return pfnXrGetVulkanDeviceExtensionsKHR( instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
 	}
+	bool xrGetVulkanGraphicsDeviceKHR_Available() { return pfnXrGetVulkanGraphicsDeviceKHR != nullptr; }
 	XrResult xrGetVulkanGraphicsDeviceKHR(XrInstance instance, XrSystemId systemId, VkInstance vkInstance, VkPhysicalDevice* vkPhysicalDevice){
-		OOVR_FALSE_ABORT(pXrGetVulkanGraphicsDeviceKHR);
-		return pXrGetVulkanGraphicsDeviceKHR(instance, systemId, vkInstance, vkPhysicalDevice);
+		OOVR_FALSE_ABORT(pfnXrGetVulkanGraphicsDeviceKHR);
+		return pfnXrGetVulkanGraphicsDeviceKHR(instance, systemId, vkInstance, vkPhysicalDevice);
 	}
+	bool xrGetVulkanGraphicsRequirementsKHR_Available() { return pfnXrGetVulkanGraphicsRequirementsKHR != nullptr; }
 	XrResult xrGetVulkanGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsVulkanKHR* graphicsRequirements){
-		OOVR_FALSE_ABORT(pXrGetVulkanGraphicsRequirementsKHR);
-		return pXrGetVulkanGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
+		OOVR_FALSE_ABORT(pfnXrGetVulkanGraphicsRequirementsKHR);
+		return pfnXrGetVulkanGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
 #ifdef SUPPORT_GL
+	bool xrGetOpenGLGraphicsRequirementsKHR_Available() { return pfnXrGetOpenGLGraphicsRequirementsKHR != nullptr; }
 	XrResult xrGetOpenGLGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsOpenGLKHR* graphicsRequirements){
-		OOVR_FALSE_ABORT(pXrGetOpenGLGraphicsRequirementsKHR);
-		return pXrGetOpenGLGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
+		OOVR_FALSE_ABORT(pfnXrGetOpenGLGraphicsRequirementsKHR);
+		return pfnXrGetOpenGLGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
 #ifdef SUPPORT_GLES
+	bool xrGetOpenGLESGraphicsRequirementsKHR_Available() { return pfnXrGetOpenGLESGraphicsRequirementsKHR != nullptr; }
 	XrResult xrGetOpenGLESGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsOpenGLESKHR* graphicsRequirements){
-		OOVR_FALSE_ABORT(pXrGetOpenGLESGraphicsRequirementsKHR);
-		return pXrGetOpenGLESGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
+		OOVR_FALSE_ABORT(pfnXrGetOpenGLESGraphicsRequirementsKHR);
+		return pfnXrGetOpenGLESGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
-
-	PFN_xrGetVisibilityMaskKHR xrGetVisibilityMaskKHR = nullptr;
 
 private:
+	PFN_xrGetVisibilityMaskKHR pfnXrGetVisibilityMaskKHR = nullptr;
+
 #ifdef SUPPORT_DX
-	PFN_xrGetD3D11GraphicsRequirementsKHR pXrGetD3D11GraphicsRequirementsKHR = nullptr;
+	PFN_xrGetD3D11GraphicsRequirementsKHR pfnXrGetD3D11GraphicsRequirementsKHR = nullptr;
 #endif
 #ifdef SUPPORT_VK
-	PFN_xrGetVulkanGraphicsRequirementsKHR pXrGetVulkanGraphicsRequirementsKHR = nullptr;
-	PFN_xrGetVulkanInstanceExtensionsKHR pXrGetVulkanInstanceExtensionsKHR = nullptr;
-	PFN_xrGetVulkanDeviceExtensionsKHR pXrGetVulkanDeviceExtensionsKHR = nullptr;
-	PFN_xrGetVulkanGraphicsDeviceKHR pXrGetVulkanGraphicsDeviceKHR = nullptr;
+	PFN_xrGetVulkanGraphicsRequirementsKHR pfnXrGetVulkanGraphicsRequirementsKHR = nullptr;
+	PFN_xrGetVulkanInstanceExtensionsKHR pfnXrGetVulkanInstanceExtensionsKHR = nullptr;
+	PFN_xrGetVulkanDeviceExtensionsKHR pfnXrGetVulkanDeviceExtensionsKHR = nullptr;
+	PFN_xrGetVulkanGraphicsDeviceKHR pfnXrGetVulkanGraphicsDeviceKHR = nullptr;
 #endif
 #ifdef SUPPORT_GL
-	PFN_xrGetOpenGLGraphicsRequirementsKHR pXrGetOpenGLGraphicsRequirementsKHR = nullptr;
+	PFN_xrGetOpenGLGraphicsRequirementsKHR pfnXrGetOpenGLGraphicsRequirementsKHR = nullptr;
 #endif
 #ifdef SUPPORT_GLES
-	PFN_xrGetOpenGLESGraphicsRequirementsKHR pXrGetOpenGLESGraphicsRequirementsKHR = nullptr;
+	PFN_xrGetOpenGLESGraphicsRequirementsKHR pfnXrGetOpenGLESGraphicsRequirementsKHR = nullptr;
 #endif
 
 };
