@@ -105,11 +105,11 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 			HideKeyboard();
 	}
 
+	XrCompositionLayerBaseHeader* prevLayer = sceneLayer;
+
 	if (!oovr_global_configuration.EnableLayers()) {
 		goto done;
 	}
-
-	XrCompositionLayerBaseHeader* prevLayer = sceneLayer;
 
 	for (const auto &kv : overlays) {
 		if (kv.second) {
