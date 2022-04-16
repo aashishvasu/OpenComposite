@@ -32,15 +32,13 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis)
 	XR_BIND_OPT(xrGetVisibilityMaskKHR, pfnXrGetVisibilityMaskKHR);
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-	if(apis & XR_SUPPORTED_GRAPHCIS_API_D3D11)
-	{
+	if (apis & XR_SUPPORTED_GRAPHCIS_API_D3D11) {
 		XR_BIND(xrGetD3D11GraphicsRequirementsKHR, pfnXrGetD3D11GraphicsRequirementsKHR);
 	}
 #endif
 
 #ifdef SUPPORT_VK
-	if(apis & XR_SUPPORTED_GRAPHCIS_API_VK)
-	{
+	if (apis & XR_SUPPORTED_GRAPHCIS_API_VK) {
 		XR_BIND(xrGetVulkanGraphicsRequirementsKHR, pfnXrGetVulkanGraphicsRequirementsKHR);
 		XR_BIND(xrGetVulkanInstanceExtensionsKHR, pfnXrGetVulkanInstanceExtensionsKHR);
 		XR_BIND(xrGetVulkanDeviceExtensionsKHR, pfnXrGetVulkanDeviceExtensionsKHR);
@@ -49,15 +47,13 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis)
 #endif
 
 #ifdef SUPPORT_GL
-	if(apis & XR_SUPPORTED_GRAPHCIS_API_GL)
-	{
+	if (apis & XR_SUPPORTED_GRAPHCIS_API_GL) {
 		XR_BIND(xrGetOpenGLGraphicsRequirementsKHR, pfnXrGetOpenGLGraphicsRequirementsKHR);
 	}
 #endif
 
 #ifdef SUPPORT_GLES
-	if(apis & XR_SUPPORTED_GRAPHCIS_API_GLES)
-	{
+	if (apis & XR_SUPPORTED_GRAPHCIS_API_GLES) {
 		XR_BIND(xrGetOpenGLESGraphicsRequirementsKHR, pfnXrGetOpenGLESGraphicsRequirementsKHR);
 	}
 #endif
