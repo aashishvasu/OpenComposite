@@ -135,22 +135,41 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	appInfo.apiVersion = XR_CURRENT_API_VERSION;
 
 	std::vector<const char*> extensions;
+	XrGraphicsApiSupportedFlags apiFlags = 0;
+
 #ifdef SUPPORT_DX
-	extensions.push_back("XR_KHR_D3D11_enable");
+	if(availableExtensions.count("XR_KHR_D3D11_enable")){
+		extensions.push_back("XR_KHR_D3D11_enable");
+		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D11;
+	}
+	if(availableExtensions.count("XR_KHR_D3D12_enable")){
+		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D12;
+	}
 #endif
 #if defined(SUPPORT_VK)
-	extensions.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
+	if(availableExtensions.count(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME)){
+		extensions.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
+		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_VK;
+	}
 #endif
 #if defined(SUPPORT_GL)
-	extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+	if(availableExtensions.count(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)){
+		extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_GL;
+	}
 #endif
 #if defined(SUPPORT_GLES)
-	extensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
+	if(availableExtensions.count(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME)){
+		extensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
+		apiFlags |= OC_SUPPORTED_GRAPHCIS_API_GLES;
+	}
 #endif
 #if defined(ANDROID)
-	extensions.push_back(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME);
+	if(availableExtensions.count(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME))
+		extensions.push_back(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME);
 #endif
-	extensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	if (availableExtensions.count(XR_EXT_DEBUG_UTILS_EXTENSION_NAME))
+		extensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	// If the visibility mask is available use it, otherwise no big deal
 	if (availableExtensions.count(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME))
@@ -198,8 +217,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #endif
 
 	// Load the function pointers for the extension functions
-	xr_ext = new XrExt();
-
+	xr_ext = new XrExt(apiFlags);
 	// Create a system - this is when we choose what form factor we want, in this case an HMD
 	XrSystemGetInfo systemInfo{};
 	systemInfo.type = XR_TYPE_SYSTEM_GET_INFO;
@@ -224,12 +242,22 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	if (!temporaryGraphics) {
 #if defined(SUPPORT_VK)
 		// If we have Vulkan prioritise that, since we need it if the application uses Vulkan
-		temporaryGraphics = std::make_unique<TemporaryVk>();
-#elif defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-		temporaryGraphics = std::make_unique<TemporaryD3D11>();
-#else
+		if(apiFlags & XR_SUPPORTED_GRAPHCIS_API_VK){
+			temporaryGraphics = std::make_unique<TemporaryVk>();
+		}
+#endif
+
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+		if(!temporaryGraphics && (apiFlags & XR_SUPPORTED_GRAPHCIS_API_D3D11)){
+			temporaryGraphics = std::make_unique<TemporaryD3D11>();
+		}
+#endif
+
+#if !defined(SUPPORT_VK) && !defined(SUPPORT_DX) && !defined(SUPPORT_DX11)
 #error No available temporary graphics implementation
 #endif
+
+		OOVR_FALSE_ABORT(temporaryGraphics);
 	}
 
 	// Build a backend that works with OpenXR

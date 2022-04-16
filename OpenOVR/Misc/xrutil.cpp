@@ -4,6 +4,7 @@
 
 #include "convert.h"
 #include "xr_ext.h"
+#include "Drivers/Backend.h"
 
 XrInstance xr_instance = XR_NULL_HANDLE;
 XrSession xr_session = XR_NULL_HANDLE;
@@ -23,33 +24,46 @@ XrViewConfigurationView& xr_main_view(XruEye view_id)
 	return xr_views_list.at(view_id);
 }
 
-XrExt::XrExt()
+XrExt::XrExt(XrGraphicsApiSupportedFlags apis)
 {
-#define XR_BIND(name) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name))
+#define XR_BIND(name, function) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function))
 #define XR_BIND_OPT(name) xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->name)
 
 	XR_BIND_OPT(xrGetVisibilityMaskKHR);
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-	XR_BIND(xrGetD3D11GraphicsRequirementsKHR);
+	if(apis & XR_SUPPORTED_GRAPHCIS_API_D3D11)
+	{
+		XR_BIND(xrGetD3D11GraphicsRequirementsKHR, pXrGetD3D11GraphicsRequirementsKHR);
+	}
 #endif
 
 #ifdef SUPPORT_VK
-	XR_BIND(xrGetVulkanGraphicsRequirementsKHR);
-	XR_BIND(xrGetVulkanInstanceExtensionsKHR);
-	XR_BIND(xrGetVulkanDeviceExtensionsKHR);
-	XR_BIND(xrGetVulkanGraphicsDeviceKHR);
+	if(apis & XR_SUPPORTED_GRAPHCIS_API_VK)
+	{
+		XR_BIND(xrGetVulkanGraphicsRequirementsKHR, pXrGetVulkanGraphicsRequirementsKHR);
+		XR_BIND(xrGetVulkanInstanceExtensionsKHR, pXrGetVulkanInstanceExtensionsKHR);
+		XR_BIND(xrGetVulkanDeviceExtensionsKHR, pXrGetVulkanDeviceExtensionsKHR);
+		XR_BIND(xrGetVulkanGraphicsDeviceKHR, pXrGetVulkanGraphicsDeviceKHR);
+	}
 #endif
 
 #ifdef SUPPORT_GL
-	XR_BIND(xrGetOpenGLGraphicsRequirementsKHR);
+	if(apis & XR_SUPPORTED_GRAPHCIS_API_GL)
+	{
+		XR_BIND(xrGetOpenGLGraphicsRequirementsKHR, pXrGetOpenGLGraphicsRequirementsKHR);
+	}
 #endif
 
 #ifdef SUPPORT_GLES
-	XR_BIND(xrGetOpenGLESGraphicsRequirementsKHR);
+	if(apis & XR_SUPPORTED_GRAPHCIS_API_GLES)
+	{
+		XR_BIND(xrGetOpenGLESGraphicsRequirementsKHR, pXrGetOpenGLESGraphicsRequirementsKHR);
+	}
 #endif
 
 #undef XR_BIND
+#undef XR_BIND_OPT
 }
 
 XrSessionGlobals::XrSessionGlobals()
