@@ -114,6 +114,9 @@ unless you've been told to enable this (or you know what you're doing while trou
 * `enableHiddenMeshFix` - boolean, default `enabled`. Alter the coordinates of the hidden area mesh mask to fit within the view's projection. 
 The hidden area mesh mask defines a region to which the game will not draw and is used to mask off areas of the display that you typically cannot
 see in the headset. If you see odd black regions around the view then try disabling this fix.
+* `invertUsingShaders` - boolean, default `disabled`. Invert the image for display using shaders rather than replying on XR runtime and inverted FOV values. 
+Some games render the image inverted and rely on the runtime to display correctly. In OpenXR some runtimes don't do the inversion correctly.
+If so enable this option for OpenComposite to do the inversion when copying the image using shaders. This might have a minor cost in performance.
 
 The possible types are as follows:
 

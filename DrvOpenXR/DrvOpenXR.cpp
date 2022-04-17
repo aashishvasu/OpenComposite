@@ -143,6 +143,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D11;
 	}
 	if(availableExtensions.count("XR_KHR_D3D12_enable")){
+		extensions.push_back("XR_KHR_D3D12_enable");
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D12;
 	}
 #endif
