@@ -52,9 +52,9 @@ typedef uint32_t XrGraphicsApiSupportedFlags;
 // Flag bits for supported graphics apis
 static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_D3D11 = 0x0001;
 static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_D3D12 = 0x0002;
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_GL    = 0x0004;
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_GLES  = 0x0008;
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_VK    = 0x0010;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_GL = 0x0004;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_GLES = 0x0008;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_VK = 0x0010;
 
 /**
  * A wrapper class for the function pointers to OpenXR extensions.
@@ -72,55 +72,74 @@ public:
 
 	bool xrGetVisibilityMaskKHR_Available() { return pfnXrGetVisibilityMaskKHR != nullptr; }
 	XrResult xrGetVisibilityMaskKHR(
-		XrSession               session,
-		XrViewConfigurationType viewConfigurationType,
-		uint32_t                viewIndex,
-		XrVisibilityMaskTypeKHR visibilityMaskType,
-		XrVisibilityMaskKHR*    visibilityMask)
+	    XrSession session,
+	    XrViewConfigurationType viewConfigurationType,
+	    uint32_t viewIndex,
+	    XrVisibilityMaskTypeKHR visibilityMaskType,
+	    XrVisibilityMaskKHR* visibilityMask)
 	{
 		OOVR_FALSE_ABORT(pfnXrGetVisibilityMaskKHR);
 		return pfnXrGetVisibilityMaskKHR(session, viewConfigurationType, viewIndex, visibilityMaskType, visibilityMask);
 	}
 
 #ifdef SUPPORT_DX
-	bool xrGetD3D11GraphicsRequirementsKHR_Available() { return pfnXrGetD3D11GraphicsRequirementsKHR != nullptr; }
-	XrResult xrGetD3D11GraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsD3D11KHR* graphicsRequirements){
+	bool xrGetD3D11GraphicsRequirementsKHR_Available()
+	{
+		return pfnXrGetD3D11GraphicsRequirementsKHR != nullptr;
+	}
+	XrResult xrGetD3D11GraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsD3D11KHR* graphicsRequirements)
+	{
 		OOVR_FALSE_ABORT(pfnXrGetD3D11GraphicsRequirementsKHR);
 		return pfnXrGetD3D11GraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
 #ifdef SUPPORT_VK
-	bool xrGetVulkanInstanceExtensionsKHR_Available() { return pfnXrGetVulkanInstanceExtensionsKHR != nullptr; }
-	XrResult xrGetVulkanInstanceExtensionsKHR(XrInstance instance, XrSystemId systemId, uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer){
+	bool xrGetVulkanInstanceExtensionsKHR_Available()
+	{
+		return pfnXrGetVulkanInstanceExtensionsKHR != nullptr;
+	}
+	XrResult xrGetVulkanInstanceExtensionsKHR(XrInstance instance, XrSystemId systemId, uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer)
+	{
 		OOVR_FALSE_ABORT(pfnXrGetVulkanInstanceExtensionsKHR);
 		return pfnXrGetVulkanInstanceExtensionsKHR(instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
 	}
 	bool xrGetVulkanDeviceExtensionsKHR_Available() { return pfnXrGetVulkanDeviceExtensionsKHR != nullptr; }
-	XrResult xrGetVulkanDeviceExtensionsKHR( XrInstance instance, XrSystemId systemId, uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer){
+	XrResult xrGetVulkanDeviceExtensionsKHR(XrInstance instance, XrSystemId systemId, uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer)
+	{
 		OOVR_FALSE_ABORT(pfnXrGetVulkanDeviceExtensionsKHR);
-		return pfnXrGetVulkanDeviceExtensionsKHR( instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
+		return pfnXrGetVulkanDeviceExtensionsKHR(instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
 	}
 	bool xrGetVulkanGraphicsDeviceKHR_Available() { return pfnXrGetVulkanGraphicsDeviceKHR != nullptr; }
-	XrResult xrGetVulkanGraphicsDeviceKHR(XrInstance instance, XrSystemId systemId, VkInstance vkInstance, VkPhysicalDevice* vkPhysicalDevice){
+	XrResult xrGetVulkanGraphicsDeviceKHR(XrInstance instance, XrSystemId systemId, VkInstance vkInstance, VkPhysicalDevice* vkPhysicalDevice)
+	{
 		OOVR_FALSE_ABORT(pfnXrGetVulkanGraphicsDeviceKHR);
 		return pfnXrGetVulkanGraphicsDeviceKHR(instance, systemId, vkInstance, vkPhysicalDevice);
 	}
 	bool xrGetVulkanGraphicsRequirementsKHR_Available() { return pfnXrGetVulkanGraphicsRequirementsKHR != nullptr; }
-	XrResult xrGetVulkanGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsVulkanKHR* graphicsRequirements){
+	XrResult xrGetVulkanGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsVulkanKHR* graphicsRequirements)
+	{
 		OOVR_FALSE_ABORT(pfnXrGetVulkanGraphicsRequirementsKHR);
 		return pfnXrGetVulkanGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
 #ifdef SUPPORT_GL
-	bool xrGetOpenGLGraphicsRequirementsKHR_Available() { return pfnXrGetOpenGLGraphicsRequirementsKHR != nullptr; }
-	XrResult xrGetOpenGLGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsOpenGLKHR* graphicsRequirements){
+	bool xrGetOpenGLGraphicsRequirementsKHR_Available()
+	{
+		return pfnXrGetOpenGLGraphicsRequirementsKHR != nullptr;
+	}
+	XrResult xrGetOpenGLGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsOpenGLKHR* graphicsRequirements)
+	{
 		OOVR_FALSE_ABORT(pfnXrGetOpenGLGraphicsRequirementsKHR);
 		return pfnXrGetOpenGLGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
 #ifdef SUPPORT_GLES
-	bool xrGetOpenGLESGraphicsRequirementsKHR_Available() { return pfnXrGetOpenGLESGraphicsRequirementsKHR != nullptr; }
-	XrResult xrGetOpenGLESGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsOpenGLESKHR* graphicsRequirements){
+	bool xrGetOpenGLESGraphicsRequirementsKHR_Available()
+	{
+		return pfnXrGetOpenGLESGraphicsRequirementsKHR != nullptr;
+	}
+	XrResult xrGetOpenGLESGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsOpenGLESKHR* graphicsRequirements)
+	{
 		OOVR_FALSE_ABORT(pfnXrGetOpenGLESGraphicsRequirementsKHR);
 		return pfnXrGetOpenGLESGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
@@ -144,7 +163,6 @@ private:
 #ifdef SUPPORT_GLES
 	PFN_xrGetOpenGLESGraphicsRequirementsKHR pfnXrGetOpenGLESGraphicsRequirementsKHR = nullptr;
 #endif
-
 };
 
 // Put this here rather tha xrutil.h so not all files have to include vector
