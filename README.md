@@ -207,6 +207,11 @@ This program uses a part of Psiha's and Microblink's [build](https://github.com/
 library. This is available under the two-clause BSD licence, a copy of which can be found in the `LICENCE_BUILD_UTIL.txt`
 file of this repository.
 
+### DebugBreak
+
+This programme uses Scott Tsai's [DebugBreak](https://github.com/scottt/debugbreak) library when built on Linux. It's full
+text can be found in `LICENCE_DEBUG_BREAK.txt`.
+
 ## Compiling (**for developers**)
 
 Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR) - it's under the GPLv3 licence.
