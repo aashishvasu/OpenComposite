@@ -2,9 +2,11 @@
 #define BASE_IMPL
 #include "BaseInputInternal.h"
 
-#define UKN_FUNC(id) void BaseInputInternal::UknFunc ## id () { \
-STUBBED(); \
-}
+#define UKN_FUNC(id)                      \
+	void BaseInputInternal::UknFunc##id() \
+	{                                     \
+		STUBBED();                        \
+	}
 
 UKN_FUNC(001);
 UKN_FUNC(002);

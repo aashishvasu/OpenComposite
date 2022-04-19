@@ -47,8 +47,8 @@ protected:
 	};
 
 	/**
-     * Gets information about a given format into the output variable. Returns true if the texture was
-     * found, if not it returns false and leaves out in an undefined state.
-     */
+	 * Gets information about a given format into the output variable. Returns true if the texture was
+	 * found, if not it returns false and leaves out in an undefined state.
+	 */
 	static bool GetFormatInfo(DXGI_FORMAT format, DxgiFormatInfo& out);
 };

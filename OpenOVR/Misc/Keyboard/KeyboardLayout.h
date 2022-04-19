@@ -1,7 +1,7 @@
 #pragma once
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 class KeyboardLayout {
 public:
@@ -26,11 +26,10 @@ public:
 	KeyboardLayout(std::vector<char>);
 	~KeyboardLayout();
 
-	const keymap_t & GetKeymap() const { return keys; }
+	const keymap_t& GetKeymap() const { return keys; }
 	int GetWidth() const { return width; }
 
 private:
 	keymap_t keys;
 	int width = 0;
 };
-

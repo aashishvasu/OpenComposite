@@ -6,9 +6,9 @@
 #include <d3d11.h>
 #endif
 
-#include "Reimpl/static_bases.gen.h"
 #include "Reimpl/BaseCompositor.h"
 #include "Reimpl/BaseSystem.h"
+#include "Reimpl/static_bases.gen.h"
 
 #include "Misc/ScopeGuard.h"
 #include "convert.h"
@@ -29,7 +29,8 @@ using namespace std;
 // If you're working on the keyboard, it may be useful to have it headlocked so you can easily see it in the Oculus mirror
 static const bool DBG_STUCK_TO_FACE = false;
 
-static vector<char> loadResource(int rid, int type) {
+static vector<char> loadResource(int rid, int type)
+{
 #ifdef _WIN32
 	// Open our OBJ file
 	HRSRC ref = FindResource(openovr_module_id, MAKEINTRESOURCE(rid), MAKEINTRESOURCE(type));
@@ -38,7 +39,7 @@ static vector<char> loadResource(int rid, int type) {
 		OOVR_ABORT(err.c_str());
 	}
 
-	char *cstr = (char*)LoadResource(openovr_module_id, ref);
+	char* cstr = (char*)LoadResource(openovr_module_id, ref);
 	if (!cstr) {
 		string err = "LoadResource error: " + std::to_string(GetLastError());
 		OOVR_ABORT(err.c_str());
@@ -66,15 +67,16 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;
 
 #ifndef OC_XR_PORT
 
-VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t eventDispatch,
-	EGamepadTextInputMode inputMode)
-	: dev(dev), userValue(userValue), maxLength(maxLength), minimal(minimal), eventDispatch(eventDispatch), inputMode(inputMode) {
+VRKeyboard::VRKeyboard(ID3D11Device* dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t eventDispatch,
+    EGamepadTextInputMode inputMode)
+    : dev(dev), userValue(userValue), maxLength(maxLength), minimal(minimal), eventDispatch(eventDispatch), inputMode(inputMode)
+{
 
 	std::shared_ptr<BaseCompositor> cmp = GetBaseCompositor();
 	if (!cmp)
 		OOVR_ABORT("Keyboard: Compositor must be active!");
 
-	if(!dev)
+	if (!dev)
 		OOVR_ABORT("Keyboard currently only works on DX11, and game must have submitted at least a single frame");
 
 	if (inputMode == EGamepadTextInputMode::k_EGamepadTextInputModePassword)
@@ -91,7 +93,7 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 
 	Sizei bufferSize(1024, 512);
 
-	ovrTextureSwapChainDesc &desc = chainDesc;
+	ovrTextureSwapChainDesc& desc = chainDesc;
 	desc = {};
 	desc.Type = ovrTexture_2D;
 	desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
@@ -134,7 +136,7 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 	layout = make_unique<KeyboardLayout>(loadResource(RES_O_KB_EN_GB, RES_T_KBLAYOUT));
 
 	if (!DBG_STUCK_TO_FACE) {
-		BaseCompositor *comp = GetUnsafeBaseCompositor();
+		BaseCompositor* comp = GetUnsafeBaseCompositor();
 		vr::TrackedDevicePose_t spose = { 0 };
 		comp->GetLastPoses(&spose, 1, nullptr, 0);
 
@@ -144,7 +146,8 @@ VRKeyboard::VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength
 	}
 }
 
-VRKeyboard::~VRKeyboard() {
+VRKeyboard::~VRKeyboard()
+{
 	if (ctx)
 		ctx->Release();
 }
@@ -155,17 +158,20 @@ VRKeyboard::~VRKeyboard()
 	XR_STUBBED();
 }
 #endif
-wstring VRKeyboard::contents() {
+wstring VRKeyboard::contents()
+{
 	return text;
 }
 #ifndef OC_XR_PORT
 
-void VRKeyboard::contents(wstring str) {
+void VRKeyboard::contents(wstring str)
+{
 	text = str;
 	dirty = true;
 }
 
-ovrLayerHeader * VRKeyboard::Update() {
+ovrLayerHeader* VRKeyboard::Update()
+{
 	if (dirty) {
 		dirty = false;
 		Refresh();
@@ -174,7 +180,8 @@ ovrLayerHeader * VRKeyboard::Update() {
 	return &layer.Header;
 }
 
-void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t state, float time) {
+void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t state, float time)
+{
 	using namespace vr;
 
 	// In case this is somehow called after the keyboard is closed, ignore it
@@ -185,7 +192,9 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 	lastButtonState[side] = state.ulButtonPressed;
 
 #define GET_BTTN(var, key) bool var = state.ulButtonPressed & ButtonMaskFromId(key)
-#define GET_BTTN_LAST(var, key) GET_BTTN(var, key); bool var ## _last = lastButtons & ButtonMaskFromId(key)
+#define GET_BTTN_LAST(var, key) \
+	GET_BTTN(var, key);         \
+	bool var##_last = lastButtons & ButtonMaskFromId(key)
 	GET_BTTN(left, k_EButton_DPad_Left);
 	GET_BTTN(right, k_EButton_DPad_Right);
 	GET_BTTN(up, k_EButton_DPad_Up);
@@ -201,7 +210,7 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 		return;
 	}
 
-	const KeyboardLayout::Key &key = layout->GetKeymap()[selected[side]];
+	const KeyboardLayout::Key& key = layout->GetKeymap()[selected[side]];
 
 	if (trigger && !trigger_last) {
 		wchar_t ch = caseMode == ECaseMode::LOWER ? key.ch : key.shift;
@@ -212,34 +221,29 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 			// Shift
 			ECaseMode target = ch == '\x02' ? ECaseMode::LOCK : ECaseMode::SHIFT;
 			caseMode = caseMode == target ? ECaseMode::LOWER : target;
-		}
-		else if (ch == '\b') {
+		} else if (ch == '\b') {
 			// Backspace
 			if (!text.empty()) {
 				text.erase(text.end() - 1);
 			}
 
 			submitKeyEvent = true;
-		}
-		else if (ch == '\x03') {
+		} else if (ch == '\x03') {
 			// done
 
 			// Submit mode is for stuff like chat, where the keyboard stays open
-			if(inputMode != EGamepadTextInputMode::k_EGamepadTextInputModeSubmit)
+			if (inputMode != EGamepadTextInputMode::k_EGamepadTextInputModeSubmit)
 				closed = true;
 
-			if(!minimal)
+			if (!minimal)
 				SubmitEvent(VREvent_KeyboardCharInput, 0);
 
 			SubmitEvent(VREvent_KeyboardDone, 0);
-		}
-		else if (!minimal && ch == '\t') {
+		} else if (!minimal && ch == '\t') {
 			// Silently soak up tabs for now
-		}
-		else if (!minimal && ch == '\n') {
+		} else if (!minimal && ch == '\n') {
 			// Silently soak up newlines for now
-		}
-		else {
+		} else {
 			text += ch;
 
 			submitKeyEvent = true;
@@ -288,7 +292,8 @@ void VRKeyboard::HandleOverlayInput(vr::EVREye side, vr::VRControllerState_t sta
 	dirty = true;
 }
 
-void VRKeyboard::SetTransform(HmdMatrix34_t transform) {
+void VRKeyboard::SetTransform(HmdMatrix34_t transform)
+{
 	ovrPosef pose = S2O_om34_pose(transform);
 
 	layer.QuadPoseCenter = pose;
@@ -300,7 +305,8 @@ struct pix_t {
 
 static_assert(sizeof(pix_t) == 4, "padded pix_t");
 
-void VRKeyboard::Refresh() {
+void VRKeyboard::Refresh()
+{
 	D3D11_TEXTURE2D_DESC desc;
 	desc.Width = chainDesc.Width;
 	desc.Height = chainDesc.Height;
@@ -313,13 +319,13 @@ void VRKeyboard::Refresh() {
 	desc.CPUAccessFlags = 0;
 	desc.MiscFlags = 0;
 
-	pix_t *pixels = new pix_t[desc.Width * desc.Height];
+	pix_t* pixels = new pix_t[desc.Width * desc.Height];
 
 	for (UINT y = 0; y < desc.Height; y++) {
 		for (UINT x = 0; x < desc.Width; x++) {
 			int col = 125;
 
-			pix_t &pix = pixels[x + y * desc.Width];
+			pix_t& pix = pixels[x + y * desc.Width];
 			pix.a = 255;
 			pix.r = col;
 			pix.g = col;
@@ -333,7 +339,7 @@ void VRKeyboard::Refresh() {
 		for (int ix = 0; ix < w; ix++) {
 			for (int iy = 0; iy < h; iy++) {
 				size_t idx = (x + ix) + (y + iy) * desc.Width;
-				pix_t &p = pixels[idx];
+				pix_t& p = pixels[idx];
 
 				p.r = r;
 				p.g = g;
@@ -353,7 +359,7 @@ void VRKeyboard::Refresh() {
 
 	int kbWidth = layout->GetWidth();
 	int keySize = ((desc.Width - padding) / kbWidth) - padding;
-	auto drawKey = [&](int x, int y, const KeyboardLayout::Key &key) {
+	auto drawKey = [&](int x, int y, const KeyboardLayout::Key& key) {
 		int width = (int)(keySize * key.w);
 		int height = (int)(keySize * key.h);
 
@@ -362,29 +368,26 @@ void VRKeyboard::Refresh() {
 		}
 
 		bool highlighted = (key.ch == '\x01' && caseMode == ECaseMode::SHIFT)
-			|| (key.ch == '\x02' && caseMode == ECaseMode::LOCK);
+		    || (key.ch == '\x02' && caseMode == ECaseMode::LOCK);
 		int bkg_c = highlighted ? 255 : 80;
 
 		fillArea(
-			x, y,
-			width, height,
-			bkg_c, bkg_c, bkg_c
-		);
+		    x, y,
+		    width, height,
+		    bkg_c, bkg_c, bkg_c);
 
 		if (selected[vr::Eye_Left] == key.id) {
 			fillArea(
-				x, y,
-				width / 2, height,
-				0, 100, 255
-			);
+			    x, y,
+			    width / 2, height,
+			    0, 100, 255);
 		}
 
 		if (selected[vr::Eye_Right] == key.id) {
 			fillArea(
-				x + width / 2, y,
-				width / 2, height,
-				0, 255, 100
-			);
+			    x + width / 2, y,
+			    width / 2, height,
+			    0, 255, 100);
 		}
 
 		pix_t targetColour = { 255, 255, 255, 255 };
@@ -400,7 +403,7 @@ void VRKeyboard::Refresh() {
 	};
 
 	int keyAreaBaseY = minimal ? padding : padding + keySize + padding;
-	for (const KeyboardLayout::Key &key : layout->GetKeymap()) {
+	for (const KeyboardLayout::Key& key : layout->GetKeymap()) {
 		int x = padding + (int)((keySize + padding) * key.x);
 		int y = keyAreaBaseY + (int)((keySize + padding) * key.y);
 
@@ -409,10 +412,9 @@ void VRKeyboard::Refresh() {
 
 	if (!minimal) {
 		fillArea(
-			padding, padding,
-			desc.Width - padding * 2, keySize,
-			255, 255, 255
-		);
+		    padding, padding,
+		    desc.Width - padding * 2, keySize,
+		    255, 255, 255);
 
 		pix_t targetColour = { 0, 0, 0, 255 };
 
@@ -425,7 +427,7 @@ void VRKeyboard::Refresh() {
 
 	CComPtr<ID3D11Texture2D> tex;
 	HRESULT rres = dev->CreateTexture2D(&desc, init, &tex);
-	//HRESULT hrr = dev->GetDeviceRemovedReason();
+	// HRESULT hrr = dev->GetDeviceRemovedReason();
 	OOVR_FAILED_DX_ABORT(rres);
 	delete[] pixels;
 
@@ -443,7 +445,8 @@ void VRKeyboard::Refresh() {
 	OOVR_FAILED_OVR_ABORT(ovr_CommitTextureSwapChain(*ovr::session, chain));
 }
 
-void VRKeyboard::SubmitEvent(vr::EVREventType ev, wchar_t ch) {
+void VRKeyboard::SubmitEvent(vr::EVREventType ev, wchar_t ch)
+{
 	// Here's how (from some basic experimentation) the SteamVR keyboard appears to submit events:
 	// In minimal mode:
 	// * Pressing a key submits a KeyboardCharInput event, with the character stored in cNewInput

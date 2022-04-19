@@ -46,7 +46,7 @@ public:
 		LOCK,
 	};
 
-	static std::wstring_convert<std::codecvt_utf8<wchar_t> > CHAR_CONV;
+	static std::wstring_convert<std::codecvt_utf8<wchar_t>> CHAR_CONV;
 
 	bool IsClosed() { return closed; }
 

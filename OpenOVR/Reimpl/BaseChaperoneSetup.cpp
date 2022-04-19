@@ -54,8 +54,8 @@ bool BaseChaperoneSetup::GetLiveCollisionBoundsInfo(VR_OUT_ARRAY_COUNT(punQuadsC
 		corners[3] = G2S_v3f(vec3(bounds.width, 0, -bounds.height));
 	}
 
-	//string msg = to_string(status) + "," + to_string(pointsCount);
-	//OOVR_LOG(msg.c_str());
+	// string msg = to_string(status) + "," + to_string(pointsCount);
+	// OOVR_LOG(msg.c_str());
 
 	if (punQuadsCount)
 		*punQuadsCount = 1;

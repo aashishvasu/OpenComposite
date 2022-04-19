@@ -4,16 +4,20 @@
 
 // These functions are used in HL:A - See #176
 // Nooping both of these should be fine.
-void BaseControlPanel::SetDashBoardUserToggleEnabled(bool status) {
+void BaseControlPanel::SetDashBoardUserToggleEnabled(bool status)
+{
 }
-OOVR_EVR_ControlPanel_Error BaseControlPanel::RegisterExternalWebRoot() {
+OOVR_EVR_ControlPanel_Error BaseControlPanel::RegisterExternalWebRoot()
+{
 	return VR_ControlPanelError_None;
 }
 
 // Unknown functions
-#define UKN_FUNC(id) void BaseControlPanel::UknFunc ## id () { \
-STUBBED(); \
-}
+#define UKN_FUNC(id)                     \
+	void BaseControlPanel::UknFunc##id() \
+	{                                    \
+		STUBBED();                       \
+	}
 
 UKN_FUNC(00);
 UKN_FUNC(01);

@@ -2,9 +2,9 @@
 
 #include "xrutil.h"
 
+#include "Drivers/Backend.h"
 #include "convert.h"
 #include "xr_ext.h"
-#include "Drivers/Backend.h"
 
 XrInstance xr_instance = XR_NULL_HANDLE;
 XrSession xr_session = XR_NULL_HANDLE;
@@ -115,34 +115,36 @@ XrSpace xr_space_from_ref_space_type(XrReferenceSpaceType spaceType)
 	}
 }
 
-XrQuaternionf yRotation(XrQuaternionf &q)
+XrQuaternionf yRotation(XrQuaternionf& q)
 {
 	float theta = atan2(q.y, q.w);
-	return {0.f, sinf(theta), 0.f, cosf(theta)};
+	return { 0.f, sinf(theta), 0.f, cosf(theta) };
 }
 
-XrQuaternionf yRotation(XrQuaternionf &q, XrQuaternionf &r)
+XrQuaternionf yRotation(XrQuaternionf& q, XrQuaternionf& r)
 {
 	float theta = atan2(q.y, q.w);
 	theta += atan2(r.y, r.w);
 	return { 0.f, sinf(theta), 0.f, cosf(theta) };
 }
-	
-float v3_dot(const XrVector3f &a, const XrVector3f &b)
+
+float v3_dot(const XrVector3f& a, const XrVector3f& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-XrVector3f v3_cross(const XrVector3f &a, const XrVector3f &b)
+XrVector3f v3_cross(const XrVector3f& a, const XrVector3f& b)
 {
 	return XrVector3f{ a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
 }
 
-XrVector3f operator*(float a, const XrVector3f &b) {
+XrVector3f operator*(float a, const XrVector3f& b)
+{
 	return { b.x * a, b.y * a, b.z * a };
 }
 
-XrVector3f operator+(const XrVector3f &a, const XrVector3f &b) {
+XrVector3f operator+(const XrVector3f& a, const XrVector3f& b)
+{
 	return { b.x + a.x, b.y + a.y, b.z + a.z };
 }
 
@@ -156,6 +158,6 @@ void rotate_vector_by_quaternion(const XrVector3f& v, const XrQuaternionf& q, Xr
 
 	// Do the math
 	vprime = 2.0f * v3_dot(u, v) * u
-		+ (s*s - v3_dot(u, u)) * v
-		+ 2.0f * s * v3_cross(u, v);
+	    + (s * s - v3_dot(u, u)) * v
+	    + 2.0f * s * v3_cross(u, v);
 }

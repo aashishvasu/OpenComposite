@@ -16,17 +16,26 @@ Config oovr_global_configuration;
 // OOVR_ABORT doesn't work here for some reason
 // TODO Turtle1331 use OOVR_ABORT from logging.h
 #ifdef WIN32
-	#define ABORT(msg) { MessageBoxA(NULL, string(msg).c_str(), "OpenComposite Config File Error", MB_OK); exit(1); }
+#define ABORT(msg)                                                                        \
+	{                                                                                     \
+		MessageBoxA(NULL, string(msg).c_str(), "OpenComposite Config File Error", MB_OK); \
+		exit(1);                                                                          \
+	}
 #else
-	#define ABORT(msg) { exit(42); }
+#define ABORT(msg) \
+	{              \
+		exit(42);  \
+	}
 #endif
 
-static string str_tolower(std::string val) {
+static string str_tolower(std::string val)
+{
 	transform(val.begin(), val.end(), val.begin(), ::tolower);
 	return val;
 }
 
-unsigned char hexval(unsigned char c) {
+unsigned char hexval(unsigned char c)
+{
 	if ('0' <= c && c <= '9')
 		return c - '0';
 	else if ('a' <= c && c <= 'f')
@@ -35,7 +44,8 @@ unsigned char hexval(unsigned char c) {
 		return 0;
 }
 
-static bool parse_bool(string orig, string name, int line) {
+static bool parse_bool(string orig, string name, int line)
+{
 	string val = str_tolower(orig);
 
 	if (val == "true" || val == "on" || val == "enabled")
@@ -44,11 +54,12 @@ static bool parse_bool(string orig, string name, int line) {
 		return false;
 
 	string err = "Value " + orig + " for in config file for " + name + " on line "
-		+ to_string(line) + " is not a boolean - true/on/enabled/false/off/disabled";
+	    + to_string(line) + " is not a boolean - true/on/enabled/false/off/disabled";
 	ABORT(err);
 }
 
-static HmdColor_t parse_HmdColor_t(string orig, string name, int line) {
+static HmdColor_t parse_HmdColor_t(string orig, string name, int line)
+{
 	string val = str_tolower(orig);
 
 	if (val.length() != 7 || val[0] != '#') {
@@ -70,23 +81,24 @@ static HmdColor_t parse_HmdColor_t(string orig, string name, int line) {
 
 	return c;
 
-	invalid:
+invalid:
 
 	string err = "Value " + orig + " for in config file for " + name + " on line "
-		+ to_string(line) + " is not a hex (CSS) colour code";
+	    + to_string(line) + " is not a hex (CSS) colour code";
 	ABORT(err);
 }
 
-static float parse_float(string orig, string name, int line) {
+static float parse_float(string orig, string name, int line)
+{
 	string val = str_tolower(orig);
 
-	const char *str = orig.c_str();
-	char *end = NULL;
+	const char* str = orig.c_str();
+	char* end = NULL;
 	float result = strtof(str, &end);
 
 	if (end != str + orig.length()) {
 		string err = "Value " + orig + " for in config file for " + name + " on line "
-			+ to_string(line) + " is not a decimal number (eg 12.34)";
+		    + to_string(line) + " is not a decimal number (eg 12.34)";
 		ABORT(err);
 	}
 
@@ -94,16 +106,21 @@ static float parse_float(string orig, string name, int line) {
 }
 
 int Config::ini_handler(void* user, const char* pSection,
-	const char* pName, const char* pValue,
-	int lineno) {
+    const char* pName, const char* pValue,
+    int lineno)
+{
 
 	string section = pSection;
 	string name = pName;
 	string value = pValue;
 
-	Config *cfg = (Config*)user;
+	Config* cfg = (Config*)user;
 
-#define CFGOPT(type, vname) if(name == #vname) { cfg->vname = parse_ ## type(value, #vname, lineno); return true; }
+#define CFGOPT(type, vname)                               \
+	if (name == #vname) {                                 \
+		cfg->vname = parse_##type(value, #vname, lineno); \
+		return true;                                      \
+	}
 
 	if (section == "" || section == "default") {
 		CFGOPT(bool, renderCustomHands);
@@ -129,7 +146,8 @@ int Config::ini_handler(void* user, const char* pSection,
 	ABORT(err);
 }
 
-static int wini_parse(const wchar_t* filename, ini_handler handler, void* user) {
+static int wini_parse(const wchar_t* filename, ini_handler handler, void* user)
+{
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> CHAR_CONV;
 	std::string utf8filename = CHAR_CONV.to_bytes(filename);
 
@@ -148,7 +166,8 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
 #endif
 
-Config::Config() {
+Config::Config()
+{
 	// If we're on Windows, look for a config file next to the DLL
 	// If we're on Linux, skip that and just check the working directory.
 #ifdef _WIN32
@@ -183,8 +202,7 @@ Config::Config() {
 		// Couldn't open file, no problen since the config file is optional and
 		//  the defaults are set up as the default values for the variables
 		return;
-	}
-	else if (err) {
+	} else if (err) {
 		// err is the line number
 		string str = "Config error on line " + to_string(err);
 		ABORT(str);
@@ -193,5 +211,6 @@ Config::Config() {
 	// Everything should have been set up by ini_handler
 }
 
-Config::~Config() {
+Config::~Config()
+{
 }

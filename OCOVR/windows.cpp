@@ -24,44 +24,43 @@ using namespace std;
 HMODULE openovr_module_id;
 HMODULE chainedImplementation;
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule,
+    DWORD ul_reason_for_call,
+    LPVOID lpReserved)
 {
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
+	switch (ul_reason_for_call) {
+	case DLL_PROCESS_ATTACH:
 		openovr_module_id = hModule;
 #if defined(_DEBUG)
 		DbgSetModule(hModule);
 #endif
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
 		break;
-    case DLL_PROCESS_DETACH:
+	case DLL_PROCESS_DETACH:
 		if (chainedImplementation) {
 			FreeLibrary(chainedImplementation);
 		}
-        break;
-    }
-    return TRUE;
+		break;
+	}
+	return TRUE;
 }
 
-//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
-static string GetLastErrorAsString() {
-	//Get the error message, if any.
+// Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+static string GetLastErrorAsString()
+{
+	// Get the error message, if any.
 	DWORD errorMessageID = ::GetLastError();
 	if (errorMessageID == 0)
-		return "<no error>"; //No error message has been recorded
+		return "<no error>"; // No error message has been recorded
 
 	LPSTR messageBuffer = nullptr;
 	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+	    NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
 
 	string message(messageBuffer, size);
 
-	//Free the buffer.
+	// Free the buffer.
 	LocalFree(messageBuffer);
 
 	return message;

@@ -24,21 +24,22 @@ static std::wstring_convert<std::codecvt_utf8<wchar_t>> CHAR_CONV;
 #define APISTR(str) (CHAR_CONV.to_bytes(str))
 #endif
 
-static bool ReadJson(wstring path, Json::Value &result) {
+static bool ReadJson(wstring path, Json::Value& result)
+{
 	ifstream in(APISTR(path), ios::binary);
 	if (in) {
 		std::stringstream contents;
 		contents << in.rdbuf();
 		contents >> result;
 		return true;
-	}
-	else {
+	} else {
 		result = Json::Value(Json::ValueType::objectValue);
 		return false;
 	}
 }
 
-static void WriteJson(wstring path, const Json::Value &value) {
+static void WriteJson(wstring path, const Json::Value& value)
+{
 	ofstream out(APISTR(path), ios::binary);
 	if (!out) {
 		OOVR_ABORTF("Failed to write applist json: %s", strerror(errno));
@@ -53,7 +54,8 @@ enum Runtime {
 	SteamVR = 2,
 };
 
-bool BaseClientCore::CheckAppEnabled() {
+bool BaseClientCore::CheckAppEnabled()
+{
 #ifndef _WIN32
 	OOVR_LOG_ONCE("Launcher configuration not yet supported on Linux");
 	return true;
@@ -118,23 +120,27 @@ bool BaseClientCore::CheckAppEnabled() {
 #endif
 }
 
-template<typename str_t>
-static void TrimPath(str_t &path) {
+template <typename str_t>
+static void TrimPath(str_t& path)
+{
 	if (path.back() == '\\' || path.back() == '/') {
 		path.erase(path.end() - 1);
 	}
 }
 
-template<typename str_t>
-bool EndsWith(const str_t& a, const str_t& b) {
-	if (b.size() > a.size()) return false;
+template <typename str_t>
+bool EndsWith(const str_t& a, const str_t& b)
+{
+	if (b.size() > a.size())
+		return false;
 	return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
 }
 
 // Derived from OpenVR
-static wstring GetAppSettingsPath() {
+static wstring GetAppSettingsPath()
+{
 	wstring path;
-#if defined( WIN32 )
+#if defined(WIN32)
 	WCHAR rwchPath[MAX_PATH];
 
 	if (!SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, 0, rwchPath))) {
@@ -142,9 +148,9 @@ static wstring GetAppSettingsPath() {
 	}
 
 	path = rwchPath;
-#elif defined( OSX )
+#elif defined(OSX)
 #error "Unsupported platform"
-#elif defined( __linux__ )
+#elif defined(__linux__)
 	// As defined by XDG Base Directory Specification
 	// https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
@@ -173,12 +179,13 @@ static wstring GetAppSettingsPath() {
 	return path;
 }
 
-static wstring GetOpenVRConfigPath() {
+static wstring GetOpenVRConfigPath()
+{
 	wstring sConfigPath = GetAppSettingsPath();
 
-#if defined( _WIN32 ) || defined( __linux__ )
+#if defined(_WIN32) || defined(__linux__)
 	sConfigPath += L"/openvr";
-#elif defined ( OSX )
+#elif defined(OSX)
 	sConfigPath += L"/.openvr";
 #else
 #error "Unsupported platform"
@@ -186,10 +193,11 @@ static wstring GetOpenVRConfigPath() {
 	return sConfigPath;
 }
 
-string BaseClientCore::GetAlternativeRuntimePath() {
+string BaseClientCore::GetAlternativeRuntimePath()
+{
 	wstring regPath = GetOpenVRConfigPath();
 
-#if defined( _WIN32 ) || defined( __unix__ )
+#if defined(_WIN32) || defined(__unix__)
 	regPath += L"/openvrpaths.vrpath";
 #else
 #error "Unsupported platform"
@@ -214,39 +222,47 @@ string BaseClientCore::GetAlternativeRuntimePath() {
 	OOVR_ABORT("Could not find a usable SteamVR intallation");
 }
 
-EVRInitError BaseClientCore::Init(vr::EVRApplicationType eApplicationType, const char * pStartupInfo) {
+EVRInitError BaseClientCore::Init(vr::EVRApplicationType eApplicationType, const char* pStartupInfo)
+{
 	EVRInitError err;
 	VR_InitInternal2(&err, eApplicationType, pStartupInfo);
 	return err;
 }
 
-void BaseClientCore::Cleanup() {
+void BaseClientCore::Cleanup()
+{
 	// Note that this object is not affected by the shutdown, as it is handled seperately
 	//  from all the other interface objects and is only destroyed when the DLL is unloaded.
 	VR_ShutdownInternal();
 }
 
-EVRInitError BaseClientCore::IsInterfaceVersionValid(const char * pchInterfaceVersion) {
+EVRInitError BaseClientCore::IsInterfaceVersionValid(const char* pchInterfaceVersion)
+{
 	return VR_IsInterfaceVersionValid(pchInterfaceVersion) ? VRInitError_None : VRInitError_Init_InvalidInterface;
 }
 
-void * BaseClientCore::GetGenericInterface(const char * pchNameAndVersion, EVRInitError * peError) {
+void* BaseClientCore::GetGenericInterface(const char* pchNameAndVersion, EVRInitError* peError)
+{
 	return VR_GetGenericInterface(pchNameAndVersion, peError);
 }
 
-bool BaseClientCore::BIsHmdPresent() {
+bool BaseClientCore::BIsHmdPresent()
+{
 	return VR_IsHmdPresent();
 }
 
-const char * BaseClientCore::GetEnglishStringForHmdError(vr::EVRInitError eError) {
+const char* BaseClientCore::GetEnglishStringForHmdError(vr::EVRInitError eError)
+{
 	return VR_GetVRInitErrorAsEnglishDescription(eError);
 }
 
-const char * BaseClientCore::GetIDForVRInitError(vr::EVRInitError eError) {
+const char* BaseClientCore::GetIDForVRInitError(vr::EVRInitError eError)
+{
 	return VR_GetVRInitErrorAsSymbol(eError);
 }
 
-std::string BaseClientCore::GetAppPath() {
+std::string BaseClientCore::GetAppPath()
+{
 #ifndef _WIN32
 	LINUX_STUBBED();
 #else
@@ -256,7 +272,8 @@ std::string BaseClientCore::GetAppPath() {
 #endif
 }
 
-std::wstring BaseClientCore::GetDllDir() {
+std::wstring BaseClientCore::GetDllDir()
+{
 #ifndef _WIN32
 	LINUX_STUBBED();
 #else
@@ -267,15 +284,16 @@ std::wstring BaseClientCore::GetDllDir() {
 #endif
 }
 
-void BaseClientCore::SetManifestPath(string filename) {
+void BaseClientCore::SetManifestPath(string filename)
+{
 	wstring listname = GetDllDir() + L"applist.json";
 	Json::Value root;
 	ReadJson(listname, root);
 
-	Json::Value &tag = root[GetAppPath()];
+	Json::Value& tag = root[GetAppPath()];
 
 	// Don't need to update it
-	if(tag["manifest"] == filename)
+	if (tag["manifest"] == filename)
 		return;
 
 	tag["manifest"] = filename;

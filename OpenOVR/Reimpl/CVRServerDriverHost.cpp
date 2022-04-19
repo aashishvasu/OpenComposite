@@ -14,31 +14,38 @@ using DriverPose_t005 = vr::driver_ITrackedDeviceServerDriver_005::DriverPose_t;
 // TODO auto-generate these
 class OCTrackedDeviceDriver_005 : public OCTrackedDeviceDriver {
 public:
-	OCTrackedDeviceDriver_005(const char *serialNumber, vr::ETrackedDeviceClass deviceClass, ITrackedDeviceServerDriver005 *driver)
-		: OCTrackedDeviceDriver(serialNumber, deviceClass), driver(driver) {
+	OCTrackedDeviceDriver_005(const char* serialNumber, vr::ETrackedDeviceClass deviceClass, ITrackedDeviceServerDriver005* driver)
+	    : OCTrackedDeviceDriver(serialNumber, deviceClass), driver(driver)
+	{
 	}
 
-	virtual vr::EVRInitError Activate(uint32_t unObjectId) {
+	virtual vr::EVRInitError Activate(uint32_t unObjectId)
+	{
 		return driver->Activate(unObjectId);
 	}
 
-	virtual void Deactivate() {
+	virtual void Deactivate()
+	{
 		driver->Deactivate();
 	}
 
-	virtual void EnterStandby() {
+	virtual void EnterStandby()
+	{
 		driver->EnterStandby();
 	}
 
-	virtual void *GetComponent(const char *pchComponentNameAndVersion) {
+	virtual void* GetComponent(const char* pchComponentNameAndVersion)
+	{
 		return driver->GetComponent(pchComponentNameAndVersion);
 	}
 
-	virtual void DebugRequest(const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize) {
+	virtual void DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize)
+	{
 		driver->DebugRequest(pchRequest, pchResponseBuffer, unResponseBufferSize);
 	}
 
-	virtual OCDriverPose_t GetPose() {
+	virtual OCDriverPose_t GetPose()
+	{
 		DriverPose_t005 p5 = driver->GetPose();
 
 		OCDriverPose_t p;
@@ -51,17 +58,19 @@ public:
 	}
 
 private:
-	ITrackedDeviceServerDriver005 *driver;
+	ITrackedDeviceServerDriver005* driver;
 };
 
 bool CVRServerDriverHost_005::TrackedDeviceAdded(const char* serialNumber, vr::ETrackedDeviceClass deviceClass,
-	ITrackedDeviceServerDriver005* pDriver) {
+    ITrackedDeviceServerDriver005* pDriver)
+{
 
 	// TODO implement
-	OCTrackedDeviceDriver *driver = new OCTrackedDeviceDriver_005(serialNumber, deviceClass, pDriver);
+	OCTrackedDeviceDriver* driver = new OCTrackedDeviceDriver_005(serialNumber, deviceClass, pDriver);
 	return base->TrackedDeviceAdded(driver);
 }
 
-void CVRServerDriverHost_005::TrackedDevicePoseUpdated(uint32_t unWhichDevice, const DriverPose_t005& newPose, uint32_t unPoseStructSize) {
+void CVRServerDriverHost_005::TrackedDevicePoseUpdated(uint32_t unWhichDevice, const DriverPose_t005& newPose, uint32_t unPoseStructSize)
+{
 	base->TrackedDevicePoseUpdated(unWhichDevice, (OCDriverPose_t&)newPose, unPoseStructSize);
 }

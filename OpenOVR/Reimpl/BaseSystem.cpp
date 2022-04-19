@@ -489,8 +489,7 @@ float BaseSystem::SGetIpd()
 	IHMD* dev = BackendManager::Instance().GetPrimaryHMD();
 	float ipd = dev->GetIPD();
 	static float lastIpd = NAN;
-	if(ipd != lastIpd)
-	{
+	if (ipd != lastIpd) {
 		lastIpd = ipd;
 		OOVR_LOGF("IPD: %f", ipd);
 	}
@@ -820,14 +819,13 @@ void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel)
 // Tracking origin stuff
 void BaseSystem::ResetSeatedZeroPose()
 {
-	if (BackendManager::Instance().IsGraphicsConfigured())
-	{
+	if (BackendManager::Instance().IsGraphicsConfigured()) {
 		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
 		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
 		XrResult err = xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location);
 		OOVR_FAILED_XR_ABORT(err);
 
-		static XrReferenceSpaceCreateInfo spaceInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr, XR_REFERENCE_SPACE_TYPE_LOCAL, {{0.0f, 0.0f, 0.0f, 1.0f},{0.0f, 0.0f, 0.0f}} };
+		static XrReferenceSpaceCreateInfo spaceInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr, XR_REFERENCE_SPACE_TYPE_LOCAL, { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } } };
 		XrVector3f rotatedPos;
 		auto rot = yRotation(location.pose.orientation, spaceInfo.poseInReferenceSpace.orientation);
 		rotate_vector_by_quaternion(location.pose.position, rot, rotatedPos);

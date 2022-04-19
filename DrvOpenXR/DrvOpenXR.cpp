@@ -33,25 +33,25 @@ std::string GetExeName()
 	char exePath[MAX_PATH + 1] = { 0 };
 	DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
 	PathStripPathA(exePath);
-	return {exePath};
+	return { exePath };
 }
 #else
-#include <libgen.h>         // basename
-#include <unistd.h>         // readlink
-#include <linux/limits.h>   // PATH_MAX
+#include <libgen.h> // basename
+#include <linux/limits.h> // PATH_MAX
+#include <unistd.h> // readlink
 
 std::string GetExeName()
 {
 	char exePath[PATH_MAX + 1] = { 0 };
 	ssize_t count = readlink("/proc/self/exe", exePath, PATH_MAX);
 	if (count != -1) {
-		return {basename(exePath)};
+		return { basename(exePath) };
 	}
-	return {""};
+	return { "" };
 }
 #endif
 
-void DrvOpenXR::GetXRAppName(char (& appName)[128])
+void DrvOpenXR::GetXRAppName(char (&appName)[128])
 {
 	std::string exeName = GetExeName();
 	if (exeName.size() > 0) {
@@ -62,8 +62,7 @@ void DrvOpenXR::GetXRAppName(char (& appName)[128])
 			ocAppName = ocAppName.substr(0, pos);
 		OOVR_LOGF("Setting application name to %s", ocAppName.c_str());
 		strcpy_arr(appName, ocAppName.c_str());
-	}
-	else {
+	} else {
 		strcpy_arr(appName, "OpenComposite");
 	}
 }
@@ -72,10 +71,10 @@ void DrvOpenXR::GetXRAppName(char (& appName)[128])
 static XrDebugUtilsMessengerEXT dbgMessenger = NULL;
 
 static XrBool32 debugCallback(
-	XrDebugUtilsMessageSeverityFlagsEXT              messageSeverity,
-	XrDebugUtilsMessageTypeFlagsEXT                  messageTypes,
-	const XrDebugUtilsMessengerCallbackDataEXT*      callbackData,
-	void*                                            userData)
+    XrDebugUtilsMessageSeverityFlagsEXT messageSeverity,
+    XrDebugUtilsMessageTypeFlagsEXT messageTypes,
+    const XrDebugUtilsMessengerCallbackDataEXT* callbackData,
+    void* userData)
 {
 	OOVR_LOGF("debugCallback %s", callbackData->message);
 	return XR_FALSE;
@@ -120,7 +119,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	std::vector<XrApiLayerProperties> layerProperties;
 	layerProperties.resize(availableLayersCount, { XR_TYPE_API_LAYER_PROPERTIES });
 	OOVR_FAILED_XR_ABORT(xrEnumerateApiLayerProperties(
-		layerProperties.size(), &availableLayersCount, layerProperties.data()));
+	    layerProperties.size(), &availableLayersCount, layerProperties.data()));
 	std::set<std::string> availableLayers;
 	for (const XrApiLayerProperties& layer : layerProperties) {
 		availableLayers.insert(layer.layerName);
@@ -138,35 +137,35 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	XrGraphicsApiSupportedFlags apiFlags = 0;
 
 #ifdef SUPPORT_DX
-	if(availableExtensions.count("XR_KHR_D3D11_enable")){
+	if (availableExtensions.count("XR_KHR_D3D11_enable")) {
 		extensions.push_back("XR_KHR_D3D11_enable");
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D11;
 	}
-	if(availableExtensions.count("XR_KHR_D3D12_enable")){
+	if (availableExtensions.count("XR_KHR_D3D12_enable")) {
 		extensions.push_back("XR_KHR_D3D12_enable");
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D12;
 	}
 #endif
 #if defined(SUPPORT_VK)
-	if(availableExtensions.count(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME)){
+	if (availableExtensions.count(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_VK;
 	}
 #endif
 #if defined(SUPPORT_GL)
-	if(availableExtensions.count(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)){
+	if (availableExtensions.count(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_GL;
 	}
 #endif
 #if defined(SUPPORT_GLES)
-	if(availableExtensions.count(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME)){
+	if (availableExtensions.count(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
 		apiFlags |= OC_SUPPORTED_GRAPHCIS_API_GLES;
 	}
 #endif
 #if defined(ANDROID)
-	if(availableExtensions.count(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME))
+	if (availableExtensions.count(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME))
 		extensions.push_back(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME);
 #endif
 	if (availableExtensions.count(XR_EXT_DEBUG_UTILS_EXTENSION_NAME))
@@ -209,7 +208,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	dbgCreateInfo.messageTypes = XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
 	dbgCreateInfo.next = NULL;
 	dbgCreateInfo.userData = NULL;
-	if(dbgMessenger != NULL){
+	if (dbgMessenger != NULL) {
 		OOVR_FAILED_XR_ABORT(xrDestroyDebugUtilsMessengerEXT(dbgMessenger));
 		dbgMessenger = NULL;
 	}
@@ -243,13 +242,13 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	if (!temporaryGraphics) {
 #if defined(SUPPORT_VK)
 		// If we have Vulkan prioritise that, since we need it if the application uses Vulkan
-		if(apiFlags & XR_SUPPORTED_GRAPHCIS_API_VK){
+		if (apiFlags & XR_SUPPORTED_GRAPHCIS_API_VK) {
 			temporaryGraphics = std::make_unique<TemporaryVk>();
 		}
 #endif
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-		if(!temporaryGraphics && (apiFlags & XR_SUPPORTED_GRAPHCIS_API_D3D11)){
+		if (!temporaryGraphics && (apiFlags & XR_SUPPORTED_GRAPHCIS_API_D3D11)) {
 			temporaryGraphics = std::make_unique<TemporaryD3D11>();
 		}
 #endif
@@ -330,7 +329,7 @@ void DrvOpenXR::FullShutdown()
 		ShutdownSession();
 
 #ifdef _DEBUG
-	if(dbgMessenger != NULL){
+	if (dbgMessenger != NULL) {
 		OOVR_FAILED_XR_ABORT(xrDestroyDebugUtilsMessengerEXT(dbgMessenger));
 		dbgMessenger = NULL;
 	}

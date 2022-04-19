@@ -84,33 +84,33 @@ struct OOVR_VRActiveActionSet_t {
 	vr::VRActionSetHandle_t ulActionSet;
 
 	/** This is the handle of a device path that this action set should be active for. To
-	* activate for all devices, set this to k_ulInvalidInputValueHandle. */
+	 * activate for all devices, set this to k_ulInvalidInputValueHandle. */
 	vr::VRInputValueHandle_t ulRestrictedToDevice;
 
 	/** The action set to activate for all devices other than ulRestrictedDevice. If
-	* ulRestrictedToDevice is set to k_ulInvalidInputValueHandle, this parameter is
-	* ignored. */
+	 * ulRestrictedToDevice is set to k_ulInvalidInputValueHandle, this parameter is
+	 * ignored. */
 	vr::VRActionSetHandle_t ulSecondaryActionSet;
 
 	// This field is ignored
 	uint32_t unPadding;
 
 	/** The priority of this action set relative to other action sets. Any inputs
-	* bound to a source (e.g. trackpad, joystick, trigger) will disable bindings in
-	* other active action sets with a smaller priority. */
+	 * bound to a source (e.g. trackpad, joystick, trigger) will disable bindings in
+	 * other active action sets with a smaller priority. */
 	int32_t nPriority;
 };
 
 /** Contains summary information about the current skeletal pose */
 struct OOVR_VRSkeletalSummaryData_t {
 	/** The amount that each finger is 'curled' inwards towards the palm.  In the case of the thumb,
-	* this represents how much the thumb is wrapped around the fist.
-	* 0 means straight, 1 means fully curled */
+	 * this represents how much the thumb is wrapped around the fist.
+	 * 0 means straight, 1 means fully curled */
 	float flFingerCurl[VRFinger_Count];
 
 	/** The amount that each pair of adjacent fingers are separated.
-	* 0 means the digits are touching, 1 means they are fully separated.
-	*/
+	 * 0 means the digits are touching, 1 means they are fully separated.
+	 */
 	float flFingerSplay[VRFingerSplay_Count];
 };
 
@@ -160,9 +160,9 @@ public:
 	// ---------------  Handle management   --------------- //
 
 	/** Sets the path to the action manifest JSON file that is used by this application. If this information
-	* was set on the Steam partner site, calls to this function are ignored. If the Steam partner site
-	* setting and the path provided by this call are different, VRInputError_MismatchedActionManifest is returned.
-	* This call must be made before the first call to UpdateActionState or IVRSystem::PollNextEvent. */
+	 * was set on the Steam partner site, calls to this function are ignored. If the Steam partner site
+	 * setting and the path provided by this call are different, VRInputError_MismatchedActionManifest is returned.
+	 * This call must be made before the first call to UpdateActionState or IVRSystem::PollNextEvent. */
 	virtual EVRInputError SetActionManifestPath(const char* pchActionManifestPath);
 
 	/** Returns a handle for an action set. This handle is used for all performance-sensitive calls. */
@@ -177,15 +177,15 @@ public:
 	// --------------- Reading action state ------------------- //
 
 	/** Reads the current state into all actions. After this call, the results of Get*Action calls
-	* will be the same until the next call to UpdateActionState. */
+	 * will be the same until the next call to UpdateActionState. */
 	virtual EVRInputError UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t* pSets, uint32_t unSizeOfVRSelectedActionSet_t, uint32_t unSetCount);
 
 	/** Reads the state of a digital action given its handle. This will return VRInputError_WrongType if the type of
-	* action is something other than digital */
+	 * action is something other than digital */
 	virtual EVRInputError GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
 	/** Reads the state of an analog action given its handle. This will return VRInputError_WrongType if the type of
-	* action is something other than analog */
+	 * action is something other than analog */
 	virtual EVRInputError GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
 	/**
@@ -196,11 +196,11 @@ public:
 	virtual EVRInputError GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow, InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
 	/** Reads the state of a pose action given its handle for the number of seconds relative to now. This
-	* will generally be called with negative times from the fUpdateTime fields in other actions. */
+	 * will generally be called with negative times from the fUpdateTime fields in other actions. */
 	virtual EVRInputError GetPoseActionDataRelativeToNow(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow, InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
 	/** Reads the state of a pose action given its handle. The returned values will match the values returned
-	* by the last call to IVRCompositor::WaitGetPoses(). */
+	 * by the last call to IVRCompositor::WaitGetPoses(). */
 	virtual EVRInputError GetPoseActionDataForNextFrame(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice);
 
 	/** Reads the state of a skeletal action given its handle. */
@@ -210,8 +210,8 @@ public:
 	virtual EVRInputError GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t* pActionData, uint32_t unActionDataSize);
 
 	/** Returns the current dominant hand for the user for this application. This function will only return success for applications
-	* which include "supports_dominant_hand_setting": true in their action manifests. The dominant hand will only change after
-	* a call to UpdateActionState, and the action data returned after that point will use the new dominant hand. */
+	 * which include "supports_dominant_hand_setting": true in their action manifests. The dominant hand will only change after
+	 * a call to UpdateActionState, and the action data returned after that point will use the new dominant hand. */
 	virtual EVRInputError GetDominantHand(vr::ETrackedControllerRole* peDominantHand);
 
 	/** Sets the dominant hand for the user for this application. */
@@ -249,13 +249,13 @@ public:
 	virtual EVRInputError GetSkeletalSummaryData(VRActionHandle_t action, VRSkeletalSummaryData_t* pSkeletalSummaryData);
 
 	/** Reads the state of the skeletal bone data in a compressed form that is suitable for
-		* sending over the network. The required buffer size will never exceed ( sizeof(VR_BoneTransform_t)*boneCount + 2).
-		* Usually the size will be much smaller. */
+	 * sending over the network. The required buffer size will never exceed ( sizeof(VR_BoneTransform_t)*boneCount + 2).
+	 * Usually the size will be much smaller. */
 	virtual EVRInputError GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalMotionRange eMotionRange, VR_OUT_BUFFER_COUNT(unCompressedSize) void* pvCompressedData, uint32_t unCompressedSize, uint32_t* punRequiredCompressedSize, VRInputValueHandle_t ulRestrictToDevice);
 
 	/** Reads the state of the skeletal bone data in a compressed form that is suitable for
-	* sending over the network. The required buffer size will never exceed ( sizeof(VR_BoneTransform_t)*boneCount + 2).
-	* Usually the size will be much smaller. */
+	 * sending over the network. The required buffer size will never exceed ( sizeof(VR_BoneTransform_t)*boneCount + 2).
+	 * Usually the size will be much smaller. */
 	virtual EVRInputError GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalMotionRange eMotionRange, VR_OUT_BUFFER_COUNT(unCompressedSize) void* pvCompressedData, uint32_t unCompressedSize, uint32_t* punRequiredCompressedSize);
 
 	/** Turns a compressed buffer from GetSkeletalBoneDataCompressed and turns it back into a bone transform array. */
@@ -278,7 +278,7 @@ public:
 	virtual EVRInputError GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize);
 
 	/** Retrieves the name of the origin in the current language. unStringSectionsToInclude is a bitfield of values in EVRInputStringBits that allows the
-			application to specify which parts of the origin's information it wants a string for. */
+	        application to specify which parts of the origin's information it wants a string for. */
 	virtual EVRInputError GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize, int32_t unStringSectionsToInclude);
 
 	/** Retrieves useful information for the origin of this action */
@@ -304,7 +304,7 @@ public:
 	// --------------- Utilities ------------------- //
 
 	/** Opens the binding user interface. If no app key is provided it will use the key from the calling process.
-	* If no set is provided it will open to the root of the app binding page. */
+	 * If no set is provided it will open to the root of the app binding page. */
 	virtual EVRInputError OpenBindingUI(const char* pchAppKey, VRActionSetHandle_t ulActionSetHandle, VRInputValueHandle_t ulDeviceHandle, bool bShowOnDesktop);
 
 	/**
@@ -417,15 +417,15 @@ private:
 	 *
 	 * @code
 	 * {
-     *   "inputs": {
-     *     "click": {
-     *       "output": "/actions/main/in/Test1"
-     *     }
-     *   },
-     *   "mode": "button",
-     *   "path": "/user/hand/left/input/trackpad"
-     * }
-     * @endcode
+	 *   "inputs": {
+	 *     "click": {
+	 *       "output": "/actions/main/in/Test1"
+	 *     }
+	 *   },
+	 *   "mode": "button",
+	 *   "path": "/user/hand/left/input/trackpad"
+	 * }
+	 * @endcode
 	 */
 	// TODO delete this and move the documentation to OOVR_InputBindingInfo_t
 	struct ActionSource {
@@ -457,7 +457,7 @@ private:
 		XrAction xr = XR_NULL_HANDLE;
 
 		// Any virtual inputs bound to this action are attached here
-		std::vector<std::unique_ptr<VirtualInput> > virtualInputs;
+		std::vector<std::unique_ptr<VirtualInput>> virtualInputs;
 
 		// Only used in the case of Pose actions
 		XrSpace actionSpace = XR_NULL_HANDLE;
@@ -471,8 +471,8 @@ private:
 
 	bool hasLoadedActions = false;
 	bool usingLegacyInput = false;
-	std::map<std::string, std::unique_ptr<ActionSet> > actionSets;
-	std::map<std::string, std::unique_ptr<Action> > actions;
+	std::map<std::string, std::unique_ptr<ActionSet>> actionSets;
+	std::map<std::string, std::unique_ptr<Action>> actions;
 
 	std::string bindingsPath;
 

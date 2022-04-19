@@ -106,7 +106,7 @@ mat4 BaseCompositor::GetHandTransform()
 	// ovrPose.ThePose.Orientation = { 0,0,0,1 };
 
 	vec3 rotateAxis = vec3(1, 0, 0);
-	quat rotation = glm::rotate(controller_offset_angle * deg_to_rad, rotateAxis); //count++ * 0.01f);
+	quat rotation = glm::rotate(controller_offset_angle * deg_to_rad, rotateAxis); // count++ * 0.01f);
 
 	mat4 transform(rotation);
 
@@ -453,7 +453,7 @@ void BaseCompositor::SuspendRendering(bool bSuspend)
 	// TODO
 	// I'm not sure what the purpose of this function is. If you know, please tell me.
 	// - ZNix
-	//STUBBED();
+	// STUBBED();
 }
 
 ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView)

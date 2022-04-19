@@ -70,7 +70,7 @@ public:
 XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin);
 XrSpace xr_space_from_ref_space_type(XrReferenceSpaceType spaceType);
 
-XrQuaternionf yRotation(XrQuaternionf &q, XrQuaternionf &r);
+XrQuaternionf yRotation(XrQuaternionf& q, XrQuaternionf& r);
 void rotate_vector_by_quaternion(const XrVector3f& v, const XrQuaternionf& q, XrVector3f& vprime);
 
 extern XrInstance xr_instance;

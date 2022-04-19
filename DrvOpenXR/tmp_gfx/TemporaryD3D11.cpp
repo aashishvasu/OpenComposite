@@ -42,7 +42,7 @@ TemporaryD3D11::TemporaryD3D11()
 	IDXGIAdapter1* adapter = d3d_get_adapter(graphicsRequirements.adapterLuid);
 	D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
 
-	if(graphicsRequirements.minFeatureLevel > D3D_FEATURE_LEVEL_11_0)
+	if (graphicsRequirements.minFeatureLevel > D3D_FEATURE_LEVEL_11_0)
 		featureLevels[0] = graphicsRequirements.minFeatureLevel;
 
 	// Such a horrid hack - of all the ugly things we do in OpenComposite, this has to be one of the worst.

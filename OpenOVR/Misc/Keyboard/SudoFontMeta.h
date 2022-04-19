@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
 class SudoFontMeta {
@@ -36,7 +36,7 @@ public:
 	 *
 	 * Does not copy transparent regions, so this respects the background.
 	 */
-	void Blit(wchar_t ch, int x, int y, int img_width, pix_t targetColour, pix_t *rawPixels, bool hpad = true);
+	void Blit(wchar_t ch, int x, int y, int img_width, pix_t targetColour, pix_t* rawPixels, bool hpad = true);
 
 	int Width(wchar_t ch);
 	int Width(std::wstring str);
@@ -52,4 +52,3 @@ private:
 
 	unsigned int lineHeight;
 };
-

@@ -46,7 +46,7 @@ class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {
 
 // If we don't set up our own deleter, then at least on linux it'll get the layout mixed up and call a random function
 // Also for the basis of this typedef, see: https://stackoverflow.com/a/26276805
-using correct_layout_unique = std::unique_ptr<CVRCorrectLayout, std::function<void(CVRCorrectLayout*)> >;
+using correct_layout_unique = std::unique_ptr<CVRCorrectLayout, std::function<void(CVRCorrectLayout*)>>;
 
 static map<string, correct_layout_unique> interfaces;
 

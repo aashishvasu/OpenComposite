@@ -4,8 +4,8 @@
 
 #include "dx11compositor.h"
 
-#include "../Misc/xr_ext.h"
 #include "../Misc/Config.h"
+#include "../Misc/xr_ext.h"
 
 #include <d3dcompiler.h> // For compiling shaders! D3DCompile
 
@@ -86,7 +86,7 @@ ID3DBlob* d3d_compile_shader(const char* hlsl, const char* entrypoint, const cha
 	return compiled;
 }
 
-ID3D11RenderTargetView* d3d_make_rtv(ID3D11Device* d3d_device, XrBaseInStructure& swapchain_img, const DXGI_FORMAT &format)
+ID3D11RenderTargetView* d3d_make_rtv(ID3D11Device* d3d_device, XrBaseInStructure& swapchain_img, const DXGI_FORMAT& format)
 {
 	ID3D11RenderTargetView* result = nullptr;
 
@@ -101,7 +101,7 @@ ID3D11RenderTargetView* d3d_make_rtv(ID3D11Device* d3d_device, XrBaseInStructure
 	target_desc.Format = format;
 	target_desc.Texture2D.MipSlice = 0;
 	OOVR_FAILED_DX_ABORT(d3d_device->CreateRenderTargetView(d3d_swapchain_img.texture, &target_desc, &result));
-	
+
 	return result;
 }
 
@@ -138,7 +138,7 @@ DX11Compositor::DX11Compositor(ID3D11Texture2D* initial)
 
 DX11Compositor::~DX11Compositor()
 {
-	for(auto && rtv : swapchain_rtvs)
+	for (auto&& rtv : swapchain_rtvs)
 		rtv->Release();
 
 	swapchain_rtvs.clear();
@@ -156,9 +156,8 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 	D3D11_TEXTURE2D_DESC srcDesc;
 	src->GetDesc(&srcDesc);
 
-	if (bounds)
-	{
-		if(std::fabs(bounds->uMax - bounds->uMin) > 0.1)
+	if (bounds) {
+		if (std::fabs(bounds->uMax - bounds->uMin) > 0.1)
 			srcDesc.Width = uint32_t(float(srcDesc.Width) * std::fabs(bounds->uMax - bounds->uMin));
 		if (std::fabs(bounds->vMax - bounds->vMin) > 0.1)
 			srcDesc.Height = uint32_t(float(srcDesc.Height) * std::fabs(bounds->vMax - bounds->vMin));
@@ -175,7 +174,7 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 	if (!usable) {
 		OOVR_LOG("Generating new swap chain");
 
-		if(bounds)
+		if (bounds)
 			OOVR_LOGF("Bounds: uMin %f uMax %f vMin %f vMax %f", bounds->uMin, bounds->uMax, bounds->vMin, bounds->vMax);
 		OOVR_LOGF("Texture desc format: %d", srcDesc.Format);
 		OOVR_LOGF("Texture desc bind flags: %d", srcDesc.BindFlags);
@@ -189,11 +188,10 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 			xrDestroySwapchain(chain);
 		}
 
-		for(auto && rtv : swapchain_rtvs)
+		for (auto&& rtv : swapchain_rtvs)
 			rtv->Release();
 
 		swapchain_rtvs.clear();
-
 
 		// Figure out what format we need to use
 		DxgiFormatInfo info = {};
@@ -274,7 +272,7 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 		}
 		return;
 	}
-	
+
 	CheckCreateSwapChain(texture, bounds, false);
 
 	// First reserve an image from the swapchain
@@ -291,17 +289,15 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	XrResult res;
 	OOVR_FAILED_XR_ABORT(res = xrWaitSwapchainImage(chain, &waitInfo));
 
-	if(res == XR_TIMEOUT_EXPIRED)
+	if (res == XR_TIMEOUT_EXPIRED)
 		OOVR_ABORTF("xrWaitSwapchainImage timeout");
-		
 
 	// Copy the source to the destination image
 	D3D11_BOX sourceRegion;
 	if (bounds) {
 		sourceRegion.left = bounds->uMin == 0.0f ? 0 : createInfo.width;
 		sourceRegion.right = bounds->uMin == 0.0f ? createInfo.width : createInfo.width * 2;
-	}
-	else {
+	} else {
 		sourceRegion.left = 0;
 		sourceRegion.right = createInfo.width;
 	}
@@ -309,10 +305,9 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	sourceRegion.bottom = createInfo.height;
 	sourceRegion.front = 0;
 	sourceRegion.back = 1;
-	
+
 	// Bounds describe an inverted image so copy texture using pixel shader inverting on copy
-	if(bounds && bounds->vMin > bounds->vMax && oovr_global_configuration.InvertUsingShaders() && !swapchain_rtvs.empty())
-	{
+	if (bounds && bounds->vMin > bounds->vMax && oovr_global_configuration.InvertUsingShaders() && !swapchain_rtvs.empty()) {
 		auto* src = (ID3D11Texture2D*)texture->handle;
 
 		D3D11_TEXTURE2D_DESC srcDesc;
@@ -347,7 +342,7 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 		viewDesc.Texture2D.MostDetailedMip = 0;
 
 		// rFactor2 fails to create a SRV when the texture's eColorSpace is auto and 8bpp so should be srgb.
-		// If it fails try the linear instead 
+		// If it fails try the linear instead
 		if (FAILED(device->CreateShaderResourceView(src, &viewDesc, &quad_texture_view))) {
 			viewDesc.Format = useLinearFormat ? info.srgb : info.linear;
 			OOVR_FAILED_DX_ABORT(device->CreateShaderResourceView(src, &viewDesc, &quad_texture_view));
@@ -368,7 +363,7 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 		scissors.resize(numScissors);
 		context->RSGetScissorRects(&numScissors, scissors.data());
 
-		ID3D11RasterizerState *pRSState;
+		ID3D11RasterizerState* pRSState;
 		context->RSGetState(&pRSState);
 		context->RSSetState(nullptr);
 
@@ -406,11 +401,10 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 			context->RSSetScissorRects(numScissors, scissors.data());
 
 		context->RSSetState(pRSState);
-	}
-	else {
+	} else {
 		context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, (ID3D11Texture2D*)texture->handle, 0, &sourceRegion);
 	}
-		
+
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
 	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo));

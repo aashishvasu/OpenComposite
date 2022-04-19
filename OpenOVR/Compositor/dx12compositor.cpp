@@ -14,8 +14,8 @@
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
 
-#include <d3d11.h>
 #include "d3dx12.h"
+#include <d3d11.h>
 
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
@@ -50,14 +50,16 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 )HLSL";
 
-void ThrowIfFailed(HRESULT test, ID3D12Device *device) {
+void ThrowIfFailed(HRESULT test, ID3D12Device* device)
+{
 	if ((test) != S_OK) {
 		HRESULT remReason = device->GetDeviceRemovedReason();
 		throw "ThrowIfFailed err";
 	}
 }
 
-void XTrace(LPCSTR lpszFormat, ...) {
+void XTrace(LPCSTR lpszFormat, ...)
+{
 	va_list args;
 	va_start(args, lpszFormat);
 	int nBuf;
@@ -67,7 +69,8 @@ void XTrace(LPCSTR lpszFormat, ...) {
 	va_end(args);
 }
 
-void ThrowIfCompileFailed(HRESULT test, ID3DBlob **error) {
+void ThrowIfCompileFailed(HRESULT test, ID3DBlob** error)
+{
 	if ((test) != S_OK) {
 		XTrace("Error compiling shader: %s\n", (char*)(*error)->GetBufferPointer());
 		throw "ThrowIfFailed err";
@@ -75,17 +78,17 @@ void ThrowIfCompileFailed(HRESULT test, ID3DBlob **error) {
 }
 
 // TODO deleteme
-struct Vertex
-{
+struct Vertex {
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT2 uv;
 };
 
-DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, ovrTextureSwapChain *chains) {
+DX12Compositor::DX12Compositor(D3D12TextureData_t* td, OVR::Sizei& bufferSize, ovrTextureSwapChain* chains)
+{
 	this->chains = chains;
 	singleScreenSize = bufferSize;
 
-	ovrSession &session = *ovr::session;
+	ovrSession& session = *ovr::session;
 	queue = td->m_pCommandQueue;
 
 	queue->GetDevice(IID_PPV_ARGS(&device));
@@ -94,7 +97,7 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 
 	// xapp->d3d11Device.Get() will not work, we need a real D3D11 device
 
-	//for (int i = 0; i < xapp->FrameCount; i++) {
+	// for (int i = 0; i < xapp->FrameCount; i++) {
 	//	ID3D12Resource *resource = xapp->renderTargets[i].Get();
 	//	D3D12_RESOURCE_DESC rDesc = resource->GetDesc();
 	//	D3D11_RESOURCE_FLAGS d3d11Flags = { D3D11_BIND_RENDER_TARGET };
@@ -106,7 +109,7 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 	//		IID_PPV_ARGS(&xapp->wrappedBackBuffers[i])
 	//		));
 	//	//xapp->d3d11On12Device->AcquireWrappedResources(xapp->wrappedBackBuffers[i].GetAddressOf(), 1);
-	//}
+	// }
 
 	D3D12_RESOURCE_DESC targetDesc = td->m_pResource->GetDesc();
 
@@ -119,7 +122,7 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 	dsDesc.MipLevels = 1;
 	dsDesc.SampleCount = 1;
 	dsDesc.StaticImage = ovrFalse;
-	dsDesc.MiscFlags = ovrTextureMisc_DX_Typeless;//ovrTextureMisc_None;
+	dsDesc.MiscFlags = ovrTextureMisc_DX_Typeless; // ovrTextureMisc_None;
 	dsDesc.BindFlags = ovrTextureBind_DX_RenderTarget;
 
 	/*	D3D11_TEXTURE2D_DESC dsDesc;
@@ -135,8 +138,8 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 	dsDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 	dsDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	*/
-	ovrTextureSwapChain *chain = chains;
-	if (ovr_CreateTextureSwapChainDX(session, queue.Get()/*xapp->reald3d11Device.Get()*/, &dsDesc, chain) != ovrSuccess) {
+	ovrTextureSwapChain* chain = chains;
+	if (ovr_CreateTextureSwapChainDX(session, queue.Get() /*xapp->reald3d11Device.Get()*/, &dsDesc, chain) != ovrSuccess) {
 		throw "Could not create texture swap chain!";
 	}
 
@@ -162,7 +165,7 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 
 	// Create the second chain,
 	// but we don't have to set up everything like we did the first time
-	if (ovr_CreateTextureSwapChainDX(session, queue.Get()/*xapp->reald3d11Device.Get()*/, &dsDesc, chains + 1) != ovrSuccess) {
+	if (ovr_CreateTextureSwapChainDX(session, queue.Get() /*xapp->reald3d11Device.Get()*/, &dsDesc, chains + 1) != ovrSuccess) {
 		throw "Could not create second swapchain";
 	}
 
@@ -174,30 +177,31 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 
 			ID3D11Texture2D* tex = nullptr;
 			ovr_GetTextureSwapChainBufferDX(session, *chain, i, IID_PPV_ARGS(&texResource[resId]));
-			//xapp->reald3d11Device.Get()->CreateRenderTargetView(tex, nullptr, &texRtv[i]);
+			// xapp->reald3d11Device.Get()->CreateRenderTargetView(tex, nullptr, &texRtv[i]);
 
 			D3D12_RENDER_TARGET_VIEW_DESC rtvd = {};
 			rtvd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			rtvd.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvVRHeap->GetCPUDescriptorHandleForHeapStart(), resId, rtvDescriptorSize);
 			texRtv[resId] = rtvHandle;
-			device->CreateRenderTargetView(texResource[resId], /*nullptr*/&rtvd, texRtv[resId]);
+			device->CreateRenderTargetView(texResource[resId], /*nullptr*/ &rtvd, texRtv[resId]);
 			XTrace("Initializing texResource[%d]\n", resId);
 
-			//ComPtr<IDXGIResource> dxgires;
-			//tex->QueryInterface<IDXGIResource>(&dxgires);
+			// ComPtr<IDXGIResource> dxgires;
+			// tex->QueryInterface<IDXGIResource>(&dxgires);
 			////Log("dxgires = " << dxgires.GetAddressOf() << endl);
-			//HANDLE shHandle;
-			//dxgires->GetSharedHandle(&shHandle);
+			// HANDLE shHandle;
+			// dxgires->GetSharedHandle(&shHandle);
 			////Log("shared handle = " << shHandle << endl);
-			//xapp->d3d11Device->OpenSharedResource(shHandle, IID_PPV_ARGS(&xapp->wrappedTextures[i]));
-			//tex->Release();
+			// xapp->d3d11Device->OpenSharedResource(shHandle, IID_PPV_ARGS(&xapp->wrappedTextures[i]));
+			// tex->Release();
 		}
 	}
 
 	// TODO close command lsit
 	ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(),
-		nullptr, IID_PPV_ARGS(&commandList)), device.Get());
+	                  nullptr, IID_PPV_ARGS(&commandList)),
+	    device.Get());
 	commandList->Close(); // Close it so it's ready to be reset when ->Invoke is called
 
 	// Create an empty root signature.
@@ -207,8 +211,7 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 		// This is the highest version the sample supports. If CheckFeatureSupport succeeds, the HighestVersion returned will not be greater than this.
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
 
-		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
-		{
+		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData)))) {
 			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 		}
 
@@ -236,12 +239,14 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 		rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-		ID3DBlob *signature;
-		ID3DBlob *error;
+		ID3DBlob* signature;
+		ID3DBlob* error;
 		ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-			&signature, &error), device.Get());
+		                  &signature, &error),
+		    device.Get());
 		ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(),
-			signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)), device.Get());
+		                  signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)),
+		    device.Get());
 	}
 
 	// Create descriptor heap.
@@ -259,8 +264,8 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 
 	// Create the pipeline state, which includes compiling and loading shaders.
 	{
-		ID3DBlob *vertexShader;
-		ID3DBlob *pixelShader;
+		ID3DBlob* vertexShader;
+		ID3DBlob* pixelShader;
 
 #if defined(_DEBUG)
 		// Enable better shader debugging with the graphics debugging tools.
@@ -269,15 +274,16 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 		UINT compileFlags = 0;
 #endif
 
-		ID3DBlob *error;
+		ID3DBlob* error;
 		ThrowIfCompileFailed(D3DCompile(SHADER_STRING.c_str(), SHADER_STRING.length(), "shader-compiled",
-			nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, &error), &error);
+		                         nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, &error),
+		    &error);
 		ThrowIfCompileFailed(D3DCompile(SHADER_STRING.c_str(), SHADER_STRING.length(), "shader-compiled",
-			nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, &error), &error);
+		                         nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, &error),
+		    &error);
 
 		// Define the vertex input layout.
-		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-		{
+		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
@@ -303,37 +309,36 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 	// Create the vertex buffer.
 	{
 		// Define the geometry for a triangle.
-		Vertex triangleVertices[] =
-		{
+		Vertex triangleVertices[] = {
 			// First triangle
-			{ { -1.0f, 1.0f, 0.0f },{ 0.0f, 1.0f } }, // Bottom left corner
-			{ { 1.0f, -1.0f, 0.0f },{ 1.0f, 0.0f } }, // Top right corner
-			{ { -1.0f, -1.0f, 0.0f },{ 0.0f, 0.0f } }, // Top left corner
+			{ { -1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } }, // Bottom left corner
+			{ { 1.0f, -1.0f, 0.0f }, { 1.0f, 0.0f } }, // Top right corner
+			{ { -1.0f, -1.0f, 0.0f }, { 0.0f, 0.0f } }, // Top left corner
 
 			// Second triangle
-			{ { 1.0f, 1.0f, 0.0f },{ 1.0f, 1.0f } }, // Bottom right corner
-			{ { 1.0f, -1.0f, 0.0f },{ 1.0f, 0.0f } }, // Top right corner
-			{ { -1.0f, 1.0f, 0.0f },{ 0.0f, 1.0f } }, // Bottom left corner
+			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } }, // Bottom right corner
+			{ { 1.0f, -1.0f, 0.0f }, { 1.0f, 0.0f } }, // Top right corner
+			{ { -1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } }, // Bottom left corner
 		};
 
 		const UINT vertexBufferSize = sizeof(triangleVertices);
 
-		// Note: using upload heaps to transfer static data like vert buffers is not 
-		// recommended. Every time the GPU needs it, the upload heap will be marshalled 
-		// over. Please read up on Default Heap usage. An upload heap is used here for 
+		// Note: using upload heaps to transfer static data like vert buffers is not
+		// recommended. Every time the GPU needs it, the upload heap will be marshalled
+		// over. Please read up on Default Heap usage. An upload heap is used here for
 		// code simplicity and because there are very few verts to actually transfer.
 		ThrowIfFailed(device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&m_vertexBuffer)),
-			device.Get());
+		                  &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		                  D3D12_HEAP_FLAG_NONE,
+		                  &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+		                  D3D12_RESOURCE_STATE_GENERIC_READ,
+		                  nullptr,
+		                  IID_PPV_ARGS(&m_vertexBuffer)),
+		    device.Get());
 
 		// Copy the triangle data to the vertex buffer.
 		UINT8* pVertexDataBegin;
-		CD3DX12_RANGE readRange(0, 0);		// We do not intend to read from this resource on the CPU.
+		CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
 		ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)), device.Get());
 		memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
 		m_vertexBuffer->Unmap(0, nullptr);
@@ -345,14 +350,15 @@ DX12Compositor::DX12Compositor(D3D12TextureData_t *td, OVR::Sizei &bufferSize, o
 	}
 }
 
-void DX12Compositor::Invoke(ovrEyeType eye, const Texture_t * texture, const VRTextureBounds_t * bounds,
-	EVRSubmitFlags submitFlags, ovrLayerEyeFov &layer) {
+void DX12Compositor::Invoke(ovrEyeType eye, const Texture_t* texture, const VRTextureBounds_t* bounds,
+    EVRSubmitFlags submitFlags, ovrLayerEyeFov& layer)
+{
 
 	// TODO without this, the eye images are reversed. What is the root cause of this?
 	// TODO or is this a misinterpretation?
-	eye = (ovrEyeType) (1 - eye);
+	eye = (ovrEyeType)(1 - eye);
 
-	//if (true) return;
+	// if (true) return;
 
 	// TODO support multisampling
 
@@ -361,7 +367,7 @@ void DX12Compositor::Invoke(ovrEyeType eye, const Texture_t * texture, const VRT
 
 	commandList->SetGraphicsRootSignature(rootSignature.Get());
 
-	D3D12TextureData_t *input = (D3D12TextureData_t*)texture->handle;
+	D3D12TextureData_t* input = (D3D12TextureData_t*)texture->handle;
 
 	int currentIndex;
 	ovr_GetTextureSwapChainCurrentIndex(*ovr::session, chains[eye], &currentIndex);
@@ -408,7 +414,7 @@ void DX12Compositor::Invoke(ovrEyeType eye, const Texture_t * texture, const VRT
 
 	commandList->Close();
 
-	ID3D12CommandList *set[] = { commandList.Get() };
+	ID3D12CommandList* set[] = { commandList.Get() };
 	queue->ExecuteCommandLists(1, set);
 }
 

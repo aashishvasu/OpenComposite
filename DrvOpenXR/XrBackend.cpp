@@ -21,8 +21,8 @@
 #endif
 
 // FIXME find a better way to send the OnPostFrame call?
-#include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/Reimpl/BaseOverlay.h"
+#include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "../OpenOVR/convert.h"
 
@@ -74,11 +74,11 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
     vr::TrackedDevicePose_t* poseArray,
     uint32_t poseArrayCount)
 {
-	for(uint32_t i = 0; i < poseArrayCount; ++i){
+	for (uint32_t i = 0; i < poseArrayCount; ++i) {
 		ITrackedDevice* dev = GetDevice(i);
 		if (dev) {
 			dev->GetPose(toOrigin, &poseArray[i], ETrackingStateType::TrackingStateType_Rendering);
-		}else{
+		} else {
 			poseArray[i] = BackendManager::InvalidPose();
 		}
 	}
@@ -337,11 +337,9 @@ void XrBackend::SubmitFrames(bool showSkybox)
 		layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
 	}
 
-	if (overlay)
-	{
+	if (overlay) {
 		layer_count = overlay->_BuildLayers(app_layer, headers);
-	}
-	else {
+	} else {
 		layer_count = 1;
 		headers = &app_layer;
 	}
@@ -356,8 +354,7 @@ void XrBackend::SubmitFrames(bool showSkybox)
 		OOVR_SOFT_ABORT("XR_ERROR_VALIDATION_FAILURE");
 	else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID) {
 		OOVR_SOFT_ABORT("XR_ERROR_SWAPCHAIN_RECT_INVALID");
-	}
-	else
+	} else
 		OOVR_FAILED_XR_ABORT(xrEndFrame_result);
 
 	BaseSystem* sys = GetUnsafeBaseSystem();
@@ -369,8 +366,7 @@ void XrBackend::SubmitFrames(bool showSkybox)
 IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)
 {
 	// Needed for rFactor2 loading screens
-	if (unTextureCount == 6)
-	{
+	if (unTextureCount == 6) {
 		if (!sessionActive || !renderingFrame || pTextures == nullptr)
 			return 0;
 
@@ -385,7 +381,7 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		// ideal to run a separate thread while the skybox override is set to submit frames if IVRCompositor->Submit is not
 		// being called frequently enough, and that'd need to be carefully synchronised with the main submit thread. That's
 		// not yet implemented since it's not currently worth the hassle, but if someone in the future wants to do it:
-		// TODO submit skybox frames in their own thread. 
+		// TODO submit skybox frames in their own thread.
 		XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
 		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session, &beginInfo));
 
@@ -408,14 +404,15 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		layerQuad.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
 		layerQuad.eyeVisibility = XR_EYE_VISIBILITY_BOTH;
 		layerQuad.pose = { { 0.f, 0.f, 0.f, 1.f },
-				{ 0.0f, 0.0f, -0.65f } };
+			{ 0.0f, 0.0f, -0.65f } };
 		layerQuad.size = { 1.0f, 1.0f / 1.333f };
 		layerQuad.subImage = {
 			compositor->GetSwapChain(),
 			{ { 0, 0 },
-				{ (int32_t)compositor->GetSrcSize().width,
-					(int32_t)compositor->GetSrcSize().height } },
-			0};
+			    { (int32_t)compositor->GetSrcSize().width,
+			        (int32_t)compositor->GetSrcSize().height } },
+			0
+		};
 
 		XrCompositionLayerBaseHeader* layers[1];
 		layers[0] = (XrCompositionLayerBaseHeader*)&layerQuad;
@@ -433,15 +430,11 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID) {
 			OOVR_LOG("XR_ERROR_SWAPCHAIN_RECT_INVALID");
 			OOVR_SOFT_ABORTF("subImage rect: %d %d %d %d", layerQuad.subImage.imageRect.offset.x, layerQuad.subImage.imageRect.offset.y, layerQuad.subImage.imageRect.extent.width, layerQuad.subImage.imageRect.extent.height);
-		}
-		else
+		} else
 			OOVR_FAILED_XR_ABORT(xrEndFrame_result /*xrEndFrame(xr_session, &info)*/);
-	}
-	else
-	{
+	} else {
 		OOVR_SOFT_ABORT("Unsupported texture count");
 	}
-
 
 	return 0;
 }
