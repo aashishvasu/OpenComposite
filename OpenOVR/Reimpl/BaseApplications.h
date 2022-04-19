@@ -3,6 +3,7 @@
 
 /** Used for all errors reported by the IVRApplications interface */
 enum OOVR_EVRApplicationError {
+	// clang-format off
 	VRApplicationError_None = 0,
 
 	VRApplicationError_AppKeyAlreadyExists = 100,	// Only one application can use any given key
@@ -26,6 +27,7 @@ enum OOVR_EVRApplicationError {
 	VRApplicationError_PropertyNotSet = 201,		// The requested property was not set
 	VRApplicationError_UnknownProperty = 202,
 	VRApplicationError_InvalidParameter = 203,
+	// clang-format on
 };
 
 /** these are the properties available on applications. */

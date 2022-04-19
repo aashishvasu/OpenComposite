@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "DriverManager.h"
 
+#include "DriverManager.h"
 #include "steamvr_abi.h"
 
 using namespace vr;

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "debug_helper.h"
 
 #if defined(_DEBUG)

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "SudoFontMeta.h"
 
 #include "Misc/lodepng.h"
