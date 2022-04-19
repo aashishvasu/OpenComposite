@@ -1,5 +1,6 @@
 // From https://github.com/scottt/debugbreak/blob/master/debugbreak.h
 // Commit: 5dcbe41
+// clang-format off
 
 /* Copyright (c) 2011-2021, Scott Tsai
  * 

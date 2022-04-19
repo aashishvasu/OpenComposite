@@ -1,3 +1,6 @@
+// Avoid modification by clang-format
+// clang-format off
+
 /* inih -- simple .INI file parser
 
 inih is released under the New BSD license (see LICENSE.txt). Go to the project

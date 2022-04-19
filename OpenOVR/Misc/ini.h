@@ -1,3 +1,6 @@
+// Avoid modification by clang-format
+// clang-format off
+
 // Defined for OpenOVR/OpenComposite
 #define INI_HANDLER_LINENO 1
 

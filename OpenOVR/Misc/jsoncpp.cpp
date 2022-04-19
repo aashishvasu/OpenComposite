@@ -1,3 +1,6 @@
+// Avoid modification by clang-format
+// clang-format off
+
 /// Json-cpp amalgamated source (http://jsoncpp.sourceforge.net/).
 /// It is intended to be used with #include "json/json.h"
 

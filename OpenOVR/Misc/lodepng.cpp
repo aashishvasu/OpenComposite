@@ -1,3 +1,6 @@
+// Avoid modification by clang-format
+// clang-format off
+
 /*
 LodePNG version 20180910
 
