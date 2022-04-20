@@ -217,7 +217,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #endif
 
 	// Load the function pointers for the extension functions
-	xr_ext = new XrExt(apiFlags);
+	xr_ext = new XrExt(apiFlags, extensions);
 	// Create a system - this is when we choose what form factor we want, in this case an HMD
 	XrSystemGetInfo systemInfo{};
 	systemInfo.type = XR_TYPE_SYSTEM_GET_INFO;

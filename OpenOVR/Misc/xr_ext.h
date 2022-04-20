@@ -68,7 +68,7 @@ static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_VK = 0x0010;
  */
 class XrExt {
 public:
-	XrExt(XrGraphicsApiSupportedFlags apis);
+	XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& extensions);
 
 	bool xrGetVisibilityMaskKHR_Available() { return pfnXrGetVisibilityMaskKHR != nullptr; }
 	XrResult xrGetVisibilityMaskKHR(

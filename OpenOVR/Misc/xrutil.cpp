@@ -24,12 +24,20 @@ XrViewConfigurationView& xr_main_view(XruEye view_id)
 	return xr_views_list.at(view_id);
 }
 
-XrExt::XrExt(XrGraphicsApiSupportedFlags apis)
+XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& extensions)
 {
+	// Check the extensions we have selected, and don't fetch functions if we're not allowed to use them
+	bool hasVisMask = false;
+	for (const char* ext : extensions) {
+		if (strcmp(ext, XR_KHR_VISIBILITY_MASK_EXTENSION_NAME) == 0)
+			hasVisMask = true;
+	}
+
 #define XR_BIND(name, function) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function))
 #define XR_BIND_OPT(name, function) xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function)
 
-	XR_BIND_OPT(xrGetVisibilityMaskKHR, pfnXrGetVisibilityMaskKHR);
+	if (hasVisMask)
+		XR_BIND_OPT(xrGetVisibilityMaskKHR, pfnXrGetVisibilityMaskKHR);
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	if (apis & XR_SUPPORTED_GRAPHCIS_API_D3D11) {
