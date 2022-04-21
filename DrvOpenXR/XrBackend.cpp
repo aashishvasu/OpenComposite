@@ -237,7 +237,9 @@ void XrBackend::WaitForTrackingData()
 	XrViewState viewState = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views));
+	XrResult xrLocateViews_res = xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views);
+	if (xrLocateViews_res != XR_SUCCESS)
+		OOVR_SOFT_ABORTF("xrLocateViews failure: %d", xrLocateViews_res);
 
 	for (int eye = 0; eye < XruEyeCount; eye++) {
 		projectionViews[eye].fov = views[eye].fov;

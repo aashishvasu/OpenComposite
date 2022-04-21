@@ -91,7 +91,7 @@ XrSessionGlobals::XrSessionGlobals()
 
 XrTime XrSessionGlobals::GetBestTime()
 {
-	return nextPredictedFrameTime ? nextPredictedFrameTime : latestTime;
+	return nextPredictedFrameTime > 1 ? nextPredictedFrameTime : latestTime;
 }
 
 XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin)

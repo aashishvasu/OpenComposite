@@ -159,12 +159,11 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 
 		uint32_t viewCount = 0;
 		XrViewState viewState = { XR_TYPE_VIEW_STATE };
-		XrResult res_xrLocateViews = xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views);
-		if (res_xrLocateViews == XR_ERROR_SESSION_NOT_RUNNING) {
+		XrResult xrLocateViews_res = xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views);
+		if (xrLocateViews_res != XR_SUCCESS) {
+			OOVR_SOFT_ABORTF("xrLocateViews failure: %d", xrLocateViews_res);
 			return vr::HmdMatrix34_t();
 		}
-
-		OOVR_FAILED_XR_ABORT(res_xrLocateViews);
 		OOVR_FALSE_ABORT(viewCount == XruEyeCount);
 
 		if (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT && viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) {
@@ -278,7 +277,12 @@ float XrHMD::GetIPD()
 	XrViewState state = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
+	XrResult xrLocateViews_res = xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views);
+	if (xrLocateViews_res != XR_SUCCESS) {
+		OOVR_SOFT_ABORTF("xrLocateViews failure: %d", xrLocateViews_res);
+		return 0.0064;
+	}
+
 	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
 
 	return views[vr::Eye_Right].pose.position.x - views[vr::Eye_Left].pose.position.x;

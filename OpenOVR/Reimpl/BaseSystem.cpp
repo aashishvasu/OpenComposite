@@ -165,9 +165,11 @@ void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigi
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
 {
 	XrSpaceLocation location{};
-	STUBBED(); // FIXME Implement the timing thing
-	XrResult err = xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, 0 /* TODO */, &location);
-	OOVR_FAILED_XR_ABORT(err);
+	XrResult xrLocateSpace_res = xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, xr_gbl->GetBestTime(), &location);
+	if (xrLocateSpace_res != XR_SUCCESS) {
+		OOVR_SOFT_ABORT("xrLocateSpace failed: %d", xrLocateSpace_res);
+		return vr::HmdMatrix34_t();
+	}
 
 	glm::mat4 m = glm::mat4(X2G_quat(location.pose.orientation));
 	m[3] = glm::vec4(X2G_v3f(location.pose.position), 1.0f);
@@ -822,8 +824,10 @@ void BaseSystem::ResetSeatedZeroPose()
 	if (BackendManager::Instance().IsGraphicsConfigured()) {
 		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
 		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
-		XrResult err = xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location);
-		OOVR_FAILED_XR_ABORT(err);
+		XrResult xrLocateSpace_ret = xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location);
+		if (xrLocateSpace_ret != XR_SUCCESS) {
+			return;
+		}
 
 		static XrReferenceSpaceCreateInfo spaceInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr, XR_REFERENCE_SPACE_TYPE_LOCAL, { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } } };
 		XrVector3f rotatedPos;
