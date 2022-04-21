@@ -426,7 +426,6 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		info.layers = layers;
 		info.layerCount = 1;
 
-		OOVR_LOG("xrEndFrame");
 		auto xrEndFrame_result = xrEndFrame(xr_session, &info);
 		if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
 			OOVR_SOFT_ABORT("XR_ERROR_CALL_ORDER_INVALID");
