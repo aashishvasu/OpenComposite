@@ -237,9 +237,7 @@ void XrBackend::WaitForTrackingData()
 	XrViewState viewState = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	XrResult xrLocateViews_res = xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views);
-	if (xrLocateViews_res != XR_SUCCESS)
-		OOVR_SOFT_ABORTF("xrLocateViews failure: %d", xrLocateViews_res);
+	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views));
 
 	for (int eye = 0; eye < XruEyeCount; eye++) {
 		projectionViews[eye].fov = views[eye].fov;
@@ -351,19 +349,7 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	info.layers = headers;
 	info.layerCount = layer_count;
 
-	XrResult xrEndFrame_result = xrEndFrame(xr_session, &info);
-	if (XR_FAILED(xrEndFrame_result)) {
-		if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
-			OOVR_SOFT_ABORT("XR_ERROR_CALL_ORDER_INVALID");
-		else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
-			OOVR_SOFT_ABORT("XR_ERROR_VALIDATION_FAILURE");
-		else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID)
-			OOVR_SOFT_ABORT("XR_ERROR_SWAPCHAIN_RECT_INVALID");
-		else if (xrEndFrame_result == XR_ERROR_HANDLE_INVALID)
-			OOVR_SOFT_ABORT("XR_ERROR_HANDLE_INVALID");
-		else
-			OOVR_FAILED_XR_ABORT(xrEndFrame_result);
-	}
+	OOVR_FAILED_XR_SOFT_ABORT(xrEndFrame(xr_session, &info));
 
 	BaseSystem* sys = GetUnsafeBaseSystem();
 	if (sys) {
@@ -433,19 +419,8 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		info.layers = layers;
 		info.layerCount = 1;
 
-		XrResult xrEndFrame_result = xrEndFrame(xr_session, &info);
-		if (XR_FAILED(xrEndFrame_result)) {
-			if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
-				OOVR_SOFT_ABORT("XR_ERROR_CALL_ORDER_INVALID");
-			else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
-				OOVR_SOFT_ABORT("XR_ERROR_VALIDATION_FAILURE");
-			else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID)
-				OOVR_SOFT_ABORT("XR_ERROR_SWAPCHAIN_RECT_INVALID");
-			else if (xrEndFrame_result == XR_ERROR_HANDLE_INVALID)
-				OOVR_SOFT_ABORT("XR_ERROR_HANDLE_INVALID");
-			else
-				OOVR_FAILED_XR_ABORT(xrEndFrame_result);
-		}
+		OOVR_FAILED_XR_SOFT_ABORT(xrEndFrame(xr_session, &info));
+
 	} else {
 		OOVR_SOFT_ABORT("Unsupported texture count");
 	}

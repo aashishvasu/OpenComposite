@@ -164,15 +164,15 @@ void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigi
 
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
 {
-	XrSpaceLocation location{};
-	XrResult xrLocateSpace_res = xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, xr_gbl->GetBestTime(), &location);
-	if (xrLocateSpace_res != XR_SUCCESS) {
-		OOVR_SOFT_ABORT("xrLocateSpace failed: %d", xrLocateSpace_res);
-		return vr::HmdMatrix34_t();
-	}
+	glm::mat4 m;
+	XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, nullptr, 0, {} };
 
-	glm::mat4 m = glm::mat4(X2G_quat(location.pose.orientation));
-	m[3] = glm::vec4(X2G_v3f(location.pose.position), 1.0f);
+	OOVR_FAILED_XR_SOFT_ABORT(xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, xr_gbl->GetBestTime(), &location));
+
+	if ((location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) && (location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) {
+		m = glm::mat4(X2G_quat(location.pose.orientation));
+		m[3] = glm::vec4(X2G_v3f(location.pose.position), 1.0f);
+	}
 
 	return G2S_m34(m);
 }
@@ -823,26 +823,26 @@ void BaseSystem::ResetSeatedZeroPose()
 {
 	if (BackendManager::Instance().IsGraphicsConfigured()) {
 		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
-		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity };
-		XrResult xrLocateSpace_ret = xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location);
-		if (xrLocateSpace_ret != XR_SUCCESS) {
-			return;
+		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity, 0, {} };
+
+		OOVR_FAILED_XR_SOFT_ABORT(xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location));
+
+		if ((location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) && (location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) {
+			static XrReferenceSpaceCreateInfo spaceInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr, XR_REFERENCE_SPACE_TYPE_LOCAL, { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } } };
+			XrVector3f rotatedPos;
+			auto rot = yRotation(location.pose.orientation, spaceInfo.poseInReferenceSpace.orientation);
+			rotate_vector_by_quaternion(location.pose.position, rot, rotatedPos);
+			spaceInfo.poseInReferenceSpace.position.x += rotatedPos.x;
+			spaceInfo.poseInReferenceSpace.position.y += rotatedPos.y;
+			spaceInfo.poseInReferenceSpace.position.z += rotatedPos.z;
+
+			spaceInfo.poseInReferenceSpace.orientation.y = rot.y;
+			spaceInfo.poseInReferenceSpace.orientation.w = rot.w;
+
+			spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+			auto oldSpace = xr_gbl->seatedSpace;
+			OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &xr_gbl->seatedSpace));
+			xrDestroySpace(oldSpace);
 		}
-
-		static XrReferenceSpaceCreateInfo spaceInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr, XR_REFERENCE_SPACE_TYPE_LOCAL, { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } } };
-		XrVector3f rotatedPos;
-		auto rot = yRotation(location.pose.orientation, spaceInfo.poseInReferenceSpace.orientation);
-		rotate_vector_by_quaternion(location.pose.position, rot, rotatedPos);
-		spaceInfo.poseInReferenceSpace.position.x += rotatedPos.x;
-		spaceInfo.poseInReferenceSpace.position.y += rotatedPos.y;
-		spaceInfo.poseInReferenceSpace.position.z += rotatedPos.z;
-
-		spaceInfo.poseInReferenceSpace.orientation.y = rot.y;
-		spaceInfo.poseInReferenceSpace.orientation.w = rot.w;
-
-		spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
-		auto oldSpace = xr_gbl->seatedSpace;
-		OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &xr_gbl->seatedSpace));
-		xrDestroySpace(oldSpace);
 	}
 }
