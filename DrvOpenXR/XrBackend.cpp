@@ -351,17 +351,19 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	info.layers = headers;
 	info.layerCount = layer_count;
 
-	auto xrEndFrame_result = xrEndFrame(xr_session, &info);
-	if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
-		OOVR_SOFT_ABORT("XR_ERROR_CALL_ORDER_INVALID");
-	else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
-		OOVR_SOFT_ABORT("XR_ERROR_VALIDATION_FAILURE");
-	else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID)
-		OOVR_SOFT_ABORT("XR_ERROR_SWAPCHAIN_RECT_INVALID");
-	else if (xrEndFrame_result == XR_ERROR_HANDLE_INVALID)
-		OOVR_SOFT_ABORT("XR_ERROR_HANDLE_INVALID");
-	else
-		OOVR_FAILED_XR_ABORT(xrEndFrame_result);
+	XrResult xrEndFrame_result = xrEndFrame(xr_session, &info);
+	if (XR_FAILED(xrEndFrame_result)) {
+		if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
+			OOVR_SOFT_ABORT("XR_ERROR_CALL_ORDER_INVALID");
+		else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
+			OOVR_SOFT_ABORT("XR_ERROR_VALIDATION_FAILURE");
+		else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID)
+			OOVR_SOFT_ABORT("XR_ERROR_SWAPCHAIN_RECT_INVALID");
+		else if (xrEndFrame_result == XR_ERROR_HANDLE_INVALID)
+			OOVR_SOFT_ABORT("XR_ERROR_HANDLE_INVALID");
+		else
+			OOVR_FAILED_XR_ABORT(xrEndFrame_result);
+	}
 
 	BaseSystem* sys = GetUnsafeBaseSystem();
 	if (sys) {
@@ -431,18 +433,19 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		info.layers = layers;
 		info.layerCount = 1;
 
-		auto xrEndFrame_result = xrEndFrame(xr_session, &info);
-		if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
-			OOVR_SOFT_ABORT("XR_ERROR_CALL_ORDER_INVALID");
-		else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
-			OOVR_SOFT_ABORT("XR_ERROR_VALIDATION_FAILURE");
-		else if (xrEndFrame_result == XR_ERROR_HANDLE_INVALID)
-			OOVR_SOFT_ABORT("XR_ERROR_HANDLE_INVALID");
-		else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID) {
-			OOVR_LOG("XR_ERROR_SWAPCHAIN_RECT_INVALID");
-			OOVR_SOFT_ABORTF("subImage rect: %d %d %d %d", layerQuad.subImage.imageRect.offset.x, layerQuad.subImage.imageRect.offset.y, layerQuad.subImage.imageRect.extent.width, layerQuad.subImage.imageRect.extent.height);
-		} else
-			OOVR_FAILED_XR_ABORT(xrEndFrame_result);
+		XrResult xrEndFrame_result = xrEndFrame(xr_session, &info);
+		if (XR_FAILED(xrEndFrame_result)) {
+			if (xrEndFrame_result == XR_ERROR_CALL_ORDER_INVALID)
+				OOVR_SOFT_ABORT("XR_ERROR_CALL_ORDER_INVALID");
+			else if (xrEndFrame_result == XR_ERROR_VALIDATION_FAILURE)
+				OOVR_SOFT_ABORT("XR_ERROR_VALIDATION_FAILURE");
+			else if (xrEndFrame_result == XR_ERROR_SWAPCHAIN_RECT_INVALID)
+				OOVR_SOFT_ABORT("XR_ERROR_SWAPCHAIN_RECT_INVALID");
+			else if (xrEndFrame_result == XR_ERROR_HANDLE_INVALID)
+				OOVR_SOFT_ABORT("XR_ERROR_HANDLE_INVALID");
+			else
+				OOVR_FAILED_XR_ABORT(xrEndFrame_result);
+		}
 	} else {
 		OOVR_SOFT_ABORT("Unsupported texture count");
 	}
