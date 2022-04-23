@@ -91,7 +91,8 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 	// Note that at least on MSVC, this shouldn't be doing any memory allocations
 	//  unless the list is expanding from new layers.
 	layerHeaders.clear();
-	layerHeaders.push_back(sceneLayer);
+	if (sceneLayer)
+		layerHeaders.push_back(sceneLayer);
 
 	// For performance reasons, this indicates that something is using input
 	// Don't write it directly to usingInput, as that could cause race conditions between
@@ -145,8 +146,10 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 				{ overlay.overlayTransform[0][3], overlay.overlayTransform[1][3], overlay.overlayTransform[2][3] } };
 
 			layerHeaders.push_back((XrCompositionLayerBaseHeader*)&overlay.layerQuad);
-			prevLayer->next = (XrCompositionLayerBaseHeader*)&overlay.layerQuad;
-			prevLayer = (XrCompositionLayerBaseHeader*)&overlay.layerQuad;
+			if (prevLayer) {
+				prevLayer->next = (XrCompositionLayerBaseHeader*)&overlay.layerQuad;
+				prevLayer = (XrCompositionLayerBaseHeader*)&overlay.layerQuad;
+			}
 		}
 	}
 

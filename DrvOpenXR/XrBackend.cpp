@@ -328,7 +328,7 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	mainLayer.views = projectionViews;
 	mainLayer.viewCount = 2;
 
-	XrCompositionLayerBaseHeader const* const* headers;
+	XrCompositionLayerBaseHeader const* const* headers = nullptr;
 	XrCompositionLayerBaseHeader* app_layer = (XrCompositionLayerBaseHeader*)&mainLayer;
 	int layer_count = 0;
 
@@ -337,11 +337,13 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	for (int i = 0; i < mainLayer.viewCount; ++i) {
 		XrCompositionLayerProjectionView& layer = projectionViews[i];
 		layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+		if (layer.subImage.swapchain == nullptr)
+			app_layer = nullptr;
 	}
 
 	if (overlay) {
 		layer_count = overlay->_BuildLayers(app_layer, headers);
-	} else {
+	} else if (app_layer) {
 		layer_count = 1;
 		headers = &app_layer;
 	}
