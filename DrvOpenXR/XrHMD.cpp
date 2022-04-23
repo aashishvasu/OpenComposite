@@ -34,7 +34,7 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	// bad values.
 	// TODo A better way to solve this would be to submit a few blank frames when we're using the temporary device to
 	// let this value settle, along with any other similar data.
-	locateInfo.space = xr_gbl->viewSpace; // Should make no difference to the FOV
+	locateInfo.space = xr_gbl->seatedSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
@@ -100,7 +100,7 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 	locateInfo.displayTime = xr_gbl->GetBestTime();
 
 	// View space is available first when starting up
-	locateInfo.space = xr_gbl->viewSpace; // Should make no difference to the FOV
+	locateInfo.space = xr_gbl->seatedSpace; // Should make no difference to the FOV
 
 	XrViewState state = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
