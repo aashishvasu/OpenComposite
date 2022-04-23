@@ -185,7 +185,8 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 
 		// First, delete the old chain if necessary
 		if (chain) {
-			xrDestroySwapchain(chain);
+			OOVR_FAILED_XR_ABORT(xrDestroySwapchain(chain));
+			chain = XR_NULL_HANDLE;
 		}
 
 		for (auto&& rtv : swapchain_rtvs)
@@ -268,7 +269,8 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	src->GetDesc(&srcDesc);
 	if (srcDesc.Format == DXGI_FORMAT_BC1_TYPELESS) {
 		if (chain) {
-			xrDestroySwapchain(chain);
+			OOVR_FAILED_XR_ABORT(xrDestroySwapchain(chain));
+			chain = XR_NULL_HANDLE;
 		}
 		return;
 	}

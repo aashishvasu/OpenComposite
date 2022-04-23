@@ -5,7 +5,7 @@
 Compositor::~Compositor()
 {
 	if (chain) {
-		xrDestroySwapchain(chain);
+		OOVR_FAILED_XR_ABORT(xrDestroySwapchain(chain));
 		chain = XR_NULL_HANDLE;
 	}
 }
