@@ -373,8 +373,11 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 {
 	// Needed for rFactor2 loading screens
 	if (unTextureCount == 6) {
-		if (!sessionActive || !renderingFrame || pTextures == nullptr)
+		if (!sessionActive || pTextures == nullptr)
 			return 0;
+
+		// Make sure any unfinished frames don't call xrEndFrame after this call
+		renderingFrame = false;
 
 		XrFrameWaitInfo waitInfo{ XR_TYPE_FRAME_WAIT_INFO };
 		XrFrameState state{ XR_TYPE_FRAME_STATE };
