@@ -5,8 +5,51 @@
 #include <fstream>
 #include <iostream>
 #include <stdarg.h>
+#include <chrono>
+#include <ctime>
 
 using namespace std;
+
+// strftime format
+#define LOGGER_TIME_FORMAT "%Y-%m-%d %H:%M:%S"
+
+// printf format
+#define LOGGER_MS_FORMAT ".%03d"
+
+// convert current time to milliseconds since unix epoch
+template <typename T>
+static int to_ms(const std::chrono::time_point<T>& tp)
+{
+	using namespace std::chrono;
+
+	auto dur = tp.time_since_epoch();
+	return static_cast<int>(duration_cast<milliseconds>(dur).count());
+}
+
+// format it in two parts: main part with date and time and part with milliseconds
+static std::string format_time()
+{
+	auto tp = std::chrono::system_clock::now();
+	std::time_t current_time = std::chrono::system_clock::to_time_t(tp);
+
+	// this function use static global pointer. so it is not thread safe solution
+	std::tm* time_info = std::localtime(&current_time);
+
+	char buffer[128];
+
+	int string_size = strftime(
+	    buffer, sizeof(buffer),
+	    LOGGER_TIME_FORMAT,
+	    time_info);
+
+	int ms = to_ms(tp) % 1000;
+
+	string_size += std::snprintf(
+	    buffer + string_size, sizeof(buffer) - string_size,
+	    LOGGER_MS_FORMAT, ms);
+
+	return std::string(buffer, buffer + string_size);
+}
 
 #ifdef ANDROID
 #include <android/log.h>
@@ -26,7 +69,7 @@ void oovr_log_raw(const char* file, long line, const char* func, const char* msg
 	}
 
 	// stream << file << ":" << line << ":" << func << "\t- " << msg << endl;
-	stream << func << ":" << line << "\t- " << (msg ? msg : "NULL") << endl;
+	stream << "[" << format_time() << "] " << func << ":" << line << "\t- " << (msg ? msg : "NULL") << endl;
 
 	// Write it to stdout
 	// TODO on Windows, write it into the debug log
