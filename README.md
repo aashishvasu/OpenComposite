@@ -54,7 +54,7 @@ file for each game, this usually must be done each time said game is updated).
 
 ### System-wide installation
 
-Download the [OpenComposite Launcher](https://znix.xyz/OpenComposite/runtimeswitcher.php). Unzip it to a folder of your choosing,
+Download the [OpenComposite Launcher](https://znix.xyz/OpenComposite/runtimeswitcher.php&branch=openxr). Unzip it to a folder of your choosing,
 and run `OpenComposite.exe`. Click 'Switch to OpenComposite', and wait while the DLLs are downloaded. Games will now run via OpenComposite
 rather than SteamVR.
 
@@ -64,8 +64,8 @@ if so an update button will appear. Click it and OpenComposite will be updated.
 ### Per-game installation
 
 Download the DLLs:
-[32-bit](https://znix.xyz/OpenComposite/download.php?arch=x86)
-[64-bit](https://znix.xyz/OpenComposite/download.php?arch=x64)
+[32-bit](https://znix.xyz/OpenComposite/download.php?arch=x86&branch=openxr)
+[64-bit](https://znix.xyz/OpenComposite/download.php?arch=x64&branch=openxr)
 
 These come from [AppVeyor](https://ci.appveyor.com/project/ZNix/openovr) - whenever I push some new code, it will be compiled
 and uploaded to those links automatically.
