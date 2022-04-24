@@ -335,7 +335,7 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	for (int i = 0; i < mainLayer.viewCount; ++i) {
 		XrCompositionLayerProjectionView& layer = projectionViews[i];
 		layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
-		if (layer.subImage.swapchain == nullptr)
+		if (layer.subImage.swapchain == XR_NULL_HANDLE)
 			app_layer = nullptr;
 	}
 
