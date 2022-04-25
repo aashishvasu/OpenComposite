@@ -1,13 +1,13 @@
-# OpenComposite - Play SteamVR games without SteamVR!
+# OpenComposite (OpenXR) - Play SteamVR games without SteamVR!
 
 [![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
 [![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg)](https://ci.appveyor.com/project/ZNix/openovr)
 
-OpenComposite (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
+OpenComposite OpenXR (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
-to the Oculus runtime. Think of it as a backwards version of ReVive, for the Rift.
+to the OpenXR runtime. Think of it as a backwards version of ReVive, for the OpenXR compatible headsets.
 
-This allows you to play SteamVR-based games on an Oculus Rift as though they were native titles, without
+This allows you to play SteamVR-based games on an OpenXR compatible headset as though they were native titles, without
 the use of SteamVR!
 
 Why would you want to do this? There are several of good reasons:
@@ -15,8 +15,7 @@ Why would you want to do this? There are several of good reasons:
 * Some users have trouble running SteamVR on their machines
 * While more work needs to be done on OpenComposite's side for this, it can potentially get slightly better
 performance due to several design decisions, due to not having to support the Vive
-* When you run a program it's guaranteed to show up in Oculus Home, while with SteamVR if you start the
-game when SteamVR is already running this won't happen.
+* OpenXR is less susceptible to the stuttering that has plagued SteamVR
 * Again a problem for some people but not others, SteamVR can take some time to start up
 * SteamVR is several gigabytes in side - that might be a problem for some people
 
@@ -25,18 +24,12 @@ that use versions of interfaces that I have yet to implement - this will result 
 you find a game that does this, please let me know (see below).
 
 There are several things missing though:
-- Oculus Touch models are not present. Some games (eg, *Skyrim*) will use their own models in this case. For other games, you
+- Hand controller models are not present. Some games (eg, *Skyrim*) will use their own models in this case. For other games, you
 might not see a controller model at all. Most games use their own hand models though, rather than displaying a model
 of your controller.
-- The virtual keyboard does not yet work in OpenGL-, DirectX12- or Vulkan-based games. This should only affect DOOM BFG and older
-versions of Vivecraft however.
+- The virtual keyboard does not yet.
 
 The games that I can confirm it works with are as follows:
-- Skyrim VR
-- VTOL VR
-- PAYDAY 2 VR
-
-OpenXR supported games (WMR and Oculus headsets):
 - Assetto Corsa
 - Assetto Corsa Competizione
 - DCS World
