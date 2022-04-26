@@ -32,11 +32,16 @@ of your controller.
 The games that I can confirm it works with are as follows:
 - Assetto Corsa
 - Assetto Corsa Competizione
-- DCS World
-- Dirt Rally 2
+- DCS World *
+- Dirt Rally 2 *
 - Euro Truck Sim 2
 - IL-2
 - rFactor 2
+
+\* These games use an old version of D3DCompiler_47.dll that is incompatible with some OpenXR Runtimes. 
+If you experience an error with OpenComposite resulting in a -2 error code then find the D3DCompiler_47.dll in the game install
+dir and rename to D3DCompiler_47.dll_orig. This will then use the one from your system path that should be the latest version if
+your system is up to date.
 
 It probably works in quite a few other games, but I have not tried them.
 
