@@ -2,6 +2,7 @@
 #define GENFILE
 #include "BaseCommon.h"
 
+GEN_INTERFACE("Compositor", "009")
 GEN_INTERFACE("Compositor", "012")
 GEN_INTERFACE("Compositor", "013")
 GEN_INTERFACE("Compositor", "014")

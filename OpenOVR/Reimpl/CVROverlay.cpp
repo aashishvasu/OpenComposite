@@ -2,6 +2,7 @@
 #define GENFILE
 #include "BaseCommon.h"
 
+GEN_INTERFACE("Overlay", "007")
 GEN_INTERFACE("Overlay", "010")
 GEN_INTERFACE("Overlay", "011")
 // TODO 012
@@ -20,6 +21,11 @@ GEN_INTERFACE("Overlay", "024")
 GEN_INTERFACE("Overlay", "025")
 
 #include "GVROverlay.gen.h"
+
+bool CVROverlay_007::PollNextOverlayEvent(vr::VROverlayHandle_t ulOverlayHandle, vr::VREvent_t* pEvent)
+{
+	return base->PollNextOverlayEvent(ulOverlayHandle, pEvent, sizeof(vr::VREvent_t));
+}
 
 vr::EVROverlayError CVROverlay_011::GetOverlayTexture(vr::VROverlayHandle_t ulOverlayHandle, void** pNativeTextureHandle,
     void* pNativeTextureRef, uint32_t* pWidth, uint32_t* pHeight, uint32_t* pNativeFormat, EGraphicsAPIConvention* pAPI,

@@ -2,6 +2,7 @@
 #define GENFILE
 #include "BaseCommon.h"
 
+GEN_INTERFACE("System", "009")
 GEN_INTERFACE("System", "011")
 GEN_INTERFACE("System", "012")
 //
@@ -18,6 +19,27 @@ GEN_INTERFACE("System", "022")
 #include "GVRSystem.gen.h"
 
 // Old methods that don't take size arguments
+bool CVRSystem_009::PollNextEvent(vr::VREvent_t* pEvent) 
+{ 
+	return base->PollNextEvent(pEvent, sizeof(vr::VREvent_t));
+}
+
+bool CVRSystem_009::PollNextEventWithPose(vr::ETrackingUniverseOrigin eOrigin, vr::VREvent_t* pEvent, vr::TrackedDevicePose_t* pTrackedDevicePose)
+{ 
+	return base->PollNextEventWithPose(eOrigin, pEvent, sizeof(vr::VREvent_t), pTrackedDevicePose);
+}
+
+bool CVRSystem_009::GetControllerState(vr::TrackedDeviceIndex_t unControllerDeviceIndex, vr::VRControllerState_t* pControllerState)
+{
+	return base->GetControllerState(unControllerDeviceIndex, pControllerState, sizeof(vr::VRControllerState001_t));
+}
+
+bool CVRSystem_009::GetControllerStateWithPose(vr::ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
+    vr::VRControllerState_t* pControllerState, vr::TrackedDevicePose_t* pTrackedDevicePose)
+{
+	return base->GetControllerStateWithPose(eOrigin, unControllerDeviceIndex, pControllerState, sizeof(vr::VRControllerState001_t), pTrackedDevicePose);
+}
+
 bool CVRSystem_011::GetControllerState(vr::TrackedDeviceIndex_t unControllerDeviceIndex, vr::VRControllerState_t* pControllerState)
 {
 	return base->GetControllerState(unControllerDeviceIndex, pControllerState, sizeof(vr::VRControllerState001_t));
