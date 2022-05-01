@@ -166,7 +166,7 @@ public:
 	    vr::EVRSubmitFlags submitFlags,                                                                                                            \
 	    bool isFirstEye) APPEND;                                                                                                                   \
                                                                                                                                                    \
-	PREPEND void SubmitFrames(bool showSkybox) APPEND;                                                                                             \
+	PREPEND void SubmitFrames(bool showSkybox, bool postPresent) APPEND;                                                                                             \
                                                                                                                                                    \
 	PREPEND IBackend::openvr_enum_t SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount) APPEND;                             \
                                                                                                                                                    \
@@ -199,7 +199,8 @@ public:
 	/** Returns true if the runtime is focused and receiving input */                                                                              \
 	PREPEND bool IsInputAvailable() APPEND;                                                                                                        \
 	/** Returns true if the application graphics device is being used */                                                                           \
-	PREPEND bool IsGraphicsConfigured() APPEND;
+	PREPEND bool IsGraphicsConfigured() APPEND;                                                                                                    \
+	PREPEND void OnOverlayTexture(const vr::Texture_t* texture) APPEND;
 
 /**
  * Backend is similar in concept to the OpenVR driver API, however it is

@@ -272,7 +272,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VR
 
 	if (leftEyeSubmitted && rightEyeSubmitted) {
 		if (!isNullRender)
-			BackendManager::Instance().SubmitFrames(isInSkybox);
+			BackendManager::Instance().SubmitFrames(isInSkybox, false);
 
 		leftEyeSubmitted = false;
 		rightEyeSubmitted = false;
@@ -289,6 +289,7 @@ void BaseCompositor::ClearLastSubmittedFrame()
 
 void BaseCompositor::PostPresentHandoff()
 {
+	BackendManager::Instance().SubmitFrames(isInSkybox, true);
 	// It appears (from the documentation) that SteamVR will, even after all frames are submitted, not begin
 	//  compositing the submitted textures until WaitGetPoses is called. Thus is you want to do some rendering
 	//  or game logic or whatever, it will delay the compositor. Calling this tells SteamVR that no further changes

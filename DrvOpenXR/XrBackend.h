@@ -58,4 +58,6 @@ private:
 	// Were we supposed to start rendering a frame, but couldn't since we were on the
 	// early (pre switch to application graphics instance) OpenXR session?
 	bool deferredRenderingStart = false;
+
+	bool submittedEyeTextures = false;
 };

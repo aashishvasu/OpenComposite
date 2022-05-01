@@ -715,6 +715,8 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 	USEH();
 	overlay->texture = *pTexture;
 
+	BackendManager::Instance().OnOverlayTexture(pTexture);
+
 	if (!oovr_global_configuration.EnableLayers() || !BackendManager::Instance().IsGraphicsConfigured())
 		return VROverlayError_None;
 

@@ -286,6 +286,8 @@ void XrBackend::StoreEyeTexture(
 	if (sessionActive && renderingFrame)
 		comp.Invoke((XruEye)eye, texture, bounds, submitFlags, layer);
 
+	submittedEyeTextures = true;
+
 	// TODO store view somewhere and use it for submitting our frame
 
 	// If WaitGetPoses was called before the first texture was submitted, we're in a kinda weird state
@@ -300,14 +302,19 @@ void XrBackend::StoreEyeTexture(
 	}
 }
 
-void XrBackend::SubmitFrames(bool showSkybox)
+void XrBackend::SubmitFrames(bool showSkybox, bool postPresent)
 {
 	// Always pump events, even if the session isn't active - this is what makes the session active
 	// in the first place.
 	PumpEvents();
 
-	if (!renderingFrame)
+	static bool postPresentStatus = false;
+	bool skipRender = postPresentStatus && !postPresent;
+	postPresentStatus = postPresent;
+
+	if (!renderingFrame || skipRender)
 		return;
+
 	renderingFrame = false;
 
 	// Make sure the OpenXR session is active before doing anything else
@@ -327,16 +334,21 @@ void XrBackend::SubmitFrames(bool showSkybox)
 	mainLayer.viewCount = 2;
 
 	XrCompositionLayerBaseHeader const* const* headers = nullptr;
-	XrCompositionLayerBaseHeader* app_layer = (XrCompositionLayerBaseHeader*)&mainLayer;
+	XrCompositionLayerBaseHeader* app_layer = nullptr;
+	
 	int layer_count = 0;
 
 	BaseOverlay* overlay = GetUnsafeBaseOverlay();
 
-	for (int i = 0; i < mainLayer.viewCount; ++i) {
-		XrCompositionLayerProjectionView& layer = projectionViews[i];
-		layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
-		if (layer.subImage.swapchain == XR_NULL_HANDLE)
-			app_layer = nullptr;
+	if (submittedEyeTextures) {
+		app_layer = (XrCompositionLayerBaseHeader*)&mainLayer;
+		for (int i = 0; i < mainLayer.viewCount; ++i) {
+			XrCompositionLayerProjectionView& layer = projectionViews[i];
+			layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+			if (layer.subImage.swapchain == XR_NULL_HANDLE)
+				app_layer = nullptr;
+		}
+		submittedEyeTextures = false;
 	}
 
 	if (overlay) {
@@ -360,8 +372,10 @@ void XrBackend::SubmitFrames(bool showSkybox)
 IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)
 {
 	// Needed for rFactor2 loading screens
-	if (unTextureCount == 6) {
-		if (!sessionActive || pTextures == nullptr || !usingApplicationGraphicsAPI)
+	if (unTextureCount && pTextures) {
+		CheckOrInitCompositors(pTextures);
+
+		if (!sessionActive || !usingApplicationGraphicsAPI)
 			return 0;
 
 		// Make sure any unfinished frames don't call xrEndFrame after this call
@@ -610,4 +624,10 @@ void OpenComposite_Android_EventPoll()
 bool XrBackend::IsGraphicsConfigured()
 {
 	return usingApplicationGraphicsAPI;
+}
+
+void XrBackend::OnOverlayTexture(const vr::Texture_t* texture)
+{
+	if (!usingApplicationGraphicsAPI)
+		CheckOrInitCompositors(texture);
 }

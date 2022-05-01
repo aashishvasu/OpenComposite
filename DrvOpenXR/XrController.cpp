@@ -61,7 +61,7 @@ uint64_t XrController::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty
 
 	// This is for the old input system, which we don't initially need
 	if (prop == vr::Prop_SupportedButtons_Uint64) {
-		XR_STUBBED();
+		OOVR_SOFT_ABORT("vr::Prop_SupportedButtons_Uint64");
 	}
 
 	// if (IsTouchController() && prop == vr::Prop_SupportedButtons_Uint64) {

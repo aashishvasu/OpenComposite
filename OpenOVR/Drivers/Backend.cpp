@@ -110,9 +110,9 @@ void BackendManager::StoreEyeTexture(
 	return backend->StoreEyeTexture(eye, texture, bounds, submitFlags, isFirstEye);
 }
 
-void BackendManager::SubmitFrames(bool showSkybox)
+void BackendManager::SubmitFrames(bool showSkybox, bool postPresent)
 {
-	return backend->SubmitFrames(showSkybox);
+	return backend->SubmitFrames(showSkybox, postPresent);
 }
 
 IBackend::openvr_enum_t BackendManager::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)
@@ -171,6 +171,12 @@ bool BackendManager::IsGraphicsConfigured()
 {
 	return backend->IsGraphicsConfigured();
 }
+
+void BackendManager::OnOverlayTexture(const vr::Texture_t* texture)
+{
+	return backend->OnOverlayTexture(texture);
+}
+
 // ITrackedDevice
 bool ITrackedDevice::GetControllerState(vr::VRControllerState_t* state)
 {
