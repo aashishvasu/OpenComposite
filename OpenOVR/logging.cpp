@@ -2,11 +2,11 @@
 
 #include "Misc/Config.h"
 #include "logging.h"
+#include <chrono>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <stdarg.h>
-#include <chrono>
-#include <ctime>
 
 using namespace std;
 
