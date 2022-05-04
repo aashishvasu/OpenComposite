@@ -4,7 +4,6 @@
 // FIXME don't do that, it's ugly and slows down the build when modifying headers
 #include "../BaseCommon.h"
 
-#include "../Misc/Input/InteractionProfile.h"
 #include "../Misc/json/json.h"
 #include <map>
 #include <string>
@@ -429,6 +428,8 @@ private:
 	 */
 	// TODO delete this and move the documentation to OOVR_InputBindingInfo_t
 	struct ActionSource {
+		~ActionSource(); // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
+
 		std::string svrPathName; // Full SteamVR path name for this input, eg '/user/hand/left/input/trackpad'
 		std::string svrDevicePathName; // The device path from svrPathName, eg '/user/hand/left'
 		std::string svrInputPathName; // The input path from svrPathName, eg '/input/trigger'
@@ -441,6 +442,8 @@ private:
 	};
 
 	struct Action {
+		~Action(); // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
+
 		// Since the list of VirtualInputs cannot be copied (only moved) we might as well make the
 		// whole struct non-copyable to make the error messages easier to follow.
 		Action() = default;
@@ -457,7 +460,7 @@ private:
 		XrAction xr = XR_NULL_HANDLE;
 
 		// Any virtual inputs bound to this action are attached here
-		std::vector<std::unique_ptr<VirtualInput>> virtualInputs;
+		std::vector<std::unique_ptr<class VirtualInput>> virtualInputs;
 
 		// Only used in the case of Pose actions
 		XrSpace actionSpace = XR_NULL_HANDLE;
@@ -484,9 +487,9 @@ private:
 	 */
 	std::vector<XrPath> allSubactionPaths;
 
-	void LoadBindingsSet(const struct InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
+	void LoadBindingsSet(const struct InteractionProfile& profile);
 
-	void AddLegacyBindings(InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings);
+	void CreateLegacyActions();
 
 	/**
 	 * Convert a tracked device index to 0=left 1=right -1=other
@@ -494,12 +497,15 @@ private:
 	static int DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx);
 
 	struct LegacyControllerActions {
+		~LegacyControllerActions(); // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
+
 		std::string handPath; // eg /user/hand/left
 		XrPath handPathXr;
 
-		XrAction system; // Oculus button
-		XrAction menu, menuTouch; // Upper button on touch controller - B/Y
-		XrAction btnA, btnATouch; // Lower button on touch controller - A/X
+		// Matches up with EVRButtonId
+		XrAction system; // 'system' button, on Vive the SteamVR buttons, on Oculus Touch the menu button on the left controller
+		XrAction menu, menuTouch; // Upper button on touch controller (B/Y), application button on Vive
+		XrAction btnA, btnATouch; // Lower button on touch controller - A/X, not present on Vive
 
 		XrAction stickX, stickY, stickBtn, stickBtnTouch; // Axis0
 		XrAction trigger, triggerTouch; // Axis1
@@ -521,4 +527,6 @@ private:
 	static vr::TrackedDeviceIndex_t cast_IVH(VRInputValueHandle_t);
 	static VRInputValueHandle_t devToIVH(vr::TrackedDeviceIndex_t index);
 	VRInputValueHandle_t activeOriginToIVH(XrPath path);
+
+	friend class InteractionProfile;
 };

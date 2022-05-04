@@ -78,3 +78,51 @@ const std::vector<VirtualInputFactory>& OculusTouchInteractionProfile::GetVirtua
 {
 	return virtualInputs;
 }
+
+const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLegacyBindings(const std::string& handPath) const
+{
+	static LegacyBindings allBindings[2] = { {}, {} };
+	int hand = handPath == "/user/hand/left" ? vr::Eye_Left : vr::Eye_Right;
+	LegacyBindings& bindings = allBindings[hand];
+
+	// First-time initialisation
+	if (!bindings.menu) {
+		bindings = {};
+		bindings.stickX = "input/thumbstick/x";
+		bindings.stickY = "input/thumbstick/y";
+		bindings.stickBtn = "input/thumbstick/click";
+		bindings.stickBtnTouch = "input/thumbstick/touch";
+
+		bindings.trigger = "input/trigger/value";
+		bindings.triggerTouch = "input/trigger/touch";
+
+		bindings.grip = "input/squeeze/value";
+
+		bindings.haptic = "output/haptic";
+
+		bindings.gripPoseAction = "input/grip/pose";
+		bindings.aimPoseAction = "input/aim/pose";
+
+		if (handPath == "/user/hand/left") {
+			// Left
+			bindings.menu = "input/y/click";
+			bindings.menuTouch = "input/y/touch";
+			bindings.btnA = "input/x/click";
+			bindings.btnATouch = "input/x/touch";
+
+			// Note this refers to what Oculus calls the menu button (and games use to open the pause menu), which
+			// is used by SteamVR for it's menu.
+			bindings.system = "input/menu/click";
+		} else {
+			// Right
+			bindings.menu = "input/b/click";
+			bindings.menuTouch = "input/b/touch";
+			bindings.btnA = "input/a/click";
+			bindings.btnATouch = "input/a/touch";
+
+			// Ignore Oculus's system button, you're not supposed to do anything with it
+		}
+	}
+
+	return &bindings;
+}

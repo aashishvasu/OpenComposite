@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "InputData.h"
+#include "Reimpl/BaseInput.h"
 
 /**
  * Represents an input that doesn't exist in the OpenXR runtime but does in SteamVR. These
@@ -154,13 +155,37 @@ public:
 
 	virtual const VirtualInputFactory* GetVirtualInput(const std::string& inputPath) const;
 
+	/**
+	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
+	 */
+	void AddLegacyBindings(const BaseInput::LegacyControllerActions& actions, std::vector<XrActionSuggestedBinding>& bindings) const;
+
 protected:
+	struct LegacyBindings {
+		// Matches up with BaseInput::LegacyControllerActions - see it for comments
+		// Specifies the path for each action
+		// These paths are relative to the hand - eg, use input/trigger/value not /user/hand/left/input/trigger/value
+		const char* system = nullptr;
+		const char *menu = nullptr, *menuTouch = nullptr;
+		const char *btnA = nullptr, *btnATouch = nullptr;
+
+		const char *stickX = nullptr, *stickY = nullptr, *stickBtn = nullptr, *stickBtnTouch = nullptr;
+		const char *trigger = nullptr, *triggerTouch = nullptr;
+		const char* grip = nullptr;
+
+		const char* haptic = nullptr;
+
+		const char *gripPoseAction = nullptr, *aimPoseAction = nullptr;
+	};
+
 	/**
 	 * Finish setting up this instance.
 	 *
 	 * PostSetup MUST be by the superclass once it's virtual methods will return their final values.
 	 */
 	void PostSetup();
+
+	virtual const LegacyBindings* GetLegacyBindings(const std::string& handPath) const = 0;
 
 private:
 	std::map<std::string, const VirtualInputFactory*> virtualInputNames;

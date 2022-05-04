@@ -168,6 +168,11 @@ static std::string pathFromParts(const std::initializer_list<std::string>& parts
 	return str;
 }
 
+// Must be defined non-inline to avoid it ending up in stubs.gen.cpp
+BaseInput::LegacyControllerActions::~LegacyControllerActions() = default;
+BaseInput::Action::~Action() = default;
+BaseInput::ActionSource::~ActionSource() = default;
+
 // ---
 
 EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath)
@@ -416,23 +421,11 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		OOVR_FAILED_XR_ABORT(xrCreateAction(act.set->xr, &info, &act.xr));
 	}
 
+	CreateLegacyActions();
+
 	// Read the default bindings file, and load it into OpenXR
-	std::vector<XrActionSuggestedBinding> bindings;
 	OculusTouchInteractionProfile profile;
-	LoadBindingsSet(profile, bindings);
-
-	// Add our legacy bindings in - these are what power GetControllerState
-	AddLegacyBindings(profile, bindings);
-
-	// Load the bindings into the runtime
-	XrPath interactionProfilePath;
-	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.GetPath().c_str(), &interactionProfilePath));
-	XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
-
-	suggestedBindings.interactionProfile = interactionProfilePath;
-	suggestedBindings.suggestedBindings = bindings.data();
-	suggestedBindings.countSuggestedBindings = bindings.size();
-	OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
+	LoadBindingsSet(profile);
 
 	// Attach everything to the current session
 	BindInputsForSession();
@@ -460,7 +453,10 @@ void BaseInput::LoadEmptyManifest()
 	// TODO deduplicate with the regular manifest loader
 	std::vector<XrActionSuggestedBinding> bindings;
 	OculusTouchInteractionProfile profile;
-	AddLegacyBindings(profile, bindings);
+	CreateLegacyActions();
+	for (const auto& legacyController : legacyControllers) {
+		profile.AddLegacyBindings(legacyController, bindings);
+	}
 
 	// Load the bindings into the runtime
 	XrPath interactionProfilePath;
@@ -510,7 +506,7 @@ void BaseInput::BindInputsForSession()
 	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session, &attachInfo));
 }
 
-void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings)
+void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 {
 	Json::Value bindingsRoot;
 	if (!ReadJson(utf8to16(bindingsPath), bindingsRoot)) {
@@ -524,6 +520,8 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, std::v
 	const Json::Value& bindingsJson = bindingsRoot["bindings"];
 	if (!bindingsJson.isObject())
 		OOVR_ABORTF("Invalid bindings file %s, missing or invalid bindings object", bindingsPath.c_str());
+
+	std::vector<XrActionSuggestedBinding> bindings;
 
 	for (std::string setFullName : bindingsJson.getMemberNames()) {
 		const Json::Value setJson = bindingsJson[setFullName];
@@ -646,6 +644,13 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, std::v
 		return;
 	}
 
+	// Only register legacy bindings if this profile is supported by the application. This is to avoid the runtime picking
+	// an input profile we know about but the game doesn't (eg khr/simple_controller) over one that the game has actually
+	// defined bindings for (eg htc/vive_controller).
+	for (const auto& legacyController : legacyControllers) {
+		profile.AddLegacyBindings(legacyController, bindings);
+	}
+
 	// Load the bindings we just built into the runtime
 	XrPath interactionProfilePath;
 	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.GetPath().c_str(), &interactionProfilePath));
@@ -657,7 +662,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, std::v
 	OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
 }
 
-void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrActionSuggestedBinding>& bindings)
+void BaseInput::CreateLegacyActions()
 {
 	// Add the stuff required to make the backend work
 	// This means the pose and haptic inputs for each hand, and actions for all the legacy inputs, into a new ActionSet that
@@ -678,76 +683,40 @@ void BaseInput::AddLegacyBindings(InteractionProfile& profile, std::vector<XrAct
 		ctrl.handPath = "/user/hand/" + side;
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, ctrl.handPath.c_str(), &ctrl.handPathXr));
 
-		auto createSpecial = [&](XrAction* out, const std::string& path, const std::string& name, const std::string& humanName, XrActionType type) {
+		auto create = [&](XrAction* out, const std::string& name, const std::string& englishName, XrActionType type) {
 			XrActionCreateInfo info = { XR_TYPE_ACTION_CREATE_INFO };
 			info.actionType = type;
 
 			std::string codeName = "legacy-" + side + "-" + name;
 			strcpy_arr(info.actionName, codeName.c_str());
 
-			std::string fullHumanName = "Legacy input: " + humanName + " - " + side;
+			std::string fullHumanName = "Legacy input: " + englishName + " - " + side; // TODO localisation
 			strcpy_arr(info.localizedActionName, fullHumanName.c_str());
 
 			OOVR_FAILED_XR_ABORT(xrCreateAction(legacyInputsSet, &info, out));
-
-			// Bind the action to a suggested binding
-			std::string realPath = ctrl.handPath + "/" + path;
-			if (!profile.IsInputPathValid(realPath)) {
-				OOVR_LOGF("Skipping legacy input binding %s, not supported by profile", realPath.c_str());
-				return;
-			}
-
-			XrActionSuggestedBinding binding = {};
-			binding.action = *out;
-
-			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, realPath.c_str(), &binding.binding));
-
-			bindings.push_back(binding);
 		};
 
-		auto create = [&](XrAction* out, const std::string& path, const std::string& name, const std::string& humanName, XrActionType type) {
-			createSpecial(out, "input/" + path, name, humanName, type);
-		};
+		create(&ctrl.system, "system", "System Button", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.menu, "menu", "Menu Button", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.menuTouch, "menu-touch", "Menu Button (Touch)", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.btnA, "btn-a", "'A' Button", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.btnATouch, "btn-a-touch", "'A' Button (Touch)", XR_ACTION_TYPE_BOOLEAN_INPUT);
 
-#define BOOL_WITH_CAP(member, path, name, humanName)                                                             \
-	do {                                                                                                         \
-		create(member, path "/click", name, humanName, XR_ACTION_TYPE_BOOLEAN_INPUT);                            \
-		create(member##Touch, path "/touch", name "-touch", humanName " (touch)", XR_ACTION_TYPE_BOOLEAN_INPUT); \
-	} while (0)
+		create(&ctrl.stickBtn, "thumbstick-btn", "Thumbstick Button", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.stickBtnTouch, "thumbstick-btn-touch", "Thumbstick Button (Touch)", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.stickX, "thumbstick-x", "Thumbstick X axis", XR_ACTION_TYPE_FLOAT_INPUT);
+		create(&ctrl.stickY, "thumbstick-y", "Thumbstick Y axis", XR_ACTION_TYPE_FLOAT_INPUT);
 
-		if (i == 0) {
-			// Left
-			BOOL_WITH_CAP(&ctrl.menu, "y", "y", "Upper-left (Y)");
-			BOOL_WITH_CAP(&ctrl.btnA, "x", "x", "Lower-left (X)");
+		// Note that while we define the grip as a float, we can still bind it to boolean actions and the OpenXR runtime will
+		// return 0.0 or 1.0 depending on the button status. OpenXR 1.0 § 11.4.
+		create(&ctrl.grip, "grip", "Grip", XR_ACTION_TYPE_FLOAT_INPUT);
+		create(&ctrl.trigger, "trigger", "Trigger", XR_ACTION_TYPE_FLOAT_INPUT);
+		create(&ctrl.triggerTouch, "trigger-touch", "Trigger (Touch)", XR_ACTION_TYPE_BOOLEAN_INPUT);
 
-			// Note this refers to what Oculus calls the menu button (and games use to open the pause menu), which
-			// is used by SteamVR for it's menu.
-			create(&ctrl.system, "menu/click", "menu", "Menu", XR_ACTION_TYPE_BOOLEAN_INPUT);
-		} else {
-			// Right
-			BOOL_WITH_CAP(&ctrl.menu, "b", "b", "Upper-right (B)");
-			BOOL_WITH_CAP(&ctrl.btnA, "a", "a", "Lower-right (A)");
+		create(&ctrl.haptic, "haptic", "Vibration Haptics", XR_ACTION_TYPE_VIBRATION_OUTPUT);
 
-			// Ignore Oculus's system button
-		}
-
-		// Thumbstick button
-		BOOL_WITH_CAP(&ctrl.stickBtn, "thumbstick", "stick", "Thumbstick");
-
-#undef BOOL_WITH_CAP
-
-		create(&ctrl.grip, "squeeze/value", "grip", "Grip", XR_ACTION_TYPE_FLOAT_INPUT);
-
-		create(&ctrl.trigger, "trigger/value", "trigger", "Trigger", XR_ACTION_TYPE_FLOAT_INPUT);
-		create(&ctrl.triggerTouch, "trigger/touch", "trigger-touch", "Trigger (touch)", XR_ACTION_TYPE_BOOLEAN_INPUT);
-
-		create(&ctrl.stickX, "thumbstick/x", "thumbstick-x", "Thumbstick X axis", XR_ACTION_TYPE_FLOAT_INPUT);
-		create(&ctrl.stickY, "thumbstick/y", "thumbstick-y", "Thumbstick Y axis", XR_ACTION_TYPE_FLOAT_INPUT);
-
-		createSpecial(&ctrl.haptic, "output/haptic", "haptic", "Haptics", XR_ACTION_TYPE_VIBRATION_OUTPUT);
-
-		create(&ctrl.gripPoseAction, "grip/pose", "grip-pose", "Grip Pose", XR_ACTION_TYPE_POSE_INPUT);
-		create(&ctrl.aimPoseAction, "aim/pose", "aim-pose", "Aim Pose", XR_ACTION_TYPE_POSE_INPUT);
+		create(&ctrl.gripPoseAction, "grip-pose", "Grip Pose", XR_ACTION_TYPE_POSE_INPUT);
+		create(&ctrl.aimPoseAction, "aim-pose", "Aim Pose", XR_ACTION_TYPE_POSE_INPUT);
 	}
 }
 

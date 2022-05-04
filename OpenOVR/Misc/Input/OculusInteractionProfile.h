@@ -17,6 +17,9 @@ public:
 
 	const std::vector<VirtualInputFactory>& GetVirtualInputs() const override;
 
+protected:
+	const LegacyBindings* GetLegacyBindings(const std::string& handPath) const override;
+
 private:
 	std::string path;
 	std::vector<std::string> validInputPaths;
