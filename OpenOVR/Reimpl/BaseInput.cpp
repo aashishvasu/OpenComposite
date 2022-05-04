@@ -175,6 +175,12 @@ BaseInput::ActionSource::~ActionSource() = default;
 
 // ---
 
+BaseInput::BaseInput()
+{
+	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new OculusTouchInteractionProfile()));
+}
+BaseInput::~BaseInput() = default;
+
 EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath)
 {
 	OOVR_LOGF("Loading manifest file '%s'", pchActionManifestPath);
@@ -424,8 +430,9 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	CreateLegacyActions();
 
 	// Read the default bindings file, and load it into OpenXR
-	OculusTouchInteractionProfile profile;
-	LoadBindingsSet(profile);
+	for (const std::unique_ptr<InteractionProfile>& profile : interactionProfiles) {
+		LoadBindingsSet(*profile);
+	}
 
 	// Attach everything to the current session
 	BindInputsForSession();
@@ -451,22 +458,25 @@ void BaseInput::LoadEmptyManifest()
 	usingLegacyInput = true;
 
 	// TODO deduplicate with the regular manifest loader
-	std::vector<XrActionSuggestedBinding> bindings;
-	OculusTouchInteractionProfile profile;
 	CreateLegacyActions();
-	for (const auto& legacyController : legacyControllers) {
-		profile.AddLegacyBindings(legacyController, bindings);
+
+	// Load in the suggested bindings for the legacy input actions
+	for (const std::unique_ptr<InteractionProfile>& profile : interactionProfiles) {
+		std::vector<XrActionSuggestedBinding> bindings;
+		for (const auto& legacyController : legacyControllers) {
+			profile->AddLegacyBindings(legacyController, bindings);
+		}
+
+		// Load the bindings into the runtime
+		XrPath interactionProfilePath;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile->GetPath().c_str(), &interactionProfilePath));
+		XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+
+		suggestedBindings.interactionProfile = interactionProfilePath;
+		suggestedBindings.suggestedBindings = bindings.data();
+		suggestedBindings.countSuggestedBindings = bindings.size();
+		OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
 	}
-
-	// Load the bindings into the runtime
-	XrPath interactionProfilePath;
-	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.GetPath().c_str(), &interactionProfilePath));
-	XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
-
-	suggestedBindings.interactionProfile = interactionProfilePath;
-	suggestedBindings.suggestedBindings = bindings.data();
-	suggestedBindings.countSuggestedBindings = bindings.size();
-	OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
 
 	// Attach everything to the current session
 	BindInputsForSession();
@@ -763,7 +773,9 @@ EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VR
 	} else if (!strcmp("/user/hand/right", pchInputSourcePath)) {
 		handType = ITrackedDevice::HAND_RIGHT;
 	} else {
-		OOVR_ABORTF("Unknown input source '%s'", pchInputSourcePath);
+		// FIXME you can specify a path like /user/hand/left/input/select/click
+		OOVR_SOFT_ABORTF("Unknown input source '%s'", pchInputSourcePath);
+		return VRInputError_NameNotFound; // Probably not valid in this context, but whatever
 	}
 
 	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {

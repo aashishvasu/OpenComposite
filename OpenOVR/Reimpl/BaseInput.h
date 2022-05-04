@@ -138,6 +138,11 @@ struct OOVR_InputBindingInfo_t {
 
 class BaseInput {
 public:
+	// Ctor/dtor
+	BaseInput();
+	~BaseInput();
+
+public:
 	typedef vr::VRInputValueHandle_t VRInputValueHandle_t;
 	typedef vr::EVRInputError EVRInputError;
 	typedef vr::VRActionSetHandle_t VRActionSetHandle_t;
@@ -474,6 +479,7 @@ private:
 
 	bool hasLoadedActions = false;
 	bool usingLegacyInput = false;
+	std::vector<std::unique_ptr<class InteractionProfile>> interactionProfiles;
 	std::map<std::string, std::unique_ptr<ActionSet>> actionSets;
 	std::map<std::string, std::unique_ptr<Action>> actions;
 
