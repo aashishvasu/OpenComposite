@@ -223,7 +223,7 @@ EDeviceActivityLevel BaseSystem::GetTrackedDeviceActivityLevel(vr::TrackedDevice
 
 void BaseSystem::ApplyTransform(TrackedDevicePose_t* pOutputPose, const TrackedDevicePose_t* pTrackedDevicePose, const HmdMatrix34_t* pTransform)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("ApplyTransform is not implemented! This will probably break things if they're using it!");
 }
 
 vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType)
