@@ -42,7 +42,7 @@ void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit
  */
 #define OOVR_SOFT_ABORTF(msg, ...)                                                                      \
 	do {                                                                                                \
-		int soft_abort_hit_count = 0;                                                                   \
+		static int soft_abort_hit_count = 0;                                                            \
 		oovr_soft_abort_raw(__FILE__, __LINE__, __FUNCTION__, &soft_abort_hit_count, msg, __VA_ARGS__); \
 	} while (0)
 
