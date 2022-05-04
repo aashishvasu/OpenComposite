@@ -232,6 +232,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Keyboard/VRKeyboard.cpp
 	OpenOVR/Misc/Input/InteractionProfile.cpp
 	OpenOVR/Misc/Input/OculusInteractionProfile.cpp
+	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.cpp
 	OpenOVR/Misc/Input/AnalogueToDigitalInput.cpp
 	OpenOVR/OpenOVR.cpp
 	OpenOVR/Reimpl/BaseApplications.cpp
@@ -297,6 +298,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Keyboard/VRKeyboard.h
 	OpenOVR/Misc/Input/InteractionProfile.h
 	OpenOVR/Misc/Input/OculusInteractionProfile.h
+	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.h
 	OpenOVR/Misc/Input/AnalogueToDigitalInput.h
 	OpenOVR/Misc/lodepng.h
 	OpenOVR/Misc/ScopeGuard.h

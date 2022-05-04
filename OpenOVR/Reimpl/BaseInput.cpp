@@ -14,6 +14,7 @@
 #include <map>
 #include <utility>
 
+#include "Misc/Input/KhrSimpleInteractionProfile.h"
 #include "Misc/Input/OculusInteractionProfile.h"
 #include "Misc/xrmoreutils.h"
 
@@ -178,6 +179,7 @@ BaseInput::ActionSource::~ActionSource() = default;
 BaseInput::BaseInput()
 {
 	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new OculusTouchInteractionProfile()));
+	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new KhrSimpleInteractionProfile()));
 }
 BaseInput::~BaseInput() = default;
 
