@@ -61,14 +61,20 @@ uint64_t XrController::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty
 
 	// This is for the old input system, which we don't initially need
 	if (prop == vr::Prop_SupportedButtons_Uint64) {
-		OOVR_SOFT_ABORT("vr::Prop_SupportedButtons_Uint64");
+		// Just assume we're an Oculus Touch-style controller and enable all the buttons.
+		uint64_t supported = 0;
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_Grip);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_Axis2);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_DPad_Left);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_DPad_Up);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_DPad_Down);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_DPad_Right);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_A);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger);
+		return supported;
 	}
-
-	// if (IsTouchController() && prop == vr::Prop_SupportedButtons_Uint64) {
-	// 	return ButtonMaskFromId(k_EButton_ApplicationMenu) | ButtonMaskFromId(k_EButton_Grip) | ButtonMaskFromId(k_EButton_Axis2) | ButtonMaskFromId(k_EButton_DPad_Left)
-	// 	| ButtonMaskFromId(k_EButton_DPad_Up) | ButtonMaskFromId(k_EButton_DPad_Down) | ButtonMaskFromId(k_EButton_DPad_Right) | ButtonMaskFromId(k_EButton_A)
-	// 	| ButtonMaskFromId(k_EButton_SteamVR_Touchpad) | ButtonMaskFromId(k_EButton_SteamVR_Trigger);
-	// }
 
 	return XrTrackedDevice::GetUint64TrackedDeviceProperty(prop, pErrorL);
 }
