@@ -299,6 +299,14 @@ bool XrHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ET
 		return false;
 	case vr::Prop_HasDriverDirectModeComponent_Bool:
 		return true; // Who knows what this is used for? It's in HL:A anyway.
+	case vr::Prop_ContainsProximitySensor_Bool:
+		return true;
+	case vr::Prop_HasCameraComponent_Bool:
+		return false;
+	case vr::Prop_HasDisplayComponent_Bool:
+		return true;
+	case vr::Prop_HasVirtualDisplayComponent_Bool:
+		return false;
 	default:
 		break;
 	}
@@ -349,19 +357,42 @@ uint32_t XrHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
 
-#define PROP(in, out)                                                                                  \
-	if (prop == in) {                                                                                  \
-		if (value != NULL && bufferSize > 0) {                                                         \
-			strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
-		}                                                                                              \
-		return (uint32_t)strlen(out) + 1;                                                              \
-	}
+#define PROP(in, out)                                                                                      \
+	do {                                                                                                   \
+		if (prop == in) {                                                                                  \
+			if (value != NULL && bufferSize > 0) {                                                         \
+				strcpy_s(value, bufferSize, out); /* FFS msvc - strncpy IS the secure version of strcpy */ \
+			}                                                                                              \
+			return (uint32_t)strlen(out) + 1;                                                              \
+		}                                                                                                  \
+	} while (0)
 
-	// Pretend everything is a CV1
-	PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1");
+	// Pretend everything is a Quest 2 (because that's what I have the property JSON of in the openvr-tests repo)
+	PROP(vr::Prop_ModelNumber_String, "Oculus Quest2");
 	PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F");
+	PROP(vr::Prop_ControllerType_String, "rift");
+	PROP(vr::Prop_ExpectedControllerType_String, "oculus_touch");
 
 	PROP(vr::Prop_RenderModelName_String, "oculusHmdRenderModel");
 
 	return XrTrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
+}
+
+int32_t XrHMD::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
+{
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_Success;
+
+	switch (prop) {
+	case vr::Prop_DeviceClass_Int32:
+		return vr::TrackedDeviceClass_HMD;
+	case vr::Prop_ExpectedControllerCount_Int32:
+		return 2;
+	case vr::Prop_ExpectedTrackingReferenceCount_Int32:
+		return 0;
+	default:
+		break;
+	}
+
+	return ITrackedDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
 }
