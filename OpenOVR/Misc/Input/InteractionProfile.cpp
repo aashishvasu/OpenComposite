@@ -169,6 +169,7 @@ void VirtualInput::PostInit()
 	int endOfHandPos = first.find('/', strlen("/user/hand/") + 1);
 	first.erase(endOfHandPos);
 
+	// TODO remove this whole broken mess
 	BaseInput* input = GetUnsafeBaseInput();
 	activeOrigin = input->HandPathToIVH(first);
 	OOVR_FALSE_ABORT(activeOrigin != vr::k_ulInvalidInputValueHandle);

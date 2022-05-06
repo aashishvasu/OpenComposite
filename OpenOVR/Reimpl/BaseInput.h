@@ -466,6 +466,13 @@ private:
 
 		XrAction xr = XR_NULL_HANDLE;
 
+		// The action sources (paths like /user/hand/left/input/select/click, specifying an output of a physical
+		// control) this action is bound to. This is cached, and is updated by activeOriginFromSubaction.
+		XrPath sources[32] = {};
+		std::string sourceNames[ARRAYSIZE(sources)] = {};
+		uint32_t sourcesCount = 0; // Number of sources in the above that are defined
+		uint64_t nextSourcesUpdate = 0; // For caching, the next value of syncSerial this should update at
+
 		// Any virtual inputs bound to this action are attached here
 		std::vector<std::unique_ptr<class VirtualInput>> virtualInputs;
 
@@ -483,8 +490,34 @@ private:
 	struct InputValueHandle {
 		InputValueHandle();
 		~InputValueHandle();
+
+		/**
+		 * The full path of this handle, eg /user/hand/left/input/select/value.
+		 *
+		 * This is what was passed to GetInputSourceHandle.
+		 */
 		std::string path;
+
+		/**
+		 * If this is a valid input source (eg in /user/hand/left or a child thereof) this specifies
+		 * what that input source is.
+		 */
 		InputSource type = InputSource::INVALID;
+
+		/**
+		 * If this is a valid input source, this specifies the path of the input device it is mounted on as
+		 * an OpenXR path atom. If it is not, this is XR_NULL_PATH.
+		 *
+		 * This will match one of the paths from allSubactionPaths.
+		 *
+		 * Eg /user/hand/left.
+		 */
+		XrPath devicePath = XR_NULL_PATH;
+
+		/**
+		 * A string version of #devicePath. Null corresponds to an empty string.
+		 */
+		std::string devicePathString;
 	};
 
 	// See GetSyncSerial
@@ -508,6 +541,14 @@ private:
 	 * both the left and right hand paths as defined in the OpenXR spec.
 	 */
 	std::vector<XrPath> allSubactionPaths;
+
+	/**
+	 * String version of allSubactionPaths.
+	 */
+	std::vector<std::string> allSubactionPathNames = {
+		"/user/hand/left",
+		"/user/hand/right",
+	};
 
 	void LoadBindingsSet(const struct InteractionProfile& profile);
 
@@ -550,6 +591,7 @@ private:
 	static InputValueHandle* cast_IVH(VRInputValueHandle_t);
 	static ITrackedDevice* ivhToDev(VRInputValueHandle_t handle);
 	VRInputValueHandle_t devToIVH(vr::TrackedDeviceIndex_t index);
+	static bool checkRestrictToDevice(vr::VRInputValueHandle_t restrict, XrPath subactionPath);
 
 	/**
 	 * Get the 'activeOrigin' corresponding to a particular sub-action path on a given action.
@@ -559,7 +601,7 @@ private:
 	 * bound, we can't tell which one was pressed. Therefore this will pick one in an arbitrary but
 	 * consistent manner.
 	 */
-	VRInputValueHandle_t activeOriginFromSubaction(Action* action, XrPath subactionPath);
+	VRInputValueHandle_t activeOriginFromSubaction(Action* action, const char* subactionPath);
 
 	friend class InteractionProfile;
 };
