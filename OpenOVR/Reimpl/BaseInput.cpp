@@ -173,6 +173,8 @@ static std::string pathFromParts(const std::initializer_list<std::string>& parts
 BaseInput::LegacyControllerActions::~LegacyControllerActions() = default;
 BaseInput::Action::~Action() = default;
 BaseInput::ActionSource::~ActionSource() = default;
+BaseInput::InputValueHandle::InputValueHandle() = default;
+BaseInput::InputValueHandle::~InputValueHandle() = default;
 
 // ---
 
@@ -693,6 +695,7 @@ void BaseInput::CreateLegacyActions()
 
 		std::string side = i == 0 ? "left" : "right";
 		ctrl.handPath = "/user/hand/" + side;
+		ctrl.handType = i == 0 ? ITrackedDevice::HAND_LEFT : ITrackedDevice::HAND_RIGHT;
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, ctrl.handPath.c_str(), &ctrl.handPathXr));
 
 		auto create = [&](XrAction* out, const std::string& name, const std::string& englishName, XrActionType type) {
@@ -766,29 +769,31 @@ EVRInputError BaseInput::GetActionHandle(const char* pchActionName, VRActionHand
 
 EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VRInputValueHandle_t* pHandle)
 {
-	*(uint64_t*)pHandle = 0;
+	// Get the existing InputValueHandle if it already exists, or make a new one otherwise. Applications can
+	// get whatever handles they want, regardless of whether the runtime associates any special meaning with it.
 
-	ITrackedDevice::HandType handType;
-
-	if (!strcmp("/user/hand/left", pchInputSourcePath)) {
-		handType = ITrackedDevice::HAND_LEFT;
-	} else if (!strcmp("/user/hand/right", pchInputSourcePath)) {
-		handType = ITrackedDevice::HAND_RIGHT;
-	} else {
-		// FIXME you can specify a path like /user/hand/left/input/select/click
-		OOVR_SOFT_ABORTF("Unknown input source '%s'", pchInputSourcePath);
-		return VRInputError_NameNotFound; // Probably not valid in this context, but whatever
+	const auto iter = inputHandleRegistry.find(pchInputSourcePath);
+	if (iter != inputHandleRegistry.end()) {
+		InputValueHandle* handle = iter->second.get();
+		*pHandle = (uint64_t)handle;
+		return VRInputError_None;
 	}
 
-	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
-		ITrackedDevice* dev = BackendManager::Instance().GetDevice(i);
-		if (dev && dev->GetHand() == handType) {
-			*pHandle = devToIVH(i);
-			return VRInputError_None;
-		}
-	}
+	std::unique_ptr<InputValueHandle> handle = std::make_unique<InputValueHandle>();
+	InputValueHandle* ptr = handle.get();
+	handle->path = pchInputSourcePath;
 
-	OOVR_ABORTF("Missing device for input source %d '%s'", handType, pchInputSourcePath);
+	// Yes, this will let through something like/user/hand/leftblah but it's probably not an issue
+	static std::string leftHand = "/user/hand/left";
+	static std::string rightHand = "/user/hand/right";
+	if (strncmp(pchInputSourcePath, leftHand.c_str(), leftHand.size()) == 0)
+		handle->type = InputSource::HAND_LEFT;
+	if (strncmp(pchInputSourcePath, rightHand.c_str(), rightHand.size()) == 0)
+		handle->type = InputSource::HAND_RIGHT;
+
+	inputHandleRegistry[pchInputSourcePath] = std::move(handle);
+	*(uint64_t*)pHandle = (uint64_t)ptr;
+	return VRInputError_None;
 }
 
 EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t* pSets,
@@ -832,7 +837,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 			    as->fullName.c_str());
 
 			// Once we've got something to test it with, it should look something like this:
-			// index = cast_IVH(set.ulRestrictedToDevice);
+			// index = ivhToDev(set.ulRestrictedToDevice);
 			// ITrackedDevice::HandType hand = dev->GetHand();
 			// LegacyControllerActions& ctrl = legacyControllers[hand];
 			// aas[i].subactionPath = ctrl.pathXr;
@@ -878,8 +883,8 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 
 	// Unfortunately to implement activeOrigin we have to loop through and query each action state
 	for (XrPath subactionPath : allSubactionPaths) {
-		// TODO what's the performance cost of this?
-		VRInputValueHandle_t ao = activeOriginToIVH(subactionPath);
+		// TODO cache the InputValueHandle
+		VRInputValueHandle_t ao = activeOriginFromSubaction(nullptr, subactionPath);
 		if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle && ao != ulRestrictToDevice)
 			continue;
 
@@ -988,7 +993,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	// Unfortunately to implement activeOrigin we have to loop through and query each action state
 	for (XrPath subactionPath : allSubactionPaths) {
 		// TODO what's the performance cost of this?
-		VRInputValueHandle_t ao = activeOriginToIVH(subactionPath);
+		VRInputValueHandle_t ao = activeOriginFromSubaction(nullptr, subactionPath);
 		if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle && ao != ulRestrictToDevice)
 			continue;
 
@@ -1122,8 +1127,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 	// TODO check the subaction stuff works properly
 	XrPath subactionPath = XR_NULL_PATH;
 	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle) {
-		TrackedDeviceIndex_t idx = cast_IVH(ulRestrictToDevice);
-		ITrackedDevice* dev = BackendManager::Instance().GetDevice(idx);
+		ITrackedDevice* dev = ivhToDev(ulRestrictToDevice);
 		if (dev && dev->GetHand() != ITrackedDevice::HAND_NONE) {
 			LegacyControllerActions& ctrl = legacyControllers[dev->GetHand()];
 			subactionPath = ctrl.handPathXr;
@@ -1219,9 +1223,9 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 	memset(info, 0, unOriginInfoSize);
 	OOVR_FALSE_ABORT(unOriginInfoSize == sizeof(InputOriginInfo_t));
 
-	TrackedDeviceIndex_t dev = cast_IVH(origin);
+	ITrackedDevice* dev = ivhToDev(origin);
 
-	info->trackedDeviceIndex = dev;
+	info->trackedDeviceIndex = dev->DeviceIndex();
 	info->devicePath = origin; // TODO is this how it's supposed to work?
 	strcpy_arr(info->rchRenderModelComponentName, "getorigintrackeddeviceinfo_testing"); // TODO figure out how this should work
 
@@ -1348,64 +1352,85 @@ BaseInput::ActionSet* BaseInput::cast_ASH(VRActionSetHandle_t handle)
 	return (ActionSet*)handle;
 }
 
-TrackedDeviceIndex_t BaseInput::cast_IVH(VRInputValueHandle_t handle)
+BaseInput::InputValueHandle* BaseInput::cast_IVH(VRInputValueHandle_t handle)
 {
 	if (handle == vr::k_ulInvalidInputValueHandle)
-		OOVR_ABORT("Called cast_IVH for invalid input value handle");
+		OOVR_ABORT("Called ivhToDev for invalid input value handle");
 
-	// -1000 to undo what we added - see GetInputSourceHandle
-	TrackedDeviceIndex_t dev = ((TrackedDeviceIndex_t)handle) - 1000;
+	return (InputValueHandle*)handle;
+}
 
-	// Make sure it's a valid handle
-	if (dev < 0 || dev > vr::k_unMaxTrackedDeviceCount) {
-		OOVR_ABORTF("Corrupt VRInputValueHandle - value %d", handle);
+ITrackedDevice* BaseInput::ivhToDev(VRInputValueHandle_t handle)
+{
+	const InputValueHandle* ivh = cast_IVH(handle);
+
+	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
+	switch (ivh->type) {
+	case InputSource::HAND_LEFT:
+		hand = ITrackedDevice::HAND_LEFT;
+		break;
+	case InputSource::HAND_RIGHT:
+		hand = ITrackedDevice::HAND_RIGHT;
+		break;
+	default:
+		OOVR_SOFT_ABORTF("Cannot get invalid device from handle '%s'", ivh->path.c_str());
+		return nullptr;
 	}
 
-	return dev;
+	return BackendManager::Instance().GetDeviceByHand(hand);
 }
 
 VRInputValueHandle_t BaseInput::devToIVH(vr::TrackedDeviceIndex_t index)
 {
-	// Add 1000 so any valid device doesn't equal k_ulInvalidInputValueHandle
-	return index + 1000;
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(index);
+	if (!dev) {
+		OOVR_SOFT_ABORTF("Invalid non-existent device IVH lookup: %d", index);
+		return 0;
+	}
+
+	ITrackedDevice::HandType hand = dev->GetHand();
+
+	const char* path = nullptr;
+	switch (hand) {
+	case ITrackedDevice::HAND_LEFT:
+		path = "/user/hand/left";
+		break;
+	case ITrackedDevice::HAND_RIGHT:
+		path = "/user/hand/right";
+		break;
+	default:
+		OOVR_SOFT_ABORTF("Cannot do IVH lookup for device %d - not a hand", index);
+		return 0;
+	}
+
+	VRInputValueHandle_t handle = 0;
+	OOVR_FALSE_ABORT(GetInputSourceHandle(path, &handle) == VRInputError_None);
+	return handle;
 }
 
-VRInputValueHandle_t BaseInput::activeOriginToIVH(XrPath path)
+VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, XrPath subactionPath)
 {
-	if (path == XR_NULL_PATH)
+	if (subactionPath == XR_NULL_PATH)
 		return vr::k_ulInvalidInputValueHandle;
 
-	// Find the hand for this path
-	int ctrlId = -1;
-	for (int hand = 0; hand < ARRAYSIZE(legacyControllers); hand++) {
-		if (legacyControllers[hand].handPathXr == path) {
-			ctrlId = hand;
-			break;
+	// FIXME return the path to the input source, not to the hand
+
+	for (const auto& legacyController : legacyControllers) {
+		if (legacyController.handPathXr == subactionPath) {
+			ITrackedDevice::HandType handType = legacyController.handType;
+			ITrackedDevice* device = BackendManager::Instance().GetDeviceByHand(handType);
+			return devToIVH(device->DeviceIndex());
 		}
 	}
 
-	if (ctrlId == -1) {
-		uint32_t len;
-		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, path, 0, &len, nullptr));
-		std::vector<char> str(len);
-		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, path, len, &len, str.data()));
-		OOVR_ABORTF("Unknown active origin path '%s'", str.data());
-	}
-
-	// Convert it into a device index
-	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
-		if (DeviceIndexToHandId(i) == ctrlId)
-			return devToIVH(i);
-	}
-
-	OOVR_ABORTF("Cannot find controller tracking ID by handId=%d", ctrlId);
+	OOVR_ABORT("Cannot find controller tracking ID by subaction path");
 }
 
 VRInputValueHandle_t BaseInput::HandPathToIVH(const std::string& path)
 {
 	XrPath xrPath;
 	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, path.c_str(), &xrPath));
-	return activeOriginToIVH(xrPath);
+	return activeOriginFromSubaction(nullptr, xrPath);
 }
 
 bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* state)

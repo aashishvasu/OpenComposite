@@ -73,6 +73,20 @@ ITrackedDevice* XrBackend::GetDevice(
 	}
 }
 
+ITrackedDevice* XrBackend::GetDeviceByHand(
+    ITrackedDevice::HandType hand)
+{
+	switch (hand) {
+	case ITrackedDevice::HAND_LEFT:
+		return hand_left.get();
+	case ITrackedDevice::HAND_RIGHT:
+		return hand_right.get();
+	default:
+		OOVR_SOFT_ABORTF("Cannot get hand by type '%d'", (int)hand);
+		return nullptr;
+	}
+}
+
 void XrBackend::GetDeviceToAbsoluteTrackingPose(
     vr::ETrackingUniverseOrigin toOrigin,
     float predictedSecondsToPhotonsFromNow,

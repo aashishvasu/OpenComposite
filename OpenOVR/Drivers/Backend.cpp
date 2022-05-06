@@ -62,6 +62,11 @@ ITrackedDevice* BackendManager::GetDevice(vr::TrackedDeviceIndex_t index)
 	return backend->GetDevice(index);
 }
 
+ITrackedDevice* BackendManager::GetDeviceByHand(ITrackedDevice::HandType hand)
+{
+	return backend->GetDeviceByHand(hand);
+}
+
 IHMD* BackendManager::GetPrimaryHMD()
 {
 	return backend->GetPrimaryHMD();

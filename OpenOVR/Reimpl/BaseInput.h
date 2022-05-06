@@ -4,9 +4,11 @@
 // FIXME don't do that, it's ugly and slows down the build when modifying headers
 #include "../BaseCommon.h"
 
+#include "../Drivers/Backend.h"
 #include "../Misc/json/json.h"
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "../Misc/Input/InputData.h"
@@ -471,7 +473,18 @@ private:
 		XrSpace actionSpace = XR_NULL_HANDLE;
 	};
 
-	struct InputValue {
+	enum class InputSource {
+		INVALID,
+		HAND_LEFT,
+		HAND_RIGHT,
+		// HMD and Gamepad can go in here if necessary
+	};
+
+	struct InputValueHandle {
+		InputValueHandle();
+		~InputValueHandle();
+		std::string path;
+		InputSource type = InputSource::INVALID;
 	};
 
 	// See GetSyncSerial
@@ -482,6 +495,9 @@ private:
 	std::vector<std::unique_ptr<class InteractionProfile>> interactionProfiles;
 	std::map<std::string, std::unique_ptr<ActionSet>> actionSets;
 	std::map<std::string, std::unique_ptr<Action>> actions;
+
+	// Use unordered_map for the registries since they'll likely be extremely frequently accessed
+	std::unordered_map<std::string, std::unique_ptr<InputValueHandle>> inputHandleRegistry;
 
 	std::string bindingsPath;
 
@@ -507,6 +523,7 @@ private:
 
 		std::string handPath; // eg /user/hand/left
 		XrPath handPathXr;
+		ITrackedDevice::HandType handType;
 
 		// Matches up with EVRButtonId
 		XrAction system; // 'system' button, on Vive the SteamVR buttons, on Oculus Touch the menu button on the left controller
@@ -530,9 +547,19 @@ private:
 	// Utility functions
 	static Action* cast_AH(VRActionHandle_t);
 	static ActionSet* cast_ASH(VRActionSetHandle_t);
-	static vr::TrackedDeviceIndex_t cast_IVH(VRInputValueHandle_t);
-	static VRInputValueHandle_t devToIVH(vr::TrackedDeviceIndex_t index);
-	VRInputValueHandle_t activeOriginToIVH(XrPath path);
+	static InputValueHandle* cast_IVH(VRInputValueHandle_t);
+	static ITrackedDevice* ivhToDev(VRInputValueHandle_t handle);
+	VRInputValueHandle_t devToIVH(vr::TrackedDeviceIndex_t index);
+
+	/**
+	 * Get the 'activeOrigin' corresponding to a particular sub-action path on a given action.
+	 *
+	 * in OpenVR the application knows exactly what input source caused the action, while on OpenXR
+	 * we only know what subaction caused it. So if you have two buttons on the same controller
+	 * bound, we can't tell which one was pressed. Therefore this will pick one in an arbitrary but
+	 * consistent manner.
+	 */
+	VRInputValueHandle_t activeOriginFromSubaction(Action* action, XrPath subactionPath);
 
 	friend class InteractionProfile;
 };

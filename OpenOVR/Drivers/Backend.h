@@ -150,6 +150,10 @@ public:
 	PREPEND ITrackedDevice* GetDevice(                                                                                                             \
 	    vr::TrackedDeviceIndex_t index) APPEND;                                                                                                    \
                                                                                                                                                    \
+	/* Get the first (and hopefully only) device of a given hand type, or nullptr */                                                               \
+	PREPEND ITrackedDevice* GetDeviceByHand(                                                                                                       \
+	    ITrackedDevice::HandType hand) APPEND;                                                                                                     \
+                                                                                                                                                   \
 	PREPEND void GetDeviceToAbsoluteTrackingPose(                                                                                                  \
 	    vr::ETrackingUniverseOrigin toOrigin,                                                                                                      \
 	    float predictedSecondsToPhotonsFromNow,                                                                                                    \
