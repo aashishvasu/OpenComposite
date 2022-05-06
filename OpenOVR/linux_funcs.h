@@ -9,4 +9,6 @@ void strncpy_s(char* dest, size_t dest_size, char const* src, size_t max);
 void strcpy_s(char* dest, size_t dest_size, char const* src);
 void DebugBreak();
 
+void FindResourceLinux(int id, const char** start, const char** end);
+
 #define ARRAYSIZE(arr) (sizeof(arr) / sizeof((arr)[0]))

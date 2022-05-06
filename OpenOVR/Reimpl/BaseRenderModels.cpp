@@ -87,7 +87,9 @@ typedef OOVR_TextureID_t TextureID_t;
 static string loadResource(int rid)
 {
 #ifndef _WIN32
-	LINUX_STUBBED();
+	const char *start = nullptr, *end = nullptr;
+	FindResourceLinux(rid, &start, &end);
+	return { start, (size_t)(end - start) };
 #else
 	// Open our OBJ file
 	HRSRC ref = FindResource(openovr_module_id, MAKEINTRESOURCE(rid), MAKEINTRESOURCE(RES_T_OBJ));

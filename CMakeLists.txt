@@ -199,9 +199,18 @@ endif ()
 
 # === OCCore ===
 # TODO: precompiled headers
-set(OVR_RESOURCES
-	OpenOVR/resources.rc
-)
+if (WIN32)
+	set(OVR_RESOURCES
+		OpenOVR/resources.rc
+	)
+else ()
+	enable_language(ASM)
+	set_property(SOURCE OpenOVR/Misc/resources_linux.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
+	set_property(SOURCE OpenOVR/Misc/resources_linux.s SET PROPERTY INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}")
+	set(OVR_RESOURCES
+		OpenOVR/Misc/resources_linux.s
+	)
+endif ()
 set(OVR_PCH_EXCLUDED
 	OpenOVR/Misc/ini.c
 	OpenOVR/Misc/jsoncpp.cpp
@@ -277,9 +286,6 @@ add_library(OCCore STATIC
 
 	# Exclude from the PCH requirement
 	${OVR_PCH_EXCLUDED}
-
-	# Resources
-	${OVR_RESOURCES}
 
 	# Headers
 	OpenOVR/BaseCommon.h
@@ -476,7 +482,10 @@ endif ()
 # See the comment at the top about -fvisibility=hidden
 if (WIN32)
 else ()
-	target_link_libraries(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
+	target_link_options(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
+
+	# Ensure all required symbols are actually found, don't produce a binary that can't be loaded
+	target_link_options(OCOVR PRIVATE -z defs)
 
 	# Oh, and we need dlopen
 	target_link_libraries(OCOVR PUBLIC -ldl)
