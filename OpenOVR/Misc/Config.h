@@ -20,6 +20,7 @@ public:
 	inline bool EnableAppRequestedCubemap() const { return enableAppRequestedCubemap; }
 	inline bool EnableHiddenMeshFix() const { return enableHiddenMeshFix; }
 	inline bool InvertUsingShaders() const { return invertUsingShaders; }
+	inline bool InitUsingVulkan() const { return initUsingVulkan; }
 
 private:
 	static int ini_handler(
@@ -46,6 +47,7 @@ private:
 	bool enableAppRequestedCubemap = true;
 	bool enableHiddenMeshFix = true;
 	bool invertUsingShaders = false;
+	bool initUsingVulkan = true;
 };
 
 extern Config oovr_global_configuration;

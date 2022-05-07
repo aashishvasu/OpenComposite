@@ -48,10 +48,14 @@ static bool parse_bool(string orig, string name, int line)
 {
 	string val = str_tolower(orig);
 
-	if (val == "true" || val == "on" || val == "enabled")
+	if (val == "true" || val == "on" || val == "enabled") {
+		OOVR_LOGF("Setting config param %s to true", name.c_str());
 		return true;
-	if (val == "false" || val == "off" || val == "disabled")
+	}
+	if (val == "false" || val == "off" || val == "disabled") {
+		OOVR_LOGF("Setting config param %s to false", name.c_str());
 		return false;
+	}
 
 	string err = "Value " + orig + " for in config file for " + name + " on line "
 	    + to_string(line) + " is not a boolean - true/on/enabled/false/off/disabled";
@@ -79,6 +83,7 @@ static HmdColor_t parse_HmdColor_t(string orig, string name, int line)
 	c.g = ((hexval(val[3]) << 4) + hexval(val[4])) / 255.0f;
 	c.b = ((hexval(val[5]) << 4) + hexval(val[6])) / 255.0f;
 
+	OOVR_LOGF("Setting config param %s to %f %f %f", name.c_str(), c.r, c.g, c.b);
 	return c;
 
 invalid:
@@ -102,6 +107,7 @@ static float parse_float(string orig, string name, int line)
 		ABORT(err);
 	}
 
+	OOVR_LOGF("Setting config param %s to %f", name.c_str(), result);
 	return result;
 }
 
@@ -116,10 +122,10 @@ int Config::ini_handler(void* user, const char* pSection,
 
 	Config* cfg = (Config*)user;
 
-#define CFGOPT(type, vname)                               \
-	if (name == #vname) {                                 \
-		cfg->vname = parse_##type(value, #vname, lineno); \
-		return true;                                      \
+#define CFGOPT(type, vname)                             \
+	if (name == #vname) {                               \
+		cfg->vname = parse_##type(value, name, lineno); \
+		return true;                                    \
 	}
 
 	if (section == "" || section == "default") {
@@ -138,6 +144,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, enableAppRequestedCubemap);
 		CFGOPT(bool, enableHiddenMeshFix);
 		CFGOPT(bool, invertUsingShaders);
+		CFGOPT(bool, initUsingVulkan);
 	}
 
 #undef CFGOPT

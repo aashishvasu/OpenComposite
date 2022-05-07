@@ -10,6 +10,7 @@
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "XrBackend.h"
 #include "tmp_gfx/TemporaryGraphics.h"
+#include "../OpenOVR/Misc/Config.h"
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 #include "tmp_gfx/TemporaryD3D11.h"
@@ -241,8 +242,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	if (!temporaryGraphics) {
 #if defined(SUPPORT_VK)
-		// If we have Vulkan prioritise that, since we need it if the application uses Vulkan
-		if (apiFlags & XR_SUPPORTED_GRAPHCIS_API_VK) {
+		if ((apiFlags & XR_SUPPORTED_GRAPHCIS_API_VK) && oovr_global_configuration.InitUsingVulkan()) {
 			temporaryGraphics = std::make_unique<TemporaryVk>();
 		}
 #endif
