@@ -161,9 +161,9 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 		XrViewState viewState = { XR_TYPE_VIEW_STATE };
 		XrView _views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
 		OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, _views));
-		OOVR_FALSE_ABORT(viewCount == XruEyeCount);
 
 		if (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT && viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) {
+			OOVR_FALSE_ABORT(viewCount == XruEyeCount);
 			views[0] = _views[0];
 			views[1] = _views[1];
 			time = xr_gbl->GetBestTime();
