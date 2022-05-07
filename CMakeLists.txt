@@ -438,6 +438,7 @@ endif ()
 set(OCOVR_SRC_ALL
 	OCOVR/${OCOVR_PLAT_SRC}
 	OCOVR/openvr_api.cpp
+	OCOVR/openvr_api_0_9_12.cpp
 
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
