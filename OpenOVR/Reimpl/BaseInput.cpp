@@ -720,8 +720,10 @@ void BaseInput::CreateLegacyActions()
 		// Note that while we define the grip as a float, we can still bind it to boolean actions and the OpenXR runtime will
 		// return 0.0 or 1.0 depending on the button status. OpenXR 1.0 § 11.4.
 		create(&ctrl.grip, "grip", "Grip", XR_ACTION_TYPE_FLOAT_INPUT);
+		create(&ctrl.gripClick, "grip-click", "Grip (Digital)", XR_ACTION_TYPE_BOOLEAN_INPUT);
 		create(&ctrl.trigger, "trigger", "Trigger", XR_ACTION_TYPE_FLOAT_INPUT);
 		create(&ctrl.triggerTouch, "trigger-touch", "Trigger (Touch)", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.triggerClick, "trigger-click", "Trigger (Digital)", XR_ACTION_TYPE_BOOLEAN_INPUT);
 
 		create(&ctrl.haptic, "haptic", "Vibration Haptics", XR_ACTION_TYPE_VIBRATION_OUTPUT);
 
@@ -1424,6 +1426,10 @@ VRInputValueHandle_t BaseInput::devToIVH(vr::TrackedDeviceIndex_t index)
 
 VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const char* subactionPath)
 {
+	// FIXME the docs for xrEnumerateBoundSourcesForAction are wrong and will be updated (source: rpavlik). They don't
+	//  have to return a path listed in the input profile, they can be literally anything (not even a /user/hand/<side>
+	//  prefix is guaranteed). Thus we'll need some sophisticated lying to the application about this.
+
 	// If it's time for an update and this isn't a virtual input, update its sources
 	if (syncSerial >= action->nextSourcesUpdate && action->xr) {
 		// Get the attached sources
@@ -1512,14 +1518,9 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	bindButton(ctrl.btnA, ctrl.btnATouch, vr::k_EButton_A);
 	bindButton(ctrl.menu, ctrl.menuTouch, vr::k_EButton_ApplicationMenu);
 	bindButton(ctrl.stickBtn, ctrl.stickBtnTouch, vr::k_EButton_SteamVR_Touchpad);
-
-	// FIXME these two need to convert from an analogue value
-	OOVR_LOG_ONCE("Analogue-to-digital conversion for trigger/grip not yet implemented");
-#ifndef XR_STUBBED
-#error todo
-#endif
-	bindButton(XR_NULL_HANDLE, ctrl.triggerTouch, vr::k_EButton_SteamVR_Trigger);
-	bindButton(XR_NULL_HANDLE, XR_NULL_HANDLE, vr::k_EButton_Axis2);
+	bindButton(ctrl.gripClick, XR_NULL_HANDLE, vr::k_EButton_Grip);
+	bindButton(ctrl.triggerClick, ctrl.triggerTouch, vr::k_EButton_SteamVR_Trigger);
+	bindButton(XR_NULL_HANDLE, XR_NULL_HANDLE, vr::k_EButton_Axis2); // FIXME clean up? Is this the grip?
 
 	// Read the analogue values
 	auto readFloat = [](XrAction action) -> float {

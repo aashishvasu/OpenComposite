@@ -572,8 +572,12 @@ private:
 		XrAction btnA, btnATouch; // Lower button on touch controller - A/X, not present on Vive
 
 		XrAction stickX, stickY, stickBtn, stickBtnTouch; // Axis0
-		XrAction trigger, triggerTouch; // Axis1
-		XrAction grip; // Axis2
+
+		// For the trigger and grip, we use separate actions for digital and analogue input. If the physical input is analogue it
+		// saves us from having to implement hysteresis (and the runtime probably knows what the appropriate thresholds are better
+		// than we do) and generally gives more flexibility on exotic hardware, as the user can rebind them separately.
+		XrAction trigger, triggerClick, triggerTouch; // Axis1
+		XrAction grip, gripClick; // Axis2
 
 		XrAction haptic;
 
