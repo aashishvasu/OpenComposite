@@ -310,7 +310,6 @@ void XrBackend::SubmitFrames(bool showSkybox, bool postPresent)
 
 	// If we are getting calls from PostPresentHandOff then skip the calls from other functions as
 	//  there will be other data such as GUI layers to be added before ending the frame.
-	static bool postPresentStatus = false;
 	bool skipRender = postPresentStatus && !postPresent;
 	postPresentStatus = postPresent;
 

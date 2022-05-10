@@ -59,5 +59,11 @@ private:
 	// early (pre switch to application graphics instance) OpenXR session?
 	bool deferredRenderingStart = false;
 
+	// Keep track of if eye textures have been submitted and if we need to create a projection layer for them
 	bool submittedEyeTextures = false;
+
+	// If the app is using PostPresentHandoff then we need to delay when we submit frame data through xrEndFrame
+	// until after all frame and layer data has been submitted and PostPresentHandoff is called. Otherwise we 
+	// might miss overlay elements for GUI or HUDs
+	bool postPresentStatus = false;
 };
