@@ -1,7 +1,7 @@
 # OpenComposite (OpenXR) - Play SteamVR games without SteamVR!
 
-[![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
-[![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg)](https://ci.appveyor.com/project/ZNix/openovr)
+[![Discord](https://img.shields.io/discord/499733750209314816.svg?style=for-the-badge&logo=discord&label=discord)](https://discord.gg/zYA6Tzs)
+[![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg?style=for-the-badge&logo=appveyor)](https://ci.appveyor.com/project/ZNix/openovr)
 
 OpenComposite OpenXR (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
@@ -147,8 +147,7 @@ If you find an issue, missing interface, crash etc then *please* let me know abo
 way of doing this and you'll automatically get an email when it's fixed (if you let me know
 via a different method I'll probably make an issue and send you the link to help keep track of them).
 
-If you do not or cannot create or use a GitLab account for whatever reason, you can message me
-on Discord - I'm at ZNix#6217. If there is enough interest, I'll create a Discord server.
+If you do not or cannot create or use a GitLab account for whatever reason, you can join the [Discord server](https://discord.gg/zYA6Tzs) and report the issue in #bugs.
 
 In any case, please include the contents your `openovr_log` file - each time you start
 a game, this is created next to the EXE file and contains potentially invaluable debugging
