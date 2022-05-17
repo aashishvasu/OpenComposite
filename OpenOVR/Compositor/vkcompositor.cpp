@@ -106,7 +106,6 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 
 	bool usable = chain != XR_NULL_HANDLE && CheckChainCompatible(*tex, createInfo, texture->eColorSpace);
 
-
 	if (!usable) {
 		OOVR_LOG("Generating new swap chain");
 
@@ -214,26 +213,31 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	    1, &region);
 
 	// Repeat the image copy, but on the runtime side
-	// HACK: as of May 13th 2022 Monado does not support multisampling 
+	// HACK: as of May 13th 2022 Monado does not support multisampling
 	// workaround: use vkCmdResolveImage if our max supported sample count is less than the texture's
 	// could theoretically keep this in place for any runtime that happens to not support multisampling
-	decltype(vkCmdCopyImage) (*copy_img_func) = nullptr;
-	if (xr_main_view(XruEyeLeft).maxSwapchainSampleCount < tex->m_nSampleCount){
-		// vkCmdCopyImage and vkCmdResolveImage take the same parameters
-		copy_img_func = (decltype(&vkCmdCopyImage))&vkCmdResolveImage;
-	}
-	else{
-		copy_img_func = &vkCmdCopyImage;
-	}
-	copy_img_func(rtCommandBuffer,
-	    // Set in SetupMappedImages
-	    rtImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	// note: vkCmdResolveImage doesn't support depth textures
+	if (xr_main_view(XruEyeLeft).maxSwapchainSampleCount < tex->m_nSampleCount) {
+		vkCmdResolveImage(rtCommandBuffer,
+		    // Set in SetupMappedImages
+		    rtImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 
-	    // Set during the transition
-	    swapchainImages.at(currentIndex).image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		    // Set during the transition
+		    swapchainImages.at(currentIndex).image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 
-	    // Information about which subresource to copy, and which area to copy
-	    1, &region);
+		    // Information about which subresource to copy, and which area to copy
+		    1, (VkImageResolve*)&region);
+	} else {
+		vkCmdCopyImage(rtCommandBuffer,
+		    // Set in SetupMappedImages
+		    rtImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+
+		    // Set during the transition
+		    swapchainImages.at(currentIndex).image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+
+		    // Information about which subresource to copy, and which area to copy
+		    1, &region);
+	}
 
 	// Copy the images from the application to the shared memory pool - this is fenced on the application finishing rendering
 	endSingleTimeCommands(tex->m_pDevice, appCommandPool, appCommandBuffer, tex->m_pQueue);
@@ -350,11 +354,10 @@ void VkCompositor::SetupMappedImages(VkCommandBuffer appCmdBuffer, std::vector<V
 	imgInfo.queueFamilyIndexCount = 0; // This must be set if we're in the concurrent sharing mode
 	imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	// TODO createInfo.faceCount - what's that for?
-	
+
 	// make it clear that the created images will be used in external memory
-	VkExternalMemoryImageCreateInfo externalInfo { VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO };
-	externalInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT | 
-		VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+	VkExternalMemoryImageCreateInfo externalInfo{ VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO };
+	externalInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT | VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
 	imgInfo.pNext = (void*)&externalInfo;
 
 	// Create the image on both the runtime and app sides
