@@ -357,7 +357,13 @@ void VkCompositor::SetupMappedImages(VkCommandBuffer appCmdBuffer, std::vector<V
 
 	// make it clear that the created images will be used in external memory
 	VkExternalMemoryImageCreateInfo externalInfo{ VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO };
-	externalInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT | VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+
+#ifdef _WIN32
+	externalInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+#else
+	externalInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+
 	imgInfo.pNext = (void*)&externalInfo;
 
 	// Create the image on both the runtime and app sides
