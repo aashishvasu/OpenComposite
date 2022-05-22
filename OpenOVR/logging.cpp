@@ -18,12 +18,15 @@ using namespace std;
 
 // convert current time to milliseconds since unix epoch
 template <typename T>
-static int to_ms(const std::chrono::time_point<T>& tp)
+static int get_ms(const std::chrono::time_point<T>& tp)
 {
 	using namespace std::chrono;
 
 	auto dur = tp.time_since_epoch();
-	return static_cast<int>(duration_cast<milliseconds>(dur).count());
+	auto s = std::chrono::duration_cast<std::chrono::seconds>(dur);
+	std::chrono::duration<long, std::milli> rounded_ms = s;
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur);
+	return static_cast<int>((ms - rounded_ms).count());
 }
 
 // format it in two parts: main part with date and time and part with milliseconds
@@ -42,7 +45,7 @@ static std::string format_time()
 	    LOGGER_TIME_FORMAT,
 	    time_info);
 
-	int ms = to_ms(tp) % 1000;
+	int ms = get_ms(tp);
 
 	string_size += std::snprintf(
 	    buffer + string_size, sizeof(buffer) - string_size,
