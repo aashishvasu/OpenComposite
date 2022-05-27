@@ -169,7 +169,8 @@ namespace RuntimeSwitcher
                 await DownloadFile(vrclient_x64, "https://znix.xyz/OpenComposite/download.php?arch=x64&branch=openxr");
             }
 
-            File.WriteAllText(revisionFilePath, await UpdateChecker.GetLatestHash());
+            if(downloads)
+                File.WriteAllText(revisionFilePath, await UpdateChecker.GetLatestHash());
 
             dllDownloadMutex.Release();
 

@@ -30,18 +30,22 @@ of your controller.
 - The virtual keyboard does not yet.
 
 The games that I can confirm it works with are as follows:
-- Assetto Corsa
+- Autmobilista 2
+- Assetto Corsa **
 - Assetto Corsa Competizione
 - DCS World *
 - Dirt Rally 2 *
 - Euro Truck Sim 2
 - IL-2
+- Project CARS 2
 - rFactor 2
 
 \* These games use an old version of D3DCompiler_47.dll that is incompatible with some OpenXR Runtimes. 
 If you experience an error with OpenComposite resulting in a -2 error code then find the D3DCompiler_47.dll in the game install
 dir and rename to D3DCompiler_47.dll_orig. This will then use the one from your system path that should be the latest version if
 your system is up to date.
+
+\** Some Oculus headsets seem to be incompatible with OpenXR initialising with Vulkan for some games. If you have issues with AC or other games try putting initUsingVulkan=false in the opencomposite.ini (see [Configuration](https://gitlab.com/znixian/OpenOVR/-/tree/openxr#configuration-file) section for details.)
 
 It probably works in quite a few other games, but I have not tried them.
 
@@ -115,6 +119,8 @@ see in the headset. If you see odd black regions around the view then try disabl
 * `invertUsingShaders` - boolean, default `disabled`. Invert the image for display using shaders rather than replying on XR runtime and inverted FOV values. 
 Some games render the image inverted and rely on the runtime to display correctly. In OpenXR some runtimes don't do the inversion correctly.
 If so enable this option for OpenComposite to do the inversion when copying the image using shaders. This might have a minor cost in performance.
+* `initUsingVulkan` - boolean, default `true`. If available the temporary graphics adapter at start up will use Vulkan by default. This may be
+incompatible with some games. This will mostly affect Oculus headsets. 
 
 The possible types are as follows:
 
