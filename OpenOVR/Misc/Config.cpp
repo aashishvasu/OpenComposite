@@ -8,6 +8,14 @@
 #include <locale>
 #include <string>
 
+#ifdef WIN32
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+
 using namespace std;
 using vr::HmdColor_t;
 
@@ -159,8 +167,12 @@ static int wini_parse(const wchar_t* filename, ini_handler handler, void* user)
 	std::string utf8filename = CHAR_CONV.to_bytes(filename);
 
 	FILE* file = fopen(utf8filename.c_str(), "r");
-	if (!file)
+	if (!file) {
+		OOVR_LOGF("No config file found at %s", utf8filename.c_str());
 		return -1;
+	}
+
+	OOVR_LOGF("Reading config file at %s", utf8filename.c_str());
 
 	int error = ini_parse_file(file, handler, user);
 	fclose(file);
@@ -191,6 +203,7 @@ Config::Config()
 		}
 	}
 
+	OOVR_LOG("Checking for global config file...");
 	wstring file = dir + L"opencomposite.ini";
 	int err = wini_parse(file.c_str(), ini_handler, this);
 #else
@@ -201,7 +214,15 @@ Config::Config()
 	if (err == -1 || err == 0) {
 		// No such file or it was parsed successfully, check the working directory
 		// for a file that overrides some properties
-		file = L"opencomposite.ini";
+		char buff[FILENAME_MAX];
+		GetCurrentDir(buff, FILENAME_MAX);
+		file = wstring(&buff[0], &buff[strlen(buff)]);
+#ifdef _WIN32
+		file += L"\\opencomposite.ini";
+#else
+		file += L"/opencomposite.ini";
+#endif
+		OOVR_LOG("Checking for app specific config file...");
 		err = wini_parse(file.c_str(), ini_handler, this);
 	}
 
