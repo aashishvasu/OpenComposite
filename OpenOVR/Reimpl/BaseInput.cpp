@@ -176,6 +176,72 @@ BaseInput::ActionSource::~ActionSource() = default;
 BaseInput::InputValueHandle::InputValueHandle() = default;
 BaseInput::InputValueHandle::~InputValueHandle() = default;
 
+// Registry implementation
+
+template <typename T>
+BaseInput::Registry<T>::~Registry() = default;
+template <typename T>
+BaseInput::Registry<T>::Registry() = default;
+
+template <typename T>
+T* BaseInput::Registry<T>::LookupItem(const std::string& name) const
+{
+	auto iter = itemsByName.find(lowerStr(name));
+	if (iter == itemsByName.end())
+		return nullptr;
+	return iter->second;
+}
+
+template <typename T>
+T* BaseInput::Registry<T>::LookupItem(RegHandle handle) const
+{
+	auto iter = itemsByHandle.find(handle);
+	if (iter == itemsByHandle.end())
+		return nullptr;
+	return iter->second;
+}
+
+template <typename T>
+BaseInput::RegHandle BaseInput::Registry<T>::LookupHandle(const std::string& name)
+{
+	std::string lowerName = lowerStr(name);
+	auto iter = handlesByName.find(lowerName);
+	if (iter != handlesByName.end())
+		return iter->second;
+
+	// Create a new dummy handle. It's only in the handlesByName map, so looking up the item
+	// for it will return nullptr.
+	RegHandle handle = 0xabcd0001 + handlesByName.size();
+	handlesByName[lowerName] = handle;
+	namesByHandle[handle] = name;
+	return handle;
+}
+
+template <typename T>
+T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T> value)
+{
+	std::string lowerName = lowerStr(name);
+
+	// Make sure noone has ever looked up the handle or created an item for this already, that'd mean trouble
+	OOVR_FALSE_ABORT(handlesByName.count(lowerName) == 0);
+
+	// Move the pointer into storage, so we'll own it
+	T* ptr = value.get();
+	storage.emplace_back(std::move(value));
+
+	// Use pointer as handle, for ease of debugging only
+	// Since our values live as long as the registry, it's guaranteed their addresses won't repeat
+	auto handle = (RegHandle)ptr;
+
+	handlesByName[lowerName] = handle;
+	namesByHandle[handle] = lowerName;
+	itemsByName[lowerName] = ptr;
+	itemsByHandle[handle] = ptr;
+
+	// Convenience return
+	return ptr;
+}
+
 // ---
 
 BaseInput::BaseInput()
@@ -270,11 +336,11 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		else
 			OOVR_ABORTF("Invalid action type '%s' for action '%s'", type.c_str(), action.fullName.c_str());
 
-		if (actions.count(action.fullName))
+		if (actions.LookupItem(action.fullName) != nullptr)
 			OOVR_ABORTF("Duplicate action name '%s'", action.fullName.c_str());
 
 		std::string name = action.fullName; // Array index may be evaluated first iirc, so pull this out now
-		actions[name] = std::move(actionPtr);
+		actions.Initialise(name, std::move(actionPtr));
 	}
 
 	// Parse the action sets
@@ -309,32 +375,26 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			OOVR_ABORTF("Invalid action set usage '%s' for action set '%s'", usage.c_str(), set.name.c_str());
 
 		// Register it
-		actionSets[set.name] = std::make_unique<ActionSet>(set);
+		actionSets.Initialise(set.fullName, std::make_unique<ActionSet>(set));
 	}
 
 	// Make sure all the actions have a corresponding set
-	for (auto& pair : actions) {
-		Action& action = *pair.second;
-
+	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
 		// In the OpenVR samples, they don't declare their action set. Are they automatically created?!
 		// Also Vivecraft unfortunately does this, so we do have to support it.
-		auto item = actionSets.find(action.setName);
-		if (item == actionSets.end()) {
-			OOVR_LOGF("Invalid action set '%s' for action '%s', creating implicit set", action.setName.c_str(), action.fullName.c_str());
+		std::string fullName = "/actions/" + action->setName;
+		ActionSet* set = actionSets.LookupItem(fullName);
+		if (set == nullptr) {
+			OOVR_LOGF("Invalid action set '%s' for action '%s', creating implicit set", action->setName.c_str(), action->fullName.c_str());
 
 			// Create this set
-			ActionSet set{};
-			set.name = action.setName;
-			set.fullName = "/actions/" + set.name;
-			set.usage = ActionSetUsage::LeftRight; // Just assume these default sets are in leftright mode, FIXME validate against steamvr
-			actionSets[set.name] = std::make_unique<ActionSet>(set);
-
-			// Now grab it and it should be there
-			item = actionSets.find(action.setName);
-			OOVR_FALSE_ABORT(item != actionSets.end());
+			set = actionSets.Initialise(fullName, std::make_unique<ActionSet>());
+			set->name = action->setName;
+			set->fullName = fullName;
+			set->usage = ActionSetUsage::LeftRight; // Just assume these default sets are in leftright mode, FIXME validate against steamvr
 		}
 
-		action.set = item->second.get();
+		action->set = set;
 	}
 
 	// Find the default bindings file
@@ -371,29 +431,25 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	/// Now we've got everything done, load the actions into OpenXR
 	//////////////////////////
 
-	for (auto& pair : actionSets) {
-		ActionSet& as = *pair.second;
-
+	for (const std::unique_ptr<ActionSet>& as : actionSets.GetItems()) {
 		XrActionSetCreateInfo createInfo = { XR_TYPE_ACTION_SET_CREATE_INFO };
-		std::string safeName = escapePathString(as.name);
+		std::string safeName = escapePathString(as->name);
 		strcpy_arr(createInfo.actionSetName, safeName.c_str());
-		strcpy_arr(createInfo.localizedActionSetName, as.name.c_str()); // TODO localisation
+		strcpy_arr(createInfo.localizedActionSetName, as->name.c_str()); // TODO localisation
 
 		// Take priority over the ActionSet which defines the legacy bindings.
 		createInfo.priority = 100;
 
-		OOVR_FAILED_XR_ABORT(xrCreateActionSet(xr_instance, &createInfo, &as.xr));
+		OOVR_FAILED_XR_ABORT(xrCreateActionSet(xr_instance, &createInfo, &as->xr));
 	}
 
-	for (auto& pair : actions) {
-		Action& act = *pair.second;
-
+	for (const std::unique_ptr<Action>& act : actions.GetItems()) {
 		XrActionCreateInfo info = { XR_TYPE_ACTION_CREATE_INFO };
-		std::string safeName = escapePathString(act.shortName);
+		std::string safeName = escapePathString(act->shortName);
 		strcpy_arr(info.actionName, safeName.c_str());
-		strcpy_arr(info.localizedActionName, act.shortName.c_str()); // TODO localisation
+		strcpy_arr(info.localizedActionName, act->shortName.c_str()); // TODO localisation
 
-		switch (act.type) {
+		switch (act->type) {
 		case ActionType::Boolean:
 			info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
 			break;
@@ -416,14 +472,14 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			OOVR_SOFT_ABORT("Warning: Unsupported action type - Skeleton"); // Not XR_STUBBED since AFAIK this didn't work before, and since OpenXR doesn't do skeletal stuff we'll have to sort this our ourselves
 			break;
 		default:
-			OOVR_SOFT_ABORTF("Bad action type while remapping action %s: %d", act.fullName.c_str(), act.type);
+			OOVR_SOFT_ABORTF("Bad action type while remapping action %s: %d", act->fullName.c_str(), act->type);
 		}
 
 		// Listen on all the subactions
 		info.subactionPaths = allSubactionPaths.data();
 		info.countSubactionPaths = allSubactionPaths.size();
 
-		OOVR_FAILED_XR_ABORT(xrCreateAction(act.set->xr, &info, &act.xr));
+		OOVR_FAILED_XR_ABORT(xrCreateAction(act->set->xr, &info, &act->xr));
 	}
 
 	CreateLegacyActions();
@@ -437,9 +493,8 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	BindInputsForSession();
 
 	// Finish the setup for our VirtualInputs
-	for (const auto& actionPair : actions) {
-		const Action& action = *actionPair.second;
-		for (const std::unique_ptr<VirtualInput>& input : action.virtualInputs) {
+	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
+		for (const std::unique_ptr<VirtualInput>& input : action->virtualInputs) {
 			input->PostInit();
 		}
 	}
@@ -486,9 +541,9 @@ void BaseInput::BindInputsForSession()
 	OOVR_LOGF("Loading bindings file %s", bindingsPath.c_str());
 
 	// Since the session has changed, any actionspaces we previously created are now invalid
-	for (auto& pair : actions) {
-		if (pair.second->actionSpace)
-			pair.second->actionSpace = XR_NULL_HANDLE;
+	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
+		if (action->actionSpace)
+			action->actionSpace = XR_NULL_HANDLE;
 	}
 
 	// Same goes for the actionspaces of the legacy controller pose actions
@@ -502,9 +557,8 @@ void BaseInput::BindInputsForSession()
 
 	// Now attach the action sets to the OpenXR session, making them immutable (including attaching suggested bindings)
 	std::vector<XrActionSet> sets;
-	for (auto& pair : actionSets) {
-		ActionSet& as = *pair.second;
-		sets.push_back(as.xr);
+	for (const std::unique_ptr<ActionSet>& as : actionSets.GetItems()) {
+		sets.push_back(as->xr);
 	}
 
 	sets.push_back(legacyInputsSet);
@@ -543,10 +597,9 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 		}
 		std::string setName = setFullName.substr(prefix.size());
 
-		auto setIter = actionSets.find(setName);
-		if (setIter == actionSets.end())
+		ActionSet* set = actionSets.LookupItem("/actions/" + setName);
+		if (set == nullptr)
 			OOVR_ABORTF("Missing action set '%s' in bindings file '%s'", setName.c_str(), bindingsPath.c_str());
-		const ActionSet& set = *setIter->second;
 
 		// TODO combine these loops for sources, poses and haptics
 
@@ -558,10 +611,9 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 				const Json::Value item = inputsJson[inputName];
 
 				std::string actionName = lowerStr(item["output"].asString());
-				auto actionIter = actions.find(actionName);
-				if (actionIter == actions.end())
+				Action* action = actions.LookupItem(actionName);
+				if (action == nullptr)
 					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
-				Action& action = *actionIter->second;
 
 				// There's probably some differences, but it looks like the SteamVR paths will 'just work' with OpenXR
 				// FIXME this doesn't with with binding boolean actions to analogue inputs
@@ -573,14 +625,14 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 				const VirtualInputFactory* virtFactory = profile.GetVirtualInput(pathStr);
 				if (virtFactory) {
 					VirtualInput::BindInfo info = {};
-					info.actionSet = action.set->xr;
-					info.actionSetName = action.setName;
-					info.openvrActionName = action.shortName;
-					info.localisedName = action.shortName; // TODO localisation
+					info.actionSet = action->set->xr;
+					info.actionSetName = action->setName;
+					info.openvrActionName = action->shortName;
+					info.localisedName = action->shortName; // TODO localisation
 
 					std::unique_ptr<VirtualInput> virt = virtFactory->BuildFor(info);
 					virt->AddSuggestedBindings(bindings);
-					action.virtualInputs.push_back(std::move(virt));
+					action->virtualInputs.push_back(std::move(virt));
 
 					// Note that we leave around the native xr instance, in case it's also bound to a native input later
 
@@ -595,7 +647,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 
 				XrPath path;
 				OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
-				bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
+				bindings.push_back(XrActionSuggestedBinding{ action->xr, path });
 			}
 		}
 
@@ -603,10 +655,9 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 			std::string specPath = lowerStr(item["path"].asString());
 
 			std::string actionName = lowerStr(item["output"].asString());
-			auto actionIter = actions.find(actionName);
-			if (actionIter == actions.end())
+			Action* action = actions.LookupItem(actionName);
+			if (action == nullptr)
 				OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
-			const Action& action = *actionIter->second;
 
 			// Translate over the paths - TODO find out what all the valid ones are
 			std::string pathStr;
@@ -625,17 +676,16 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 
 			XrPath path;
 			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
-			bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
+			bindings.push_back(XrActionSuggestedBinding{ action->xr, path });
 		}
 
 		for (const auto& item : setJson["haptics"]) {
 			std::string pathStr = lowerStr(item["path"].asString());
 
 			std::string actionName = lowerStr(item["output"].asString());
-			auto actionIter = actions.find(actionName);
-			if (actionIter == actions.end())
+			Action* action = actions.LookupItem(actionName);
+			if (action == nullptr)
 				OOVR_ABORTF("Missing haptic action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
-			const Action& action = *actionIter->second;
 
 			if (!profile.IsInputPathValid(pathStr)) {
 				OOVR_ABORTF("Built invalid input path %s from pose action %s", pathStr.c_str(), actionName.c_str());
@@ -643,7 +693,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 
 			XrPath path;
 			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
-			bindings.push_back(XrActionSuggestedBinding{ action.xr, path });
+			bindings.push_back(XrActionSuggestedBinding{ action->xr, path });
 		}
 	}
 
@@ -734,34 +784,14 @@ void BaseInput::CreateLegacyActions()
 
 EVRInputError BaseInput::GetActionSetHandle(const char* pchActionSetName, VRActionSetHandle_t* pHandle)
 {
-	*pHandle = k_ulInvalidActionSetHandle;
-
-	std::string prefix = "/actions/";
-	if (strncmp(prefix.c_str(), pchActionSetName, prefix.size()) != 0) {
-		OOVR_SOFT_ABORTF("Invalid action set name '%s' - missing or bad prefix", pchActionSetName);
-		// This is a bogus error, SteamVR will just make a new handle
-		return vr::VRInputError_NameNotFound;
-	}
-	std::string setName = pchActionSetName + prefix.size();
-
-	auto item = actionSets.find(lowerStr(setName));
-	if (item == actionSets.end())
-		return VRInputError_NameNotFound;
-
-	*pHandle = (VRActionSetHandle_t)item->second.get();
-	return VRInputError_None;
+	*pHandle = actionSets.LookupHandle(pchActionSetName);
+	return vr::VRInputError_None;
 }
 
 EVRInputError BaseInput::GetActionHandle(const char* pchActionName, VRActionHandle_t* pHandle)
 {
-	*pHandle = k_ulInvalidActionHandle;
-
-	auto item = actions.find(lowerStr(pchActionName));
-	if (item == actions.end())
-		return VRInputError_NameNotFound;
-
-	*pHandle = (VRActionHandle_t)item->second.get();
-	return VRInputError_None;
+	*pHandle = actions.LookupHandle(pchActionName);
+	return vr::VRInputError_None;
 }
 
 EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VRInputValueHandle_t* pHandle)
@@ -812,9 +842,8 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	OOVR_FALSE_ABORT(sizeof(*pSets) == unSizeOfVRSelectedActionSet_t);
 
 	// First tell all the VirtualInputs to update, to process bChanged
-	for (const auto& actionPair : actions) {
-		const Action& action = *actionPair.second;
-		for (const std::unique_ptr<VirtualInput>& input : action.virtualInputs) {
+	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
+		for (const std::unique_ptr<VirtualInput>& input : action->virtualInputs) {
 			input->OnPreFrame();
 		}
 	}
@@ -1351,12 +1380,12 @@ EVRInputError BaseInput::GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath
 
 BaseInput::Action* BaseInput::cast_AH(VRActionHandle_t handle)
 {
-	return (Action*)handle;
+	return actions.LookupItem((RegHandle)handle);
 }
 
 BaseInput::ActionSet* BaseInput::cast_ASH(VRActionSetHandle_t handle)
 {
-	return (ActionSet*)handle;
+	return actionSets.LookupItem((RegHandle)handle);
 }
 
 BaseInput::InputValueHandle* BaseInput::cast_IVH(VRInputValueHandle_t handle)

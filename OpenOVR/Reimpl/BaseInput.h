@@ -520,16 +520,62 @@ private:
 		std::string devicePathString;
 	};
 
+	using RegHandle = uint64_t;
+
+	// For keeping track of string-lookup based stuff: actions, actionsets, and inputvaluehandles.
+	// These basically serve two purposes: storing useful stuff that OpenComposite inserts, and associating
+	//  a name the game made up and we don't support with a consistent handle.
+	// Think of this as being used for something like XrPath: the application can convert a string into a
+	//  handle and that handle must be both unique for that string, and constant across calls with the same
+	//  string supplied.
+	// Additionally, some magic strings that OpenComposite loads are associated with additional data.
+	// These provide an opaque handle for a given string. If that string has an object associated with it then
+	//  it's that pointer (to make debugging easier, since you just cast to inspect the contents) or a dummy
+	//  value of a constant plus some randomisation otherwise.
+	// Handle-to-object lookups are always done through an unsorted map (no pointer cases, just in case the
+	//  memory behind the dummy values are somehow allocated and the performance cost should be very
+	//  small), the handle being the pointer solely for debugging.
+	template <typename T>
+	class Registry {
+	public:
+		Registry();
+		~Registry();
+
+		T* LookupItem(const std::string& name) const;
+		T* LookupItem(RegHandle handle) const;
+		RegHandle LookupHandle(const std::string& name);
+		T* Initialise(const std::string& name, std::unique_ptr<T> value);
+		std::vector<std::unique_ptr<T>>& GetItems() { return storage; }
+
+	private:
+		// A map of names to handles, used in the common case of not-the-first call
+		std::unordered_map<std::string, RegHandle> handlesByName;
+
+		// Reverse-lookup for debugging
+		std::unordered_map<RegHandle, std::string> namesByHandle;
+
+		// Handles to their associated item, or nothing
+		std::unordered_map<RegHandle, T*> itemsByHandle;
+
+		// Also for bonus performance, name to handle directly. Access time is more
+		// important than memory usage here, as there won't be many actual items (maybe
+		// single-digit thousands at most).
+		std::unordered_map<std::string, T*> itemsByName;
+
+		// The storage for all the actual items
+		std::vector<std::unique_ptr<T>> storage;
+	};
+
 	// See GetSyncSerial
 	uint64_t syncSerial = 0;
 
 	bool hasLoadedActions = false;
 	bool usingLegacyInput = false;
 	std::vector<std::unique_ptr<class InteractionProfile>> interactionProfiles;
-	std::map<std::string, std::unique_ptr<ActionSet>> actionSets;
-	std::map<std::string, std::unique_ptr<Action>> actions;
+	Registry<ActionSet> actionSets;
+	Registry<Action> actions;
 
-	// Use unordered_map for the registries since they'll likely be extremely frequently accessed
+	// TODO convert to Registry
 	std::unordered_map<std::string, std::unique_ptr<InputValueHandle>> inputHandleRegistry;
 
 	std::string bindingsPath;
@@ -590,8 +636,8 @@ private:
 	LegacyControllerActions legacyControllers[2] = {};
 
 	// Utility functions
-	static Action* cast_AH(VRActionHandle_t);
-	static ActionSet* cast_ASH(VRActionSetHandle_t);
+	Action* cast_AH(VRActionHandle_t);
+	ActionSet* cast_ASH(VRActionSetHandle_t);
 	static InputValueHandle* cast_IVH(VRInputValueHandle_t);
 	static ITrackedDevice* ivhToDev(VRInputValueHandle_t handle);
 	VRInputValueHandle_t devToIVH(vr::TrackedDeviceIndex_t index);
