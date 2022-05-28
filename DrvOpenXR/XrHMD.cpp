@@ -150,6 +150,10 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 	static XrTime time = 0;
 	static XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
 
+	// This won't exactly work for HMDs designed for spiders, but it's how SteamVR handles invalid eye numbers.
+	if (eEye < 0 || (int)eEye >= 2)
+		eEye = vr::Eye_Left;
+
 	if (time != xr_gbl->GetBestTime()) {
 		XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 		locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
