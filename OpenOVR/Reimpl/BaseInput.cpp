@@ -1033,9 +1033,6 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
-	// TODO test ulRestrictToDevice
-	OOVR_FALSE_ABORT(ulRestrictToDevice == vr::k_ulInvalidInputValueHandle);
-
 	if (act->type != ActionType::Pose)
 		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
 
