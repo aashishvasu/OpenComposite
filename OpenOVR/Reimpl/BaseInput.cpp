@@ -618,8 +618,12 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 		std::string setName = setFullName.substr(prefix.size());
 
 		ActionSet* set = actionSets.LookupItem("/actions/" + setName);
-		if (set == nullptr)
-			OOVR_ABORTF("Missing action set '%s' in bindings file '%s'", setName.c_str(), bindingsPath.c_str());
+		if (set == nullptr) {
+			// It seems ActionSets specified in the bindings but not in the action manifest are just ignored.
+			// Jet Island has those as of 29/05/2022.
+			OOVR_LOGF("WARNING: Missing action set '%s' in bindings file '%s', ignoring", setName.c_str(), bindingsPath.c_str());
+			continue;
+		}
 
 		// TODO combine these loops for sources, poses and haptics
 
