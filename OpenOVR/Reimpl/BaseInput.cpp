@@ -476,7 +476,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			break;
 		case ActionType::Skeleton:
 			OOVR_SOFT_ABORT("Warning: Unsupported action type - Skeleton"); // Not XR_STUBBED since AFAIK this didn't work before, and since OpenXR doesn't do skeletal stuff we'll have to sort this our ourselves
-			break;
+			continue;
 		default:
 			OOVR_SOFT_ABORTF("Bad action type while remapping action %s: %d", act->fullName.c_str(), act->type);
 		}
@@ -1033,6 +1033,12 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
+	// TODO implement
+	if (act->type == ActionType::Skeleton) {
+		OOVR_SOFT_ABORTF("Skeletal pose read for action %s not yet supported", act->fullName.c_str());
+		return vr::VRInputError_MissingSkeletonData;
+	}
+
 	if (act->type != ActionType::Pose)
 		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
 
@@ -1091,11 +1097,33 @@ EVRInputError BaseInput::GetPoseActionDataForNextFrame(VRActionHandle_t action, 
 EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
+	// This is the older function, should redirect to the one without the restrict-to-device argument.
 	STUBBED();
 }
-EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t* pActionData, uint32_t unActionDataSize)
+EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, InputSkeletalActionData_t* out, uint32_t unActionDataSize)
 {
-	STUBBED();
+	// Make sure the target struct is the right size, in case it grows in the future
+	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*out));
+
+	Action* action = cast_AH(actionHandle);
+
+	// If there's no action, say there's nothing on it
+	if (action == nullptr) {
+		*out = {
+			.bActive = false,
+			.activeOrigin = vr::k_ulInvalidActionHandle,
+		};
+		return vr::VRInputError_None;
+	}
+
+	OOVR_SOFT_ABORT("Skeletal action data not yet supported");
+
+	// For now, write out some non-active data
+	*out = {
+		.bActive = false,
+		.activeOrigin = vr::k_ulInvalidActionHandle,
+	};
+	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetDominantHand(vr::ETrackedControllerRole* peDominantHand)
 {
