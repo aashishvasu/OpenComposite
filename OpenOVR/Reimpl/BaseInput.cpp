@@ -1111,22 +1111,19 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, In
 
 	Action* action = cast_AH(actionHandle);
 
+	// Zero out the output data, leaving:
+	// bActive = false
+	// activeOrigin = vr::k_ulInvalidActionHandle
+	ZeroMemory(out, unActionDataSize);
+
 	// If there's no action, say there's nothing on it
 	if (action == nullptr) {
-		*out = {
-			.bActive = false,
-			.activeOrigin = vr::k_ulInvalidActionHandle,
-		};
 		return vr::VRInputError_None;
 	}
 
 	OOVR_SOFT_ABORT("Skeletal action data not yet supported");
 
-	// For now, write out some non-active data
-	*out = {
-		.bActive = false,
-		.activeOrigin = vr::k_ulInvalidActionHandle,
-	};
+	// For now, just return with non-active data
 	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetDominantHand(vr::ETrackedControllerRole* peDominantHand)
