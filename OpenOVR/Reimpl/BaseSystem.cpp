@@ -457,6 +457,8 @@ void BaseSystem::_OnPostFrame()
 	lastStatus = status;
 #endif
 
+	frameNumber++;
+
 	// Note: OpenXR event handling is now in XrBackend
 
 	// Create the input system, if the game hasn't already done so
@@ -467,17 +469,8 @@ void BaseSystem::_OnPostFrame()
 		if (!inputSystem) {
 			inputSystem = GetCreateBaseInput();
 
-			// Some games might not load the manifest until way later on, so as a bit of a hack let
-			// the user specify the manifest in an environment variable. In particular, Jet Island
-			// needs this. Ideally we'd do something better like delaying the manifest loading for
-			// a few frames or until the first stereo projection frame is submitted, but this will
-			// do for now, for development purposes.
-			const char* manifestPath = getenv("OPENCOMPOSITE_DEFAULT_MANIFEST");
-			if (manifestPath) {
-				inputSystem->SetActionManifestPath(manifestPath);
-			} else {
-				inputSystem->LoadEmptyManifest();
-			}
+			// We used to load an empty manifest here. Instead, we now wait until games first read the legacy
+			// inputs. This way games that wait until several frames in to load their manifest will still work.
 		}
 	}
 
@@ -613,10 +606,17 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 
 	// Since we can only bind the manifest once, and some games may never call it or may
 	//  try reading the controller state first, wait until the first frame has been submitted (returning
-	//  blank controller states until then) and only then load an empty manifest.
+	//  blank controller states until then) AND the game tries reading the controller state.
+	// This will work for both games that call this function before loading their manifest (do they really
+	//  exist? The comments mentioned that but it seems unlikely one ever actually did, and this bit may
+	//  be unnecessary.) and for games that load their manifest late (Jet Island does as of 29/05/2022).
+	// This won't work for games that need hand positions but don't use either legacy or new input, but
+	//  it seems unlikely any shipping game falls into that category.
 	if (!inputSystem) {
 		return true;
 	}
+	if (frameNumber > 0)
+		inputSystem->LoadEmptyManifestIfRequired();
 
 	return inputSystem->GetLegacyControllerState(controllerDeviceIndex, controllerState);
 #else

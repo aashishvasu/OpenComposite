@@ -329,9 +329,13 @@ public: // INTERNAL FUNCTIONS
 	/**
 	 * Similar to setting the manifest, but doesn't actually load one. Equivalent to passing in a blank manifest.
 	 *
+	 * If a manifest is already loaded, this does nothing. It should be called when a function from the legacy
+	 * input system is used. That way, games that belatedly load their manifests won't be mis-identified as using
+	 * the legacy system (previously this was called after the first frame).
+	 *
 	 * Used for games that don't use the input system.
 	 */
-	void LoadEmptyManifest();
+	void LoadEmptyManifestIfRequired();
 
 	/**
 	 * Update the input stuff, called by BaseSystem.

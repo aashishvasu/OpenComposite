@@ -268,8 +268,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	//////////////
 
 	if (hasLoadedActions) {
-		// Ignore calls with the same action manifest path. This is needed when
-		// the OPENCOMPOSITE_DEFAULT_MANIFEST environment variable is set.
+		// It stands to reason that nothing would happen if we try to load the same manifest again
 		if (loadedActionsPath == pchActionManifestPath)
 			return vr::VRInputError_None;
 
@@ -509,12 +508,13 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	return vr::VRInputError_None;
 }
 
-void BaseInput::LoadEmptyManifest()
+void BaseInput::LoadEmptyManifestIfRequired()
 {
+	if (hasLoadedActions)
+		return;
+
 	OOVR_LOG("Loading virtual empty manifest");
 
-	if (hasLoadedActions)
-		OOVR_ABORT("Cannot re-load actions!");
 	hasLoadedActions = true;
 	usingLegacyInput = true;
 

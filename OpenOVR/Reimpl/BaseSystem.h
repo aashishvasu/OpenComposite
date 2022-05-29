@@ -33,6 +33,8 @@ private:
 	// The input subsystem. This is used for the old-style inputs and haptics.
 	std::shared_ptr<class BaseInput> inputSystem;
 
+	uint64_t frameNumber = 0;
+
 public:
 	// To be called by other base classes
 	void _OnPostFrame();
