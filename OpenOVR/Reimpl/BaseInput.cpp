@@ -505,6 +505,19 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		}
 	}
 
+	// Print the input profile for debugging
+	XrInteractionProfileState ips = { XR_TYPE_INTERACTION_PROFILE_STATE };
+	xrGetCurrentInteractionProfile(xr_session, legacyControllers[0].handPathXr, &ips);
+	char inputProfile[128];
+	ZeroMemory(inputProfile, sizeof(inputProfile));
+	uint32_t len;
+	if (ips.interactionProfile == XR_NULL_PATH)
+		strcpy(inputProfile, "<OC NULL>");
+	else
+		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, ips.interactionProfile,
+		    sizeof(inputProfile) - 1, &len, inputProfile));
+	OOVR_LOGF("Using input profile: '%s'\n", inputProfile);
+
 	return vr::VRInputError_None;
 }
 
