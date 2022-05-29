@@ -570,6 +570,7 @@ private:
 	uint64_t syncSerial = 0;
 
 	bool hasLoadedActions = false;
+	std::string loadedActionsPath;
 	bool usingLegacyInput = false;
 	std::vector<std::unique_ptr<class InteractionProfile>> interactionProfiles;
 	Registry<ActionSet> actionSets;

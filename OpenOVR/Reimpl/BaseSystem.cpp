@@ -466,7 +466,18 @@ void BaseSystem::_OnPostFrame()
 
 		if (!inputSystem) {
 			inputSystem = GetCreateBaseInput();
-			inputSystem->LoadEmptyManifest();
+
+			// Some games might not load the manifest until way later on, so as a bit of a hack let
+			// the user specify the manifest in an environment variable. In particular, Jet Island
+			// needs this. Ideally we'd do something better like delaying the manifest loading for
+			// a few frames or until the first stereo projection frame is submitted, but this will
+			// do for now, for development purposes.
+			const char* manifestPath = getenv("OPENCOMPOSITE_DEFAULT_MANIFEST");
+			if (manifestPath) {
+				inputSystem->SetActionManifestPath(manifestPath);
+			} else {
+				inputSystem->LoadEmptyManifest();
+			}
 		}
 	}
 

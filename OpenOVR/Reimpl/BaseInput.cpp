@@ -267,9 +267,16 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	//// Load the actions from the manifest file
 	//////////////
 
-	if (hasLoadedActions)
+	if (hasLoadedActions) {
+		// Ignore calls with the same action manifest path. This is needed when
+		// the OPENCOMPOSITE_DEFAULT_MANIFEST environment variable is set.
+		if (loadedActionsPath == pchActionManifestPath)
+			return vr::VRInputError_None;
+
 		OOVR_ABORT("Cannot re-load actions!");
+	}
 	hasLoadedActions = true;
+	loadedActionsPath = pchActionManifestPath;
 
 	Json::Value root;
 	// It says 'open or parse', but really it ignores parse errors - TODO catch those
