@@ -562,8 +562,7 @@ void BaseInput::BindInputsForSession()
 
 	// Since the session has changed, any actionspaces we previously created are now invalid
 	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
-		if (action->actionSpace)
-			action->actionSpace = XR_NULL_HANDLE;
+		action->actionSpaces.clear();
 	}
 
 	// Same goes for the actionspaces of the legacy controller pose actions
@@ -1046,13 +1045,9 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	if (act->type != ActionType::Pose)
 		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
 
-	// Create the action space if it doesn't already exist
-	if (!act->actionSpace) {
-		XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
-		info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
-		info.action = act->xr;
-		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &act->actionSpace));
-	}
+	// Initialise the action spaces array if required
+	if (act->actionSpaces.empty())
+		act->actionSpaces.resize(allSubactionPaths.size());
 
 	// Unfortunately to implement activeOrigin we have to loop through and query each action state
 	for (int i = 0; i < allSubactionPaths.size(); i++) {
@@ -1076,7 +1071,17 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
 
 		if (state.isActive) {
-			xr_utils::PoseFromSpace(&pActionData->pose, act->actionSpace, eOrigin);
+			// Create the action space if it doesn't already exist - note there's one action space per subaction path
+			XrSpace& actionSpace = act->actionSpaces.at(i);
+			if (!actionSpace) {
+				XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
+				info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
+				info.action = act->xr;
+				info.subactionPath = subactionPath;
+				OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &actionSpace));
+			}
+
+			xr_utils::PoseFromSpace(&pActionData->pose, actionSpace, eOrigin);
 		}
 
 		// TODO implement the deltas

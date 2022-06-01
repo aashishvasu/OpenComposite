@@ -480,8 +480,9 @@ private:
 		// Any virtual inputs bound to this action are attached here
 		std::vector<std::unique_ptr<class VirtualInput>> virtualInputs;
 
-		// Only used in the case of Pose actions
-		XrSpace actionSpace = XR_NULL_HANDLE;
+		// Only used in the case of Pose actions, this is the action space for each subaction path
+		// The indexes match up with allSubactionPaths
+		std::vector<XrSpace> actionSpaces;
 	};
 
 	enum class InputSource {
