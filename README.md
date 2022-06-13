@@ -2,7 +2,12 @@
 
 [![Discord](https://img.shields.io/discord/499733750209314816.svg?style=for-the-badge&logo=discord&label=discord)](https://discord.gg/zYA6Tzs)
 [![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg?style=for-the-badge&logo=appveyor)](https://ci.appveyor.com/project/ZNix/openovr)
+---------------------------------------------
+# [GAME COMPATIBILITY SPREADSHEET](https://docs.google.com/spreadsheets/d/1s2SSuRt0oHm91RUZB-R-ef5BrfOtvP_jwDwb6FuMF9Q/edit#gid=2068512515)
 
+Feel free to comment on the spreadsheet for us to modify its information.
+
+------------------------------------------------------
 OpenComposite OpenXR (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
 to the OpenXR runtime. Think of it as a backwards version of ReVive, for the OpenXR compatible headsets.
