@@ -291,6 +291,10 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
 	xr_gbl = new XrSessionGlobals();
 
+	// Print the current version for diagnostic purposes
+	OOVR_LOGF("Started OpenXR session on runtime '%s', hand tracking supported: %d",
+	    xr_gbl->systemProperties.systemName, xr_gbl->handTrackingProperties.supportsHandTracking);
+
 	// If required, re-setup the input system for this new session
 	BaseInput* input = GetUnsafeBaseInput();
 	if (input)
