@@ -178,6 +178,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	if (availableExtensions.count(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME))
 		extensions.push_back(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
 
+	if (availableExtensions.count(XR_EXT_HAND_TRACKING_EXTENSION_NAME))
+		extensions.push_back(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+
 	const char* const layers[] = {
 #ifdef XR_VALIDATION_LAYER_PATH
 		"XR_APILAYER_LUNARG_core_validation",

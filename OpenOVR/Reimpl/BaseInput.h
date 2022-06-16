@@ -470,6 +470,10 @@ private:
 
 		XrAction xr = XR_NULL_HANDLE;
 
+		// If this is a skeletal action, what hand it's bound to - this is set in the actions
+		// manifest itself, not a binding file.
+		ITrackedDevice::HandType skeletalHand = ITrackedDevice::HAND_NONE;
+
 		// The action sources (paths like /user/hand/left/input/select/click, specifying an output of a physical
 		// control) this action is bound to. This is cached, and is updated by activeOriginFromSubaction.
 		XrPath sources[32] = {};
@@ -636,10 +640,50 @@ private:
 		// Note: the 'grip' pose runs along the axis of the Touch controller, the 'aim' pose comes
 		// straight out the front if you're holding it neutral. They correspond to the old Oculus
 		// and SteamVR poses.
+		// Note: The skeletal input functions all work inside the grip space, not sure if SteamVR does it this way.
 		XrAction gripPoseAction, aimPoseAction;
 		XrSpace gripPoseSpace, aimPoseSpace;
 	};
 	LegacyControllerActions legacyControllers[2] = {};
+
+	// From https://github.com/ValveSoftware/openvr/wiki/Hand-Skeleton
+	// Used as indexes into the skeleton output data
+	enum HandSkeletonBone {
+		eBone_Root = 0,
+		eBone_Wrist,
+		eBone_Thumb0,
+		eBone_Thumb1,
+		eBone_Thumb2,
+		eBone_Thumb3,
+		eBone_IndexFinger0,
+		eBone_IndexFinger1,
+		eBone_IndexFinger2,
+		eBone_IndexFinger3,
+		eBone_IndexFinger4,
+		eBone_MiddleFinger0,
+		eBone_MiddleFinger1,
+		eBone_MiddleFinger2,
+		eBone_MiddleFinger3,
+		eBone_MiddleFinger4,
+		eBone_RingFinger0,
+		eBone_RingFinger1,
+		eBone_RingFinger2,
+		eBone_RingFinger3,
+		eBone_RingFinger4,
+		eBone_PinkyFinger0,
+		eBone_PinkyFinger1,
+		eBone_PinkyFinger2,
+		eBone_PinkyFinger3,
+		eBone_PinkyFinger4,
+		eBone_Aux_Thumb,
+		eBone_Aux_IndexFinger,
+		eBone_Aux_MiddleFinger,
+		eBone_Aux_RingFinger,
+		eBone_Aux_PinkyFinger,
+		eBone_Count
+	};
+
+	XrHandTrackerEXT handTrackers[2] = { XR_NULL_HANDLE, XR_NULL_HANDLE };
 
 	// Utility functions
 	Action* cast_AH(VRActionHandle_t);

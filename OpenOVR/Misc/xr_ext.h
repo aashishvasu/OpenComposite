@@ -87,6 +87,23 @@ public:
 		return pfnXrGetVisibilityMaskKHR(session, viewConfigurationType, viewIndex, visibilityMaskType, visibilityMask);
 	}
 
+	bool handTrackingExtensionAvailable() { return pfnXrCreateHandTrackerExt != nullptr; }
+	XrResult xrCreateHandTrackerEXT(XrSession session, const XrHandTrackerCreateInfoEXT* createInfo, XrHandTrackerEXT* handTracker)
+	{
+		OOVR_FALSE_ABORT(pfnXrCreateHandTrackerExt);
+		return pfnXrCreateHandTrackerExt(session, createInfo, handTracker);
+	}
+	XrResult xrDestroyHandTrackerEXT(XrHandTrackerEXT handTracker)
+	{
+		OOVR_FALSE_ABORT(pfnXrDestroyHandTrackerExt);
+		return pfnXrDestroyHandTrackerExt(handTracker);
+	}
+	XrResult xrLocateHandJointsEXT(XrHandTrackerEXT handTracker, const XrHandJointsLocateInfoEXT* locateInfo, XrHandJointLocationsEXT* locations)
+	{
+		OOVR_FALSE_ABORT(pfnXrLocateHandJointsExt);
+		return pfnXrLocateHandJointsExt(handTracker, locateInfo, locations);
+	}
+
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	bool xrGetD3D11GraphicsRequirementsKHR_Available()
 	{
@@ -163,6 +180,9 @@ public:
 
 private:
 	PFN_xrGetVisibilityMaskKHR pfnXrGetVisibilityMaskKHR = nullptr;
+	PFN_xrCreateHandTrackerEXT pfnXrCreateHandTrackerExt = nullptr;
+	PFN_xrDestroyHandTrackerEXT pfnXrDestroyHandTrackerExt = nullptr;
+	PFN_xrLocateHandJointsEXT pfnXrLocateHandJointsExt = nullptr;
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	PFN_xrGetD3D11GraphicsRequirementsKHR pfnXrGetD3D11GraphicsRequirementsKHR = nullptr;

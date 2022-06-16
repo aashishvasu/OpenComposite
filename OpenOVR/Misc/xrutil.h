@@ -46,6 +46,9 @@ public:
 	XrSpace seatedSpace;
 	XrSpace viewSpace;
 
+	XrSystemProperties systemProperties = { XR_TYPE_SYSTEM_PROPERTIES };
+	XrSystemHandTrackingPropertiesEXT handTrackingProperties = { XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT };
+
 	// Set by XrBackend
 	XrTime nextPredictedFrameTime = 1;
 

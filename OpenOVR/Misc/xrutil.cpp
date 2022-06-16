@@ -28,9 +28,12 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 {
 	// Check the extensions we have selected, and don't fetch functions if we're not allowed to use them
 	bool hasVisMask = false;
+	bool hasHandTracking = false;
 	for (const char* ext : extensions) {
 		if (strcmp(ext, XR_KHR_VISIBILITY_MASK_EXTENSION_NAME) == 0)
 			hasVisMask = true;
+		if (strcmp(ext, XR_EXT_HAND_TRACKING_EXTENSION_NAME) == 0)
+			hasHandTracking = true;
 	}
 
 #define XR_BIND(name, function) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function))
@@ -38,6 +41,12 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 
 	if (hasVisMask)
 		XR_BIND_OPT(xrGetVisibilityMaskKHR, pfnXrGetVisibilityMaskKHR);
+
+	if (hasHandTracking) {
+		XR_BIND(xrCreateHandTrackerEXT, pfnXrCreateHandTrackerExt);
+		XR_BIND(xrDestroyHandTrackerEXT, pfnXrDestroyHandTrackerExt);
+		XR_BIND(xrLocateHandJointsEXT, pfnXrLocateHandJointsExt);
+	}
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	if (apis & XR_SUPPORTED_GRAPHCIS_API_D3D11) {
@@ -93,6 +102,11 @@ XrSessionGlobals::XrSessionGlobals()
 
 	spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
 	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &viewSpace));
+
+	// Read the system properties, including those for hand-tracking
+	if (xr_ext->handTrackingExtensionAvailable())
+		systemProperties.next = &handTrackingProperties;
+	OOVR_FAILED_XR_ABORT(xrGetSystemProperties(xr_instance, xr_system, &systemProperties));
 }
 
 XrTime XrSessionGlobals::GetBestTime()

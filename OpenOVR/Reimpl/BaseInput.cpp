@@ -10,8 +10,10 @@
 #include <algorithm>
 #include <codecvt>
 #include <fstream>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <locale>
 #include <map>
+#include <optional>
 #include <utility>
 
 #include "Misc/Input/KhrSimpleInteractionProfile.h"
@@ -249,7 +251,14 @@ BaseInput::BaseInput()
 	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new OculusTouchInteractionProfile()));
 	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new KhrSimpleInteractionProfile()));
 }
-BaseInput::~BaseInput() = default;
+BaseInput::~BaseInput()
+{
+	for (XrHandTrackerEXT& handTracker : handTrackers) {
+		if (handTracker != XR_NULL_HANDLE)
+			xr_ext->xrDestroyHandTrackerEXT(handTracker);
+		handTracker = XR_NULL_HANDLE;
+	}
+}
 
 EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath)
 {
@@ -344,6 +353,24 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 		if (actions.LookupItem(action.fullName) != nullptr)
 			OOVR_ABORTF("Duplicate action name '%s'", action.fullName.c_str());
+
+		// If this is a skeletal action, see what hand it's bound to. Uniquely, this is done in the actions manifest itself
+		if (action.type == ActionType::Skeleton) {
+			// Default to the left hand, so we can always safely use it as a 0 or 1 value for indexing arrays etc
+			action.skeletalHand = ITrackedDevice::HAND_LEFT;
+
+			std::string skelSide = item["skeleton"].asString();
+			if (skelSide.empty()) {
+				OOVR_SOFT_ABORTF("Skeletal hand side not set for action '%s'", action.fullName.c_str());
+			} else if (skelSide == "/skeleton/hand/left") {
+				action.skeletalHand = ITrackedDevice::HAND_LEFT;
+			} else if (skelSide == "/skeleton/hand/right") {
+				action.skeletalHand = ITrackedDevice::HAND_RIGHT;
+			} else {
+				OOVR_SOFT_ABORTF("Unknown/unsupported skeletal hand side '%s' for action '%s'",
+				    skelSide.c_str(), action.fullName.c_str());
+			}
+		}
 
 		std::string name = action.fullName; // Array index may be evaluated first iirc, so pull this out now
 		actions.Initialise(name, std::move(actionPtr));
@@ -443,9 +470,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		strcpy_arr(createInfo.actionSetName, safeName.c_str());
 		strcpy_arr(createInfo.localizedActionSetName, as->name.c_str()); // TODO localisation
 
-		// Take priority over the ActionSet which defines the legacy bindings.
-		createInfo.priority = 100;
-
 		OOVR_FAILED_XR_ABORT(xrCreateActionSet(xr_instance, &createInfo, &as->xr));
 	}
 
@@ -475,7 +499,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			info.actionType = XR_ACTION_TYPE_POSE_INPUT;
 			break;
 		case ActionType::Skeleton:
-			OOVR_SOFT_ABORT("Warning: Unsupported action type - Skeleton"); // Not XR_STUBBED since AFAIK this didn't work before, and since OpenXR doesn't do skeletal stuff we'll have to sort this our ourselves
+			// Don't actually create an action for skeletons, since we'll get their data from the hand tracking extension.
 			continue;
 		default:
 			OOVR_SOFT_ABORTF("Bad action type while remapping action %s: %d", act->fullName.c_str(), act->type);
@@ -565,11 +589,20 @@ void BaseInput::BindInputsForSession()
 		action->actionSpaces.clear();
 	}
 
-	// Same goes for the actionspaces of the legacy controller pose actions
+	// Same goes for the actionspaces of the legacy controller pose actions, this time create
+	// new ones for this session.
 	for (LegacyControllerActions& lca : legacyControllers) {
 		// No need to destroy it, the session it was attached to was destroyed
 		lca.gripPoseSpace = XR_NULL_HANDLE;
 		lca.aimPoseSpace = XR_NULL_HANDLE;
+
+		// Create the new spaces
+		XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
+		info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
+		info.action = lca.gripPoseAction;
+		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &lca.gripPoseSpace));
+		info.action = lca.aimPoseAction;
+		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &lca.aimPoseSpace));
 	}
 
 	// Note: even if actionSets is empty, we always still want to load the legacy set.
@@ -586,6 +619,16 @@ void BaseInput::BindInputsForSession()
 	attachInfo.actionSets = sets.data();
 	attachInfo.countActionSets = sets.size();
 	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session, &attachInfo));
+
+	// Setup hand tracking if supported
+	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
+		XrHandTrackerCreateInfoEXT createInfo = { XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT };
+		for (int i = 0; i < 2; i++) {
+			createInfo.hand = i == 0 ? XR_HAND_LEFT_EXT : XR_HAND_RIGHT_EXT;
+			createInfo.handJointSet = XR_HAND_JOINT_SET_DEFAULT_EXT;
+			OOVR_FAILED_XR_ABORT(xr_ext->xrCreateHandTrackerEXT(xr_session, &createInfo, &handTrackers[i]));
+		}
+	}
 }
 
 void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
@@ -684,10 +727,14 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 
 			// Translate over the paths - TODO find out what all the valid ones are
 			std::string pathStr;
-			if (specPath == "/user/hand/left/pose/raw") {
+			if (specPath == "/user/hand/left/pose/raw" || specPath == "/user/hand/left/pose/aim") {
 				pathStr = "/user/hand/left/input/aim/pose";
-			} else if (specPath == "/user/hand/right/pose/raw") {
+			} else if (specPath == "/user/hand/right/pose/raw" || specPath == "/user/hand/right/pose/aim") {
 				pathStr = "/user/hand/right/input/aim/pose";
+			} else if (specPath == "/user/hand/left/pose/grip") {
+				pathStr = "/user/hand/left/input/grip/pose";
+			} else if (specPath == "/user/hand/right/pose/grip") {
+				pathStr = "/user/hand/right/input/grip/pose";
 			} else {
 				OOVR_LOGF("WARNING: Ignoring unknown pose path '%s'", specPath.c_str());
 				continue;
@@ -987,43 +1034,64 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
-	// TODO implement ulRestrictToDevice
-	OOVR_FALSE_ABORT(ulRestrictToDevice == vr::k_ulInvalidInputValueHandle);
-
 	XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
 	getInfo.action = act->xr;
 
-	switch (act->type) {
-	case ActionType::Vector1: {
-		XrActionStateFloat state = { XR_TYPE_ACTION_STATE_FLOAT };
-		OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session, &getInfo, &state));
+	// Only return the input with the greatest magnitude
+	// To do this, track the input with the greatest length.
+	float maxLengthSq = 0;
 
-		pActionData->x = state.currentState;
-		pActionData->y = 0;
-		pActionData->z = 0;
-		pActionData->bActive = state.isActive;
-		break;
-	}
-	case ActionType::Vector2: {
-		XrActionStateVector2f state = { XR_TYPE_ACTION_STATE_VECTOR2F };
-		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, &getInfo, &state));
+	// Unfortunately to implement activeOrigin we have to loop through and query each action state
+	for (int i = 0; i < allSubactionPaths.size(); i++) {
+		XrPath subactionPath = allSubactionPaths[i];
+		if (!checkRestrictToDevice(ulRestrictToDevice, subactionPath))
+			continue;
 
-		pActionData->x = state.currentState.x;
-		pActionData->y = state.currentState.y;
-		pActionData->z = 0;
-		pActionData->bActive = state.isActive;
-		break;
-	}
-	case ActionType::Vector3:
-		OOVR_ABORTF("Input type vector3 unsupported: %s", act->fullName.c_str());
-		break;
-	default:
-		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
-		break;
+		getInfo.subactionPath = subactionPath;
+
+		switch (act->type) {
+		case ActionType::Vector1: {
+			XrActionStateFloat state = { XR_TYPE_ACTION_STATE_FLOAT };
+			OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session, &getInfo, &state));
+
+			float lengthSq = state.currentState * state.currentState;
+			if (lengthSq < maxLengthSq || !state.isActive)
+				continue;
+			lengthSq = maxLengthSq;
+
+			pActionData->x = state.currentState;
+			pActionData->y = 0;
+			pActionData->z = 0;
+			pActionData->bActive = state.isActive;
+			pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
+			break;
+		}
+		case ActionType::Vector2: {
+			XrActionStateVector2f state = { XR_TYPE_ACTION_STATE_VECTOR2F };
+			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, &getInfo, &state));
+
+			float lengthSq = state.currentState.x * state.currentState.x + state.currentState.y * state.currentState.y;
+			if (lengthSq < maxLengthSq || !state.isActive)
+				continue;
+			maxLengthSq = lengthSq;
+
+			pActionData->x = state.currentState.x;
+			pActionData->y = state.currentState.y;
+			pActionData->z = 0;
+			pActionData->bActive = state.isActive;
+			pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
+			break;
+		}
+		case ActionType::Vector3:
+			OOVR_ABORTF("Input type vector3 unsupported: %s", act->fullName.c_str());
+			break;
+		default:
+			OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
+			break;
+		}
 	}
 
 	// TODO implement the deltas
-	// TODO implement activeOrigin
 
 	return VRInputError_None;
 }
@@ -1036,10 +1104,15 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
-	// TODO implement
+	// Skeletons go through the legacy input thing, since they're tightly bound to either hand
 	if (act->type == ActionType::Skeleton) {
-		OOVR_SOFT_ABORTF("Skeletal pose read for action %s not yet supported", act->fullName.c_str());
-		return vr::VRInputError_MissingSkeletonData;
+		XrSpace space = legacyControllers[act->skeletalHand].gripPoseSpace;
+
+		pActionData->bActive = true; // TODO this should probably come from reading the skeleton data
+		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle; // TODO implement activeOrigin
+		xr_utils::PoseFromSpace(&pActionData->pose, space, eOrigin);
+
+		return vr::VRInputError_None;
 	}
 
 	if (act->type != ActionType::Pose)
@@ -1106,12 +1179,19 @@ EVRInputError BaseInput::GetPoseActionDataForNextFrame(VRActionHandle_t action, 
 EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	// This is the older function, should redirect to the one without the restrict-to-device argument.
-	STUBBED();
+	// This is the old version of the function, the new one doesn't have the device restriction
+	// Hopefully noone depends on this and we can just ignore it
+	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle) {
+		OOVR_SOFT_ABORT("Old GetSkeletalActionData device restrictions not supported");
+	}
+
+	return GetSkeletalActionData(action, pActionData, unActionDataSize);
 }
 EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, InputSkeletalActionData_t* out, uint32_t unActionDataSize)
 {
 	// Make sure the target struct is the right size, in case it grows in the future
+	// Note: CVRInput_004 has a manual override for this in CVRInput.cpp to deal with an old struct version, it
+	// sets unActionDataSize to what we're expecting so we don't have to handle that here.
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*out));
 
 	Action* action = cast_AH(actionHandle);
@@ -1126,9 +1206,21 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, In
 		return vr::VRInputError_None;
 	}
 
-	OOVR_SOFT_ABORT("Skeletal action data not yet supported");
+	// Same for if the runtime doesn't support hand-tracking
+	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
+		OOVR_SOFT_ABORT("Runtime does not support hand-tracking, skeletal data unavailable");
+		return vr::VRInputError_None;
+	}
 
-	// For now, just return with non-active data
+	// Find the active origin for this hand
+	std::string originPath;
+	if (action->skeletalHand == ITrackedDevice::HAND_LEFT)
+		originPath = "/user/hand/left";
+	else
+		originPath = "/user/hand/right";
+	OOVR_FALSE_ABORT(GetInputSourceHandle(originPath.c_str(), &out->activeOrigin) == vr::VRInputError_None);
+
+	out->bActive = true; // TODO run xrLocateHandJointsEXT and use it's isActive
 	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetDominantHand(vr::ETrackedControllerRole* peDominantHand)
@@ -1141,7 +1233,9 @@ EVRInputError BaseInput::SetDominantHand(vr::ETrackedControllerRole eDominantHan
 }
 EVRInputError BaseInput::GetBoneCount(VRActionHandle_t action, uint32_t* pBoneCount)
 {
-	STUBBED();
+	// Maybe we should check the action?
+	*pBoneCount = (int)eBone_Count;
+	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetBoneHierarchy(VRActionHandle_t action, VR_ARRAY_COUNT(unIndexArayCount) BoneIndex_t* pParentIndices, uint32_t unIndexArayCount)
 {
@@ -1163,16 +1257,168 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeleta
     EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray,
     uint32_t unTransformArrayCount, VRInputValueHandle_t ulRestrictToDevice)
 {
-	STUBBED();
+	// This is the old version of the function, the new one doesn't have the device restriction
+	// Hopefully noone depends on this and we can just ignore it
+	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle) {
+		OOVR_SOFT_ABORT("Old skeletal input device restrictions not supported");
+	}
+
+	return GetSkeletalBoneData(action, eTransformSpace, eMotionRange, pTransformArray, unTransformArrayCount);
 }
-EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace,
+EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRSkeletalTransformSpace eTransformSpace,
     EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
-	STUBBED();
+	ZeroMemory(pTransformArray, sizeof(VRBoneTransform_t) * unTransformArrayCount);
+	Action* action = cast_AH(actionHandle);
+
+	// FIXME remove
+	// Hand labs is in parent transform space, and usually 'with controller' motion range
+	// OOVR_LOGF("skeletal data %d %d", eTransformSpace, eMotionRange);
+
+	// Check for the right number of bones
+	OOVR_FALSE_ABORT(unTransformArrayCount == 31);
+
+	// If there's no action, leave the transforms zeroed out
+	if (action == nullptr) {
+		return vr::VRInputError_None;
+	}
+
+	// If the runtime doesn't support hand-tracking, leave the data zeroed out. We should eventually
+	// make our own data in this case.
+	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
+		OOVR_SOFT_ABORT("Runtime does not support hand-tracking, skeletal data unavailable");
+		return vr::VRInputError_None;
+	}
+
+	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
+	locateInfo.baseSpace = legacyControllers[(int)action->skeletalHand].gripPoseSpace;
+	locateInfo.time = xr_gbl->GetBestTime();
+
+	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
+	locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
+	std::vector<XrHandJointLocationEXT> jointLocations(locations.jointCount);
+	locations.jointLocations = jointLocations.data();
+
+	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(handTrackers[(int)action->skeletalHand], &locateInfo, &locations));
+
+	if (!locations.isActive) {
+		// Leave empty-handed, IDK if this is the right error or not
+		return vr::VRInputError_InvalidSkeleton;
+	}
+
+	// Annoyingly the coordinate system between this extension and OpenVR is also different. As per the wiki page:
+	// https://github.com/ValveSoftware/openvr/wiki/Hand-Skeleton
+	// The hands effectively sit on their sides in the bind pose. The right hand's palm faces -X and the left hand's
+	// palm faces +X. In the OpenXR extension, the hands are as they would be if you placed them on a table: palms on
+	// both hands are down (-Y) and the tops of your hands are up (+Y). Therefore the normal of your thumbnails are
+	// facing towards the opposite hand. Fortunately Z represents the same axis in both coordinate spaces.
+	// Therefore roll the right-hand clockwise 90deg around Z and the left hand counter-clockwise around Z (careful with
+	// what direction Z is if you're trying to visualise this).
+	float angle_mult;
+	if (action->skeletalHand == ITrackedDevice::HAND_LEFT)
+		angle_mult = 1.0f; // Natural rotation is CCW, invert for clockwise
+	else
+		angle_mult = -1.0f;
+	glm::mat4 systemTransform = glm::rotate(glm::identity<glm::mat4>(), angle_mult * M_PIf / 2.0f, glm::vec3(0, 0, 1));
+
+	// Load the data into the output bones, with the correct mapping
+	std::optional<XrHandJointEXT> parentId;
+	auto mapBone = [&](XrHandJointEXT xrId, int vrId) {
+		const XrHandJointLocationEXT& src = jointLocations.at(xrId);
+		OOVR_FALSE_ABORT(vrId < unTransformArrayCount);
+		vr::VRBoneTransform_t& out = pTransformArray[vrId];
+
+		// Read the OpenXR transform
+		// I don't think there's anything we can do if the validity flags are false, so just ignore them
+		glm::mat4 pose = systemTransform * X2G_om34_pose(src.pose);
+
+		// All the OpenXR transforms are relative to the space we specified as baseSpace, in this case the grip pose. If the
+		// application wants each bone's transform relative to it's parent, apply that now.
+		// If this bone is the root bone (parentId is not set), then it's the same in either space mode.
+		// Get the required transform from:
+		// Tbone_in_model = Tparent_in_model * Tbone_in_parent
+		// inv(Tparent_in_model) * Tbone_in_model = Tbone_in_parent
+		if (eTransformSpace == VRSkeletalTransformSpace_Parent && parentId) {
+			const XrHandJointLocationEXT& parent = jointLocations.at(parentId.value());
+			glm::mat4 parentPose = systemTransform * X2G_om34_pose(parent.pose);
+
+			pose = glm::affineInverse(parentPose) * pose;
+		}
+
+		// TODO eMotionRange, if that's even possible
+
+		glm::quat rotation(pose);
+		out.position = vr::HmdVector4_t{ pose[3][0], pose[3][1], pose[3][2], 1.f }; // What's the fourth value for?
+		out.orientation = vr::HmdQuaternionf_t{ rotation.w, rotation.x, rotation.y, rotation.z };
+
+		// Update the parent to make it convenient to declare bones moving towards the finger tip
+		parentId = xrId;
+	};
+
+	// Set up the root bone
+	pTransformArray[0].orientation = vr::HmdQuaternionf_t{ /* w */ 1, 0, 0, 0 };
+	pTransformArray[0].position = vr::HmdVector4_t{ 0, 0, 0, 1 };
+
+	parentId = {};
+	mapBone(XR_HAND_JOINT_WRIST_EXT, eBone_Wrist);
+
+	// clang-format off
+	parentId = XR_HAND_JOINT_WRIST_EXT;
+	mapBone(XR_HAND_JOINT_THUMB_METACARPAL_EXT, eBone_Thumb0);
+	mapBone(XR_HAND_JOINT_THUMB_PROXIMAL_EXT,   eBone_Thumb1);
+	mapBone(XR_HAND_JOINT_THUMB_DISTAL_EXT,     eBone_Thumb2);
+	mapBone(XR_HAND_JOINT_THUMB_TIP_EXT,        eBone_Thumb3);
+
+	parentId = XR_HAND_JOINT_WRIST_EXT;
+	mapBone(XR_HAND_JOINT_INDEX_METACARPAL_EXT,   eBone_IndexFinger0);
+	mapBone(XR_HAND_JOINT_INDEX_PROXIMAL_EXT,     eBone_IndexFinger1);
+	mapBone(XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT, eBone_IndexFinger2);
+	mapBone(XR_HAND_JOINT_INDEX_DISTAL_EXT,       eBone_IndexFinger3);
+	mapBone(XR_HAND_JOINT_INDEX_TIP_EXT,          eBone_IndexFinger4);
+
+	parentId = XR_HAND_JOINT_WRIST_EXT;
+	mapBone(XR_HAND_JOINT_MIDDLE_METACARPAL_EXT,   eBone_MiddleFinger0);
+	mapBone(XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT,     eBone_MiddleFinger1);
+	mapBone(XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT, eBone_MiddleFinger2);
+	mapBone(XR_HAND_JOINT_MIDDLE_DISTAL_EXT,       eBone_MiddleFinger3);
+	mapBone(XR_HAND_JOINT_MIDDLE_TIP_EXT,          eBone_MiddleFinger4);
+
+	parentId = XR_HAND_JOINT_WRIST_EXT;
+	mapBone(XR_HAND_JOINT_RING_METACARPAL_EXT,   eBone_RingFinger0);
+	mapBone(XR_HAND_JOINT_RING_PROXIMAL_EXT,     eBone_RingFinger1);
+	mapBone(XR_HAND_JOINT_RING_INTERMEDIATE_EXT, eBone_RingFinger2);
+	mapBone(XR_HAND_JOINT_RING_DISTAL_EXT,       eBone_RingFinger3);
+	mapBone(XR_HAND_JOINT_RING_TIP_EXT,          eBone_RingFinger4);
+
+	parentId = XR_HAND_JOINT_WRIST_EXT;
+	mapBone(XR_HAND_JOINT_LITTLE_METACARPAL_EXT,   eBone_PinkyFinger0);
+	mapBone(XR_HAND_JOINT_LITTLE_PROXIMAL_EXT,     eBone_PinkyFinger1);
+	mapBone(XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT, eBone_PinkyFinger2);
+	mapBone(XR_HAND_JOINT_LITTLE_DISTAL_EXT,       eBone_PinkyFinger3);
+	mapBone(XR_HAND_JOINT_LITTLE_TIP_EXT,          eBone_PinkyFinger4);
+	// clang-format on
+
+	// TODO aux bones - they're equal to the distal bones but always use VRSkeletalTransformSpace_Model mode
+
+	// For now, just return with non-active data
+	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t action, EVRSummaryType eSummaryType, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Skeletal summary not yet implemented");
+
+	static int timer = 0;
+	timer++;
+	int cap = 100;
+	float v = (float)(timer % cap) / cap;
+
+	// Just put some fake values in for now until we can try and process out the real values
+	for (float& i : pSkeletalSummaryData->flFingerCurl)
+		i = sin(v) / 2.0f + 0.5f;
+	for (float& i : pSkeletalSummaryData->flFingerSplay)
+		i = 0.2;
+
+	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t action, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
@@ -1696,17 +1942,5 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
 	ITrackedDevice::HandType hand = dev->GetHand();
 	LegacyControllerActions& ctrl = legacyControllers[hand];
 
-	// Refs here so we can easily fiddle with them
-	XrAction action = ctrl.aimPoseAction;
-	XrSpace& actionSpace = ctrl.aimPoseSpace;
-
-	// Create the action space if necessary
-	if (!actionSpace) {
-		XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
-		info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
-		info.action = action;
-		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &actionSpace));
-	}
-
-	space = actionSpace;
+	space = ctrl.aimPoseSpace;
 }
