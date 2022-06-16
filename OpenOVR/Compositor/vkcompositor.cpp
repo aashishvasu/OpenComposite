@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <vulkan/vulkan_core.h>
 
 #if defined(SUPPORT_VK)
 
@@ -140,29 +141,6 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, swapchainImages.size(), &chainLength, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
 		vector<VkImageMemoryBarrier> rtBarriers, appBarriers;
-		for (const XrSwapchainImageVulkanKHR& swapchainImage : swapchainImages) {
-			VkImage image = swapchainImage.image;
-
-			VkImageMemoryBarrier barrier = {};
-			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-			barrier.image = image;
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			barrier.subresourceRange.baseMipLevel = 0;
-			barrier.subresourceRange.levelCount = 1;
-			barrier.subresourceRange.baseArrayLayer = 0;
-			barrier.subresourceRange.layerCount = 1;
-
-			barrier.srcAccessMask = 0; // TODO
-			barrier.dstAccessMask = 0; // TODO
-
-			rtBarriers.push_back(barrier);
-		}
 
 		SetupMappedImages(rtCommandBuffer, rtBarriers, appBarriers);
 
@@ -187,6 +165,29 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
 	uint32_t currentIndex;
 	OOVR_FAILED_XR_ABORT(xrAcquireSwapchainImage(chain, &acquireInfo, &currentIndex));
+
+	// transition swapchain image to TRANSFER_DST for copy
+	VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+	barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+	barrier.image = swapchainImages.at(currentIndex).image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+
+	vkCmdPipelineBarrier(
+	    rtCommandBuffer,
+	    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+	    0,
+	    0, nullptr,
+	    0, nullptr,
+	    1, &barrier);
 
 	VkImageCopy region = {};
 	region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -238,6 +239,17 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		    // Information about which subresource to copy, and which area to copy
 		    1, &region);
 	}
+
+	// transition swapchain image back to COLOR_ATTACHMENT_OPTIMAL for runtime
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	vkCmdPipelineBarrier(
+	    rtCommandBuffer,
+	    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	    0,
+	    0, nullptr,
+	    0, nullptr,
+	    1, &barrier);
 
 	// Copy the images from the application to the shared memory pool - this is fenced on the application finishing rendering
 	endSingleTimeCommands(tex->m_pDevice, appCommandPool, appCommandBuffer, tex->m_pQueue);
@@ -394,6 +406,7 @@ void VkCompositor::SetupMappedImages(VkCommandBuffer appCmdBuffer, std::vector<V
 	appBarriers.push_back(barrier);
 
 	barrier.image = rtImage;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	rtBarriers.push_back(barrier);
 
 	//////////////////////////////////
