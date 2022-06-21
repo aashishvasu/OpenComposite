@@ -183,7 +183,8 @@ BaseInput::InputValueHandle::~InputValueHandle() = default;
 template <typename T>
 BaseInput::Registry<T>::~Registry() = default;
 template <typename T>
-BaseInput::Registry<T>::Registry() = default;
+BaseInput::Registry<T>::Registry(uint32_t _maxNameSize)
+    : maxNameSize(_maxNameSize) {}
 
 template <typename T>
 T* BaseInput::Registry<T>::LookupItem(const std::string& name) const
@@ -206,7 +207,7 @@ T* BaseInput::Registry<T>::LookupItem(RegHandle handle) const
 template <typename T>
 BaseInput::RegHandle BaseInput::Registry<T>::LookupHandle(const std::string& name)
 {
-	std::string lowerName = lowerStr(name);
+	std::string lowerName = ShortenOrLookupName(name);
 	auto iter = handlesByName.find(lowerName);
 	if (iter != handlesByName.end())
 		return iter->second;
@@ -220,12 +221,47 @@ BaseInput::RegHandle BaseInput::Registry<T>::LookupHandle(const std::string& nam
 }
 
 template <typename T>
+std::string BaseInput::Registry<T>::ShortenOrLookupName(const std::string& longName)
+{
+	std::string ret = lowerStr(longName);
+	if (ret.size() > maxNameSize - 1) {
+		auto iter = longNames.find(ret);
+		if (iter == longNames.end()) {
+			// new name - shorten and append "_ln" + unique number (ln for Long Name)
+			std::string fullName = ret;
+			std::string unique_id = "_ln" + std::to_string(longNames.size());
+			ret = ret.substr(0, maxNameSize - 1 - unique_id.size()) + unique_id;
+			longNames[fullName] = ret;
+			OOVR_LOGF("Shortened name %s to %s", fullName.c_str(), ret.c_str());
+		} else {
+			// name has already been shortened before - find the shortened version
+			auto iter2 = handlesByName.find(iter->second);
+
+			// if it's in the longNames map, it has to be in the handlesByName map
+			// otherwise something probably went wrong
+			OOVR_FALSE_ABORT(iter2 != handlesByName.end());
+
+			// return shortened name
+			return iter2->first;
+		}
+	}
+	return ret;
+}
+
+template <typename T>
 T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T> value)
 {
 	std::string lowerName = lowerStr(name);
+	RegHandle handle = 0;
 
-	// Make sure noone has ever looked up the handle or created an item for this already, that'd mean trouble
-	OOVR_FALSE_ABORT(handlesByName.count(lowerName) == 0);
+	// apparently games CAN in fact grab handles before initialization - Kayak VR does this
+	// grab already created handle if it exists
+	if (handlesByName.count(lowerName) != 0) {
+		// since we only generate dummy handles before initialization, make sure we only have dummy handles
+		// dummy handles have no associated items
+		handle = handlesByName.find(lowerName)->second;
+		OOVR_FALSE_ABORT(itemsByHandle.find(handle) == itemsByHandle.end());
+	}
 
 	// Move the pointer into storage, so we'll own it
 	T* ptr = value.get();
@@ -233,10 +269,12 @@ T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T
 
 	// Use pointer as handle, for ease of debugging only
 	// Since our values live as long as the registry, it's guaranteed their addresses won't repeat
-	auto handle = (RegHandle)ptr;
+	if (!handle) {
+		handle = (RegHandle)ptr;
+		handlesByName[lowerName] = handle;
+		namesByHandle[handle] = lowerName;
+	}
 
-	handlesByName[lowerName] = handle;
-	namesByHandle[handle] = lowerName;
 	itemsByName[lowerName] = ptr;
 	itemsByHandle[handle] = ptr;
 
@@ -247,6 +285,7 @@ T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T
 // ---
 
 BaseInput::BaseInput()
+    : actionSets(XR_MAX_ACTION_SET_NAME_SIZE), actions(XR_MAX_ACTION_NAME_SIZE)
 {
 	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new OculusTouchInteractionProfile()));
 	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new KhrSimpleInteractionProfile()));
@@ -295,7 +334,8 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	for (Json::Value item : root["actions"]) {
 		std::unique_ptr<Action> actionPtr = std::make_unique<Action>();
 		Action& action = *actionPtr;
-		action.fullName = lowerStr(item["name"].asString());
+
+		action.fullName = actions.ShortenOrLookupName(item["name"].asString());
 
 		// Split the full name by stroke ('/') characters
 		// They have four parts: the first is always 'actions', the second is the action set name, the third is
@@ -380,7 +420,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	for (Json::Value item : root["action_sets"]) {
 		ActionSet set = {};
 
-		set.fullName = lowerStr(item["name"].asString());
+		set.fullName = actionSets.ShortenOrLookupName(item["name"].asString());
 
 		// Split the full name by stroke ('/') characters
 		// They have four parts: the first is always 'actions', the second is the action set name, the third is
@@ -676,7 +716,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 			for (const std::string& inputName : inputsJson.getMemberNames()) {
 				const Json::Value item = inputsJson[inputName];
 
-				std::string actionName = lowerStr(item["output"].asString());
+				std::string actionName = actions.ShortenOrLookupName(item["output"].asString());
 				Action* action = actions.LookupItem(actionName);
 				if (action == nullptr)
 					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
