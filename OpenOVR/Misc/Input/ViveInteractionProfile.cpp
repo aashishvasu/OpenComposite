@@ -85,3 +85,8 @@ std::string ViveWandInteractionProfile::TranslateAction(const std::string& input
 	}
 	return inputPath;
 }
+
+const char* ViveWandInteractionProfile::GetOVRName() const
+{
+	return "vive_controller";
+}

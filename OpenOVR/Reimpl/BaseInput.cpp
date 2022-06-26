@@ -335,6 +335,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		OOVR_ABORT("Failed to open or parse input manifest");
 
 	// Parse the actions
+	OOVR_LOG("Parsing actions...");
 	for (Json::Value item : root["actions"]) {
 		std::unique_ptr<Action> actionPtr = std::make_unique<Action>();
 		Action& action = *actionPtr;
@@ -421,6 +422,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	}
 
 	// Parse the action sets
+	OOVR_LOG("Parsing action sets...");
 	for (Json::Value item : root["action_sets"]) {
 		ActionSet set = {};
 
@@ -473,36 +475,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 		action->set = set;
 	}
-
-	// Find the default bindings file
-	// TODO load all of them, and let the OpenXR runtime choose which one to use
-	std::string bestPath;
-	int bestPriority = -1;
-	for (Json::Value item : root["default_bindings"]) {
-		std::string type = item["controller_type"].asString();
-
-		// Given the type of controller, find a priority for it
-		int priority;
-
-		if (iequals(type, "oculus_touch"))
-			priority = 3;
-		else if (iequals(type, "rift")) // This came from the previous code, where's it from?
-			priority = 2;
-		else if (iequals(type, "generic"))
-			priority = 1;
-		else
-			priority = 0;
-
-		if (priority > bestPriority) {
-			bestPath = item["binding_url"].asString();
-			bestPriority = priority;
-		}
-	}
-
-	if (bestPath.empty())
-		OOVR_ABORT("No compatible binding action specified!");
-
-	bindingsPath = dirnameOf(pchActionManifestPath) + "/" + bestPath;
 
 	//////////////////////////
 	/// Now we've got everything done, load the actions into OpenXR
@@ -558,9 +530,54 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 	CreateLegacyActions();
 
-	// Read the default bindings file, and load it into OpenXR
+	// load all available bindings for known interaction profiles
+	OOVR_LOG("Loading known bindings...");
+	// Map of OpenVR names (i.e. "vive_controller") to interaction profile pointers
+	std::unordered_map<std::string, InteractionProfile*> OVRNameToProfile;
 	for (const std::unique_ptr<InteractionProfile>& profile : interactionProfiles) {
-		LoadBindingsSet(*profile);
+		OVRNameToProfile[profile->GetOVRName()] = profile.get();
+	}
+
+	// For determining the best path for supported controllers that don't have a profile handled by the game (i.e. khr/simple_controller)
+	std::string backupPath;
+	int8_t priority = -1;
+
+	// these priorities are a bit arbitrary
+	const std::unordered_map<std::string, uint8_t> typeToPriority = {
+		{ "oculus_touch", 3 },
+		{ "knuckles", 2 },
+		{ "generic", 1 }
+	};
+
+	for (Json::Value item : root["default_bindings"]) {
+		std::string controller_type = item["controller_type"].asString();
+		std::string path = dirnameOf(pchActionManifestPath) + "/" + item["binding_url"].asString();
+
+		// look if we know about this OpenVR name
+		// have to loop through every binding type because default_bindings is an array for some reason
+		auto iter = OVRNameToProfile.find(controller_type);
+		if (iter != OVRNameToProfile.end()) {
+			LoadBindingsSet(*(iter->second), path);
+			// profile has been bound: we don't need it in our map anymore
+			OVRNameToProfile.erase(iter);
+		}
+
+		// get priority for remaining unbound profiles
+		auto iter2 = typeToPriority.find(controller_type);
+		if (iter2 != typeToPriority.end()) {
+			if (iter2->second > priority) {
+				priority = iter2->second;
+				backupPath = path;
+			}
+		} else if (priority < 0) {
+			priority = 0;
+			backupPath = path;
+		}
+	}
+
+	// remaining profiles: bind to our backup path
+	for (auto& [name, profile_ptr] : OVRNameToProfile) {
+		LoadBindingsSet(*profile_ptr, backupPath);
 	}
 
 	// Attach everything to the current session
@@ -626,8 +643,6 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 void BaseInput::BindInputsForSession()
 {
-	OOVR_LOGF("Loading bindings file %s", bindingsPath.c_str());
-
 	// Since the session has changed, any actionspaces we previously created are now invalid
 	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
 		action->actionSpaces.clear();
@@ -675,8 +690,9 @@ void BaseInput::BindInputsForSession()
 	}
 }
 
-void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
+void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const std::string& bindingsPath)
 {
+	OOVR_LOGF("Loading bindings for %s", profile.GetPath().c_str());
 	Json::Value bindingsRoot;
 	if (!ReadJson(utf8to16(bindingsPath), bindingsRoot)) {
 		OOVR_ABORTF("Failed to read and parse JSON binding descriptor: %s", bindingsPath.c_str());

@@ -139,3 +139,8 @@ const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLega
 
 	return &bindings;
 }
+
+const char* OculusTouchInteractionProfile::GetOVRName() const
+{
+	return "oculus_touch";
+}

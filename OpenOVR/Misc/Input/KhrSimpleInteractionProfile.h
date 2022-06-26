@@ -15,6 +15,7 @@ public:
 	bool IsInputPathValid(const std::string& inputPath) const override;
 	const std::vector<VirtualInputFactory>& GetVirtualInputs() const override;
 	std::string TranslateAction(const std::string& inputPath) const override;
+	const char* GetOVRName() const override;
 
 protected:
 	const LegacyBindings* GetLegacyBindings(const std::string& handPath) const override;

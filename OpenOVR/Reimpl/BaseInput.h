@@ -605,8 +605,6 @@ private:
 	// TODO convert to Registry
 	std::unordered_map<std::string, std::unique_ptr<InputValueHandle>> inputHandleRegistry;
 
-	std::string bindingsPath;
-
 	XrActionSet legacyInputsSet = XR_NULL_HANDLE;
 
 	/**
@@ -623,7 +621,7 @@ private:
 		"/user/hand/right",
 	};
 
-	void LoadBindingsSet(const struct InteractionProfile& profile);
+	void LoadBindingsSet(const struct InteractionProfile& profile, const std::string& bindingsPath);
 
 	void CreateLegacyActions();
 

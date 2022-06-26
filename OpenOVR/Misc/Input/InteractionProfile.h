@@ -162,6 +162,12 @@ public:
 	virtual std::string TranslateAction(const std::string& inputPath) const;
 
 	/**
+	 * Returns the name for the profile as recognized by OpenVR.
+	 * If null, this device must not be recognized by OpenVR.
+	 */
+	virtual const char* GetOVRName() const = 0;
+
+	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
 	 */
 	void AddLegacyBindings(const BaseInput::LegacyControllerActions& actions, std::vector<XrActionSuggestedBinding>& bindings) const;

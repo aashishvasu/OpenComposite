@@ -93,3 +93,8 @@ std::string KhrSimpleInteractionProfile::TranslateAction(const std::string& inpu
 	// either this path is already valid or it's invalid and not translatable
 	return inputPath;
 }
+
+const char* KhrSimpleInteractionProfile::GetOVRName() const
+{
+	return "generic";
+}
