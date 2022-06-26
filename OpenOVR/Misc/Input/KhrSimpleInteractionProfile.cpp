@@ -24,12 +24,8 @@ KhrSimpleInteractionProfile::KhrSimpleInteractionProfile()
 
 	for (const char** side = sides; *side; side++) {
 		for (const char** input = inputs; *input; input++) {
-			validPaths.emplace_back(std::string(*side) + "/" + std::string(*input));
+			validPaths.insert(std::string(*side) + "/" + std::string(*input));
 		}
-	}
-
-	for (const std::string& path : validPaths) {
-		validPathsSet.insert(path);
 	}
 
 	PostSetup();
@@ -41,14 +37,14 @@ const std::string& KhrSimpleInteractionProfile::GetPath() const
 	return interactionPath;
 }
 
-const std::vector<std::string>& KhrSimpleInteractionProfile::GetValidInputPaths() const
+const std::unordered_set<std::string>& KhrSimpleInteractionProfile::GetValidInputPaths() const
 {
 	return validPaths;
 }
 
 bool KhrSimpleInteractionProfile::IsInputPathValid(const std::string& inputPath) const
 {
-	return validPathsSet.count(inputPath) != 0;
+	return validPaths.find(inputPath) != validPaths.end();
 }
 
 const std::vector<VirtualInputFactory>& KhrSimpleInteractionProfile::GetVirtualInputs() const
@@ -71,4 +67,29 @@ const InteractionProfile::LegacyBindings* KhrSimpleInteractionProfile::GetLegacy
 		bindings.aimPoseAction = "input/aim/pose";
 	}
 	return &bindings;
+}
+
+static const std::map<std::string, std::string> pathTranslationMap = {
+	{ "application_menu", "menu" },
+	{ "trigger", "select" },
+};
+
+std::string KhrSimpleInteractionProfile::TranslateAction(const std::string& inputPath) const
+{
+	// check if we have an invalid hand path
+	if (!IsInputPathValid(inputPath) && inputPath.find("/user/hand/") != std::string::npos) {
+		// try translating path
+		for (auto& [key, val] : pathTranslationMap) {
+			size_t loc = inputPath.find(key);
+			if (loc != std::string::npos) {
+				// translate action!
+				std::string ret = inputPath.substr(0, loc) + val + inputPath.substr(loc + key.size());
+				OOVR_LOGF("Translated path %s to %s for profile %s", inputPath.c_str(), ret.c_str(), GetPath().c_str());
+				return ret;
+			}
+		}
+	}
+
+	// either this path is already valid or it's invalid and not translatable
+	return inputPath;
 }

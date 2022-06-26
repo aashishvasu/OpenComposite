@@ -7,8 +7,8 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "InputData.h"
@@ -136,7 +136,7 @@ public:
 	 *
 	 * Note this does not include virtual inputs.
 	 */
-	virtual const std::vector<std::string>& GetValidInputPaths() const = 0;
+	virtual const std::unordered_set<std::string>& GetValidInputPaths() const = 0;
 
 	/**
 	 * Returns true if the given path is present in GetValidInputsPaths.
@@ -154,6 +154,12 @@ public:
 	virtual const std::vector<VirtualInputFactory>& GetVirtualInputs() const = 0;
 
 	virtual const VirtualInputFactory* GetVirtualInput(const std::string& inputPath) const;
+
+	/**
+	 * Translate an unsupported path to a supported one.
+	 * For example, for the simple controller, this will translate any trigger paths to select paths.
+	 */
+	virtual std::string TranslateAction(const std::string& inputPath) const;
 
 	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.

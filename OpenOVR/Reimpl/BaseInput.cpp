@@ -15,10 +15,12 @@
 #include <locale>
 #include <map>
 #include <optional>
+#include <set>
 #include <utility>
 
 #include "Misc/Input/KhrSimpleInteractionProfile.h"
 #include "Misc/Input/OculusInteractionProfile.h"
+#include "Misc/Input/ViveInteractionProfile.h"
 #include "Misc/xrmoreutils.h"
 
 using namespace vr;
@@ -288,8 +290,9 @@ T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T
 BaseInput::BaseInput()
     : actionSets(XR_MAX_ACTION_SET_NAME_SIZE), actions(XR_MAX_ACTION_NAME_SIZE)
 {
-	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new OculusTouchInteractionProfile()));
-	interactionProfiles.emplace_back(std::unique_ptr<InteractionProfile>(new KhrSimpleInteractionProfile()));
+	interactionProfiles.emplace_back(std::make_unique<ViveWandInteractionProfile>());
+	interactionProfiles.emplace_back(std::make_unique<OculusTouchInteractionProfile>());
+	interactionProfiles.emplace_back(std::make_unique<KhrSimpleInteractionProfile>());
 }
 BaseInput::~BaseInput()
 {
@@ -722,9 +725,8 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile)
 				if (action == nullptr)
 					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
 
-				// There's probably some differences, but it looks like the SteamVR paths will 'just work' with OpenXR
-				// FIXME this doesn't with with binding boolean actions to analogue inputs
-				std::string pathStr = importBasePath + "/" + inputName;
+				// Translate path string to an appropriate path supported by this interaction profile, if necessary
+				std::string pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
 
 				// Handle virtual paths - this creates the relevant virtual input for the specified path on this
 				// action set and binds the Action to it. Note we don't want to cache and reuse the same virtual input
@@ -1552,9 +1554,9 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 		info.action = action;
 
 		// 20 will be more than enough, saves a second call
-		XrPath tmp[20];
+		std::array<XrPath, 20> tmp;
 		uint32_t count;
-		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, ARRAYSIZE(tmp), &count, tmp));
+		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, tmp.size(), &count, tmp.data()));
 
 		// Now for each source find the /user/hand/abc substring that it starts with
 		char buff[XR_MAX_PATH_LENGTH + 1];
@@ -1809,7 +1811,7 @@ VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const 
 		XrBoundSourcesForActionEnumerateInfo enumInfo = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
 		enumInfo.action = action->xr;
 		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &enumInfo,
-		    ARRAYSIZE(action->sources), &action->sourcesCount, action->sources));
+		    action->sources.size(), &action->sourcesCount, action->sources.data()));
 
 		// Convert the source paths to strings
 		char buff[256];

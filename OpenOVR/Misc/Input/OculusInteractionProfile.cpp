@@ -42,15 +42,13 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	};
 
 	for (const char** str = paths; *str; str++) {
-		validInputPaths.emplace_back(*str);
+		validInputPaths.insert(*str);
 	}
 
 	for (const char** str = perHandPaths; *str; str++) {
-		validInputPaths.push_back("/user/hand/left/" + std::string(*str));
-		validInputPaths.push_back("/user/hand/right/" + std::string(*str));
+		validInputPaths.insert("/user/hand/left/" + std::string(*str));
+		validInputPaths.insert("/user/hand/right/" + std::string(*str));
 	}
-
-	validInputPathsSet.insert(validInputPaths.begin(), validInputPaths.end());
 
 	// Setup the virtual inputs
 	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/left/input/trigger/value", "/user/hand/left/input/trigger/click"));
@@ -72,6 +70,21 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 
 	// Called last now that all our overridden functions will return their final values
 	PostSetup();
+}
+
+const std::string& OculusTouchInteractionProfile::GetPath() const
+{
+	return path;
+}
+
+const std::unordered_set<std::string>& OculusTouchInteractionProfile::GetValidInputPaths() const
+{
+	return validInputPaths;
+}
+
+bool OculusTouchInteractionProfile::IsInputPathValid(const std::string& inputPath) const
+{
+	return validInputPaths.find(inputPath) != validInputPaths.end();
 }
 
 const std::vector<VirtualInputFactory>& OculusTouchInteractionProfile::GetVirtualInputs() const

@@ -34,6 +34,11 @@ void InteractionProfile::PostSetup()
 	donePostSetup = true;
 }
 
+std::string InteractionProfile::TranslateAction(const std::string& inputPath) const
+{
+	return inputPath;
+}
+
 void InteractionProfile::AddLegacyBindings(const BaseInput::LegacyControllerActions& ctrl, std::vector<XrActionSuggestedBinding>& bindings) const
 {
 	auto create = [&](XrAction action, const char* path) {

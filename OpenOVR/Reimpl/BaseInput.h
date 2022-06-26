@@ -6,6 +6,7 @@
 
 #include "../Drivers/Backend.h"
 #include "../Misc/json/json.h"
+#include <array>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -453,6 +454,10 @@ private:
 	};
 
 	struct Action {
+	private:
+		static constexpr size_t sources_size = 32;
+
+	public:
 		~Action(); // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
 
 		// Since the list of VirtualInputs cannot be copied (only moved) we might as well make the
@@ -476,8 +481,8 @@ private:
 
 		// The action sources (paths like /user/hand/left/input/select/click, specifying an output of a physical
 		// control) this action is bound to. This is cached, and is updated by activeOriginFromSubaction.
-		XrPath sources[32] = {};
-		std::string sourceNames[ARRAYSIZE(sources)] = {};
+		std::array<XrPath, sources_size> sources = {};
+		std::array<std::string, sources_size> sourceNames = {};
 		uint32_t sourcesCount = 0; // Number of sources in the above that are defined
 		uint64_t nextSourcesUpdate = 0; // For caching, the next value of syncSerial this should update at
 
