@@ -69,6 +69,7 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 
 static std::map<std::string, std::string> translation_map = {
 	{ "application_menu", "menu" },
+	{ "grip/click", "squeeze/click" }
 };
 
 std::string ViveWandInteractionProfile::TranslateAction(const std::string& inputPath) const
