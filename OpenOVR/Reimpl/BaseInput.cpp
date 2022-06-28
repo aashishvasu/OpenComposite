@@ -1,3 +1,4 @@
+#include "OpenVR/interfaces/vrtypes.h"
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseInput.h"
@@ -1596,10 +1597,16 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 	memset(info, 0, unOriginInfoSize);
 	OOVR_FALSE_ABORT(unOriginInfoSize == sizeof(InputOriginInfo_t));
 
+	if (origin == vr::k_ulInvalidInputValueHandle)
+		return vr::VRInputError_InvalidHandle;
+
 	ITrackedDevice* dev = ivhToDev(origin);
 
+	if (!dev)
+		return vr::VRInputError_InvalidHandle;
+
 	info->trackedDeviceIndex = dev->DeviceIndex();
-	info->devicePath = origin; // TODO is this how it's supposed to work?
+	info->devicePath = origin;
 	strcpy_arr(info->rchRenderModelComponentName, "getorigintrackeddeviceinfo_testing"); // TODO figure out how this should work
 
 	return VRInputError_None;
