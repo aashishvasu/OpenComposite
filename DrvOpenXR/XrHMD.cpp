@@ -11,9 +11,8 @@
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 {
-	// TODO supersampling? Is that done here or elsewhere?
-	*width = xr_main_view(XruEyeLeft).recommendedImageRectWidth;
-	*height = xr_main_view(XruEyeLeft).recommendedImageRectHeight;
+	*width = (uint32_t)((float)xr_main_view(XruEyeLeft).recommendedImageRectWidth * oovr_global_configuration.SupersampleRatio());
+	*height = (uint32_t)((float)xr_main_view(XruEyeLeft).recommendedImageRectHeight * oovr_global_configuration.SupersampleRatio());
 }
 
 // from BaseSystem
