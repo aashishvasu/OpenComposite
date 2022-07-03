@@ -59,7 +59,7 @@ void BaseChaperone::ReloadInfo(void)
 }
 void BaseChaperone::SetSceneColor(HmdColor_t color)
 {
-	STUBBED();
+	OOVR_LOG_ONCE("No implementation");
 }
 void BaseChaperone::GetBoundsColor(HmdColor_t* pOutputColorArray, int nNumOutputColors, float flCollisionBoundsFadeDistance, HmdColor_t* pOutputCameraColor)
 {
