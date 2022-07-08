@@ -10,7 +10,6 @@
 
 OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 {
-	path = "/interaction_profiles/oculus/touch_controller";
 
 	const char* paths[] = {
 		"/user/hand/left/input/x/click",
@@ -74,22 +73,8 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 
 const std::string& OculusTouchInteractionProfile::GetPath() const
 {
+	static std::string path = "/interaction_profiles/oculus/touch_controller";
 	return path;
-}
-
-const std::unordered_set<std::string>& OculusTouchInteractionProfile::GetValidInputPaths() const
-{
-	return validInputPaths;
-}
-
-bool OculusTouchInteractionProfile::IsInputPathValid(const std::string& inputPath) const
-{
-	return validInputPaths.find(inputPath) != validInputPaths.end();
-}
-
-const std::vector<VirtualInputFactory>& OculusTouchInteractionProfile::GetVirtualInputs() const
-{
-	return virtualInputs;
 }
 
 const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLegacyBindings(const std::string& handPath) const
@@ -140,7 +125,7 @@ const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLega
 	return &bindings;
 }
 
-const char* OculusTouchInteractionProfile::GetOVRName() const
+const char* OculusTouchInteractionProfile::GetOpenVRName() const
 {
 	return "oculus_touch";
 }

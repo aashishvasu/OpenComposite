@@ -22,6 +22,11 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 		validInputPaths.insert("/user/hand/right" + path);
 	}
 
+	pathTranslationMap = {
+		{ "application_menu", "menu" },
+		{ "grip/click", "squeeze/click" }
+	};
+
 	PostSetup();
 }
 
@@ -29,21 +34,6 @@ const std::string& ViveWandInteractionProfile::GetPath() const
 {
 	static std::string path = "/interaction_profiles/htc/vive_controller";
 	return path;
-}
-
-const std::unordered_set<std::string>& ViveWandInteractionProfile::GetValidInputPaths() const
-{
-	return validInputPaths;
-}
-
-bool ViveWandInteractionProfile::IsInputPathValid(const std::string& inputPath) const
-{
-	return validInputPaths.find(inputPath) != validInputPaths.end();
-}
-
-const std::vector<VirtualInputFactory>& ViveWandInteractionProfile::GetVirtualInputs() const
-{
-	return virtualInputs;
 }
 
 const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyBindings(const std::string& handPath) const
@@ -67,27 +57,7 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 	return &bindings;
 }
 
-static std::map<std::string, std::string> translation_map = {
-	{ "application_menu", "menu" },
-	{ "grip/click", "squeeze/click" }
-};
-
-std::string ViveWandInteractionProfile::TranslateAction(const std::string& inputPath) const
-{
-	if (inputPath.find("/user/hand") != std::string::npos && !IsInputPathValid(inputPath)) {
-		for (const auto& [key, val] : translation_map) {
-			size_t loc = inputPath.find(key);
-			if (loc != std::string::npos) {
-				std::string ret = inputPath.substr(0, loc) + val + inputPath.substr(loc + key.size());
-				OOVR_LOGF("Translated path '%s' to '%s' for profile %s", inputPath.c_str(), ret.c_str(), GetPath().c_str());
-				return ret;
-			}
-		}
-	}
-	return inputPath;
-}
-
-const char* ViveWandInteractionProfile::GetOVRName() const
+const char* ViveWandInteractionProfile::GetOpenVRName() const
 {
 	return "vive_controller";
 }

@@ -535,7 +535,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	// Map of OpenVR names (i.e. "vive_controller") to interaction profile pointers
 	std::unordered_map<std::string, InteractionProfile*> OVRNameToProfile;
 	for (const std::unique_ptr<InteractionProfile>& profile : interactionProfiles) {
-		OVRNameToProfile[profile->GetOVRName()] = profile.get();
+		OVRNameToProfile[profile->GetOpenVRName()] = profile.get();
 	}
 
 	// For determining the best path for supported controllers that don't have a profile handled by the game (i.e. khr/simple_controller)

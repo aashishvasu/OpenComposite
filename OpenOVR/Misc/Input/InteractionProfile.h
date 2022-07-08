@@ -136,14 +136,14 @@ public:
 	 *
 	 * Note this does not include virtual inputs.
 	 */
-	virtual const std::unordered_set<std::string>& GetValidInputPaths() const = 0;
+	const std::unordered_set<std::string>& GetValidInputPaths() const;
 
 	/**
 	 * Returns true if the given path is present in GetValidInputsPaths.
 	 *
 	 * This does not include virtual inputs.
 	 */
-	virtual bool IsInputPathValid(const std::string& inputPath) const = 0;
+	bool IsInputPathValid(const std::string& inputPath) const;
 
 	/**
 	 * Get the list of VirtualInputFactories representing all the virtual inputs supported
@@ -151,21 +151,21 @@ public:
 	 *
 	 * NOTE: The storage for these items must not move, as references will be made to them!
 	 */
-	virtual const std::vector<VirtualInputFactory>& GetVirtualInputs() const = 0;
+	const std::vector<VirtualInputFactory>& GetVirtualInputs() const;
 
 	virtual const VirtualInputFactory* GetVirtualInput(const std::string& inputPath) const;
 
 	/**
-	 * Translate an unsupported path to a supported one.
+	 * Translate an unsupported path to a supported one using the pathTranslationMap.
 	 * For example, for the simple controller, this will translate any trigger paths to select paths.
 	 */
-	virtual std::string TranslateAction(const std::string& inputPath) const;
+	std::string TranslateAction(const std::string& inputPath) const;
 
 	/**
 	 * Returns the name for the profile as recognized by OpenVR.
 	 * If null, this device must not be recognized by OpenVR.
 	 */
-	virtual const char* GetOVRName() const = 0;
+	virtual const char* GetOpenVRName() const = 0;
 
 	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
@@ -198,6 +198,15 @@ protected:
 	void PostSetup();
 
 	virtual const LegacyBindings* GetLegacyBindings(const std::string& handPath) const = 0;
+
+	// The set of valid input paths for an interaction profile. An interaction profile should fill this in its constructor.
+	std::unordered_set<std::string> validInputPaths;
+
+	std::vector<VirtualInputFactory> virtualInputs;
+
+	// A map with OpenVR action name parts as keys and OpenXR equivalents as values.
+	// For example, one common key, value pair might be "application_menu", "menu"
+	std::unordered_map<std::string, std::string> pathTranslationMap;
 
 private:
 	std::map<std::string, const VirtualInputFactory*> virtualInputNames;
