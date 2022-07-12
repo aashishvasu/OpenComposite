@@ -103,6 +103,32 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
 	}
 }
 
+static void find_queue_family_and_queue_idx(VkDevice dev, VkPhysicalDevice pdev, VkQueue desired_queue, uint32_t& out_queueFamilyIndex, uint32_t& out_queueIndex)
+{
+	uint32_t queue_family_count;
+	vkGetPhysicalDeviceQueueFamilyProperties(pdev, &queue_family_count, NULL);
+
+	std::vector<VkQueueFamilyProperties> hi(queue_family_count);
+	vkGetPhysicalDeviceQueueFamilyProperties(pdev, &queue_family_count, hi.data());
+	OOVR_LOGF("number of queue families is %d", queue_family_count);
+
+	for (int i = 0; i < queue_family_count; i++) {
+		OOVR_LOGF("queue family %d has %d queues", i, hi[i].queueCount);
+		for (int j = 0; j < hi[i].queueCount; j++) {
+			VkQueue tmp;
+			vkGetDeviceQueue(dev, i, j, &tmp);
+			if (tmp == desired_queue) {
+				OOVR_LOGF("Got desired queue: %d %d", i, j);
+				out_queueFamilyIndex = i;
+				out_queueIndex = j;
+				return;
+			}
+		}
+	}
+	OOVR_ABORT("Couldn't find the queue family index/queue index of the queue that the OpenVR app gave us!"
+	           "This is really odd and really shouldn't ever happen");
+}
+
 /* Submitting Frames */
 void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 {
@@ -165,11 +191,43 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			break;
 		}
 		case vr::TextureType_Vulkan: {
-			// On Vulkan, we keep the initial graphics API around, and copy the frames into it
-			// There's a variety of issues that come from using the application's VrInstance in the session, such
-			// as it providing a VkQueue rather than the queue index. Stuff like this is by no means insurmountable, but
-			// since we're doing a texture copy anyway there's probably little performance harm in copying between
-			// instances like this, and should hopefully avoid finding a show-stopper pitfall later.
+			const vr::VRVulkanTextureData_t* vktex = (vr::VRVulkanTextureData_t*)tex->handle;
+
+
+
+			VkPhysicalDevice xr_desire;
+			// Regardless of error checking, we have to call this or we get crazy validation errors.
+			xr_ext->xrGetVulkanGraphicsDeviceKHR(xr_instance, xr_system, vktex->m_pInstance, &xr_desire);
+
+			if (xr_desire != vktex->m_pPhysicalDevice) {
+				OOVR_ABORTF("The VkPhysicalDevice that the OpenVR app (%p) used is different from the one that the OpenXR runtime used (%p)!\n"
+				            "This should never happen, except for on multi-gpu, in which case DRI_PRIME=1 should fix things on Linux.",
+				    vktex->m_pPhysicalDevice, xr_desire);
+			}
+
+			XrGraphicsBindingVulkanKHR binding;
+			binding.type = XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR;
+			binding.next = nullptr;
+			binding.instance = vktex->m_pInstance;
+			binding.physicalDevice = vktex->m_pPhysicalDevice;
+			binding.device = vktex->m_pDevice;
+
+			find_queue_family_and_queue_idx( //
+			    binding.device, //
+			    binding.physicalDevice, //
+			    vktex->m_pQueue, //
+			    binding.queueFamilyIndex, //
+			    binding.queueIndex //
+			);
+
+			DrvOpenXR::SetupSession(&binding);
+
+			// BAD BAD BAD BAD. Writes into rtQueue in vkcompositor.h so we have a queue that came from the runtime
+
+			expectedDevice = binding.device;
+			expectedPhysicalDevice = binding.physicalDevice;
+			vkGetDeviceQueue(binding.device, 0, 0, &expectedQueue);
+
 			break;
 		}
 		case vr::TextureType_OpenGL: {

@@ -216,10 +216,7 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 #endif
 #ifdef SUPPORT_VK
 	case TextureType_Vulkan: {
-		auto* vk = DrvOpenXR::GetTemporaryVk();
-		if (vk == nullptr)
-			OOVR_ABORT("Not using temporary Vulkan instance");
-		comp = new VkCompositor(texture, vk);
+		comp = new VkCompositor(texture);
 		break;
 	}
 #endif
