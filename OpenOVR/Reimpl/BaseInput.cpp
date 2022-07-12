@@ -1570,9 +1570,9 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 		info.action = action;
 
 		// 20 will be more than enough, saves a second call
-		std::array<XrPath, 20> tmp;
+		XrPath tmp[20];
 		uint32_t count;
-		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, tmp.size(), &count, tmp.data()));
+		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, std::size(tmp), &count, tmp));
 
 		// Now for each source find the /user/hand/abc substring that it starts with
 		char buff[XR_MAX_PATH_LENGTH + 1];
@@ -1827,7 +1827,7 @@ VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const 
 		XrBoundSourcesForActionEnumerateInfo enumInfo = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
 		enumInfo.action = action->xr;
 		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &enumInfo,
-		    action->sources.size(), &action->sourcesCount, action->sources.data()));
+		    std::size(action->sources), &action->sourcesCount, action->sources));
 
 		// Convert the source paths to strings
 		char buff[256];

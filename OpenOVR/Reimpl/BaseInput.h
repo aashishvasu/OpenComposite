@@ -481,8 +481,8 @@ private:
 
 		// The action sources (paths like /user/hand/left/input/select/click, specifying an output of a physical
 		// control) this action is bound to. This is cached, and is updated by activeOriginFromSubaction.
-		std::array<XrPath, sources_size> sources = {};
-		std::array<std::string, sources_size> sourceNames = {};
+		XrPath sources[sources_size] = {};
+		std::string sourceNames[sources_size] = {};
 		uint32_t sourcesCount = 0; // Number of sources in the above that are defined
 		uint64_t nextSourcesUpdate = 0; // For caching, the next value of syncSerial this should update at
 
