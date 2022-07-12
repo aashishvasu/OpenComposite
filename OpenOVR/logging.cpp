@@ -225,7 +225,7 @@ OC_NORETURN void oovr_abort_raw_va(const char* file, long line, const char* func
 
 	OOVR_MESSAGE(buff, title);
 	DebugBreak();
-	exit(1);
+	abort();
 }
 
 void oovr_soft_abort_raw(const char* file, long line, const char* func, int* count, const char* msg, ...)
