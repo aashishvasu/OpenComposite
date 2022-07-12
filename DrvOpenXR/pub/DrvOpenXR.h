@@ -10,7 +10,8 @@ namespace DrvOpenXR {
 IBackend* CreateOpenXRBackend();
 void GetXRAppName(char (&appName)[128]);
 #ifdef SUPPORT_VK
+// No
 void VkGetPhysicalDevice(VkInstance instance, VkPhysicalDevice* out);
-class TemporaryVk* GetTemporaryVk();
+// class TemporaryVk* GetTemporaryVk();
 #endif
 }; // namespace DrvOpenXR
