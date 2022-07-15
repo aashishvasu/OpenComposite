@@ -743,7 +743,14 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
 
 				// Translate path string to an appropriate path supported by this interaction profile, if necessary
-				std::string pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
+				std::string pathStr;
+				// special case: "position" in OpenVR is a 2D vector, in OpenXR this can be represented by the parent of the input value
+				// See the OpenXR spec section 11.4 ("Suggested Bindings")
+				if (inputName == "position") {
+					pathStr = profile.TranslateAction(importBasePath);
+				} else {
+					pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
+				}
 
 				// Handle virtual paths - this creates the relevant virtual input for the specified path on this
 				// action set and binds the Action to it. Note we don't want to cache and reuse the same virtual input
@@ -1122,8 +1129,11 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			pActionData->x = state.currentState;
 			pActionData->y = 0;
 			pActionData->z = 0;
+			pActionData->deltaX = state.currentState - act->previousState.x;
 			pActionData->bActive = state.isActive;
 			pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
+
+			act->previousState.x = state.currentState;
 			break;
 		}
 		case ActionType::Vector2: {
@@ -1138,8 +1148,13 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			pActionData->x = state.currentState.x;
 			pActionData->y = state.currentState.y;
 			pActionData->z = 0;
+			pActionData->deltaX = state.currentState.x - act->previousState.x;
+			pActionData->deltaY = state.currentState.y - act->previousState.y;
 			pActionData->bActive = state.isActive;
 			pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
+
+			act->previousState.x = state.currentState.x;
+			act->previousState.y = state.currentState.y;
 			break;
 		}
 		case ActionType::Vector3:

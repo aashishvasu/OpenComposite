@@ -12,6 +12,7 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 		"/input/trackpad/y",
 		"/input/trackpad/click",
 		"/input/trackpad/touch",
+		"/input/trackpad",
 		"/input/grip/pose",
 		"/input/aim/pose",
 		"/output/haptic"
@@ -24,7 +25,8 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 
 	pathTranslationMap = {
 		{ "application_menu", "menu" },
-		{ "grip/click", "squeeze/click" }
+		{ "grip/click", "squeeze/click" },
+		{ "pull", "value" }
 	};
 
 	PostSetup();

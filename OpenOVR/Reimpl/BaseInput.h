@@ -492,6 +492,13 @@ private:
 		// Only used in the case of Pose actions, this is the action space for each subaction path
 		// The indexes match up with allSubactionPaths
 		std::vector<XrSpace> actionSpaces;
+
+		// Only used in float/vector actions, for calculating deltas
+		struct {
+			float x = 0;
+			float y = 0;
+			float z = 0;
+		} previousState;
 	};
 
 	enum class InputSource {

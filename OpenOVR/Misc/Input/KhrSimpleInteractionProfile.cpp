@@ -30,7 +30,7 @@ KhrSimpleInteractionProfile::KhrSimpleInteractionProfile()
 
 	pathTranslationMap = {
 		{ "application_menu", "menu" },
-		{ "trigger", "select" },
+		{ "trigger/click", "select/click" },
 	};
 
 	PostSetup();

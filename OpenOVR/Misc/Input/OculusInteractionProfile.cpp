@@ -33,6 +33,7 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		"input/thumbstick/y",
 		"input/thumbstick/click",
 		"input/thumbstick/touch",
+		"input/thumbstick",
 		"input/thumbrest/touch",
 		"input/grip/pose",
 		"input/aim/pose",
@@ -54,6 +55,11 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/right/input/trigger/value", "/user/hand/right/input/trigger/click"));
 	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/left/input/squeeze/value", "/user/hand/left/input/grip/click"));
 	virtualInputs.emplace_back(AnalogueToDigitalInput::Factory("/user/hand/right/input/squeeze/value", "/user/hand/right/input/grip/click"));
+
+	pathTranslationMap = {
+		{ "joystick", "thumbstick" },
+		{ "pull", "value" }
+	};
 	// TODO add a way to remap the values for grip->squeeze, if an application does support handling that itself
 	// TODO implement the following inputs:
 	// joystick
