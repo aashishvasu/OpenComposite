@@ -32,8 +32,6 @@ KhrSimpleInteractionProfile::KhrSimpleInteractionProfile()
 		{ "application_menu", "menu" },
 		{ "trigger/click", "select/click" },
 	};
-
-	PostSetup();
 }
 
 const std::string& KhrSimpleInteractionProfile::GetPath() const

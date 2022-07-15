@@ -241,7 +241,6 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Input/OculusInteractionProfile.cpp
 	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.cpp
 	OpenOVR/Misc/Input/ViveInteractionProfile.cpp
-	OpenOVR/Misc/Input/AnalogueToDigitalInput.cpp
 	OpenOVR/OpenOVR.cpp
 	OpenOVR/Reimpl/BaseApplications.cpp
 	OpenOVR/Reimpl/BaseChaperone.cpp
@@ -304,7 +303,6 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Input/InteractionProfile.h
 	OpenOVR/Misc/Input/OculusInteractionProfile.h
 	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.h
-	OpenOVR/Misc/Input/AnalogueToDigitalInput.h
 	OpenOVR/Misc/lodepng.h
 	OpenOVR/Misc/ScopeGuard.h
 	OpenOVR/Reimpl/BaseApplications.h

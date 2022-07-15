@@ -28,8 +28,6 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 		{ "grip/click", "squeeze/click" },
 		{ "pull", "value" }
 	};
-
-	PostSetup();
 }
 
 const std::string& ViveWandInteractionProfile::GetPath() const

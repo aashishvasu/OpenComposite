@@ -15,99 +15,6 @@
 #include "Reimpl/BaseInput.h"
 
 /**
- * Represents an input that doesn't exist in the OpenXR runtime but does in SteamVR. These
- * read an OpenXR input then convert it.
- *
- * An example is the 'click' action for analogue inputs like the trigger or grip. They don't
- * exist in Oculus's bindings but do in SteamVR, and this provides them.
- */
-class VirtualInput {
-public:
-	/**
-	 * Describes this binding and sets how it should be used to build OpenXR actions.
-	 */
-	struct BindInfo {
-		XrActionSet actionSet;
-		std::string actionSetName;
-		std::string openvrActionName; // The name of the openvr action which is bound to this input
-		std::string localisedName;
-	};
-
-	explicit VirtualInput(BindInfo info);
-
-	virtual vr::EVRInputError GetDigitalActionData(OOVR_InputDigitalActionData_t* pActionData);
-
-	void AddSuggestedBindings(std::vector<XrActionSuggestedBinding>& bindings);
-
-	/**
-	 * Call when BaseInput is done setting everything else up, and we can do our last setup steps.
-	 */
-	void PostInit();
-
-	/**
-	 * Should be called directly before xrSyncActions. Updates the data needed to write bChanged (or equivalents for
-	 * non-digital actions).
-	 */
-	void OnPreFrame();
-
-	/**
-	 * Get a list of physical actions this virtual action contains, to be used in GetActionOrigins.
-	 */
-	const std::vector<XrAction>& GetActionsForOriginLookup() const;
-
-protected:
-	virtual void Update() = 0;
-
-	XrAction CreateAction(const std::string& pathSuffix, XrActionType type, const std::string& localisedNameSuffix);
-
-	std::vector<XrActionSuggestedBinding> suggestedBindings;
-
-protected:
-	BindInfo bindInfo;
-
-	// The SyncSerial from BaseInput that these are valid for
-	uint64_t digitalSerial = 0;
-
-	OOVR_InputDigitalActionData_t digital = {};
-
-	std::vector<XrAction> actions;
-
-	/**
-	 * The good activeOrigin value for all our produced outputs. This will be applied by InteractionProfile and
-	 * subclasses don't need to set it.
-	 */
-	vr::VRInputValueHandle_t activeOrigin = vr::k_ulInvalidInputValueHandle;
-
-private:
-	/**
-	 * The counter for a unique number to be used in each action name to avoid collisions.
-	 */
-	static int actionSerial;
-};
-
-/**
- * Defines a factory that can construct a VirtualInput for a given action set.
- *
- * This is required because while in InteractionProfile defines what virtual
- * inputs exist and the actions they map to, it cannot define which ActionSets
- * they're used on since that depends on the game.
- */
-class VirtualInputFactory {
-public:
-	typedef std::function<std::unique_ptr<VirtualInput>(const VirtualInput::BindInfo&)> builder_t;
-
-	VirtualInputFactory(std::string name, builder_t builder);
-
-	inline std::unique_ptr<VirtualInput> BuildFor(const VirtualInput::BindInfo& info) const { return builder(info); }
-
-	inline const std::string& GetName() const { return name; }
-
-private:
-	std::string name;
-	builder_t builder;
-};
-
-/**
  * Defines an interaction profile, as specified by 6.4 in the OpenXR spec.
  */
 class InteractionProfile {
@@ -146,16 +53,6 @@ public:
 	bool IsInputPathValid(const std::string& inputPath) const;
 
 	/**
-	 * Get the list of VirtualInputFactories representing all the virtual inputs supported
-	 * by this profile.
-	 *
-	 * NOTE: The storage for these items must not move, as references will be made to them!
-	 */
-	const std::vector<VirtualInputFactory>& GetVirtualInputs() const;
-
-	virtual const VirtualInputFactory* GetVirtualInput(const std::string& inputPath) const;
-
-	/**
 	 * Translate an unsupported path to a supported one using the pathTranslationMap.
 	 * For example, for the simple controller, this will translate any trigger paths to select paths.
 	 */
@@ -190,26 +87,15 @@ protected:
 		const char *gripPoseAction = nullptr, *aimPoseAction = nullptr;
 	};
 
-	/**
-	 * Finish setting up this instance.
-	 *
-	 * PostSetup MUST be by the superclass once it's virtual methods will return their final values.
-	 */
-	void PostSetup();
-
 	virtual const LegacyBindings* GetLegacyBindings(const std::string& handPath) const = 0;
 
 	// The set of valid input paths for an interaction profile. An interaction profile should fill this in its constructor.
 	std::unordered_set<std::string> validInputPaths;
-
-	std::vector<VirtualInputFactory> virtualInputs;
 
 	// A map with OpenVR action name parts as keys and OpenXR equivalents as values.
 	// For example, one common key, value pair might be "application_menu", "menu"
 	std::unordered_map<std::string, std::string> pathTranslationMap;
 
 private:
-	std::map<std::string, const VirtualInputFactory*> virtualInputNames;
-
 	bool donePostSetup = false;
 };

@@ -584,13 +584,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	// Attach everything to the current session
 	BindInputsForSession();
 
-	// Finish the setup for our VirtualInputs
-	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
-		for (const std::unique_ptr<VirtualInput>& input : action->virtualInputs) {
-			input->PostInit();
-		}
-	}
-
 	// Print the input profile for debugging
 	XrInteractionProfileState ips = { XR_TYPE_INTERACTION_PROFILE_STATE };
 	xrGetCurrentInteractionProfile(xr_session, legacyControllers[0].handPathXr, &ips);
@@ -750,26 +743,6 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 					pathStr = profile.TranslateAction(importBasePath);
 				} else {
 					pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
-				}
-
-				// Handle virtual paths - this creates the relevant virtual input for the specified path on this
-				// action set and binds the Action to it. Note we don't want to cache and reuse the same virtual input
-				// since if the runtime supports it the user may wish to rebind this action.
-				const VirtualInputFactory* virtFactory = profile.GetVirtualInput(pathStr);
-				if (virtFactory) {
-					VirtualInput::BindInfo info = {};
-					info.actionSet = action->set->xr;
-					info.actionSetName = action->setName;
-					info.openvrActionName = action->shortName;
-					info.localisedName = action->shortName; // TODO localisation
-
-					std::unique_ptr<VirtualInput> virt = virtFactory->BuildFor(info);
-					virt->AddSuggestedBindings(bindings);
-					action->virtualInputs.push_back(std::move(virt));
-
-					// Note that we leave around the native xr instance, in case it's also bound to a native input later
-
-					continue;
 				}
 
 				if (!profile.IsInputPathValid(pathStr)) {
@@ -978,13 +951,6 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 
 	OOVR_FALSE_ABORT(sizeof(*pSets) == unSizeOfVRSelectedActionSet_t);
 
-	// First tell all the VirtualInputs to update, to process bChanged
-	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
-		for (const std::unique_ptr<VirtualInput>& input : action->virtualInputs) {
-			input->OnPreFrame();
-		}
-	}
-
 	// Make sure all the ActionSets have the same priority, since we don't have any way around that right now
 	if (unSetCount > 1) {
 		int priority = pSets[0].nPriority;
@@ -1076,15 +1042,6 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 		pActionData->bChanged = state.changedSinceLastSync;
 		// TODO implement fUpdateTime
 		pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
-	}
-
-	// Check the virtual inputs
-	for (const auto& virt : act->virtualInputs) {
-		OOVR_InputDigitalActionData_t tmp = {};
-		virt->GetDigitalActionData(&tmp);
-
-		if (tmp.bActive > pActionData->bActive || tmp.bState > pActionData->bState)
-			*pActionData = tmp;
 	}
 
 	// Note it's possible we didn't set any output if this action isn't bound to anything, just leave the
@@ -1571,36 +1528,25 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 
 	ZeroMemory(originsOut, originOutCount * sizeof(*originsOut));
 
-	// Go through both the real action and any virtual actions, and add them all together
-	std::vector<XrAction> relevantActions;
-	relevantActions.emplace_back(act->xr);
-
-	for (const std::unique_ptr<VirtualInput>& virt : act->virtualInputs) {
-		std::vector<XrAction> virtActions = virt->GetActionsForOriginLookup();
-		relevantActions.insert(relevantActions.end(), virtActions.begin(), virtActions.end());
-	}
-
 	std::set<std::string> sources;
-	for (XrAction action : relevantActions) {
-		XrBoundSourcesForActionEnumerateInfo info = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
-		info.action = action;
+	XrBoundSourcesForActionEnumerateInfo info = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
+	info.action = act->xr;
 
-		// 20 will be more than enough, saves a second call
-		XrPath tmp[20];
-		uint32_t count;
-		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, std::size(tmp), &count, tmp));
+	// 20 will be more than enough, saves a second call
+	XrPath tmp[20];
+	uint32_t count;
+	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, std::size(tmp), &count, tmp));
 
-		// Now for each source find the /user/hand/abc substring that it starts with
-		char buff[XR_MAX_PATH_LENGTH + 1];
-		for (int i = 0; i < count; i++) {
-			uint32_t len;
-			OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, tmp[i], XR_MAX_PATH_LENGTH, &len, buff));
+	// Now for each source find the /user/hand/abc substring that it starts with
+	char buff[XR_MAX_PATH_LENGTH + 1];
+	for (int i = 0; i < count; i++) {
+		uint32_t len;
+		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, tmp[i], XR_MAX_PATH_LENGTH, &len, buff));
 
-			std::string path(buff, len);
-			int endOfHandPos = path.find('/', strlen("/user/hand/") + 1);
-			path.erase(endOfHandPos);
-			sources.insert(std::move(path));
-		}
+		std::string path(buff, len);
+		int endOfHandPos = path.find('/', strlen("/user/hand/") + 1);
+		path.erase(endOfHandPos);
+		sources.insert(std::move(path));
 	}
 
 	// Copy out the sources
