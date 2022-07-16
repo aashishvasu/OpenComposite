@@ -10,6 +10,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../Misc/Input/InputData.h"
@@ -363,11 +364,6 @@ public: // INTERNAL FUNCTIONS
 	 */
 	inline uint64_t GetSyncSerial() const { return syncSerial; }
 
-	/**
-	 * Converts a hand path (/user/hand/left or /user/hand/right) into an input value handle.
-	 */
-	VRInputValueHandle_t HandPathToIVH(const std::string& path);
-
 private:
 	enum class ActionRequirement {
 		Suggested = 0, // default
@@ -453,6 +449,48 @@ private:
 		std::string slot;
 	};
 
+	struct DpadBindingInfo {
+		// Possible dpad directions
+		enum class Direction {
+			NORTH,
+			SOUTH,
+			EAST,
+			WEST
+		};
+
+		// mapping from OpenVR name to Direction
+		inline static const std::unordered_map<std::string, Direction> directionMap = {
+			{ "north", Direction::NORTH },
+			{ "east", Direction::EAST },
+			{ "south", Direction::SOUTH },
+			{ "west", Direction::WEST }
+		};
+
+		// Map from dpad binding parent names to their corresponding actions and click actions
+		// For example, a parent name might be "righttrackpad-vive_controller"
+		struct ParentActions {
+			XrAction vectorAction;
+			XrAction clickAction;
+		};
+		inline static std::unordered_map<std::string, ParentActions> parents;
+
+		// Deadzone for dpad
+		static constexpr float dpadDeadzoneMin = 0.2;
+
+		// Value needed for dividing dpad into 90 degree chunks
+		// see the unit circle
+		static inline const float dpadArcMidpoint = sqrt(2) / 2;
+
+		// The direction for this binding.
+		Direction direction;
+
+		// Is a click required for this binding
+		bool click = false;
+
+		// The previous state for the dpad binding.
+		bool lastState = false;
+	};
+
 	struct Action {
 	private:
 		static constexpr size_t sources_size = 32;
@@ -496,6 +534,11 @@ private:
 			float y = 0;
 			float z = 0;
 		} previousState;
+
+		// list of dpad directions to check
+		// first member of the pair is the parent name, the second is the corresponding binding info
+		using DpadGrouping = std::pair<std::string, DpadBindingInfo>;
+		std::vector<DpadGrouping> dpadBindings;
 	};
 
 	enum class InputSource {
@@ -721,6 +764,11 @@ private:
 	 * consistent manner.
 	 */
 	VRInputValueHandle_t activeOriginFromSubaction(Action* action, const char* subactionPath);
+
+	/**
+	 * Get the state for a digital action, which could be bound to a DPad action.
+	 */
+	XrResult getDigitalActionState(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
 
 	friend class InteractionProfile;
 };

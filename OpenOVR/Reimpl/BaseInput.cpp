@@ -1,4 +1,6 @@
 #include "OpenVR/interfaces/vrtypes.h"
+#include "logging.h"
+#include "openxr/openxr.h"
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseInput.h"
@@ -735,6 +737,76 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 				if (action == nullptr)
 					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
 
+				if (srcJson["mode"].asString() == "dpad") {
+					// special case for dpad: we need to create additional inputs and read them ourselves
+
+					// check direction
+					auto dir_iter = DpadBindingInfo::directionMap.find(inputName);
+					if (dir_iter == DpadBindingInfo::directionMap.end()) {
+						OOVR_LOGF("WARNING: Unknown dpad direction %s given, skipping binding", inputName.c_str());
+						continue;
+					}
+					DpadBindingInfo dpad_info;
+					dpad_info.direction = dir_iter->second;
+
+					std::string sub_mode = srcJson["parameters"]["sub_mode"].asString();
+					if (sub_mode != "touch" && sub_mode != "click") {
+						OOVR_LOGF("WARNING: Unknown dpad sub mode %s given, skipping binding", sub_mode.c_str());
+					}
+
+					// check if parent is in dpadBindingParens
+					// get parent name: remove /user/hand and /input/ parts, add openvr name (so we don't i.e. confuse dpad bindings from the knuckles joystick with dpad bindings from the oculus joystick)
+					std::string to_delete[] = { "/user/hand/", "/input/" };
+					std::string parentName = importBasePath + "-" + profile.GetOpenVRName() + "-dpad-parent";
+					for (const auto& str : to_delete) {
+						parentName.replace(parentName.find(str), str.size(), "");
+					}
+
+					auto parent_iter = DpadBindingInfo::parents.find(parentName);
+					if (parent_iter == DpadBindingInfo::parents.end()) {
+						// create mapping
+						DpadBindingInfo::parents.insert({ parentName, { XR_NULL_HANDLE, XR_NULL_HANDLE } });
+						parent_iter = DpadBindingInfo::parents.find(parentName);
+
+						// create action for getting parent data (i.e. trackpad location)
+						XrActionCreateInfo info{ XR_TYPE_ACTION_CREATE_INFO };
+						strcpy(info.actionName, parentName.c_str());
+						info.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
+
+						// dpads can be on either hand: need to set subaction paths for GetAnalogActionData
+						info.subactionPaths = allSubactionPaths.data();
+						info.countSubactionPaths = allSubactionPaths.size();
+						strcpy(info.localizedActionName, parentName.c_str()); // TODO localization
+						                                                      //
+						xrCreateAction(action->set->xr, &info, &parent_iter->second.vectorAction);
+
+						// add parent to bindings
+						XrPath suggested_path;
+						xrStringToPath(xr_instance, profile.TranslateAction(importBasePath).c_str(), &suggested_path);
+						bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.vectorAction, suggested_path });
+
+						// create action for checking click
+						std::string click_name = parentName + "-click";
+						strcpy(info.actionName, click_name.c_str());
+						info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+						strcpy(info.localizedActionName, click_name.c_str());
+						xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction);
+
+						xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path);
+						bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.clickAction, suggested_path });
+					}
+
+					// check if click needed
+					if (sub_mode == "click") {
+						dpad_info.click = true;
+					}
+
+					// add dpad parent to action
+					action->dpadBindings.push_back({ parentName, dpad_info });
+
+					continue;
+				}
+
 				// Translate path string to an appropriate path supported by this interaction profile, if necessary
 				std::string pathStr;
 				// special case: "position" in OpenVR is a 2D vector, in OpenXR this can be represented by the parent of the input value
@@ -1010,6 +1082,82 @@ void BaseInput::InternalUpdate()
 	syncSerial++;
 }
 
+XrResult BaseInput::getDigitalActionState(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
+{
+	if (action.dpadBindings.empty()) {
+		return xrGetActionStateBoolean(xr_session, getInfo, state);
+	} else {
+		// dpad bindings: need to read parent state(s) and fill in state ourselves
+		for (auto& [parent_name, dpad_info] : action.dpadBindings) {
+			// if we've already determined one of the bindings is active no need to continue
+			if (state->currentState == XR_TRUE)
+				break;
+			// read state of parent
+			XrActionStateVector2f parent_state = { XR_TYPE_ACTION_STATE_VECTOR2F };
+			auto iter = DpadBindingInfo::parents.find(parent_name);
+			OOVR_FALSE_ABORT(iter != DpadBindingInfo::parents.end());
+			getInfo->action = iter->second.vectorAction;
+			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, getInfo, &parent_state));
+
+			struct bounds {
+				float lower_bound;
+				float upper_bound;
+				bool val_within_bounds(float cmp) { return cmp > lower_bound && cmp <= upper_bound; }
+			};
+			bounds x_bounds, y_bounds;
+
+			// fill out state struct
+			// set bounds for dpad depending on direction. these bounds will (ideally) result in completely even segments.
+			switch (dpad_info.direction) {
+			case DpadBindingInfo::Direction::NORTH: {
+				x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+				y_bounds = { DpadBindingInfo::dpadDeadzoneMin, 1 };
+				break;
+			}
+			case DpadBindingInfo::Direction::EAST: {
+				x_bounds = { DpadBindingInfo::dpadDeadzoneMin, 1 };
+				y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+				break;
+			}
+			case DpadBindingInfo::Direction::SOUTH: {
+				x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+				y_bounds = { -1, -DpadBindingInfo::dpadDeadzoneMin };
+				break;
+			}
+			case DpadBindingInfo::Direction::WEST: {
+				x_bounds = { -1, -DpadBindingInfo::dpadDeadzoneMin };
+				y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+				break;
+			}
+			}
+
+			bool active = true;
+			if (dpad_info.click) {
+				XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
+				getInfo->action = iter->second.clickAction;
+				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &click_state));
+				active = click_state.currentState;
+			}
+
+			if (active && x_bounds.val_within_bounds(parent_state.currentState.x) && y_bounds.val_within_bounds(parent_state.currentState.y)) {
+				state->currentState = XR_TRUE;
+			} else {
+				state->currentState = XR_FALSE;
+			}
+
+			if (state->currentState != dpad_info.lastState) {
+				state->changedSinceLastSync = XR_TRUE;
+				state->lastChangeTime = parent_state.lastChangeTime;
+				dpad_info.lastState = state->currentState;
+			} else {
+				state->changedSinceLastSync = XR_FALSE;
+			}
+			state->isActive = parent_state.isActive;
+		}
+	}
+	return XR_SUCCESS;
+}
+
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
@@ -1030,7 +1178,7 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 
 		getInfo.subactionPath = subactionPath;
 		XrActionStateBoolean state = { XR_TYPE_ACTION_STATE_BOOLEAN };
-		OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, &getInfo, &state));
+		OOVR_FAILED_XR_ABORT(getDigitalActionState(*act, &getInfo, &state));
 
 		// If the subaction isn't set, or it was set but not active, or it was set
 		// but the state was false and it's not now, then override it.
@@ -1822,14 +1970,6 @@ VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const 
 	OOVR_SOFT_ABORTF("Couldn't find matching source for subaction path '%s' on action '%s'", subactionPath, action->fullName.c_str());
 	VRInputValueHandle_t handle;
 	OOVR_FALSE_ABORT(GetInputSourceHandle(subactionPath, &handle) == vr::VRInputError_None);
-	return handle;
-}
-
-VRInputValueHandle_t BaseInput::HandPathToIVH(const std::string& path)
-{
-	// TODO remove when we remove the VirtualInput junk
-	VRInputValueHandle_t handle;
-	OOVR_FALSE_ABORT(GetInputSourceHandle(path.c_str(), &handle) == vr::VRInputError_None);
 	return handle;
 }
 
