@@ -26,6 +26,8 @@
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "../OpenOVR/convert.h"
 
+#include "d3dx12.h"
+
 XrBackend::XrBackend()
 {
 	memset(projectionViews, 0, sizeof(projectionViews));
@@ -113,6 +115,35 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			dev->Release();
 #else
 			OOVR_ABORT("Application is trying to submit a D3D11 texture, which OpenComposite supports but is disabled in this build");
+#endif
+			break;
+		}
+		case vr::TextureType_DirectX12: {
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
+			// The spec requires that we call this before starting a session using D3D. Unfortunately we
+			// can't actually do anything with this information, since the game has already created the device.
+			XrGraphicsRequirementsD3D12KHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_D3D12_KHR };
+			OOVR_FAILED_XR_ABORT(xr_ext->xrGetD3D12GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements));
+
+			D3D12TextureData_t* d3dTexData = (D3D12TextureData_t*)tex->handle;
+			ComPtr<ID3D12Device> device;
+			d3dTexData->m_pResource->GetDevice(IID_PPV_ARGS(&device));
+
+			XrGraphicsBindingD3D12KHR d3dInfo{};
+			d3dInfo.type = XR_TYPE_GRAPHICS_BINDING_D3D12_KHR;
+			d3dInfo.device = device.Get();
+			d3dInfo.queue = d3dTexData->m_pCommandQueue;
+			DrvOpenXR::SetupSession(&d3dInfo);
+
+#ifdef _DEBUG
+			ComPtr<ID3D12Debug> debugController;
+			D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
+			debugController->EnableDebugLayer();
+#endif
+
+			device->Release();
+#else
+			OOVR_ABORT("Application is trying to submit a D3D12 texture, which OpenComposite supports but is disabled in this build");
 #endif
 			break;
 		}

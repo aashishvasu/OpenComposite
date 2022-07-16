@@ -4,30 +4,54 @@
 
 class DX12Compositor : public Compositor {
 public:
-	DX12Compositor(vr::D3D12TextureData_t* td, OVR::Sizei& bufferSize, ovrTextureSwapChain* chains);
+	DX12Compositor(vr::D3D12TextureData_t* td);
 
 	// Override
-	virtual void Invoke(ovrEyeType eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
-	    vr::EVRSubmitFlags submitFlags, ovrLayerEyeFov& layer) override;
+	virtual ~DX12Compositor() override;
+
+	// Override
+	virtual void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds) override;
+
+	virtual void InvokeCubemap(const vr::Texture_t* textures) override;
+	virtual bool SupportsCubemap() override { return false; }
+
+	virtual void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
+	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport) override;
+
+	ComPtr<ID3D12Device> GetDevice() { return device; }
 
 private:
+	void CheckCreateSwapChain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, bool cube);
+
+	void ThrowIfFailed(HRESULT test);
+
+	bool CheckChainCompatible(D3D12_RESOURCE_DESC& inputDesc, vr::EColorSpace colourSpace);
+
 	ComPtr<ID3D12Device> device;
 	ComPtr<ID3D12CommandQueue> queue;
-	ComPtr<ID3D12GraphicsCommandList> commandList;
-	OVR::Sizei singleScreenSize;
 
-	int chainLength = -1;
+	std::vector<ComPtr<ID3D12CommandAllocator>> commandAllocators;
+	std::vector<ComPtr<ID3D12GraphicsCommandList>> commandLists;
 
-	ComPtr<ID3D12CommandAllocator> allocator = NULL;
-	ComPtr<ID3D12DescriptorHeap> rtvVRHeap = NULL; // Resource Target View Heap
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> texRtv;
-	std::vector<ID3D12Resource*> texResource;
+	std::vector < HANDLE > frameFenceEvents;
+	std::vector < ComPtr<ID3D12Fence> > frameFences;
+	std::vector < UINT64 > fenceValues;
+	UINT64 currentFenceValue;
 
-	ComPtr<ID3D12Resource> m_vertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-	ComPtr<ID3D12PipelineState> pipelineState;
-	ComPtr<ID3D12RootSignature> rootSignature;
+	std::vector<XrSwapchainImageD3D12KHR> imagesHandles;
 
-	ComPtr<ID3D12DescriptorHeap> srvHeap = NULL;
-	UINT m_rtvDescriptorSize;
+	struct DxgiFormatInfo {
+		/// The different versions of this format, set to DXGI_FORMAT_UNKNOWN if absent.
+		/// Both the SRGB and linear formats should be UNORM.
+		DXGI_FORMAT srgb, linear, typeless;
+
+		/// The bits per pixel, bits per channel, and the number of channels
+		int bpp, bpc, channels;
+	};
+
+	/**
+	 * Gets information about a given format into the output variable. Returns true if the texture was
+	 * found, if not it returns false and leaves out in an undefined state.
+	 */
+	static bool GetFormatInfo(DXGI_FORMAT format, DxgiFormatInfo& out);
 };

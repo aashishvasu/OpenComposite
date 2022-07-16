@@ -225,7 +225,7 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 #endif
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 	case TextureType_DirectX12: {
-		compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, fovTextureSize, chains);
+		comp = new DX12Compositor((D3D12TextureData_t*)texture->handle);
 		break;
 	}
 #endif

@@ -10,6 +10,13 @@
 #define XR_USE_GRAPHICS_API_D3D11
 #endif
 
+#ifdef SUPPORT_DX
+#ifdef SUPPORT_DX12
+#include <d3d12.h>
+#define XR_USE_GRAPHICS_API_D3D12
+#endif
+#endif
+
 #ifdef SUPPORT_GL
 #include <GL/gl.h>
 #define XR_USE_GRAPHICS_API_OPENGL
@@ -92,6 +99,11 @@ public:
 		OOVR_FALSE_ABORT(pfnXrGetD3D11GraphicsRequirementsKHR);
 		return pfnXrGetD3D11GraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
+	XrResult xrGetD3D12GraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsD3D12KHR* graphicsRequirements)
+	{
+		OOVR_FALSE_ABORT(pfnXrGetD3D12GraphicsRequirementsKHR);
+		return pfnXrGetD3D12GraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
+	}
 #endif
 #ifdef SUPPORT_VK
 	bool xrGetVulkanInstanceExtensionsKHR_Available()
@@ -150,6 +162,7 @@ private:
 
 #ifdef SUPPORT_DX
 	PFN_xrGetD3D11GraphicsRequirementsKHR pfnXrGetD3D11GraphicsRequirementsKHR = nullptr;
+	PFN_xrGetD3D12GraphicsRequirementsKHR pfnXrGetD3D12GraphicsRequirementsKHR = nullptr;
 #endif
 #ifdef SUPPORT_VK
 	PFN_xrGetVulkanGraphicsRequirementsKHR pfnXrGetVulkanGraphicsRequirementsKHR = nullptr;

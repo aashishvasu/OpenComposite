@@ -129,15 +129,21 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 			if ((uint64_t)overlay.layerQuad.subImage.swapchain == 0) {
 				continue;
 			}
-			// Calculate the texture's aspect ratio
-			const XrRect2Di& srcSize = overlay.layerQuad.subImage.imageRect;
-			const float aspect = srcSize.extent.height > 0 ? (float)srcSize.extent.width / (float)srcSize.extent.height : 1.0f;
 
+			const XrRect2Di& srcSize = overlay.layerQuad.subImage.imageRect;
+			if (srcSize.extent.height <= 8 && srcSize.extent.width <= 8) {
+				// Hack for F1 22 which creates a low res texture to fade between scenes
+				// but ends up just leaving a black square that takes up half the screen.
+				continue;
+			}
+
+			// Calculate the texture's aspect ratio
+			const float aspect = srcSize.extent.height > 0 ? (float)srcSize.extent.width / (float)srcSize.extent.height : 1.0f;
 			// ... and use that to set the size of the overlay, as it will appear to the user
 			// Note we shouldn't do this when setting the texture, as the user may change the width of
 			//  the overlay without changing the texture.
-			overlay.layerQuad.size.width = overlay.widthMeters;
-			overlay.layerQuad.size.height = overlay.widthMeters / aspect;
+			overlay.layerQuad.size.width = overlay.widthMeters * overlay.overlayTransform[0][0];
+			overlay.layerQuad.size.height = overlay.widthMeters * overlay.overlayTransform[1][1] / aspect;
 
 			// Finally, add it to the list of layers to be sent to LibOVR
 			overlay.layerQuad.pose = { { 0.f, 0.f, 0.f, 1.f },

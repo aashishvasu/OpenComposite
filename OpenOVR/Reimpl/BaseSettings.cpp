@@ -36,7 +36,7 @@
 		             " line "                                              \
 		    + to_string(__LINE__);                                         \
 		str += "via " + string(pchSection) + "." + string(pchSettingsKey); \
-		OOVR_ABORT_T(str.c_str(), "Stubbed func!");                        \
+		OOVR_SOFT_ABORT(str.c_str());                                      \
 	}
 
 using namespace std;
@@ -108,8 +108,10 @@ void BaseSettings::SetBool(const char* pchSection, const char* pchSettingsKey, b
 		}
 	}
 
-	OOVR_LOG(to_string(bValue).c_str());
-	STUBBED();
+	if (peError)
+		*peError = VRSettingsError_WriteFailed;
+
+	UNSET_SETTING();
 }
 void BaseSettings::SetInt32(const char* pchSection, const char* pchSettingsKey, int32_t nValue, EVRSettingsError* peError)
 {
@@ -125,7 +127,10 @@ void BaseSettings::SetInt32(const char* pchSection, const char* pchSettingsKey, 
 		}
 	}
 
-	STUBBED();
+	if (peError)
+		*peError = VRSettingsError_WriteFailed;
+
+	UNSET_SETTING();
 }
 void BaseSettings::SetFloat(const char* pchSection, const char* pchSettingsKey, float flValue, EVRSettingsError* peError)
 {
@@ -147,14 +152,22 @@ void BaseSettings::SetFloat(const char* pchSection, const char* pchSettingsKey, 
 		}
 	}
 
-	STUBBED();
+	if (peError)
+		*peError = VRSettingsError_WriteFailed;
+
+	UNSET_SETTING();
 }
 void BaseSettings::SetString(const char* pchSection, const char* pchSettingsKey, const char* pchValue, EVRSettingsError* peError)
 {
 	if (peError)
 		*peError = VRSettingsError_None;
 
-	STUBBED();
+	//*** Implementation here ***//
+
+	if (peError)
+		*peError = VRSettingsError_WriteFailed;
+
+	UNSET_SETTING();
 }
 bool BaseSettings::GetBool(const char* pchSection, const char* pchSettingsKey, EVRSettingsError* peError)
 {
@@ -186,14 +199,22 @@ bool BaseSettings::GetBool(const char* pchSection, const char* pchSettingsKey, E
 		}
 	}
 
-	STUBBED();
+	if (peError)
+		*peError = VRSettingsError_ReadFailed;
+	UNSET_SETTING();
+
+	return false;
 }
 int32_t BaseSettings::GetInt32(const char* pchSection, const char* pchSettingsKey, EVRSettingsError* peError)
 {
 	if (peError)
 		*peError = VRSettingsError_None;
 
-	STUBBED();
+	if (peError)
+		*peError = VRSettingsError_ReadFailed;
+	UNSET_SETTING();
+
+	return 0;
 }
 float BaseSettings::GetFloat(const char* pchSection, const char* pchSettingsKey, EVRSettingsError* peError)
 {
@@ -215,9 +236,15 @@ float BaseSettings::GetFloat(const char* pchSection, const char* pchSettingsKey,
 		if (key == kk::k_pch_CollisionBounds_FadeDistance_Float) {
 			return 1.0f; // made up some value that we will not use
 		}
+	} else if (section.find("steam.app") == 0) {
+		if (key == "resolutionScale")
+			return 100.0f;
 	}
 
+	if (peError)
+		*peError = VRSettingsError_ReadFailed;
 	UNSET_SETTING();
+	return 1.0f;
 }
 void BaseSettings::GetString(const char* pchSection, const char* pchSettingsKey, VR_OUT_STRING() char* pchValue,
     uint32_t unValueLen, EVRSettingsError* peError)
@@ -235,6 +262,14 @@ void BaseSettings::GetString(const char* pchSection, const char* pchSettingsKey,
 		if (key == kk::k_pch_SteamVR_GridColor_String) {
 			// When I tested it under SteamVR, it did actually just return an empty string
 			result = "";
+			goto found;
+		}
+	} else if (section == kk::k_pch_LastKnown_Section) {
+		if (key == kk::k_pch_LastKnown_HMDModel_String) {
+			result = "Oculus Quest2";
+			goto found;
+		} else if (key == kk::k_pch_LastKnown_HMDManufacturer_String) {
+			result = "Oculus";
 			goto found;
 		}
 	} else if (section == kk::k_pch_audio_Section) {
@@ -261,7 +296,11 @@ void BaseSettings::GetString(const char* pchSection, const char* pchSettingsKey,
 #endif
 	}
 
-	STUBBED();
+	if (peError)
+		*peError = VRSettingsError_ReadFailed;
+	UNSET_SETTING();
+
+	return;
 
 found:
 

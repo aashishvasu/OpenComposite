@@ -45,6 +45,12 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 	}
 #endif
 
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
+	if (apis & XR_SUPPORTED_GRAPHCIS_API_D3D12) {
+		XR_BIND(xrGetD3D12GraphicsRequirementsKHR, pfnXrGetD3D12GraphicsRequirementsKHR);
+	}
+#endif
+
 #ifdef SUPPORT_VK
 	if (apis & XR_SUPPORTED_GRAPHCIS_API_VK) {
 		XR_BIND(xrGetVulkanGraphicsRequirementsKHR, pfnXrGetVulkanGraphicsRequirementsKHR);
