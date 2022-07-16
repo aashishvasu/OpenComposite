@@ -109,8 +109,6 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 			HideKeyboard();
 	}
 
-	XrCompositionLayerBaseHeader* prevLayer = sceneLayer;
-
 	if (!oovr_global_configuration.EnableLayers()) {
 		goto done;
 	}
@@ -146,10 +144,6 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 				{ overlay.overlayTransform[0][3], overlay.overlayTransform[1][3], overlay.overlayTransform[2][3] } };
 
 			layerHeaders.push_back((XrCompositionLayerBaseHeader*)&overlay.layerQuad);
-			if (prevLayer) {
-				prevLayer->next = (XrCompositionLayerBaseHeader*)&overlay.layerQuad;
-				prevLayer = (XrCompositionLayerBaseHeader*)&overlay.layerQuad;
-			}
 		}
 	}
 
