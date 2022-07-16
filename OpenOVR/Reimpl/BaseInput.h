@@ -455,7 +455,8 @@ private:
 			NORTH,
 			SOUTH,
 			EAST,
-			WEST
+			WEST,
+			CENTER
 		};
 
 		// mapping from OpenVR name to Direction
@@ -463,19 +464,21 @@ private:
 			{ "north", Direction::NORTH },
 			{ "east", Direction::EAST },
 			{ "south", Direction::SOUTH },
-			{ "west", Direction::WEST }
+			{ "west", Direction::WEST },
+			{ "center", Direction::CENTER }
 		};
 
-		// Map from dpad binding parent names to their corresponding actions and click actions
-		// For example, a parent name might be "righttrackpad-vive_controller"
+		// Map from dpad binding parent names to their corresponding actions
+		// An example parent name might be "righttrackpad-vive_controller"
 		struct ParentActions {
-			XrAction vectorAction;
-			XrAction clickAction;
+			XrAction vectorAction = XR_NULL_HANDLE;
+			XrAction clickAction = XR_NULL_HANDLE;
+			XrAction touchAction = XR_NULL_HANDLE;
 		};
 		inline static std::unordered_map<std::string, ParentActions> parents;
 
 		// Deadzone for dpad
-		static constexpr float dpadDeadzoneMin = 0.2;
+		static constexpr float dpadDeadzone = 0.5;
 
 		// Value needed for dividing dpad into 90 degree chunks
 		// see the unit circle
@@ -485,6 +488,7 @@ private:
 		Direction direction;
 
 		// Is a click required for this binding
+		// false implies that a touch is required instead
 		bool click = false;
 
 		// The previous state for the dpad binding.

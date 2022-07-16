@@ -734,11 +734,21 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 
 				std::string actionName = actions.ShortenOrLookupName(item["output"].asString());
 				Action* action = actions.LookupItem(actionName);
-				if (action == nullptr)
-					OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
+
+				// For some reason, No Man's Sky has actions that don't exist in the manifest in its binding files
+				if (action == nullptr) {
+					OOVR_LOGF("WARNING: Action '%s' (from binding file %s) does not exist in manifest, skipping", actionName.c_str(), bindingsPath.c_str());
+					continue;
+				}
 
 				if (srcJson["mode"].asString() == "dpad") {
 					// special case for dpad: we need to create additional inputs and read them ourselves
+					// verify that we actually have an input that can be used as an dpad for this profile
+					std::string parentPath = profile.TranslateAction(importBasePath);
+					if (!profile.IsInputPathValid(parentPath)) {
+						OOVR_LOGF("WARNING: No such input path %s for profile %s, cannot bind dpad inputs, skipping", parentPath.c_str(), profile.GetPath().c_str());
+						continue;
+					}
 
 					// check direction
 					auto dir_iter = DpadBindingInfo::directionMap.find(inputName);
@@ -762,43 +772,54 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 						parentName.replace(parentName.find(str), str.size(), "");
 					}
 
+					XrActionCreateInfo info{ XR_TYPE_ACTION_CREATE_INFO };
+					// dpads can be on either hand: need to set subaction paths for GetAnalogActionData
+					info.subactionPaths = allSubactionPaths.data();
+					info.countSubactionPaths = allSubactionPaths.size();
+
 					auto parent_iter = DpadBindingInfo::parents.find(parentName);
 					if (parent_iter == DpadBindingInfo::parents.end()) {
 						// create mapping
-						DpadBindingInfo::parents.insert({ parentName, { XR_NULL_HANDLE, XR_NULL_HANDLE } });
+						DpadBindingInfo::parents.insert({ parentName, {} });
 						parent_iter = DpadBindingInfo::parents.find(parentName);
 
 						// create action for getting parent data (i.e. trackpad location)
-						XrActionCreateInfo info{ XR_TYPE_ACTION_CREATE_INFO };
 						strcpy(info.actionName, parentName.c_str());
 						info.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
-
-						// dpads can be on either hand: need to set subaction paths for GetAnalogActionData
-						info.subactionPaths = allSubactionPaths.data();
-						info.countSubactionPaths = allSubactionPaths.size();
 						strcpy(info.localizedActionName, parentName.c_str()); // TODO localization
-						                                                      //
 						xrCreateAction(action->set->xr, &info, &parent_iter->second.vectorAction);
 
 						// add parent to bindings
 						XrPath suggested_path;
 						xrStringToPath(xr_instance, profile.TranslateAction(importBasePath).c_str(), &suggested_path);
 						bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.vectorAction, suggested_path });
-
-						// create action for checking click
-						std::string click_name = parentName + "-click";
-						strcpy(info.actionName, click_name.c_str());
-						info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-						strcpy(info.localizedActionName, click_name.c_str());
-						xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction);
-
-						xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path);
-						bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.clickAction, suggested_path });
 					}
 
-					// check if click needed
 					if (sub_mode == "click") {
 						dpad_info.click = true;
+						if (parent_iter->second.clickAction == XR_NULL_HANDLE) {
+							std::string click_name = parentName + "-click";
+							strcpy(info.actionName, click_name.c_str());
+							info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+							strcpy(info.localizedActionName, click_name.c_str());
+							xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction);
+							XrPath suggested_path;
+							xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path);
+							bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.clickAction, suggested_path });
+						}
+					} else {
+						// touch dpad
+						dpad_info.click = false;
+						if (parent_iter->second.touchAction == XR_NULL_HANDLE) {
+							std::string touch_name = parentName + "-touch";
+							strcpy(info.actionName, touch_name.c_str());
+							info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+							strcpy(info.localizedActionName, touch_name.c_str());
+							xrCreateAction(action->set->xr, &info, &parent_iter->second.touchAction);
+							XrPath suggested_path;
+							xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/touch").c_str(), &suggested_path);
+							bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.touchAction, suggested_path });
+						}
 					}
 
 					// add dpad parent to action
@@ -1111,32 +1132,41 @@ XrResult BaseInput::getDigitalActionState(Action& action, XrActionStateGetInfo* 
 			switch (dpad_info.direction) {
 			case DpadBindingInfo::Direction::NORTH: {
 				x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-				y_bounds = { DpadBindingInfo::dpadDeadzoneMin, 1 };
+				y_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
 				break;
 			}
 			case DpadBindingInfo::Direction::EAST: {
-				x_bounds = { DpadBindingInfo::dpadDeadzoneMin, 1 };
+				x_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
 				y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
 				break;
 			}
 			case DpadBindingInfo::Direction::SOUTH: {
 				x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-				y_bounds = { -1, -DpadBindingInfo::dpadDeadzoneMin };
+				y_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
 				break;
 			}
 			case DpadBindingInfo::Direction::WEST: {
-				x_bounds = { -1, -DpadBindingInfo::dpadDeadzoneMin };
+				x_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
 				y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
 				break;
 			}
+			case DpadBindingInfo::Direction::CENTER: {
+				x_bounds = { -DpadBindingInfo::dpadDeadzone, DpadBindingInfo::dpadDeadzone };
+				y_bounds = x_bounds;
+			}
 			}
 
-			bool active = true;
+			bool active;
 			if (dpad_info.click) {
 				XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
 				getInfo->action = iter->second.clickAction;
 				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &click_state));
 				active = click_state.currentState;
+			} else {
+				XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
+				getInfo->action = iter->second.touchAction;
+				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &touch_state));
+				active = touch_state.currentState;
 			}
 
 			if (active && x_bounds.val_within_bounds(parent_state.currentState.x) && y_bounds.val_within_bounds(parent_state.currentState.y)) {
