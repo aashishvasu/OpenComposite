@@ -51,7 +51,9 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	pathTranslationMap = {
 		{ "joystick", "thumbstick" },
 		{ "pull", "value" },
-		{ "grip", "squeeze" }
+		{ "grip/click", "squeeze/value" },
+		{ "trigger/click", "trigger/value" },
+		{ "application_menu", "menu"}
 	};
 	// TODO implement the poses through the interaction profile (the raw pose is hard-coded in BaseInput at the moment):
 	// pose/raw
