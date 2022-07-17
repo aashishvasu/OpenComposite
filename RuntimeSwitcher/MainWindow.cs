@@ -76,7 +76,7 @@ namespace RuntimeSwitcher
             }
             else if (runtime == ocRuntimePath)
             {
-                statusLabel.Text = "OpenComposite";
+                statusLabel.Text = "OpenComposite OpenXR";
                 useOpenComposite.Enabled = false;
             }
             else
