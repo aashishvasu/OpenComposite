@@ -160,9 +160,13 @@ via a different method I'll probably make an issue and send you the link to help
 
 If you do not or cannot create or use a GitLab account for whatever reason, you can join the [Discord server](https://discord.gg/zYA6Tzs) and report the issue in #bugs.
 
-In any case, please include the contents your `openovr_log` file - each time you start
-a game, this is created next to the EXE file and contains potentially invaluable debugging
-information. Please also say what caused the crash - did it crash on startup, or maybe after clicking
+In any case, please include the contents your `opencomposite.log` file which contains potentially
+invaluable debugging information. This log file can be found here:
+
+Windows - %localappdata%\OpenComposite\logs (Copy and paste that into explorer)
+Linux - $XDG_STATE_HOME/OpenComposite/logs (If XDG_STATE_HOME is not defined then check $HOME/.local/state/...)
+
+Please also say what caused the crash - did it crash on startup, or maybe after clicking
 load on the main menu, for example?
 
 ## Licence
