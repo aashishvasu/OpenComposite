@@ -46,9 +46,9 @@ void O2S_om34(const Mat4& in, HmdMatrix34_t& out)
 	}
 }
 
-void S2O_om44(const HmdMatrix34_t& in, MfMatrix4f& out)
+void S2O_om44(const HmdMatrix34_t& in, Mat4& out)
 {
-	out = glm::identity<MfMatrix4f>();
+	out = glm::identity<Mat4>();
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 4; x++) {
 			out[y][x] = in.m[y][x];
