@@ -11,9 +11,6 @@
 
 #pragma comment(lib, "d3dcompiler.lib")
 
-using namespace std;
-using glm::min;
-
 constexpr char fs_shader_code[] = R"_(
 Texture2D shaderTexture : register(t0);
 
@@ -169,7 +166,7 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 	if (cube) {
 		// LibOVR can only use square cubemaps, while SteamVR can use any shape
 		// Note we use CopySubresourceRegion later on, so this won't cause problems with that
-		srcDesc.Height = srcDesc.Width = min(srcDesc.Height, srcDesc.Width);
+		srcDesc.Height = srcDesc.Width = std::min(srcDesc.Height, srcDesc.Width);
 	}
 
 	bool usable = chain == NULL ? false : CheckChainCompatible(srcDesc, texture->eColorSpace);

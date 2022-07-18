@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <locale>
 #include <map>
+#include <math.h>
 #include <optional>
 #include <set>
 #include <utility>
@@ -1378,7 +1379,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 		angle_mult = 1.0f; // Natural rotation is CCW, invert for clockwise
 	else
 		angle_mult = -1.0f;
-	glm::mat4 systemTransform = glm::rotate(glm::identity<glm::mat4>(), angle_mult * M_PIf / 2.0f, glm::vec3(0, 0, 1));
+	glm::mat4 systemTransform = glm::rotate(glm::identity<glm::mat4>(), angle_mult * (float)M_PI / 2.0f, glm::vec3(0, 0, 1));
 
 	// Load the data into the output bones, with the correct mapping
 	std::optional<XrHandJointEXT> parentId;

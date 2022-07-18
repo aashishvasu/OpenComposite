@@ -27,8 +27,6 @@
 
 #include "Misc/xr_ext.h"
 
-using namespace std;
-
 BaseSystem::BaseSystem()
 {
 	// The default origin is now set by the default value of currentSpace
@@ -573,7 +571,7 @@ bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_
 	VREvent_t e = info.ev;
 	events.pop();
 
-	memcpy(pEvent, &e, min((size_t)uncbVREvent, sizeof(e)));
+	memcpy(pEvent, &e, std::min((size_t)uncbVREvent, sizeof(e)));
 
 	if (pTrackedDevicePose) {
 		*pTrackedDevicePose = info.pose;

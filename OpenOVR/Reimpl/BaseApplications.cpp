@@ -3,7 +3,6 @@
 #include "BaseApplications.h"
 #include <string>
 
-using namespace std;
 using namespace vr;
 
 /** The maximum length of an application key */

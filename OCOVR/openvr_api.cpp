@@ -20,8 +20,6 @@
 #include "Drivers/DriverManager.h"
 #include "DrvOpenXR.h"
 
-using namespace std;
-
 // Binary-compatible openvr_api.dll implementation
 static bool running;
 static bool running_ovr; // are we in an apptype which uses LibOVR?
@@ -48,7 +46,7 @@ class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {
 // Also for the basis of this typedef, see: https://stackoverflow.com/a/26276805
 using correct_layout_unique = std::unique_ptr<CVRCorrectLayout, std::function<void(CVRCorrectLayout*)>>;
 
-static map<string, correct_layout_unique> interfaces;
+static std::map<std::string, correct_layout_unique> interfaces;
 
 VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersion, EVRInitError* error)
 {

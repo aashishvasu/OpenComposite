@@ -39,7 +39,6 @@
 		OOVR_SOFT_ABORT(str.c_str());                                      \
 	}
 
-using namespace std;
 namespace kk1 = vr::IVRSettings_001;
 namespace kk = vr::IVRSettings_002;
 

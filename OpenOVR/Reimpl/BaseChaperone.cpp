@@ -8,7 +8,6 @@
 
 #include <vector>
 
-using namespace std;
 using namespace vr;
 
 BaseChaperone::BaseChaperoneCalibrationState BaseChaperone::GetCalibrationState()
@@ -96,8 +95,8 @@ bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t& minPoint, vr::HmdVector3_t
 
 	for (const auto& point : points) {
 		for (int i = 0; i < 3; i++) {
-			minPoint.v[i] = min(minPoint.v[i], point.v[i]);
-			maxPoint.v[i] = max(maxPoint.v[i], point.v[i]);
+			minPoint.v[i] = std::min(minPoint.v[i], point.v[i]);
+			maxPoint.v[i] = std::max(maxPoint.v[i], point.v[i]);
 		}
 	}
 

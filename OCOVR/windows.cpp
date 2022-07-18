@@ -19,8 +19,6 @@
 #include "Drivers/DriverManager.h"
 #include "DrvOpenXR.h"
 
-using namespace std;
-
 HMODULE openovr_module_id;
 HMODULE chainedImplementation;
 

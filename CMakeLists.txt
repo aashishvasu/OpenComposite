@@ -5,10 +5,11 @@ if (MSVC)
 	set(CMAKE_SYSTEM_VERSION 10.0.17134.0)
 endif ()
 
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.16)
 project(OpenComposite)
 
 include(scripts/pch.cmake)
+set(CMAKE_CXX_STANDARD 20)
 
 # Options
 

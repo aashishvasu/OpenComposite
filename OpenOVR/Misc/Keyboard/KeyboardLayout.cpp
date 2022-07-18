@@ -6,8 +6,6 @@
 #include <algorithm>
 #include <cwctype>
 
-using namespace std;
-
 static void wstrim(wstring& s)
 {
 	s.erase(s.begin(), find_if(s.begin(), s.end(), [](wchar_t ch) {

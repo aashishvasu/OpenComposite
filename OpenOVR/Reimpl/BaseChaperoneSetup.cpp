@@ -8,7 +8,6 @@
 #include <string>
 
 using namespace vr;
-using namespace std;
 
 bool BaseChaperoneSetup::CommitWorkingCopy(EChaperoneConfigFile configFile)
 {

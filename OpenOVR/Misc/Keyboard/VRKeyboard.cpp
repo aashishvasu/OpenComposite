@@ -24,12 +24,10 @@
 #include <comdef.h>
 #endif
 
-using namespace std;
-
 // If you're working on the keyboard, it may be useful to have it headlocked so you can easily see it in the Oculus mirror
 static const bool DBG_STUCK_TO_FACE = false;
 
-static vector<char> loadResource(int rid, int type)
+static std::vector<char> loadResource(int rid, int type)
 {
 #ifdef _WIN32
 	// Open our OBJ file
@@ -53,7 +51,7 @@ static vector<char> loadResource(int rid, int type)
 
 	// Do we need to use UnlockResource on cstr?
 
-	return vector<char>(cstr, cstr + len);
+	return std::vector<char>(cstr, cstr + len);
 #else
 #ifdef OC_XR_PORT
 	XR_STUBBED();

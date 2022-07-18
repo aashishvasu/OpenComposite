@@ -16,7 +16,6 @@
 #define GetCurrentDir getcwd
 #endif
 
-using namespace std;
 using vr::HmdColor_t;
 
 Config oovr_global_configuration;

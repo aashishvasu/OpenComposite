@@ -6,22 +6,21 @@
 
 #include <assert.h>
 
-using namespace std;
-
-vector<char> readBytes(vector<char>& data, size_t len)
+std::vector<char> readBytes(std::vector<char>& data, size_t len)
 {
 	assert(len <= data.size());
-	vector<char> result(data.begin(), data.begin() + len);
+	std::vector<char> result(data.begin(), data.begin() + len);
 	data.erase(data.begin(), data.begin() + len);
 	return result;
 }
 
 template <typename T>
-T readData(vector<char>& data)
+T readData(std::vector<char>& data)
 {
 	T val;
-	vector<char> sVal = readBytes(data, sizeof(val));
+	std::vector<char> sVal = readBytes(data, sizeof(val));
 	memcpy(&val, sVal.data(), sizeof(val));
+
 	return val;
 }
 
@@ -34,10 +33,10 @@ enum SectionID_t : uint16_t {
 	ID_END = 999,
 };
 
-SudoFontMeta::SudoFontMeta(vector<char> data, vector<char> image)
+SudoFontMeta::SudoFontMeta(std::vector<char> data, std::vector<char> image)
 {
 	string headerReq = "\x0bSudoFont1.1";
-	vector<char> headerVec = readBytes(data, headerReq.length());
+	std::vector<char> headerVec = readBytes(data, headerReq.length());
 	string header(headerVec.data(), headerVec.size());
 	assert(header == headerReq);
 
@@ -51,7 +50,7 @@ SudoFontMeta::SudoFontMeta(vector<char> data, vector<char> image)
 
 		auto sectionSize = readData<uint32_t>(data);
 
-		vector<char> sec = readBytes(data, sectionSize);
+		std::vector<char> sec = readBytes(data, sectionSize);
 
 		if (sectionID == ID_FONT_INFO) {
 			lineHeight = readData<uint16_t>(sec);

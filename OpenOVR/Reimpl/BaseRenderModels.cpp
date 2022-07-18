@@ -14,7 +14,6 @@
 
 #include <glm/gtx/transform.hpp>
 
-using namespace std;
 using glm::mat4;
 using glm::quat;
 using glm::vec3;
@@ -116,9 +115,9 @@ static string loadResource(int rid)
 
 static OOVR_RenderModel_Vertex_t split_face(
     const string& s,
-    const vector<vr::HmdVector3_t>& verts,
-    const vector<vr::HmdVector2_t>& uvs,
-    const vector<vr::HmdVector3_t>& normals)
+    const std::vector<vr::HmdVector3_t>& verts,
+    const std::vector<vr::HmdVector2_t>& uvs,
+    const std::vector<vr::HmdVector3_t>& normals)
 {
 
 	size_t slash1 = s.find('/');
@@ -168,12 +167,12 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 		return VRRenderModelError_None;
 	}
 
-	istringstream res = istringstream(loadResource(rid));
+	std::istringstream res = std::istringstream(loadResource(rid));
 
-	vector<vr::HmdVector3_t> verts;
-	vector<vr::HmdVector2_t> uvs;
-	vector<vr::HmdVector3_t> normals;
-	vector<OOVR_RenderModel_Vertex_t> vertexData;
+	std::vector<vr::HmdVector3_t> verts;
+	std::vector<vr::HmdVector2_t> uvs;
+	std::vector<vr::HmdVector3_t> normals;
+	std::vector<OOVR_RenderModel_Vertex_t> vertexData;
 
 	// Transform to line up the model with the Touch controller
 	mat4 modelTransform = mat4(glm::rotate(sided * math_pi / 2, vec3(0, 0, 1)));

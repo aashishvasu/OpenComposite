@@ -13,8 +13,6 @@
 
 #include <vulkan/vulkan.h>
 
-using namespace std;
-
 VkPhysicalDevice expectedPhysicalDevice = NULL;
 VkDevice expectedDevice = NULL;
 VkQueue expectedQueue = NULL;
@@ -149,7 +147,7 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 			swapchainImage.type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
 		OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, swapchainImages.size(), &chainLength, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
-		vector<VkImageMemoryBarrier> rtBarriers, appBarriers;
+		std::vector<VkImageMemoryBarrier> rtBarriers, appBarriers;
 
 		// SetupMappedImages(appCommandBuffer, rtBarriers, appBarriers);
 

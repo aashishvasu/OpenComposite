@@ -11,7 +11,6 @@
 #include "static_bases.gen.h"
 #include <string>
 
-using namespace std;
 using glm::mat4;
 using glm::vec3;
 
@@ -620,7 +619,7 @@ bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREven
 	VREvent_t e = overlay->eventQueue.front();
 	overlay->eventQueue.pop();
 
-	memcpy(pEvent, &e, min((uint32_t)sizeof(e), eventSize));
+	memcpy(pEvent, &e, std::min((uint32_t)sizeof(e), eventSize));
 
 	return true;
 }

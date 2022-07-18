@@ -11,7 +11,6 @@ using glm::mat4;
 using glm::quat;
 using glm::vec3;
 using glm::vec4;
-using namespace std;
 
 #include "BaseCompositor.h"
 #include "BaseOverlay.h"
@@ -124,7 +123,7 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t* renderPoseArray, ui
 
 	ETrackingUniverseOrigin origin = GetTrackingSpace();
 
-	for (uint32_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
+	for (uint32_t i = 0; i < std::max(gamePoseArrayCount, renderPoseArrayCount); i++) {
 		TrackedDevicePose_t* renderPose = NULL;
 		TrackedDevicePose_t* gamePose = NULL;
 
