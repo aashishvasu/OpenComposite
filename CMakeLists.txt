@@ -7,8 +7,6 @@ endif ()
 
 cmake_minimum_required(VERSION 3.16)
 project(OpenComposite)
-
-include(scripts/pch.cmake)
 set(CMAKE_CXX_STANDARD 20)
 
 # Options
@@ -218,8 +216,7 @@ set(OVR_PCH_EXCLUDED
 	OpenOVR/Misc/lodepng.cpp
 )
 add_library(OCCore STATIC
-	# Use when doing PCH
-	# Place it above everything else, so it gets built first
+	# This file is used to generate the precompiled headers
 	OpenOVR/stdafx.cpp
 
 	OpenOVR/Compositor/compositor.cpp
@@ -427,11 +424,8 @@ if (NOT WIN32 AND NOT ANDROID)
 endif ()
 
 # Set up precompiled headers for OCCore
-if (WIN32)
-add_precompiled_header(OCCore ${CMAKE_SOURCE_DIR}/OpenOVR/stdafx.h EXCLUDE
-	${OVR_PCH_EXCLUDED}
-)
-endif ()
+target_precompile_headers(OCCore PRIVATE ${CMAKE_SOURCE_DIR}/OpenOVR/stdafx.h)
+set_source_files_properties(${OVR_PCH_EXCLUDED} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
 source_group(OpenVR REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/*)
 source_group(OpenVR\\Drivers REGULAR_EXPRESSION SplitOpenVRHeaders/OpenVR/interfaces/driver_*)
