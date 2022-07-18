@@ -45,7 +45,7 @@ static std::string format_time()
 
 	char buffer[128];
 
-	int string_size = strftime(
+	size_t string_size = strftime(
 	    buffer, sizeof(buffer),
 	    LOGGER_TIME_FORMAT,
 	    time_info);
@@ -91,7 +91,7 @@ bool makePath(const std::string& path)
 	case ENOENT:
 		// parent didn't exist, try to create it
 		{
-			int pos = path.find_last_of('/');
+			size_t pos = path.find_last_of('/');
 			if (pos == std::string::npos)
 #if defined(_WIN32)
 				pos = path.find_last_of('\\');
@@ -144,20 +144,26 @@ void oovr_log_raw(const char* file, long line, const char* func, const char* msg
 	if (!stream.is_open()) {
 		string outputFilePath = "opencomposite.log";
 
+		// Try and write to standard location
+		// fall back to exe dir if can't create dir
 #ifdef _WIN32
 		string outputFolder = GetEnv("LOCALAPPDATA");
-		outputFolder = outputFolder  + "\\OpenComposite\\logs";
-		if (makePath(outputFolder))
+		if (!outputFolder.empty())
+			outputFolder = outputFolder + "\\OpenComposite\\logs";
+		if (!outputFolder.empty() && makePath(outputFolder))
 			outputFilePath = outputFolder + "\\" + outputFilePath;
 #else
 		string outputFolder = GetEnv("XDG_STATE_HOME");
-		if (outputFolder == "")
-			outputFolder = "~/.local/state";
-		outputFolder = outputFolder + "/OpenComposite/logs";
-		if (makePath(outputFolder))
+		if (outputFolder.empty()) {
+			outputFolder = GetEnv("HOME");
+			if (!outputFolder.empty())
+				outputFolder = outputFolder + "/.local/state";
+		}
+		if (!outputFolder.empty())
+			outputFolder = outputFolder + "/OpenComposite/logs";
+		if (!outputFolder.empty() && makePath(outputFolder))
 			outputFilePath = outputFolder + "/" + outputFilePath;
 #endif
-
 
 		stream.open(outputFilePath.c_str());
 	}

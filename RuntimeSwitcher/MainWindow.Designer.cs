@@ -67,7 +67,7 @@ namespace RuntimeSwitcher
             this.useOpenComposite.Name = "useOpenComposite";
             this.useOpenComposite.Size = new System.Drawing.Size(447, 35);
             this.useOpenComposite.TabIndex = 2;
-            this.useOpenComposite.Text = "Switch to OpenComposite OpenXR";
+            this.useOpenComposite.Text = "Switch to OpenComposite";
             this.useOpenComposite.UseVisualStyleBackColor = true;
             this.useOpenComposite.Click += new System.EventHandler(this.useOpenComposite_Click);
             // 

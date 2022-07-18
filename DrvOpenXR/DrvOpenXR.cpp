@@ -137,11 +137,13 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	std::vector<const char*> extensions;
 	XrGraphicsApiSupportedFlags apiFlags = 0;
 
-#ifdef SUPPORT_DX
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	if (availableExtensions.count("XR_KHR_D3D11_enable")) {
 		extensions.push_back("XR_KHR_D3D11_enable");
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D11;
 	}
+#endif
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 	if (availableExtensions.count("XR_KHR_D3D12_enable")) {
 		extensions.push_back("XR_KHR_D3D12_enable");
 		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D12;

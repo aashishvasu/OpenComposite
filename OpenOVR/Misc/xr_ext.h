@@ -5,16 +5,14 @@
 #pragma once
 
 // TODO Turtle1331 it would be nicer to include OpenXR-SDK's xr_dependencies.h if possible
-#ifdef SUPPORT_DX
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 #include <d3d11.h>
 #define XR_USE_GRAPHICS_API_D3D11
 #endif
 
-#ifdef SUPPORT_DX
-#ifdef SUPPORT_DX12
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 #include <d3d12.h>
 #define XR_USE_GRAPHICS_API_D3D12
-#endif
 #endif
 
 #ifdef SUPPORT_GL
@@ -89,7 +87,7 @@ public:
 		return pfnXrGetVisibilityMaskKHR(session, viewConfigurationType, viewIndex, visibilityMaskType, visibilityMask);
 	}
 
-#ifdef SUPPORT_DX
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	bool xrGetD3D11GraphicsRequirementsKHR_Available()
 	{
 		return pfnXrGetD3D11GraphicsRequirementsKHR != nullptr;
@@ -98,6 +96,12 @@ public:
 	{
 		OOVR_FALSE_ABORT(pfnXrGetD3D11GraphicsRequirementsKHR);
 		return pfnXrGetD3D11GraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
+	}
+#endif
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
+	bool xrGetD3D12GraphicsRequirementsKHR_Available()
+	{
+		return pfnXrGetD3D12GraphicsRequirementsKHR != nullptr;
 	}
 	XrResult xrGetD3D12GraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsD3D12KHR* graphicsRequirements)
 	{
@@ -160,8 +164,10 @@ public:
 private:
 	PFN_xrGetVisibilityMaskKHR pfnXrGetVisibilityMaskKHR = nullptr;
 
-#ifdef SUPPORT_DX
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	PFN_xrGetD3D11GraphicsRequirementsKHR pfnXrGetD3D11GraphicsRequirementsKHR = nullptr;
+#endif
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 	PFN_xrGetD3D12GraphicsRequirementsKHR pfnXrGetD3D12GraphicsRequirementsKHR = nullptr;
 #endif
 #ifdef SUPPORT_VK

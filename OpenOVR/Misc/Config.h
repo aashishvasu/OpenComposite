@@ -32,7 +32,7 @@ private:
 	vr::HmdColor_t handColour = vr::HmdColor_t{ 0.3f, 0.3f, 0.3f, 1 };
 	float supersampleRatio = 1.0f;
 	bool haptics = true;
-	bool admitUnknownProps = true;
+	bool admitUnknownProps = false;
 	bool threePartSubmit = true;
 	bool useViewportStencil = false;
 	bool forceConnectedTouch = true;

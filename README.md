@@ -163,8 +163,10 @@ If you do not or cannot create or use a GitLab account for whatever reason, you 
 In any case, please include the contents your `opencomposite.log` file which contains potentially
 invaluable debugging information. This log file can be found here:
 
-Windows - %localappdata%\OpenComposite\logs (Copy and paste that into explorer)
-Linux - $XDG_STATE_HOME/OpenComposite/logs (If XDG_STATE_HOME is not defined then check $HOME/.local/state/...)
+Windows - %localappdata%\\OpenComposite\\logs (Copy and paste that into explorer)
+Linux - $XDG_STATE_HOME/OpenComposite/logs (If XDG_STATE_HOME is not defined then check ~/.local/state/OpenComposite/logs)
+
+If those locations do not exist this may be due to some odd security restrictions, check the exe folder for opencomposite.log
 
 Please also say what caused the crash - did it crash on startup, or maybe after clicking
 load on the main menu, for example?

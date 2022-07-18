@@ -130,7 +130,7 @@ bool BackendManager::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32
 	return backend->GetFrameTiming(pTiming, unFramesAgo);
 }
 
-#if defined(SUPPORT_DX)
+#if defined(SUPPORT_DX11)
 IBackend::openvr_enum_t BackendManager::GetMirrorTextureD3D11(vr::EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView)
 {
 	return backend->GetMirrorTextureD3D11(eEye, pD3D11DeviceOrResource, ppD3D11ShaderResourceView);
@@ -233,7 +233,7 @@ bool ITrackedDevice::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty pro
 		return false;
 	}
 
-	OOVR_ABORTF("unknown bool property - dev: %d, prop: %d", DeviceIndex(), prop);
+	OOVR_SOFT_ABORTF("unknown bool property - dev: %d, prop: %d", DeviceIndex(), prop);
 }
 
 float ITrackedDevice::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
@@ -244,7 +244,7 @@ float ITrackedDevice::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty p
 		return 0;
 	}
 
-	OOVR_ABORTF("unknown float property - dev: %d, prop: %d", DeviceIndex(), prop);
+	OOVR_SOFT_ABORTF("unknown float property - dev: %d, prop: %d", DeviceIndex(), prop);
 }
 
 int32_t ITrackedDevice::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
@@ -254,7 +254,7 @@ int32_t ITrackedDevice::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty
 		return 0;
 	}
 
-	OOVR_ABORTF("unknown int32 property - dev: %d, prop: %d", DeviceIndex(), prop);
+	OOVR_SOFT_ABORTF("unknown int32 property - dev: %d, prop: %d", DeviceIndex(), prop);
 }
 
 uint64_t ITrackedDevice::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
@@ -264,7 +264,7 @@ uint64_t ITrackedDevice::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProper
 		return 0;
 	}
 
-	OOVR_ABORTF("unknown uint64 property - dev: %d, prop: %d", DeviceIndex(), prop);
+	OOVR_SOFT_ABORTF("unknown uint64 property - dev: %d, prop: %d", DeviceIndex(), prop);
 }
 
 vr::HmdMatrix34_t ITrackedDevice::GetMatrix34TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
@@ -279,7 +279,7 @@ vr::HmdMatrix34_t ITrackedDevice::GetMatrix34TrackedDeviceProperty(vr::ETrackedD
 		return m;
 	}
 
-	OOVR_ABORTF("unknown matrix34 property - dev: %d, prop: %d", DeviceIndex(), prop);
+	OOVR_SOFT_ABORTF("unknown matrix34 property - dev: %d, prop: %d", DeviceIndex(), prop);
 }
 
 uint32_t ITrackedDevice::GetArrayTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, vr::ETrackedPropertyError* pError)
@@ -289,7 +289,7 @@ uint32_t ITrackedDevice::GetArrayTrackedDeviceProperty(vr::ETrackedDevicePropert
 		return 0;
 	}
 
-	OOVR_ABORTF("unknown array property - dev: %d, prop: %d", -1, prop); // TODO use device index
+	OOVR_SOFT_ABORTF("unknown array property - dev: %d, prop: %d", -1, prop); // TODO use device index
 }
 
 uint32_t ITrackedDevice::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
@@ -308,5 +308,5 @@ uint32_t ITrackedDevice::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProper
 		return 0;
 	}
 
-	OOVR_ABORTF("unknown string property - dev: %d, prop: %d", DeviceIndex(), prop);
+	OOVR_SOFT_ABORTF("unknown string property - dev: %d, prop: %d", DeviceIndex(), prop);
 }
