@@ -762,6 +762,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 					std::string sub_mode = srcJson["parameters"]["sub_mode"].asString();
 					if (sub_mode != "touch" && sub_mode != "click") {
 						OOVR_LOGF("WARNING: Unknown dpad sub mode %s given, skipping binding", sub_mode.c_str());
+						continue;
 					}
 
 					// check if parent is in dpadBindingParens
@@ -784,14 +785,14 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 						parent_iter = DpadBindingInfo::parents.find(parentName);
 
 						// create action for getting parent data (i.e. trackpad location)
-						strcpy(info.actionName, parentName.c_str());
+						strcpy_arr(info.actionName, parentName.c_str());
 						info.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
-						strcpy(info.localizedActionName, parentName.c_str()); // TODO localization
-						xrCreateAction(action->set->xr, &info, &parent_iter->second.vectorAction);
+						strcpy_arr(info.localizedActionName, parentName.c_str()); // TODO localization
+						OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.vectorAction));
 
 						// add parent to bindings
 						XrPath suggested_path;
-						xrStringToPath(xr_instance, profile.TranslateAction(importBasePath).c_str(), &suggested_path);
+						OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath).c_str(), &suggested_path));
 						bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.vectorAction, suggested_path });
 					}
 
@@ -799,12 +800,12 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 						dpad_info.click = true;
 						if (parent_iter->second.clickAction == XR_NULL_HANDLE) {
 							std::string click_name = parentName + "-click";
-							strcpy(info.actionName, click_name.c_str());
+							strcpy_arr(info.actionName, click_name.c_str());
 							info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-							strcpy(info.localizedActionName, click_name.c_str());
-							xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction);
+							strcpy_arr(info.localizedActionName, click_name.c_str());
+							OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction));
 							XrPath suggested_path;
-							xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path);
+							OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path));
 							bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.clickAction, suggested_path });
 						}
 					} else {
@@ -812,12 +813,12 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 						dpad_info.click = false;
 						if (parent_iter->second.touchAction == XR_NULL_HANDLE) {
 							std::string touch_name = parentName + "-touch";
-							strcpy(info.actionName, touch_name.c_str());
+							strcpy_arr(info.actionName, touch_name.c_str());
 							info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-							strcpy(info.localizedActionName, touch_name.c_str());
-							xrCreateAction(action->set->xr, &info, &parent_iter->second.touchAction);
+							strcpy_arr(info.localizedActionName, touch_name.c_str());
+							OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.touchAction));
 							XrPath suggested_path;
-							xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/touch").c_str(), &suggested_path);
+							OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/touch").c_str(), &suggested_path));
 							bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.touchAction, suggested_path });
 						}
 					}
@@ -1103,87 +1104,87 @@ void BaseInput::InternalUpdate()
 	syncSerial++;
 }
 
-XrResult BaseInput::getDigitalActionState(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
+XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
 {
+	*state = {};
 	if (action.dpadBindings.empty()) {
 		return xrGetActionStateBoolean(xr_session, getInfo, state);
-	} else {
-		// dpad bindings: need to read parent state(s) and fill in state ourselves
-		for (auto& [parent_name, dpad_info] : action.dpadBindings) {
-			// if we've already determined one of the bindings is active no need to continue
-			if (state->currentState == XR_TRUE)
-				break;
-			// read state of parent
-			XrActionStateVector2f parent_state = { XR_TYPE_ACTION_STATE_VECTOR2F };
-			auto iter = DpadBindingInfo::parents.find(parent_name);
-			OOVR_FALSE_ABORT(iter != DpadBindingInfo::parents.end());
-			getInfo->action = iter->second.vectorAction;
-			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, getInfo, &parent_state));
+	}
+	// dpad bindings: need to read parent state(s) and fill in state ourselves
+	for (auto& [parent_name, dpad_info] : action.dpadBindings) {
+		// if we've already determined one of the bindings is active no need to continue
+		if (state->currentState == XR_TRUE)
+			break;
+		// read state of parent
+		XrActionStateVector2f parent_state = { XR_TYPE_ACTION_STATE_VECTOR2F };
+		auto iter = DpadBindingInfo::parents.find(parent_name);
+		OOVR_FALSE_ABORT(iter != DpadBindingInfo::parents.end());
+		getInfo->action = iter->second.vectorAction;
+		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, getInfo, &parent_state));
 
-			struct bounds {
-				float lower_bound;
-				float upper_bound;
-				bool val_within_bounds(float cmp) { return cmp > lower_bound && cmp <= upper_bound; }
-			};
-			bounds x_bounds, y_bounds;
+		struct bounds {
+			float lower_bound;
+			float upper_bound;
+			bool val_within_bounds(float cmp) { return cmp > lower_bound && cmp <= upper_bound; }
+		};
+		bounds x_bounds, y_bounds;
 
-			// fill out state struct
-			// set bounds for dpad depending on direction. these bounds will (ideally) result in completely even segments.
-			switch (dpad_info.direction) {
-			case DpadBindingInfo::Direction::NORTH: {
-				x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-				y_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
-				break;
-			}
-			case DpadBindingInfo::Direction::EAST: {
-				x_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
-				y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-				break;
-			}
-			case DpadBindingInfo::Direction::SOUTH: {
-				x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-				y_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
-				break;
-			}
-			case DpadBindingInfo::Direction::WEST: {
-				x_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
-				y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-				break;
-			}
-			case DpadBindingInfo::Direction::CENTER: {
-				x_bounds = { -DpadBindingInfo::dpadDeadzone, DpadBindingInfo::dpadDeadzone };
-				y_bounds = x_bounds;
-			}
-			}
-
-			bool active;
-			if (dpad_info.click) {
-				XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
-				getInfo->action = iter->second.clickAction;
-				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &click_state));
-				active = click_state.currentState;
-			} else {
-				XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
-				getInfo->action = iter->second.touchAction;
-				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &touch_state));
-				active = touch_state.currentState;
-			}
-
-			if (active && x_bounds.val_within_bounds(parent_state.currentState.x) && y_bounds.val_within_bounds(parent_state.currentState.y)) {
-				state->currentState = XR_TRUE;
-			} else {
-				state->currentState = XR_FALSE;
-			}
-
-			if (state->currentState != dpad_info.lastState) {
-				state->changedSinceLastSync = XR_TRUE;
-				state->lastChangeTime = parent_state.lastChangeTime;
-				dpad_info.lastState = state->currentState;
-			} else {
-				state->changedSinceLastSync = XR_FALSE;
-			}
-			state->isActive = parent_state.isActive;
+		// fill out state struct
+		// set bounds for dpad depending on direction. these bounds will (ideally) result in completely even segments.
+		switch (dpad_info.direction) {
+		case DpadBindingInfo::Direction::NORTH: {
+			x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+			y_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
+			break;
 		}
+		case DpadBindingInfo::Direction::EAST: {
+			x_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
+			y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+			break;
+		}
+		case DpadBindingInfo::Direction::SOUTH: {
+			x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+			y_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
+			break;
+		}
+		case DpadBindingInfo::Direction::WEST: {
+			x_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
+			y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+			break;
+		}
+		case DpadBindingInfo::Direction::CENTER: {
+			x_bounds = { -DpadBindingInfo::dpadDeadzone, DpadBindingInfo::dpadDeadzone };
+			y_bounds = x_bounds;
+		}
+		}
+
+		bool active;
+		if (dpad_info.click) {
+			XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
+			getInfo->action = iter->second.clickAction;
+			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &click_state));
+			active = click_state.currentState;
+		} else {
+			XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
+			getInfo->action = iter->second.touchAction;
+			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &touch_state));
+			active = touch_state.currentState;
+		}
+
+		if (active && x_bounds.val_within_bounds(parent_state.currentState.x) && y_bounds.val_within_bounds(parent_state.currentState.y)) {
+			state->currentState = XR_TRUE;
+		} else {
+			state->currentState = XR_FALSE;
+		}
+
+		if (state->currentState != dpad_info.lastState) {
+			state->changedSinceLastSync = XR_TRUE;
+			state->lastChangeTime = parent_state.lastChangeTime;
+			dpad_info.lastState = state->currentState;
+		} else {
+			state->changedSinceLastSync = XR_FALSE;
+		}
+		state->isActive = parent_state.isActive;
 	}
 	return XR_SUCCESS;
 }
@@ -1208,7 +1209,7 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 
 		getInfo.subactionPath = subactionPath;
 		XrActionStateBoolean state = { XR_TYPE_ACTION_STATE_BOOLEAN };
-		OOVR_FAILED_XR_ABORT(getDigitalActionState(*act, &getInfo, &state));
+		OOVR_FAILED_XR_ABORT(getBooleanOrDpadData(*act, &getInfo, &state));
 
 		// If the subaction isn't set, or it was set but not active, or it was set
 		// but the state was false and it's not now, then override it.

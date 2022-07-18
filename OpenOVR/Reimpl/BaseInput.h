@@ -485,7 +485,7 @@ private:
 		static inline const float dpadArcMidpoint = sqrt(2) / 2;
 
 		// The direction for this binding.
-		Direction direction;
+		Direction direction = Direction::NORTH;
 
 		// Is a click required for this binding
 		// false implies that a touch is required instead
@@ -772,7 +772,7 @@ private:
 	/**
 	 * Get the state for a digital action, which could be bound to a DPad action.
 	 */
-	XrResult getDigitalActionState(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
+	XrResult getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
 
 	friend class InteractionProfile;
 };
