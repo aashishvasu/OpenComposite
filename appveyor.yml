@@ -15,7 +15,6 @@ before_build:
       mkdir build;
       cd build
 
-      # It's either x64 or Win32
       cmake .. -A $env:Platform
 
       cd ..
