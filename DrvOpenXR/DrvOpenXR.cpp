@@ -71,7 +71,7 @@ void DrvOpenXR::GetXRAppName(char (&appName)[128])
 #ifdef _DEBUG
 static XrDebugUtilsMessengerEXT dbgMessenger = NULL;
 
-static XrBool32 debugCallback(
+static XrBool32 XRAPI_CALL debugCallback(
     XrDebugUtilsMessageSeverityFlagsEXT messageSeverity,
     XrDebugUtilsMessageTypeFlagsEXT messageTypes,
     const XrDebugUtilsMessengerCallbackDataEXT* callbackData,
