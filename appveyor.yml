@@ -11,6 +11,7 @@ install:
   - ps: 7z x -olibs vulkan-1.1.85.0-minisdk.7z
   - ps: ./configure.cmd
 before_build:
+  - ps: nuget restore RuntimeSwitcher/RuntimeSwitcher.csproj -PackagesDirectory packages
   - ps: >-
       mkdir build;
       cd build
