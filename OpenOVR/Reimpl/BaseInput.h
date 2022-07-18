@@ -621,7 +621,7 @@ private:
 		"/user/hand/right",
 	};
 
-	void LoadBindingsSet(const struct InteractionProfile& profile, const std::string& bindingsPath);
+	void LoadBindingsSet(const class InteractionProfile& profile, const std::string& bindingsPath);
 
 	void CreateLegacyActions();
 
