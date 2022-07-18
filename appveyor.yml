@@ -17,9 +17,9 @@ before_build:
       cd build
 
       If ($env:Platform -Match "x64") {
-        cmake .. -G "Visual Studio 15 2017 Win64"
+        cmake .. -A Win64
       } Else {
-        cmake .. -G "Visual Studio 15 2017"
+        cmake ..
       }
 
       cd ..
