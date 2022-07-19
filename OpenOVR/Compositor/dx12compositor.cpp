@@ -12,8 +12,7 @@
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
 
-#include "d3dx12.h"
-#include <d3d11.h>
+#include <d3d12.h>
 
 #include "../Misc/Config.h"
 #include "../Misc/xr_ext.h"
