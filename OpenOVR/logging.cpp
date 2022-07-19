@@ -266,5 +266,3 @@ void oovr_message_raw(const char* message, const char* title)
 	std::cerr << "OOVR_MESSAGE: " << title << ": " << message << std::endl;
 #endif
 }
-
-const float math_pi = 3.14159265358979323846f;

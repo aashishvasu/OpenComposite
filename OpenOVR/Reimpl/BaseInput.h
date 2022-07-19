@@ -477,12 +477,14 @@ private:
 		};
 		inline static std::unordered_map<std::string, ParentActions> parents;
 
-		// Deadzone for dpad
-		static constexpr float dpadDeadzone = 0.5;
-
-		// Value needed for dividing dpad into 90 degree chunks
-		// see the unit circle
-		static inline const float dpadArcMidpoint = sqrt(2) / 2;
+		// Deadzone for dpad. 
+		static constexpr float dpadDeadzoneRadius = 0.2;
+		
+		// These are angles for the different dpad segments.
+		// For example, the north dpad area exists between 45deg and 135deg, the east between -45deg and 45deg, etc
+		// The actual units for the angles are in radians, but they are labeled as degrees since I find degrees more intuitive to understand for humans.
+		static constexpr float angle45deg = math_pi / 4;
+		static constexpr float angle135deg = 3*math_pi /4;
 
 		// The direction for this binding.
 		Direction direction = Direction::NORTH;

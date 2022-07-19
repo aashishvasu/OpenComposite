@@ -11,6 +11,7 @@
 #include "Drivers/Backend.h"
 #include "static_bases.gen.h"
 #include <algorithm>
+#include <cmath>
 #include <codecvt>
 #include <fstream>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -1106,7 +1107,7 @@ void BaseInput::InternalUpdate()
 
 XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
 {
-	*state = {};
+	*state = { XR_TYPE_ACTION_STATE_BOOLEAN };
 	if (action.dpadBindings.empty()) {
 		return xrGetActionStateBoolean(xr_session, getInfo, state);
 	}
@@ -1122,39 +1123,33 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* g
 		getInfo->action = iter->second.vectorAction;
 		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, getInfo, &parent_state));
 
-		struct bounds {
-			float lower_bound;
-			float upper_bound;
-			bool val_within_bounds(float cmp) { return cmp > lower_bound && cmp <= upper_bound; }
-		};
-		bounds x_bounds, y_bounds;
+		// convert to polar coordinates
+		// angle is in radians
+		float radius = sqrt(pow(parent_state.currentState.x, 2) + pow(parent_state.currentState.y, 2));
+		float angle = atan2(parent_state.currentState.y, parent_state.currentState.x);
 
-		// fill out state struct
-		// set bounds for dpad depending on direction. these bounds will (ideally) result in completely even segments.
+		// note: since the range of atan2 is (-pi, pi), the east and west directions will have points between the negative and positive portions (if you think of the dpad as a circle)
+		bool within_bounds = false;
 		switch (dpad_info.direction) {
+		case DpadBindingInfo::Direction::CENTER: {
+			within_bounds = (radius <= DpadBindingInfo::dpadDeadzoneRadius);
+			break;
+		}
 		case DpadBindingInfo::Direction::NORTH: {
-			x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-			y_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
-			break;
-		}
-		case DpadBindingInfo::Direction::EAST: {
-			x_bounds = { DpadBindingInfo::dpadDeadzone, 1 };
-			y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-			break;
-		}
-		case DpadBindingInfo::Direction::SOUTH: {
-			x_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
-			y_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
+			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > DpadBindingInfo::angle45deg && angle <= DpadBindingInfo::angle135deg);
 			break;
 		}
 		case DpadBindingInfo::Direction::WEST: {
-			x_bounds = { -1, -DpadBindingInfo::dpadDeadzone };
-			y_bounds = { -DpadBindingInfo::dpadArcMidpoint, DpadBindingInfo::dpadArcMidpoint };
+			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > DpadBindingInfo::angle135deg || angle <= -DpadBindingInfo::angle135deg);
 			break;
 		}
-		case DpadBindingInfo::Direction::CENTER: {
-			x_bounds = { -DpadBindingInfo::dpadDeadzone, DpadBindingInfo::dpadDeadzone };
-			y_bounds = x_bounds;
+		case DpadBindingInfo::Direction::SOUTH: {
+			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle135deg && angle <= -DpadBindingInfo::angle45deg);
+			break;
+		}
+		case DpadBindingInfo::Direction::EAST: {
+			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle45deg || angle <= DpadBindingInfo::angle45deg);
+			break;
 		}
 		}
 
@@ -1171,7 +1166,7 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* g
 			active = touch_state.currentState;
 		}
 
-		if (active && x_bounds.val_within_bounds(parent_state.currentState.x) && y_bounds.val_within_bounds(parent_state.currentState.y)) {
+		if (active && within_bounds) {
 			state->currentState = XR_TRUE;
 		} else {
 			state->currentState = XR_FALSE;
