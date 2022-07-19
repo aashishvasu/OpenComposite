@@ -26,8 +26,6 @@
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "../OpenOVR/convert.h"
 
-#include "d3dx12.h"
-
 XrBackend::XrBackend()
 {
 	memset(projectionViews, 0, sizeof(projectionViews));
