@@ -263,7 +263,7 @@ void oovr_message_raw(const char* message, const char* title)
 	MessageBoxA(nullptr, message, title, MB_OK);
 #else
 	// Print to stderr on Linux
-	cerr << "OOVR_MESSAGE: " << title << ": " << message << endl;
+	std::cerr << "OOVR_MESSAGE: " << title << ": " << message << std::endl;
 #endif
 }
 
