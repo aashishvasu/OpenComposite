@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "OpenVR/interfaces/vrtypes.h"
+#include "generated/interfaces/vrtypes.h"
 struct OOVR_InputDigitalActionData_t {
 	// Whether or not this action is currently available to be bound in the active action set
 	bool bActive;

@@ -9,7 +9,7 @@ GEN_INTERFACE("Input", "007")
 // version 8 and 9 are skipped
 GEN_INTERFACE("Input", "010")
 
-#include "GVRInput.gen.h"
+#include "generated/GVRInput.gen.h"
 
 // Prior to IVRInput_005 / OpenVR 1.1.3 the input layer had a slightly different format, so adapt that
 vr::EVRInputError CVRInput_004::GetSkeletalActionData(vr::VRActionHandle_t action, vr::IVRInput_004::InputSkeletalActionData_t* pActionData, uint32_t unActionDataSize, vr::VRInputValueHandle_t ulRestrictToDevice)

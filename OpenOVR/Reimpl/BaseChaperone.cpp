@@ -2,7 +2,7 @@
 #define BASE_IMPL
 #include "BaseChaperone.h"
 #include "BaseSystem.h"
-#include "static_bases.gen.h"
+#include "generated/static_bases.gen.h"
 
 #include "Drivers/Backend.h"
 

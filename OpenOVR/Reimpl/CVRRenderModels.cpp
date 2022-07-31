@@ -7,7 +7,7 @@ GEN_INTERFACE("RenderModels", "004")
 GEN_INTERFACE("RenderModels", "005")
 GEN_INTERFACE("RenderModels", "006")
 
-#include "GVRRenderModels.gen.h"
+#include "generated/GVRRenderModels.gen.h"
 
 bool CVRRenderModels_002::LoadRenderModel(const char* pchRenderModelName, vr::IVRRenderModels_002::RenderModel_t** ppRenderModel) 
 {

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <OpenVR/interfaces/vrtypes.h>
+#include "generated/interfaces/vrtypes.h"
 #include <openxr/openxr.h>
 
 namespace xr_utils {

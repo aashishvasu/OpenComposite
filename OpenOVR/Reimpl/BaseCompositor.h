@@ -1,6 +1,6 @@
 #pragma once
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
-#include "OpenVR/interfaces/IVRCompositor_022.h"
+#include "generated/interfaces/IVRCompositor_022.h"
 
 #include "../Compositor/compositor_backend.h" // TODO don't import from OCOVR, and remove the "../"
 

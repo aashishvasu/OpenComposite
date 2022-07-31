@@ -9,7 +9,7 @@
 #include "InteractionProfile.h"
 
 #include "Reimpl/BaseInput.h"
-#include "Reimpl/static_bases.gen.h"
+#include "generated/static_bases.gen.h"
 
 std::string InteractionProfile::TranslateAction(const std::string& inputPath) const
 {

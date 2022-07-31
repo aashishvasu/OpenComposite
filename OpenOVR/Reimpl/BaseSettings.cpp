@@ -3,8 +3,8 @@
 #include "BaseSettings.h"
 #include "BaseSystem.h"
 #include "Misc/Config.h"
-#include "OpenVR/interfaces/IVRSettings_001.h"
-#include "OpenVR/interfaces/IVRSettings_002.h"
+#include "generated/interfaces/IVRSettings_001.h"
+#include "generated/interfaces/IVRSettings_002.h"
 #include <string>
 
 #ifndef OC_XR_PORT

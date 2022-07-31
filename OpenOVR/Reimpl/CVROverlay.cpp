@@ -20,7 +20,7 @@ GEN_INTERFACE("Overlay", "022")
 GEN_INTERFACE("Overlay", "024")
 GEN_INTERFACE("Overlay", "025")
 
-#include "GVROverlay.gen.h"
+#include "generated/GVROverlay.gen.h"
 
 bool CVROverlay_007::PollNextOverlayEvent(vr::VROverlayHandle_t ulOverlayHandle, vr::VREvent_t* pEvent)
 {

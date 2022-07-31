@@ -25,7 +25,7 @@ def _write_interface_header(fi, iface: InterfaceDef):
     cname = iface.proxy_class_name()
 
     fi.write(f"""
-#include "{iface.base_header()}"
+#include "Reimpl/{iface.base_header()}"
 class {cname} : public {iface.namespace()}::{iface.interface()}, public CVRCommon {{
 private:
     const std::shared_ptr<{iface.basename()}> base;
@@ -104,7 +104,8 @@ std::shared_ptr<{cls}> GetCreate{getter_name}() {{
             if namespace in f.return_type:
                 return_str += f" ({f.return_type})"
 
-            fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()}) {{ {return_str} base->{f.name}({nargs}); }}\n")
+            fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()})"
+                     f"{{ {return_str} base->{f.name}({nargs}); }}\n")
 
         # Generate the fntable
         _build_fntable(fi, ver)
@@ -138,7 +139,8 @@ def _build_fntable(fi, ver: InterfaceDef):
     fi.write("};\n")
 
     # Generate the getter
-    fi.write(f"void** {cname}::_GetStatFuncList() {{ {inst_name} = this; return {func_array_name}; }}\n")
+    fi.write(
+        f"void** {cname}::_GetStatFuncList() {{ {inst_name} = this; return {func_array_name}; }}\n")
 
 
 def write_stub_footer(fi, interfaces: List[InterfaceSpec]):
@@ -148,14 +150,16 @@ def write_stub_footer(fi, interfaces: List[InterfaceSpec]):
 
     for spec in interfaces:
         for ver in spec.versions:
-            fi.write(f"\tif(strcmp({ver.version_variable()}, name) == 0) return new {ver.proxy_class_name()}();\n")
+            fi.write(
+                f"\tif(strcmp({ver.version_variable()}, name) == 0) return new {ver.proxy_class_name()}();\n")
 
     fi.write("\treturn NULL;\n")
     fi.write("}\n")
 
     # Generate the flag stuff
     fi.write("// Get flags by name\n")
-    fi.write("uint64_t GetInterfaceFlagsByName(const char *name, const char *flag, bool *success) {\n")
+    fi.write(
+        "uint64_t GetInterfaceFlagsByName(const char *name, const char *flag, bool *success) {\n")
     fi.write("\tif(success) *success = true;\n")
 
     for spec in interfaces:

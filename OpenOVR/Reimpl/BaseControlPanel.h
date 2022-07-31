@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../BaseCommon.h"
-#include "OpenVR/custom_interfaces/IVRMailbox_001.h"
+#include "custom_interfaces/IVRMailbox_001.h"
 
 enum OOVR_EVR_ControlPanel_Error {
 	VR_ControlPanelError_None = 0,

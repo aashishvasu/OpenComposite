@@ -8,7 +8,7 @@
 #include "Misc/Config.h"
 #include "Misc/Haptics.h"
 #include "convert.h"
-#include "static_bases.gen.h"
+#include "generated/static_bases.gen.h"
 
 #include <string>
 

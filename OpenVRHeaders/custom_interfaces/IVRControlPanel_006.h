@@ -1,7 +1,7 @@
 #pragma once
-#include "../interfaces/openvr.h"
-#include "../interfaces/vrtypes.h"
-#include "../interfaces/vrannotation.h"
+#include "generated/interfaces/openvr.h"
+#include "generated/interfaces/vrtypes.h"
+#include "generated/interfaces/vrannotation.h"
 
 // Used by Half-Life: Alyx. Completely propriatary and undocumented interface.
 

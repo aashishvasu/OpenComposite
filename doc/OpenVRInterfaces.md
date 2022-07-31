@@ -128,7 +128,7 @@ After the interface splitting documented in [SplitAndGen.md] runs, we're left wi
 of `IVRSystem` (and any other interface) that we support, like this somewhat highly edited example:
 
 ```c++
-// In SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_012.h
+// In <build dir>/generated/interfaces/IVRCompositor_012.h
 namespace IVRCompositor_012
 {
     class IVRCompositor {
@@ -137,7 +137,7 @@ namespace IVRCompositor_012
     };
 }
 
-// In SplitOpenVRHeaders/OpenVR/interfaces/IVRCompositor_013.h
+// In <build dir>/generated/interfaces/IVRCompositor_013.h
 namespace IVRCompositor_013
 {
     class IVRCompositor {
@@ -153,12 +153,12 @@ One would be to manually implement all of these interfaces, putting all the real
 making the old interfaces call the latest implementation. That'd be a huge pain to do manually, however.
 
 Instead, there's a code generation system. One single implementation is defined manually in the `BaseCompositor` class,
-and a script (`OpenOVR/Reimpl/generate.py`) parses the OpenVR headers with regexes (yes, it does work, and no it's not
+and a script (`scripts/split_headers.py`) parses the OpenVR headers with regexes (yes, it does work, and no it's not
 very pretty) and produces a bunch of implementing classes (the 'C' in 'CVR' means 'concrete' IIRC):
 
 ```c++
 //////////////
-/// OpenOVR/Reimpl/GVRCompositor.gen.h
+/// <build dir>/generated/GVRCompositor.gen.h
 //////////////
 
 class CVRCompositor_012 : public vr::IVRCompositor_012::IVRCompositor, public CVRCommon {
@@ -172,7 +172,7 @@ public:
 };
 
 //////////////
-///  OpenOVR/Reimpl/stubs.gen.cpp:
+///  <build dir>/generated/stubs.gen.cpp:
 //////////////
 
 vr::IVRCompositor_012::EVRCompositorError CVRCompositor_012::WaitGetPoses(TrackedDevicePose_t* outHmdPose) {

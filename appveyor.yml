@@ -9,7 +9,6 @@ install:
       git submodule update --init --recursive
   - ps: appveyor DownloadFile https://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z
   - ps: 7z x -olibs vulkan-1.1.85.0-minisdk.7z
-  - ps: ./configure.cmd
 before_build:
   - ps: nuget restore RuntimeSwitcher/RuntimeSwitcher.csproj -PackagesDirectory packages
   - ps: >-
@@ -23,8 +22,13 @@ build:
   project: build/OpenComposite.sln
   verbosity: minimal
 on_success:
-- ps: >-
-    Push-AppveyorArtifact "build/$env:Configuration/OCOVR.dll" -FileName "$env:Platform/openvr_api.dll"
+  - ps: >-
+    if ($env:PLATFORM -eq "x64") {
+      Push-AppveyorArtifact "build/$env:Configuration/bin/vrclient_x64.dll" -FileName "$env:Platform/openvr_api.dll"
+    }
+    else {
+      Push-AppveyorArtifact "build/$env:Configuration/bin/vrclient.dll" -FileName "$env:Platform/openvr_api.dll"
+    }
 
     7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
 

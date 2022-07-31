@@ -3,7 +3,7 @@
 #include <vector>
 
 // TODO get this file to split correctly, so we can use different versions of it's interfaces
-#include "OpenVR/interfaces/driver_itrackeddevicedriverprovider.h"
+#include "generated/interfaces/driver_itrackeddevicedriverprovider.h"
 
 class OCDriverContext : public vr::IVRDriverContext {
 public:

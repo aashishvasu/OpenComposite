@@ -1,7 +1,7 @@
 #pragma once
-#include "../interfaces/openvr.h"
-#include "../interfaces/vrtypes.h"
-#include "../interfaces/vrannotation.h"
+#include "generated/interfaces/openvr.h"
+#include "generated/interfaces/vrtypes.h"
+#include "generated/interfaces/vrannotation.h"
 
 // Unfortunately, Valve did not publish the header for version 017 of this interface, and then
 //  used it in The Lab. Since that's written in Unity, I was however able to find the differences.

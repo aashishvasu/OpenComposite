@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenVR/interfaces/vrtypes.h"
+#include "generated/interfaces/vrtypes.h"
 #ifdef WIN32
 // Windows template libraries
 #include <atlbase.h>

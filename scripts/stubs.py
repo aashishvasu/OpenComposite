@@ -32,10 +32,19 @@ from pathlib import Path
 #  the autocompletion system to work for our files.
 from stubs.interface_spec import InterfaceSpec
 import stubs.codegen as codegen
+import sys
 
-# Find the root directory of this project (should contain README etc)
-proj_root = Path(__file__).resolve().parent.parent
-reimpl_dir = proj_root / "OpenOVR" / "Reimpl"
+# path to where to find the generator files (which are the CVR*.cpp files)
+cvr_dir = Path(sys.argv[1])
+
+# path to the openvr headers (openvr-[version]). Also location of custom_intefaces and patches
+headers_dir = Path(sys.argv[2])
+
+# where to output generated stubs
+output_dir = Path(sys.argv[3])
+
+# make sure output directory exists
+output_dir.mkdir(parents=True, exist_ok=True)
 
 # List these rather than scanning for files, as this ensures
 # that files not checked into version control won't interfere
@@ -62,23 +71,23 @@ interfaces_list = [
     "ServerDriverHost",
 ]
 
-bases_header_fn = reimpl_dir / "static_bases.gen.h"
+bases_header_fn = output_dir / "static_bases.gen.h"
 
-interfaces = [InterfaceSpec(reimpl_dir, i) for i in interfaces_list]
+interfaces = [InterfaceSpec(cvr_dir, headers_dir, output_dir, i) for i in interfaces_list]
 
 for iface in interfaces:
-    header_filename = "GVR%s.gen.h" % iface.name
-    header_path = reimpl_dir / header_filename
+    header_filename = f"GVR{iface.name}.gen.h"
+    header_path = output_dir / header_filename
     codegen.write_header(header_path, iface)
 
 # Write out the stub file
 # This contains all the definitions for our version-specific classes, aka stubs
-with open(reimpl_dir / "stubs.gen.cpp", "w", newline='\n') as impl:
+with open(output_dir / "stubs.gen.cpp", "w", newline='\n') as impl:
     impl.write('#include "stdafx.h"\n')
 
     # The interfaces header contains OPENVR_FNTABLE_CALLTYPE, along with declarations
     #  for any non-static functions we define
-    impl.write('#include "Interfaces.h"\n')
+    impl.write('#include "Reimpl/Interfaces.h"\n')
     impl.write(f'#include "{bases_header_fn.name}"\n')
 
     for iface in interfaces:

@@ -17,7 +17,7 @@ using glm::vec4;
 
 // For the left and right hand constants - TODO move them to their own file
 #include "BaseSystem.h"
-#include "static_bases.gen.h"
+#include "generated/static_bases.gen.h"
 
 #ifndef OC_XR_PORT
 

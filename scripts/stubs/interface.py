@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import typing
-from pathlib import Path
 from typing import List
 
 import libparse
@@ -11,13 +10,25 @@ if typing.TYPE_CHECKING:
 
 
 class InterfaceDef:
+    """
+    A class representing a specific OpenVR interface (such as IVRSystem, IVRCompositor, etc)
+    """
     name: str
     version: str
     flags: List[str]
     spec: 'InterfaceSpec'
     functions: List['Function']
 
+    # Output directory for interfaces
+    # set from the InterfaceSpec class (in interface_spec.py)
+    INTERFACES_DIR = None
+
+    # Input directory for headers (openvr-[version].h)
+    HEADERS_DIR = None
+
     def __init__(self, name, version, flags, spec):
+        assert self.INTERFACES_DIR is not None
+        assert self.HEADERS_DIR is not None
         self.name = name
         self.version = version
         self.flags = flags
@@ -28,16 +39,19 @@ class InterfaceDef:
         pass
 
     def varname(self):
+        """
+        Name of the interface.
+        """
         return self.name
 
     def has_flag(self, flag):
         return flag in self.flags
 
     def header_filename(self):
-        return "OpenVR/interfaces/%s.h" % self.interface_v()
+        return f"interfaces/{self.interface_v()}.h"
 
     def header_prefix(self):
-        return "SplitOpenVRHeaders"
+        return self.INTERFACES_DIR
 
     def basename(self):
         return "Base" + self.name
@@ -49,13 +63,22 @@ class InterfaceDef:
         return self.basename()
 
     def proxy_class_name(self):
-        return "CVR%s_%s" % (self.name, self.version)
+        """
+        The name of the proxy class that will help to generate this interface - just appends CVR to the name.
+        """
+        return f"CVR{self.name}_{self.version}"
 
     def interface(self):
-        return "IVR%s" % self.name
+        """
+        Gets the name of the interface as seen in OpenVR - just appends IVR to the name.
+        """
+        return f"IVR{self.name}"
 
     def interface_v(self):
-        return "%s_%s" % (self.interface(), self.version)
+        """
+        Gets the name of the interface with the version attached.
+        """
+        return f"{self.interface()}_{self.version}"
 
     def namespace(self):
         """
@@ -72,8 +95,11 @@ class InterfaceDef:
 
 
 class CustomInterface(InterfaceDef):
+    def header_prefix(self):
+        return self.HEADERS_DIR
+
     def header_filename(self):
-        return "OpenVR/custom_interfaces/%s.h" % (self.interface_v())
+        return f"custom_interfaces/{self.interface_v()}.h"
 
 
 class DriverInterface(InterfaceDef):
@@ -84,9 +110,6 @@ class DriverInterface(InterfaceDef):
 class APIInterface(InterfaceDef):
     def header_filename(self):
         return "API/I%s_%s.h" % (self.name, self.version)
-
-    def header_prefix(self):
-        return "OpenOVR"
 
     def proxy_class_name(self):
         return "CVROC%s_%s" % (self.name, self.version)
@@ -110,11 +133,6 @@ class APIInterface(InterfaceDef):
         return "API/" + super().base_header()
 
 
-# Header parsing stuff
-
-_proj_root = Path(__file__).parent.parent.parent
-
-
 @dataclass
 class Function:
     name: str
@@ -130,14 +148,14 @@ class Function:
 
     def args_names(self):
         """
-        Returns a comma-separated list of the argument names, for passing all the arguments from this function into
-        another function
+        Returns a comma-separated list of the argument names, for passing all the arguments
+        from this function into another function
         """
         return ", ".join([a.name for a in self.args])
 
 
 def _read_headers(interface: InterfaceDef) -> List[Function]:
-    filename = _proj_root / interface.header_prefix() / interface.header_filename()
+    filename = interface.header_prefix() / interface.header_filename()
     context = dict(_get_global_context())
     libparse.read_context(context, filename, interface.namespace())
 
@@ -167,7 +185,7 @@ def _get_global_context():
         return _global_ctx
 
     _global_ctx = dict()
-    headers_dir = _proj_root / "SplitOpenVRHeaders/OpenVR/interfaces"
-    libparse.read_context(_global_ctx, headers_dir / "public_vrtypes.h", "vr")
-    libparse.read_context(_global_ctx, headers_dir / "vrtypes.h", "vr")
+    headers_dir = InterfaceDef.INTERFACES_DIR
+    libparse.read_context(_global_ctx, headers_dir / "interfaces/public_vrtypes.h", "vr")
+    libparse.read_context(_global_ctx, headers_dir / "interfaces/vrtypes.h", "vr")
     return _global_ctx

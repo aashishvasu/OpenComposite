@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenVR/interfaces/vrtypes.h"
+#include "generated/interfaces/vrtypes.h"
 
 // For shared pointers in the generated GVRxyz.gen.h headers
 #include <memory>

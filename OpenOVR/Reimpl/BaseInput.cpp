@@ -1,4 +1,4 @@
-#include "OpenVR/interfaces/vrtypes.h"
+#include "generated/interfaces/vrtypes.h"
 #include "logging.h"
 #include "openxr/openxr.h"
 #include "stdafx.h"
@@ -9,7 +9,7 @@
 #include <convert.h>
 
 #include "Drivers/Backend.h"
-#include "static_bases.gen.h"
+#include "generated/static_bases.gen.h"
 #include <algorithm>
 #include <cmath>
 #include <codecvt>

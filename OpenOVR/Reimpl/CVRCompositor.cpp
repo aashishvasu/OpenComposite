@@ -20,7 +20,7 @@ GEN_INTERFACE("Compositor", "024")
 GEN_INTERFACE("Compositor", "026")
 GEN_INTERFACE("Compositor", "027")
 
-#include "GVRCompositor.gen.h"
+#include "generated/GVRCompositor.gen.h"
 
 using namespace vr;
 

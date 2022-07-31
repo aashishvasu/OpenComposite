@@ -8,7 +8,7 @@
 
 #include "Reimpl/BaseCompositor.h"
 #include "Reimpl/BaseSystem.h"
-#include "Reimpl/static_bases.gen.h"
+#include "generated/static_bases.gen.h"
 
 #include "Misc/ScopeGuard.h"
 #include "convert.h"

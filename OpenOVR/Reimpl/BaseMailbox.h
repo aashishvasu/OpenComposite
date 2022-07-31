@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../BaseCommon.h"
-#include "OpenVR/custom_interfaces/IVRMailbox_001.h"
+#include "custom_interfaces/IVRMailbox_001.h"
 
 typedef vr::IVRMailbox_001::mbox_handle OOVR_mbox_handle;
 

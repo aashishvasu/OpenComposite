@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenVR/interfaces/vrtypes.h"
+#include "generated/interfaces/vrtypes.h"
 
 #include <openxr/openxr.h>
 

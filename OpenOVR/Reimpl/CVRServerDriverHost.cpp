@@ -4,11 +4,11 @@
 
 GEN_INTERFACE("ServerDriverHost", "005", DRIVER)
 
-#include "OpenVR/interfaces/driver_IVRServerDriverHost_005.h"
+#include "generated/interfaces/driver_IVRServerDriverHost_005.h"
 using ITrackedDeviceServerDriver005 = vr::driver_ITrackedDeviceServerDriver_005::ITrackedDeviceServerDriver;
 using DriverPose_t005 = vr::driver_ITrackedDeviceServerDriver_005::DriverPose_t;
 
-#include "GVRServerDriverHost.gen.h"
+#include "generated/GVRServerDriverHost.gen.h"
 
 // Version-indepentant proxy
 // TODO auto-generate these

@@ -23,8 +23,8 @@
 // FIXME find a better way to send the OnPostFrame call?
 #include "../OpenOVR/Reimpl/BaseOverlay.h"
 #include "../OpenOVR/Reimpl/BaseSystem.h"
-#include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "../OpenOVR/convert.h"
+#include "generated/static_bases.gen.h"
 
 #include "OpenVR/interfaces/IVRCompositor_018.h"
 
@@ -192,8 +192,6 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 		}
 		case vr::TextureType_Vulkan: {
 			const vr::VRVulkanTextureData_t* vktex = (vr::VRVulkanTextureData_t*)tex->handle;
-
-
 
 			VkPhysicalDevice xr_desire;
 			// Regardless of error checking, we have to call this or we get crazy validation errors.

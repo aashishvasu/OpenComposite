@@ -4,10 +4,11 @@
 [![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg?style=for-the-badge&logo=appveyor)](https://ci.appveyor.com/project/ZNix/openovr)
 ---------------------------------------------
 # [GAME COMPATIBILITY SPREADSHEET](https://docs.google.com/spreadsheets/d/1s2SSuRt0oHm91RUZB-R-ef5BrfOtvP_jwDwb6FuMF9Q/edit#gid=2068512515)
-
 Feel free to comment on the spreadsheet for us to modify its information.
-
 ------------------------------------------------------
+
+[TOC]
+
 OpenComposite OpenXR (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
 to the OpenXR runtime. Think of it as a backwards version of ReVive, for the OpenXR compatible headsets.
@@ -15,7 +16,7 @@ to the OpenXR runtime. Think of it as a backwards version of ReVive, for the Ope
 This allows you to play SteamVR-based games on an OpenXR compatible headset as though they were native titles, without
 the use of SteamVR!
 
-Why would you want to do this? There are several of good reasons:
+Why would you want to do this? There are several good reasons:
 
 * Some users have trouble running SteamVR on their machines
 * While more work needs to be done on OpenComposite's side for this, it can potentially get slightly better
@@ -60,6 +61,8 @@ It probably works in quite a few other games, but I have not tried them.
 OpenComposite can either be installed system-wide (all SteamVR-based games will use it automatically) or per-game (replace a DLL
 file for each game, this usually must be done each time said game is updated).
 
+(Note that these instructions are intended for Windows, Linux users can scroll down to the [Linux specific](linux-specific-info) section)
+
 ### System-wide installation
 
 Download the [OpenComposite Launcher](https://znix.xyz/OpenComposite/runtimeswitcher.php?branch=openxr). Unzip it to a folder of your choosing,
@@ -87,6 +90,21 @@ you'll be able to switch back by starting SteamVR. This will make updating much 
 
 If you have any questions, feel free to jump on our Discord server:
 [![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
+
+### Linux-specific info
+
+There are no builds available for Linux at this time: you'll have to build it manually for now (see the section below on compiling).
+After compiling, there are a few steps you'll have to follow:
+1. Get the runtime in place. This can be accomplished through one of the following methods:
+	- Set the VR_OVERRIDE variable to the build directory (in Steam launch options: `VR_OVERRIDE=<path to build directory> %command%`)
+	- Edit the OpenVR config file - typically located at `~/.config/openvr/openvrpaths.vrpath` - and in the "runtime" section, put the path to the build directory. Note that Steam likes to overwrite this file so you may need to set it to read only.
+	- For the elusive native Linux title, you can copy the `vrclient.so` over the game's `libopenvr_api.so`
+2. For Proton games (most of them): you will need to disable the Steam Runtime. This is accomplished by adding the following lines 
+to the top of `<steam library path>/SteamLinuxRuntime_soldier/_v2-entry-point`:
+```bash
+shift 2
+exec "${@}"
+```
 
 ## Configuration file
 
@@ -232,12 +250,13 @@ text can be found in `LICENCE_DEBUG_BREAK.txt`.
 
 ## Compiling (**for developers**)
 
-Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR) - it's under the GPLv3 licence.
+Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR/-/tree/openxr-input-refactor) - it's under the GPLv3 licence.
+This project is built with CMake and follows a standard build process, so tools like CLion can be used to build it.
+The resulting library will be placed at `build/bin/linux64/vrclient.so` on Linux, `build/bin/vrclient_x64.dll` on Windows.
 
-Download Visual Studio 2017 and it's C++ package. This may work on older versions of VS, but that break
-at any time.
+### Windows specific
 
-Next, if you want to use Vulkan support (enabled by default, remove `SUPPORT_VK` from the preprocessor definitions to compile without it), then
+If you want to use Vulkan support (enabled by default, remove `SUPPORT_VK` from the preprocessor definitions to compile without it), then
 download a [slimmed down copy of the Vulkan SDK with only `.lib` files and the headers](http://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z),
 and extract it to your `libs` directory (you can copy in the full SDK if you want, but it's far larger and probably better to install it
 by itself).
@@ -247,13 +266,6 @@ This is how the resulting file structure should look:
 ```
 OpenOVR: (or whatever folder you cloned/downloaded the repo into)
 	libs:
-		libovr:
-			Place LibOVR Here.txt
-			OculusSDK:
-				LibOVR:
-				LibOVRKernel:
-				LICENSE.txt
-				... etc
 		vulkan:
 			Include:
 			Lib:
@@ -261,15 +273,25 @@ OpenOVR: (or whatever folder you cloned/downloaded the repo into)
 			LICENSE.txt
 			SDK_LICENSE.rtf
 			Vulkan.ico
-
-	configure.cmd
-	OpenOVR.sln
+		openxr-sdk:
 	... etc
 ```
 
-Next, we need to configure the project. OpenComposite relies fairly heavily on scripts that
-generate code, and this has *vastly* simplified things - I expect the repo would contain
-roughly three to four times more code otherwise.
+### Linux specific
+
+OpenComposite will search for Vulkan installed via your package manager. Cloning the Vulkan SDK is not necessary. 
+If not using an IDE with CMake support, a set of commands to successfully compile might look like this after navigating to the source directory:
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+### Miscellaneous
+
+OpenComposite relies fairly heavily on scripts that generate code, and this has *vastly* simplified things - 
+I expect the repo would contain roughly three to four times more code otherwise.
 
 There are two main scripts at work:
 
@@ -281,24 +303,15 @@ classes, which implement a binary-compatible version of one version of that inte
 `GVRSystem_015`, `GVRCompositor_022`), along with C-like `FnTable`s for them (which allow compatibility
 with other languages, very notably C#).
 
-Whenever you add or remove versions of OpenVR headers, or add or remove an interface or tell the
-generator to make a stub for one, you MUST re-run `generate.bat` (TODO port to GNU Bash, I only used Batch
-due to AppVeyor). If you have added or removed OpenVR headers this will cause Visual Studio to rebuild
+These scripts are automatically run when buildling the project. If you have added or removed OpenVR headers this will cause CMake to rebuild
 the project, otherwise it will only rebuild a couple of files which is very quick.
-
-Whenever you check out a new version of OpenComposite, you should run the configure script. If you don't, you're
-liable to get mysterious errors at both runtime and compiletime.
-
-(additionally the configure script can accept `clean` as an argument, which will make it delete all
-generated files - this is really only useful when debugging the scripts, though, and there is no need
-to use it otherwise)
 
 ### Using the interface splitter
 
 To add a new version of OpenVR, download the header to an appropriately named file in `OpenOVR/OpenVR`,
 which is `openvr-version.h`. Please always ensure the version matches.
 
-Next, edit `OpenOVR/OpenVR/generate.py`, adding the new version number to the `versions` list at the
+Next, edit `scripts/split_headers.py`, adding the new version number to the `versions` list at the
 top of the file. Ensure these are in the correct order - this makes sure the latest revision of any given
 interface is always used (interfaces are sometimes edited without incrementing their version numbers, when
 the changes don't affect the ABI - for example, adding items to an enumeration).
@@ -308,7 +321,7 @@ the project from compiling.
 
 ### Using the stub generator
 
-The stub generator has a list of interfaces at the top of it's file (`OpenOVR/Reimpl/generate.py`, in the
+The stub generator has a list of interfaces at the top of it's file (`scripts/stubs.py`, in the
 `interfaces_list` variable). This lists each implemented interface, and there should be a corresponding
 `CVR*.cpp` file for each interface. This defines which versions of the interface are to be used.
 
@@ -323,7 +336,7 @@ GEN_INTERFACE("InterfaceName", "123")
 // etc
 ```
 
-(note the version **must** be exactly three digets long)
+(note the version **must** be exactly three digits long)
 
 Each `GEN_INTERFACE` macro (ignored by the compiler) instructs the stub generator to generate a stub
 for that interface for that file. There's no technical reason why you can't have one file generating

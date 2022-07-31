@@ -1,6 +1,6 @@
 #pragma once
 #include "../OpenOVR/custom_types.h" // TODO move this into the OpenVR tree
-#include "OpenVR/interfaces/vrtypes.h"
+#include "generated/interfaces/vrtypes.h"
 #include <memory>
 
 // for OOVR_Compositor_FrameTiming

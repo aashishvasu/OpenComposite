@@ -16,7 +16,7 @@ GEN_INTERFACE("System", "020")
 GEN_INTERFACE("System", "021")
 GEN_INTERFACE("System", "022")
 
-#include "GVRSystem.gen.h"
+#include "generated/GVRSystem.gen.h"
 
 // Old methods that don't take size arguments
 bool CVRSystem_009::PollNextEvent(vr::VREvent_t* pEvent) 

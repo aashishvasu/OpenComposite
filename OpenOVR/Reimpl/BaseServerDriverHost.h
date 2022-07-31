@@ -2,7 +2,7 @@
 #include "BaseCommon.h"
 
 // TODO get this to work properly
-#include "OpenVR/interfaces/driver_IVRServerDriverHost_005.h"
+#include "generated/interfaces/driver_IVRServerDriverHost_005.h"
 
 #include "Drivers/DriverManager.h"
 

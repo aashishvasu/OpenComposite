@@ -6,7 +6,7 @@
 #include "Reimpl/Interfaces.h"
 
 // Needed for the system-wide usage of this DLL (when renamed to vrclient[_x64].dll)
-#include "Reimpl/GVRClientCore.gen.h"
+#include "generated/GVRClientCore.gen.h"
 
 #include "Misc/Config.h"
 #include "Misc/debug_helper.h"

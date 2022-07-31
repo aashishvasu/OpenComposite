@@ -5,7 +5,7 @@ First, go read [OpenVRInterfaces.md] to get an idea of what purpose this serves,
 ## Interface splitting
 
 The input to this whole process is a bunch of different `openvr.h` headers, one per version. These are stored in
-`SplitOpenVRHeaders/OpenVR/openvr-<version number>.h`. These contain all the interfaces for one OpenVR version, along
+`OpenVRHeaders/openvr-<version number>.h`. These contain all the interfaces for one OpenVR version, along
 with a bunch of type and structure definitions.
 
 A given `openvr.h` file is actually made of several headers joined together, and the names of those headers can be found
@@ -14,7 +14,7 @@ various headers together. Unfortunately we don't have access to the original hea
 which is reverse of this process: it takes the single big header and breaks it into a bunch of different files.
 
 Some of those files, such as `vrtypes.h`, contain type information that is often added to but almost or completely never
-changes what's already there. These files are simple: they're placed directly in `SplitOpenVRHeaders/OpenVR/interfaces`.
+changes what's already there. These files are simple: they're placed directly in `<build dir>/generated/interfaces`.
 
 Some of those headers, however, define interfaces. Since interfaces frequently change, they're split into different
 files for each version of the interface (not by OpenVR version). For example, `IVRSystem` version `022` will always end
@@ -61,13 +61,13 @@ This then allows us to access the interface as `vr::IVRSystem_022::IVRSystem` (r
 declaration of `CVRCompositor_012` in [OpenVRInterfaces.md]) and the previous version as `vr::IVRSystem_021::IVRSystem`
 and so on. Note any structs defined in the file will have to use the same kind of namespaced access.
 
-This is all done by `SplitOpenVRHeaders/OpenVR/generate.py`. Note the stub generation script also used to be
+This is all done by `scripts/split_headers.py`. Note the stub generation script also used to be
 called `generate.py` but located in `OpenOVR/Reimpl`, but nowadays it's been renamed to `stubs.py`.
 
 ## Stub generation
 
 The basic form of the interface stubs were shown in [OpenVRInterfaces.md], with the two relevant files
-being `GVRCompositor.gen.h` and `stubs.gen.cpp` (both in `OpenOVR/Reimpl`). These are auto-generated
+being `GVRCompositor.gen.h` and `stubs.gen.cpp` (both in `<build dir>/generated`). These are auto-generated
 by `scripts/stubs.py`.
 
 This script has a list of interface names (if you add a completely new interface, not just a new version of an existing
