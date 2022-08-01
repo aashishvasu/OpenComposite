@@ -36,6 +36,7 @@ protected:
 
 	std::vector<XrSwapchainImageD3D11KHR> imagesHandles;
 	std::vector<ID3D11RenderTargetView*> swapchain_rtvs;
+	std::vector<ID3D11Texture2D*> resolvedMSAATextures;
 
 	struct DxgiFormatInfo {
 		/// The different versions of this format, set to DXGI_FORMAT_UNKNOWN if absent.

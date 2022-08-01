@@ -92,8 +92,6 @@ ID3D11RenderTargetView* d3d_make_rtv(ID3D11Device* d3d_device, XrBaseInStructure
 
 	// Get information about the swapchain image that OpenXR made for us
 	XrSwapchainImageD3D11KHR& d3d_swapchain_img = (XrSwapchainImageD3D11KHR&)swapchain_img;
-	D3D11_TEXTURE2D_DESC color_desc;
-	d3d_swapchain_img.texture->GetDesc(&color_desc);
 
 	// Create a render target view resource for the swapchain image
 	D3D11_RENDER_TARGET_VIEW_DESC target_desc = {};
@@ -142,6 +140,11 @@ DX11Compositor::~DX11Compositor()
 		rtv->Release();
 
 	swapchain_rtvs.clear();
+
+	for (auto&& tex : resolvedMSAATextures)
+		tex->Release();
+
+	resolvedMSAATextures.clear();
 
 	context->Release();
 	device->Release();
@@ -193,6 +196,11 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 			rtv->Release();
 
 		swapchain_rtvs.clear();
+
+		for (auto&& tex : resolvedMSAATextures)
+			tex->Release();
+
+		resolvedMSAATextures.clear();
 
 		// Figure out what format we need to use
 		DxgiFormatInfo info = {};
@@ -256,6 +264,18 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 			swapchain_rtvs[i] = d3d_make_rtv(device, (XrBaseInStructure&)imagesHandles[i], type);
 		}
 
+		if (srcDesc.SampleDesc.Count > 1) {
+			OOVR_LOGF("Creating resolver textures for MSAA source with sample count x%d", srcDesc.SampleDesc.Count);
+			D3D11_TEXTURE2D_DESC resDesc = srcDesc;
+			resDesc.SampleDesc.Count = 1;
+
+			resolvedMSAATextures.resize(imageCount, nullptr);
+
+			for (uint32_t i = 0; i < imageCount; i++) {
+				device->CreateTexture2D(&resDesc, nullptr, &resolvedMSAATextures[i]);
+			}
+		}
+
 		// TODO do we need to release the images at some point, or does the swapchain do that for us?
 	}
 }
@@ -312,43 +332,7 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	if (bounds && bounds->vMin > bounds->vMax && oovr_global_configuration.InvertUsingShaders() && !swapchain_rtvs.empty()) {
 		auto* src = (ID3D11Texture2D*)texture->handle;
 
-		D3D11_TEXTURE2D_DESC srcDesc;
-		src->GetDesc(&srcDesc);
-
-		// Figure out what format we need to use
-		DxgiFormatInfo info = {};
-		if (!GetFormatInfo(srcDesc.Format, info)) {
-			OOVR_ABORTF("Unknown (by OC) DXGI texture format %d", srcDesc.Format);
-		}
-		bool useLinearFormat;
-		switch (texture->eColorSpace) {
-		case vr::ColorSpace_Gamma:
-			useLinearFormat = false;
-			break;
-		case vr::ColorSpace_Linear:
-			useLinearFormat = true;
-			break;
-		default:
-			// As per the docs for the auto mode, at eight bits per channel or less it assumes gamma
-			// (using such small channels for linear colour would result in significant banding)
-			useLinearFormat = info.bpc > 8;
-			break;
-		}
-
-		DXGI_FORMAT type = useLinearFormat ? info.linear : info.srgb;
-
-		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
-		viewDesc.Format = type;
-		viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		viewDesc.Texture2D.MipLevels = 1;
-		viewDesc.Texture2D.MostDetailedMip = 0;
-
-		// rFactor2 fails to create a SRV when the texture's eColorSpace is auto and 8bpp so should be srgb.
-		// If it fails try the linear instead
-		if (FAILED(device->CreateShaderResourceView(src, &viewDesc, &quad_texture_view))) {
-			viewDesc.Format = useLinearFormat ? info.srgb : info.linear;
-			OOVR_FAILED_DX_ABORT(device->CreateShaderResourceView(src, &viewDesc, &quad_texture_view));
-		}
+		OOVR_FAILED_DX_ABORT(device->CreateShaderResourceView(src, nullptr, &quad_texture_view));
 
 		float blend_factor[4] = { 1.f, 1.f, 1.f, 1.f };
 		context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
@@ -404,7 +388,14 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 
 		context->RSSetState(pRSState);
 	} else {
-		context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, (ID3D11Texture2D*)texture->handle, 0, &sourceRegion);
+		if (srcDesc.SampleDesc.Count > 1) {
+			D3D11_TEXTURE2D_DESC resDesc = srcDesc;
+			resDesc.SampleDesc.Count = 1;
+			context->ResolveSubresource(resolvedMSAATextures[currentIndex], 0, src, 0, resDesc.Format);
+			context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, resolvedMSAATextures[currentIndex], 0, &sourceRegion);
+		} else {
+			context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, src, 0, &sourceRegion);
+		}
 	}
 
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
