@@ -239,7 +239,11 @@ vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMe
 		XrVector2f v = mask.vertices[index];
 
 		if (oovr_global_configuration.EnableHiddenMeshFix()) {
-			arr[i] = vr::HmdVector2_t{ (v.x - fleft) / (fright - fleft), (v.y - ftop) / (fbottom - ftop) };
+			if (fabs(v.y - ftop) > 0.001 && fabs(v.y - fbottom) > 0.001 ) {
+				arr[i] = vr::HmdVector2_t{ (v.x - fleft) / (fright - fleft), (v.y * oovr_global_configuration.HiddenMeshVerticalScale() - ftop) / (fbottom - ftop) };
+			} else {
+				arr[i] = vr::HmdVector2_t{ (v.x - fleft) / (fright - fleft), (v.y - ftop) / (fbottom - ftop) };
+			}
 		} else {
 			arr[i] = vr::HmdVector2_t{ v.x, v.y };
 		}

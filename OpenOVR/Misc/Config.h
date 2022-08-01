@@ -9,7 +9,7 @@ public:
 	vr::HmdColor_t HandColour() const { return handColour; }
 	float SupersampleRatio() const { return supersampleRatio; }
 	bool Haptics() const { return haptics; }
-	float AdmitUnknownProps() const { return admitUnknownProps; }
+	bool AdmitUnknownProps() const { return admitUnknownProps; }
 	inline bool ThreePartSubmit() const { return threePartSubmit; }
 	inline bool UseViewportStencil() const { return useViewportStencil; }
 	inline bool ForceConnectedTouch() const { return forceConnectedTouch; }
@@ -21,6 +21,7 @@ public:
 	inline bool EnableHiddenMeshFix() const { return enableHiddenMeshFix; }
 	inline bool InvertUsingShaders() const { return invertUsingShaders; }
 	inline bool InitUsingVulkan() const { return initUsingVulkan; }
+	float HiddenMeshVerticalScale() const { return hiddenMeshVerticalScale; }
 
 private:
 	static int ini_handler(
@@ -48,6 +49,7 @@ private:
 	bool enableHiddenMeshFix = true;
 	bool invertUsingShaders = false;
 	bool initUsingVulkan = true;
+	float hiddenMeshVerticalScale = 1.0f;
 };
 
 extern Config oovr_global_configuration;

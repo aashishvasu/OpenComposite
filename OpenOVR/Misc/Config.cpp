@@ -153,6 +153,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, enableHiddenMeshFix);
 		CFGOPT(bool, invertUsingShaders);
 		CFGOPT(bool, initUsingVulkan);
+		CFGOPT(float, hiddenMeshVerticalScale);
 	}
 
 #undef CFGOPT
