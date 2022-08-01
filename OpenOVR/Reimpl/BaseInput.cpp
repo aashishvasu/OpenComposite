@@ -1497,6 +1497,8 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeleta
 
 	return GetSkeletalBoneData(action, eTransformSpace, eMotionRange, pTransformArray, unTransformArrayCount);
 }
+
+
 EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRSkeletalTransformSpace eTransformSpace,
     EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
@@ -1523,7 +1525,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	}
 
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	locateInfo.baseSpace = legacyControllers[(int)action->skeletalHand].gripPoseSpace;
+	locateInfo.baseSpace = legacyControllers[(int)action->skeletalHand].aimPoseSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
@@ -1538,99 +1540,13 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 		return vr::VRInputError_InvalidSkeleton;
 	}
 
-	// Annoyingly the coordinate system between this extension and OpenVR is also different. As per the wiki page:
-	// https://github.com/ValveSoftware/openvr/wiki/Hand-Skeleton
-	// The hands effectively sit on their sides in the bind pose. The right hand's palm faces -X and the left hand's
-	// palm faces +X. In the OpenXR extension, the hands are as they would be if you placed them on a table: palms on
-	// both hands are down (-Y) and the tops of your hands are up (+Y). Therefore the normal of your thumbnails are
-	// facing towards the opposite hand. Fortunately Z represents the same axis in both coordinate spaces.
-	// Therefore roll the right-hand clockwise 90deg around Z and the left hand counter-clockwise around Z (careful with
-	// what direction Z is if you're trying to visualise this).
-	float angle_mult;
-	if (action->skeletalHand == ITrackedDevice::HAND_LEFT)
-		angle_mult = 1.0f; // Natural rotation is CCW, invert for clockwise
-	else
-		angle_mult = -1.0f;
-	glm::mat4 systemTransform = glm::rotate(glm::identity<glm::mat4>(), angle_mult * (float)M_PI / 2.0f, glm::vec3(0, 0, 1));
+	bool is_right = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
-	// Load the data into the output bones, with the correct mapping
-	std::optional<XrHandJointEXT> parentId;
-	auto mapBone = [&](XrHandJointEXT xrId, int vrId) {
-		const XrHandJointLocationEXT& src = jointLocations.at(xrId);
-		OOVR_FALSE_ABORT(vrId < unTransformArrayCount);
-		vr::VRBoneTransform_t& out = pTransformArray[vrId];
-
-		// Read the OpenXR transform
-		// I don't think there's anything we can do if the validity flags are false, so just ignore them
-		glm::mat4 pose = systemTransform * X2G_om34_pose(src.pose);
-
-		// All the OpenXR transforms are relative to the space we specified as baseSpace, in this case the grip pose. If the
-		// application wants each bone's transform relative to it's parent, apply that now.
-		// If this bone is the root bone (parentId is not set), then it's the same in either space mode.
-		// Get the required transform from:
-		// Tbone_in_model = Tparent_in_model * Tbone_in_parent
-		// inv(Tparent_in_model) * Tbone_in_model = Tbone_in_parent
-		if (eTransformSpace == VRSkeletalTransformSpace_Parent && parentId) {
-			const XrHandJointLocationEXT& parent = jointLocations.at(parentId.value());
-			glm::mat4 parentPose = systemTransform * X2G_om34_pose(parent.pose);
-
-			pose = glm::affineInverse(parentPose) * pose;
-		}
-
-		// TODO eMotionRange, if that's even possible
-
-		glm::quat rotation(pose);
-		out.position = vr::HmdVector4_t{ pose[3][0], pose[3][1], pose[3][2], 1.f }; // What's the fourth value for?
-		out.orientation = vr::HmdQuaternionf_t{ rotation.w, rotation.x, rotation.y, rotation.z };
-
-		// Update the parent to make it convenient to declare bones moving towards the finger tip
-		parentId = xrId;
-	};
-
-	// Set up the root bone
-	pTransformArray[0].orientation = vr::HmdQuaternionf_t{ /* w */ 1, 0, 0, 0 };
-	pTransformArray[0].position = vr::HmdVector4_t{ 0, 0, 0, 1 };
-
-	parentId = {};
-	mapBone(XR_HAND_JOINT_WRIST_EXT, eBone_Wrist);
-
-	// clang-format off
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_THUMB_METACARPAL_EXT, eBone_Thumb0);
-	mapBone(XR_HAND_JOINT_THUMB_PROXIMAL_EXT,   eBone_Thumb1);
-	mapBone(XR_HAND_JOINT_THUMB_DISTAL_EXT,     eBone_Thumb2);
-	mapBone(XR_HAND_JOINT_THUMB_TIP_EXT,        eBone_Thumb3);
-
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_INDEX_METACARPAL_EXT,   eBone_IndexFinger0);
-	mapBone(XR_HAND_JOINT_INDEX_PROXIMAL_EXT,     eBone_IndexFinger1);
-	mapBone(XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT, eBone_IndexFinger2);
-	mapBone(XR_HAND_JOINT_INDEX_DISTAL_EXT,       eBone_IndexFinger3);
-	mapBone(XR_HAND_JOINT_INDEX_TIP_EXT,          eBone_IndexFinger4);
-
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_MIDDLE_METACARPAL_EXT,   eBone_MiddleFinger0);
-	mapBone(XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT,     eBone_MiddleFinger1);
-	mapBone(XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT, eBone_MiddleFinger2);
-	mapBone(XR_HAND_JOINT_MIDDLE_DISTAL_EXT,       eBone_MiddleFinger3);
-	mapBone(XR_HAND_JOINT_MIDDLE_TIP_EXT,          eBone_MiddleFinger4);
-
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_RING_METACARPAL_EXT,   eBone_RingFinger0);
-	mapBone(XR_HAND_JOINT_RING_PROXIMAL_EXT,     eBone_RingFinger1);
-	mapBone(XR_HAND_JOINT_RING_INTERMEDIATE_EXT, eBone_RingFinger2);
-	mapBone(XR_HAND_JOINT_RING_DISTAL_EXT,       eBone_RingFinger3);
-	mapBone(XR_HAND_JOINT_RING_TIP_EXT,          eBone_RingFinger4);
-
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_LITTLE_METACARPAL_EXT,   eBone_PinkyFinger0);
-	mapBone(XR_HAND_JOINT_LITTLE_PROXIMAL_EXT,     eBone_PinkyFinger1);
-	mapBone(XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT, eBone_PinkyFinger2);
-	mapBone(XR_HAND_JOINT_LITTLE_DISTAL_EXT,       eBone_PinkyFinger3);
-	mapBone(XR_HAND_JOINT_LITTLE_TIP_EXT,          eBone_PinkyFinger4);
-	// clang-format on
-
-	// TODO aux bones - they're equal to the distal bones but always use VRSkeletalTransformSpace_Model mode
+	if (eTransformSpace == VRSkeletalTransformSpace_Model) {
+		ConvertHandModelSpace(jointLocations, is_right, pTransformArray);
+	} else {
+		ConvertHandParentSpace(jointLocations, is_right, pTransformArray);
+	}
 
 	// For now, just return with non-active data
 	return vr::VRInputError_None;

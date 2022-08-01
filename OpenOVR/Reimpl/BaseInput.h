@@ -751,6 +751,9 @@ private:
 		eBone_Count
 	};
 
+	void ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>& joints, const bool is_right, VRBoneTransform_t* out_transforms);
+	void ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>& joints, const bool is_right, VRBoneTransform_t* out_transforms);
+
 	XrHandTrackerEXT handTrackers[2] = { XR_NULL_HANDLE, XR_NULL_HANDLE };
 
 	// Utility functions
