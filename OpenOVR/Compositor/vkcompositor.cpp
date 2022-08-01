@@ -1,3 +1,4 @@
+#include "generated/interfaces/vrtypes.h"
 #include "stdafx.h"
 #include <vulkan/vulkan_core.h>
 
@@ -71,7 +72,69 @@ static void check_app_isnt_evil(const vr::VRVulkanTextureData_t* tex)
 	}
 }
 
-/////////
+static enum VkFormat handle_colorspace_auto(enum VkFormat ovrFormat)
+{
+	switch (ovrFormat) {
+	// convert to SRGB
+	case VK_FORMAT_R8G8B8A8_UNORM:
+	case VK_FORMAT_R8G8B8A8_SRGB:
+		return VK_FORMAT_R8G8B8A8_SRGB;
+		break;
+	case VK_FORMAT_B8G8R8A8_UNORM:
+	case VK_FORMAT_B8G8R8A8_SRGB:
+		return VK_FORMAT_B8G8R8A8_SRGB;
+	case VK_FORMAT_R32G32B32A32_SFLOAT:
+	case VK_FORMAT_R32G32B32_SFLOAT:
+	case VK_FORMAT_R16G16B16A16_SFLOAT:
+	case VK_FORMAT_A2R10G10B10_UINT_PACK32:
+		// Todo what games actually use these? and is color space always linear for these?
+		return ovrFormat;
+	default:
+		OOVR_ABORTF("Unsupported texture format used: %d", ovrFormat);
+	}
+}
+
+static enum VkFormat handle_colorspace_gamma(enum VkFormat ovrFormat)
+{
+	switch (ovrFormat) {
+	case VK_FORMAT_R8G8B8A8_UNORM:
+	case VK_FORMAT_R8G8B8A8_SRGB:
+		return VK_FORMAT_R8G8B8A8_SRGB;
+		break;
+	case VK_FORMAT_B8G8R8A8_UNORM:
+	case VK_FORMAT_B8G8R8A8_SRGB:
+		return VK_FORMAT_B8G8R8A8_SRGB;
+	case VK_FORMAT_R32G32B32A32_SFLOAT:
+	case VK_FORMAT_R32G32B32_SFLOAT:
+	case VK_FORMAT_R16G16B16A16_SFLOAT:
+	case VK_FORMAT_A2R10G10B10_UINT_PACK32:
+		// Todo what games actually use these? and is color space always linear for these?
+		return ovrFormat;
+	default:
+		OOVR_ABORTF("Unsupported texture format used: %d", ovrFormat);
+	}
+}
+
+static enum VkFormat handle_colorspace_linear(enum VkFormat ovrFormat)
+{
+	switch (ovrFormat) {
+	case VK_FORMAT_R8G8B8A8_UNORM:
+	case VK_FORMAT_R8G8B8A8_SRGB:
+		return VK_FORMAT_R8G8B8A8_UNORM;
+		break;
+	case VK_FORMAT_B8G8R8A8_UNORM:
+	case VK_FORMAT_B8G8R8A8_SRGB:
+		return VK_FORMAT_B8G8R8A8_UNORM;
+	case VK_FORMAT_R32G32B32A32_SFLOAT:
+	case VK_FORMAT_R32G32B32_SFLOAT:
+	case VK_FORMAT_R16G16B16A16_SFLOAT:
+	case VK_FORMAT_A2R10G10B10_UINT_PACK32:
+		// Todo what games actually use these? and is color space always linear for these?
+		return ovrFormat;
+	default:
+		OOVR_ABORTF("Unsupported texture format used: %d", ovrFormat);
+	}
+}
 
 VkCompositor::VkCompositor(const vr::Texture_t* initialTexture)
 {
@@ -132,8 +195,23 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		createInfo.sampleCount = tex->m_nSampleCount;
 		createInfo.arraySize = 1;
 
-		// FIXME do the same colourspace conversion hoop-jumping as the D3D11 compositor
-		createInfo.format = tex->m_nFormat;
+		OOVR_LOGF("m_eColorSpace is %d", texture->eColorSpace);
+		switch (texture->eColorSpace) {
+		case vr::ColorSpace_Auto: {
+			createInfo.format = handle_colorspace_auto((VkFormat)tex->m_nFormat);
+			break;
+		}
+		case vr::ColorSpace_Gamma: {
+			createInfo.format = handle_colorspace_gamma((VkFormat)tex->m_nFormat);
+			break;
+		}
+		case vr::ColorSpace_Linear: {
+			createInfo.format = handle_colorspace_linear((VkFormat)tex->m_nFormat);
+			break;
+		}
+		}
+
+		OOVR_LOGF("Format: %d", tex->m_nFormat);
 
 		OOVR_FAILED_XR_ABORT(xrCreateSwapchain(xr_session, &createInfo, &chain));
 
@@ -315,11 +393,26 @@ bool VkCompositor::CheckChainCompatible(const vr::VRVulkanTextureData_t& tex, co
 	CHECK(m_nWidth, width);
 	CHECK(m_nHeight, height);
 	CHECK(m_nSampleCount, sampleCount);
-
-	// FIXME colourspace conversion
-	(void)colourSpace;
-	CHECK(m_nFormat, format);
-	// if (chainDesc.Format != vkToOvrFormat((VkFormat)tex.m_nFormat, colourSpace)) FAIL(Format);
+	switch (colourSpace) {
+	case vr::ColorSpace_Auto: {
+		if (handle_colorspace_auto((VkFormat)tex.m_nFormat) != chainDesc.format)
+			FAIL(m_nFormat);
+		break;
+	}
+	case vr::ColorSpace_Gamma: {
+		if (handle_colorspace_gamma((VkFormat)tex.m_nFormat) != chainDesc.format)
+			FAIL(m_nFormat);
+		break;
+	}
+	case vr::ColorSpace_Linear: {
+		if (handle_colorspace_linear((VkFormat)tex.m_nFormat) != chainDesc.format)
+			FAIL(m_nFormat);
+		break;
+	}
+	default:
+		OOVR_ABORTF("Invalid colorspace given: %d", colourSpace);
+		break;
+	}
 
 #undef CHECK
 #undef FAIL
