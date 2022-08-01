@@ -304,6 +304,9 @@ void BaseCompositor::PostPresentHandoff()
 
 bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32_t unFramesAgo)
 {
+	// "Sets oldest timing info if nFramesAgo is larger than the stored history." So if our history
+	// of timing records is only 1 we can just return that.
+
 	return BackendManager::Instance().GetFrameTiming(pTiming, unFramesAgo);
 
 	// TODO fill in the m_nNumVSyncsReadyForUse and uint32_t m_nNumVSyncsToFirstView fields, but only
@@ -312,7 +315,11 @@ bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32
 
 uint32_t BaseCompositor::GetFrameTimings(OOVR_Compositor_FrameTiming* pTiming, uint32_t nFrames)
 {
-	STUBBED();
+	// This is a request to fill out an array of timing data. However only an arbitrary number
+	// of records are available with number being filled returned. In the case of only one record
+	// being available we can just send the most recent timing data and return 1.
+	bool populated = BackendManager::Instance().GetFrameTiming(pTiming, 1);
+	return populated ? 1 : 0;
 }
 
 bool BaseCompositor::GetFrameTiming(vr::Compositor_FrameTiming* pTiming, uint32_t unFramesAgo)

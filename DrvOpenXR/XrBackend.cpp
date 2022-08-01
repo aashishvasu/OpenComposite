@@ -26,6 +26,11 @@
 #include "../OpenOVR/Reimpl/static_bases.gen.h"
 #include "../OpenOVR/convert.h"
 
+#include "OpenVR/interfaces/IVRCompositor_018.h"
+
+#include <chrono>
+#include <type_traits>
+
 XrBackend::XrBackend()
 {
 	memset(projectionViews, 0, sizeof(projectionViews));
@@ -402,6 +407,11 @@ void XrBackend::SubmitFrames(bool showSkybox, bool postPresent)
 	if (sys) {
 		sys->_OnPostFrame();
 	}
+
+	auto now = std::chrono::system_clock::now().time_since_epoch();
+	frameSubmitTimeUs = (double)std::chrono::duration_cast<std::chrono::microseconds>(now).count() / 1000000.0;
+
+	nFrameIndex++;
 }
 
 IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount)
@@ -491,11 +501,49 @@ void XrBackend::ClearSkyboxOverride()
  */
 bool XrBackend::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32_t unFramesAgo)
 {
-	// TODO implement - may be a bit harder since OpenXR doesn't appear to have any functions like this
-	OOVR_LOG_ONCE("Frame timing data is not yet supported on OpenXR");
-
 	// Zero everything except the size field
-	memset(pTiming + sizeof(pTiming->m_nSize), 0, pTiming->m_nSize - sizeof(pTiming->m_nSize));
+	memset(reinterpret_cast<unsigned char*>(pTiming) + sizeof(pTiming->m_nSize), 0, pTiming->m_nSize - sizeof(pTiming->m_nSize));
+
+	if (pTiming->m_nSize >= sizeof(IVRCompositor_018::Compositor_FrameTiming)) {
+		pTiming->m_flSystemTimeInSeconds = frameSubmitTimeUs;
+		pTiming->m_nFrameIndex = nFrameIndex;
+
+		// A lot of these values we can't get the data for so just use sensible values
+		pTiming->m_nNumFramePresents = 1; // number of times this frame was presented
+		pTiming->m_nNumMisPresented = 0; // number of times this frame was presented on a vsync other than it was originally predicted to
+		pTiming->m_nNumDroppedFrames = 0; // number of additional times previous frame was scanned out
+		pTiming->m_nReprojectionFlags = 0;
+
+		// Just use sensible values until GPU timers implemented
+		pTiming->m_flPreSubmitGpuMs = 8.0f;
+		pTiming->m_flPostSubmitGpuMs = 1.0f;
+		pTiming->m_flTotalRenderGpuMs = 9.0f;
+
+		// Use very conservative guesses for these. They are used in F1 22 for dynamic resolution calculations but are not something that is provided
+		// through OpenXR. Using conservative values will give a bit more headroom for the game to target realistic frame times.
+		pTiming->m_flCompositorRenderGpuMs = 1.5f; // time spend performing distortion correction, rendering chaperone, overlays, etc.
+		pTiming->m_flCompositorRenderCpuMs = 3.0f; // time spent on cpu submitting the above work for this frame
+
+		pTiming->m_flCompositorIdleCpuMs = 0.1f;
+
+		/** Miscellaneous measured intervals. */
+		pTiming->m_flClientFrameIntervalMs = 11.1f; // time between calls to WaitGetPoses
+		pTiming->m_flPresentCallCpuMs = 0.0f; // time blocked on call to present (usually 0.0, but can go long)
+		pTiming->m_flWaitForPresentCpuMs = 0.0f; // time spent spin-waiting for frame index to change (not near-zero indicates wait object failure)
+		pTiming->m_flSubmitFrameMs = 0.0f; // time spent in IVRCompositor::Submit (not near-zero indicates driver issue)
+
+		/** The following are all relative to this frame's SystemTimeInSeconds */
+		pTiming->m_flWaitGetPosesCalledMs = 0.0f;
+		pTiming->m_flNewPosesReadyMs = 0.0f;
+		pTiming->m_flNewFrameReadyMs = 0.0f; // second call to IVRCompositor::Submit
+		pTiming->m_flCompositorUpdateStartMs = 0.0f;
+		pTiming->m_flCompositorUpdateEndMs = 0.0f;
+		pTiming->m_flCompositorRenderStartMs = 0.0f;
+
+		GetPrimaryHMD()->GetPose(vr::ETrackingUniverseOrigin::TrackingUniverseSeated, &pTiming->m_HmdPose, ETrackingStateType::TrackingStateType_Rendering);
+
+		return true;
+	}
 
 	return false;
 }
