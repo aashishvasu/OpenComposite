@@ -41,6 +41,7 @@ The games that I can confirm it works with are as follows:
 - DCS World *
 - Dirt Rally 2 *
 - Euro Truck Sim 2
+- F1 22
 - IL-2
 - Project CARS 2
 - rFactor 2
@@ -126,6 +127,9 @@ Some games render the image inverted and rely on the runtime to display correctl
 If so enable this option for OpenComposite to do the inversion when copying the image using shaders. This might have a minor cost in performance.
 * `initUsingVulkan` - boolean, default `true`. If available the temporary graphics adapter at start up will use Vulkan by default. This may be
 incompatible with some games. This will mostly affect Oculus headsets. 
+* `hiddenMeshVerticalScale` - float, default `1.0`. The scaling factor used for the hidden area mesh if supported by the application. The hidden area
+mesh is a region that the game doesn't render to. If you set this lower e.g. `0.8` then less will be drawn at the very top and very bottom of the image
+improving performance. Suggested range is `0.5` to `1.0`.
 
 The possible types are as follows:
 
