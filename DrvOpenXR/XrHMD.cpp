@@ -11,11 +11,8 @@
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 {
-	// SteamVR supersample percentage works on number of pixels rather than the axes
-	// so to convert from percentage of total pixels to axis factors we take the sqrt
-	float perAxisSSRatio = sqrtf(oovr_global_configuration.SupersampleRatio());
-	*width = (uint32_t)((float)xr_main_view(XruEyeLeft).recommendedImageRectWidth * perAxisSSRatio);
-	*height = (uint32_t)((float)xr_main_view(XruEyeLeft).recommendedImageRectHeight * perAxisSSRatio);
+	*width = (uint32_t)((float)xr_main_view(XruEyeLeft).recommendedImageRectWidth * oovr_global_configuration.SupersampleRatio());
+	*height = (uint32_t)((float)xr_main_view(XruEyeLeft).recommendedImageRectHeight * oovr_global_configuration.SupersampleRatio());
 }
 
 // from BaseSystem
