@@ -248,6 +248,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Input/OculusInteractionProfile.cpp
 	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.cpp
 	OpenOVR/Misc/Input/ViveInteractionProfile.cpp
+	OpenOVR/Misc/Input/IndexControllerInteractionProfile.cpp
 	OpenOVR/OpenOVR.cpp
 	OpenOVR/Reimpl/BaseApplications.cpp
 	OpenOVR/Reimpl/BaseChaperone.cpp

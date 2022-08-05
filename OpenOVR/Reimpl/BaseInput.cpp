@@ -22,6 +22,7 @@
 #include <set>
 #include <utility>
 
+#include "Misc/Input/IndexControllerInteractionProfile.h"
 #include "Misc/Input/KhrSimpleInteractionProfile.h"
 #include "Misc/Input/OculusInteractionProfile.h"
 #include "Misc/Input/ViveInteractionProfile.h"
@@ -320,6 +321,7 @@ T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T
 BaseInput::BaseInput()
     : actionSets(XR_MAX_ACTION_SET_NAME_SIZE), actions(XR_MAX_ACTION_NAME_SIZE)
 {
+	interactionProfiles.emplace_back(std::make_unique<IndexControllerInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<ViveWandInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<OculusTouchInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<KhrSimpleInteractionProfile>());
