@@ -19,24 +19,12 @@ using glm::vec4;
 #include "BaseSystem.h"
 #include "generated/static_bases.gen.h"
 
-#ifndef OC_XR_PORT
-
-// Need the LibOVR Vulkan headers for the GetVulkan[Device|Instance]ExtensionsRequired methods
-#ifdef SUPPORT_VK
-#include "OVR_CAPI_Vk.h"
-#endif
-
-#ifdef SUPPORT_DX
-#include "OVR_CAPI_D3D.h"
-#endif
-
-#endif
-
 // FIXME find a nice way to clean this up
 #ifdef SUPPORT_VK
 #include "../../DrvOpenXR/pub/DrvOpenXR.h"
 #endif
 
+#include "BaseClientCore.h"
 #include "Drivers/Backend.h"
 #include "Misc/ScopeGuard.h"
 
@@ -235,6 +223,10 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VRTextureBounds_t* bounds, EVRSubmitFlags submitFlags)
 {
+	if (BaseClientCore::appType == vr::VRApplication_Background) {
+		OOVR_ABORT("Error - application with type VRApplication_Background should not be submitting!");
+	}
+
 	bool isFirstEye = !leftEyeSubmitted && !rightEyeSubmitted;
 
 	bool eyeState = false;

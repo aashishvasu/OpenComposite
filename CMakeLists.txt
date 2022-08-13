@@ -92,9 +92,6 @@ else ()
 		target_link_libraries(Vulkan INTERFACE -lvulkan)
 	endif ()
 
-	# Unfortunately we also need to link against the std::filesystem implementation
-	# FIXME this hardcodes the GNU C++ library, make it work with LLVM's libc++
-	target_link_libraries(Vulkan INTERFACE -lstdc++fs)
 endif ()
 
 # === OpenXR ===

@@ -7,6 +7,9 @@
 void* CreateInterfaceByName(const char* name);
 
 // Get information about a given interface
+// name - The name of the interface (i.e. "IVRApplications_002")
+// flag - The name of the flag to check (i.e. APPTYPE)
+// success - If supplied, set the value pointed to by success to true if the flag was found, false otherwise
 uint64_t GetInterfaceFlagsByName(const char* name, const char* flag, bool* success = nullptr);
 
 // Use stdcall on Windows, see openvr_capi.h

@@ -23,7 +23,6 @@
 // Binary-compatible openvr_api.dll implementation
 static bool running;
 static bool running_ovr; // are we in an apptype which uses LibOVR?
-static bool proton_hack = false; // Are we in the special proton status check mode?
 static uint32_t current_init_token = 1;
 static EVRApplicationType current_apptype;
 
@@ -110,6 +109,9 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 
 	if (!valid_apptypes_success) {
 		valid_apptypes = 1ull << VRApplication_Scene;
+#ifndef _WIN32
+		valid_apptypes |= (1ull << VRApplication_Background); // Proton uses this
+#endif
 	}
 
 	if ((valid_apptypes & (1ull << current_apptype)) == 0) {
@@ -217,6 +219,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError* peError, EVRAppl
 
 VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApplicationType eApplicationType, const char* pStartupInfo)
 {
+	BaseClientCore::appType = eApplicationType;
 	*peError = VRInitError_None;
 
 	if (eApplicationType == VRApplication_Bootstrapper) {
@@ -240,22 +243,15 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApp
 #endif
 	}
 
-	// HACK for Proton: it calls InitInternal then (if successful) calls ShutdownInternal - just to see if the runtime is available
-#ifndef _WIN32
-	OOVR_FALSE_ABORT(!proton_hack);
-	if (eApplicationType == VRApplication_Background) {
-		proton_hack = true;
-		// Don't mark us as running or anything, so VR_GetGenericInterface will still fail
-		return 0;
-	}
-#endif
-
 	if (eApplicationType == VRApplication_Utility) {
 		return current_init_token;
 	}
 
 	if (eApplicationType != VRApplication_Scene)
-		ERR("Cannot init VR: unsupported apptype " + to_string(eApplicationType));
+#ifndef _WIN32
+		if (eApplicationType != VRApplication_Background) // Proton uses this
+#endif
+			ERR("Cannot init VR: unsupported apptype " + to_string(eApplicationType));
 
 	if (running)
 		ERR("Cannot init VR: Already running!");
@@ -271,7 +267,6 @@ success:
 
 	// TODO seperate this from the rest of dllmain
 	BackendManager::Create(DrvOpenXR::CreateOpenXRBackend());
-	// DriverManager::Instance().Register(DrvOculus::CreateOculusDriver());
 
 	return current_init_token;
 }
@@ -339,11 +334,6 @@ VR_INTERFACE const char* VR_CALLTYPE VR_RuntimePath()
 
 VR_INTERFACE void VR_CALLTYPE VR_ShutdownInternal()
 {
-	if (proton_hack) {
-		proton_hack = false;
-		return;
-	}
-
 	OOVR_LOG("OpenComposite shutdown");
 
 	// Reset interfaces

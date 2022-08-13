@@ -8,10 +8,12 @@ public:
 	static bool CheckAppEnabled();
 	static std::string GetAlternativeRuntimePath();
 	void SetManifestPath(std::string filename);
+	static inline vr::EVRApplicationType appType = vr::VRApplication_Max;
 
 private:
 	static std::string GetAppPath();
 	static std::wstring GetDllDir();
+
 
 public:
 	/** Initializes the system */

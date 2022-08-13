@@ -20,12 +20,12 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		"/input/thumbstick/y",
 		"/input/thumbstick/click",
 		"/input/thumbstick/touch",
-		"/input/thumbstick", // hack - this path doesn't exist in OpenXR, but we need it to make IsInputPathValid happy - then OpenVR input will actually do <whatever>/x and <whatever>/y
+		"/input/thumbstick", // Allows directly binding 2 axis inputs like OpenVR does - see section 11.4 of the OpenXR spec
 		"/input/trackpad/x",
 		"/input/trackpad/y",
 		"/input/trackpad/force",
 		"/input/trackpad/touch",
-		"/input/trackpad", // Same hack
+		"/input/trackpad", 
 		"/input/grip/pose",
 		"/input/aim/pose",
 		"/output/haptic"

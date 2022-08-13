@@ -99,12 +99,20 @@ After compiling, there are a few steps you'll have to follow:
 	- Set the VR_OVERRIDE variable to the build directory (in Steam launch options: `VR_OVERRIDE=<path to build directory> %command%`)
 	- Edit the OpenVR config file - typically located at `~/.config/openvr/openvrpaths.vrpath` - and in the "runtime" section, put the path to the build directory. Note that Steam likes to overwrite this file so you may need to set it to read only.
 	- For the elusive native Linux title, you can copy the `vrclient.so` over the game's `libopenvr_api.so`
-2. For Proton games (most of them): you will need to disable the Steam Runtime. This is accomplished by adding the following lines 
-to the top of `<steam library path>/SteamLinuxRuntime_soldier/_v2-entry-point`:
-```bash
-shift 2
-exec "${@}"
+2. For games utilizing the Steam Runtime (most of them): you will need to work around the Steam Runtime. Here are some general tips for working around, as setups can differ:
+	- Any files located in your home directory will exist with no problems in the runtime. There is nothing to take into consideration with these paths, they will work fine.
+	- Any path located under `/usr` can be found under `/run/host/usr` in the runtime. For example, if you installed Monado system wide, the runtime json would be located at `/run/host/usr/share/openxr/1/openxr_monado.json`.
+	- Any other paths can be added using the `PRESSURE_VESSEL_FILESYSTEMS_RW` environment variable.
+
+As an example, here is what your Steam launch options might look like if you cloned OpenComposite to your home directory, used the VR_OVERRIDE environment variable, and installed Monado system wide:
+
 ```
+VR_OVERRIDE=~/OpenOVR/build XR_RUNTIME_JSON=/run/host/usr/share/openxr/1/openxr_monado.json PRESSURE_VESSEL_FILESYSTEMS_RW=$XDG_RUNTIME_DIR/monado_comp_ipc %command%
+```
+
+Note that `$XDG_RUNTIME_DIR/monado_comp_ipc` is a socket used by Monado and required to be present for it to properly detect that Monado is running.
+
+You can read more about the `PRESSURE_VESSEL_FILESYSTEM_RW` variable and other environment variables utilized by the Steam Runtime [here](https://gitlab.steamos.cloud/steamrt/steam-runtime-tools/-/blob/master/pressure-vessel/wrap.1.md).
 
 ## Configuration file
 

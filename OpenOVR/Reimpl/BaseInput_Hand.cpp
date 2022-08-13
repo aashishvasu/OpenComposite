@@ -9,10 +9,9 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-
 #include <optional>
 
-// Think of this file as just a part of BaseInput.cpp. 
+// Think of this file as just a part of BaseInput.cpp.
 // It's split out in pursuit of lower compile times.
 
 using namespace vr;
@@ -95,11 +94,11 @@ void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>&
 
 #if 0
 	// These paths should do the same thing.
-	glm::mat4 PostRotate_0_Rotate180X = glm::rotate(glm::identity<glm::mat4>(), M_PIf, glm::vec3(1, 0, 0));
+	glm::mat4 PostRotate_0_Rotate180X = glm::rotate(glm::identity<glm::mat4>(), math_pi, glm::vec3(1, 0, 0));
 
 	// Note: this has to be the opposite between L and R. For now we only care about L, sooo
-	// -M_PIf / 2.0f for L, M_PIf / 2.0f for R
-	glm::mat4 PostRotate_0_Rotate90Z = glm::rotate(glm::identity<glm::mat4>(), is_right ? M_PIf / 2.0f : -M_PIf / 2.0f, glm::vec3(0, 0, 1));
+	// -math_pi / 2.0f for L, M_PIf / 2.0f for R
+	glm::mat4 PostRotate_0_Rotate90Z = glm::rotate(glm::identity<glm::mat4>(), is_right ? math_pi / 2.0f : -M_PIf / 2.0f, glm::vec3(0, 0, 1));
 
 	glm::quat q(PostRotate_0_Rotate180X * PostRotate_0_Rotate90Z);
 	OOVR_LOGF("postrotate %f %f %f %f", q.w, q.x, q.y, q.z);
@@ -143,7 +142,7 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 	} else {
 		angle_mult = -1.0f;
 	}
-	glm::mat4 systemTransform = glm::rotate(glm::identity<glm::mat4>(), angle_mult * M_PIf / 2.0f, glm::vec3(0, 0, 1));
+	glm::mat4 systemTransform = glm::rotate(glm::identity<glm::mat4>(), angle_mult * math_pi / 2.0f, glm::vec3(0, 0, 1));
 
 	// Load the data into the output bones, with the correct mapping
 	std::optional<XrHandJointEXT> parentId;
