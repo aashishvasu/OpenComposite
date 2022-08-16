@@ -693,7 +693,10 @@ void XrBackend::PumpEvents()
 			OOVR_FALSE_ABORT(changed->session == xr_session);
 			sessionState = changed->state;
 
-			xr_gbl->latestTime = changed->time;
+			// Monado bug: it returns 0 for this value (at least for the first two states)
+			// Make sure this is actually greater than 0, otherwise this will mess up xr_gbl->GetBestTime()
+			if (changed->time > 0)
+				xr_gbl->latestTime = changed->time;
 
 			OOVR_LOGF("Switch to OpenXR state %d", sessionState);
 

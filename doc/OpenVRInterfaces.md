@@ -1,3 +1,5 @@
+[TOC]
+
 # The OpenVR Interface and Versioning System
 
 This describes how OpenVR's interfaces work. This is from the application's point of view, and mostly ignores what's
