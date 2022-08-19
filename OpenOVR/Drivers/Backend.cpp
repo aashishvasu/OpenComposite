@@ -232,69 +232,65 @@ ITrackedDevice::HandType ITrackedDevice::GetHand()
 
 bool ITrackedDevice::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		if (pErrorL)
-			*pErrorL = vr::TrackedProp_UnknownProperty;
-		return false;
-	}
-
-	OOVR_SOFT_ABORTF("unknown bool property - dev: %d, prop: %d", DeviceIndex(), prop);
+	if (!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_SOFT_ABORTF("unknown bool property - dev: %d, prop: %d", DeviceIndex(), prop);
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_UnknownProperty;
+	return false;
 }
 
 float ITrackedDevice::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		if (pErrorL)
-			*pErrorL = vr::TrackedProp_UnknownProperty;
-		return 0;
-	}
+	if (!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_SOFT_ABORTF("unknown float property - dev: %d, prop: %d", DeviceIndex(), prop);
 
-	OOVR_SOFT_ABORTF("unknown float property - dev: %d, prop: %d", DeviceIndex(), prop);
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_UnknownProperty;
+	return 0;
 }
 
 int32_t ITrackedDevice::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = vr::TrackedProp_UnknownProperty;
-		return 0;
-	}
+	if (!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_SOFT_ABORTF("unknown int32 property - dev: %d, prop: %d", DeviceIndex(), prop);
 
-	OOVR_SOFT_ABORTF("unknown int32 property - dev: %d, prop: %d", DeviceIndex(), prop);
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_UnknownProperty;
+	return 0;
 }
 
 uint64_t ITrackedDevice::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = vr::TrackedProp_UnknownProperty;
-		return 0;
-	}
+	if (!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_SOFT_ABORTF("unknown uint64 property - dev: %d, prop: %d", DeviceIndex(), prop);
 
-	OOVR_SOFT_ABORTF("unknown uint64 property - dev: %d, prop: %d", DeviceIndex(), prop);
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_UnknownProperty;
+	return 0;
 }
 
 vr::HmdMatrix34_t ITrackedDevice::GetMatrix34TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
-	if (oovr_global_configuration.AdmitUnknownProps()) {
+	if (!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_SOFT_ABORTF("unknown matrix34 property - dev: %d, prop: %d", DeviceIndex(), prop);
+
+	if (pErrorL)
 		*pErrorL = vr::TrackedProp_UnknownProperty;
 
-		vr::HmdMatrix34_t m = { 0 };
-		m.m[0][0] = 1;
-		m.m[1][1] = 1;
-		m.m[2][2] = 1;
-		return m;
-	}
-
-	OOVR_SOFT_ABORTF("unknown matrix34 property - dev: %d, prop: %d", DeviceIndex(), prop);
+	vr::HmdMatrix34_t m = { 0 };
+	m.m[0][0] = 1;
+	m.m[1][1] = 1;
+	m.m[2][2] = 1;
+	return m;
 }
 
 uint32_t ITrackedDevice::GetArrayTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, vr::ETrackedPropertyError* pError)
 {
-	if (oovr_global_configuration.AdmitUnknownProps()) {
+	if (!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_SOFT_ABORTF("unknown array property - dev: %d, prop: %d", -1, prop); // TODO use device index
+	if (pError)
 		*pError = vr::TrackedProp_UnknownProperty;
-		return 0;
-	}
-
-	OOVR_SOFT_ABORTF("unknown array property - dev: %d, prop: %d", -1, prop); // TODO use device index
+	return 0;
 }
 
 uint32_t ITrackedDevice::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
@@ -308,10 +304,10 @@ uint32_t ITrackedDevice::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProper
 		return GetStringTrackedDeviceProperty(vr::Prop_TrackingSystemName_String, value, bufferSize, pErrorL);
 	}
 
-	if (oovr_global_configuration.AdmitUnknownProps()) {
-		*pErrorL = vr::TrackedProp_UnknownProperty;
-		return 0;
-	}
+	if (!oovr_global_configuration.AdmitUnknownProps())
+		OOVR_SOFT_ABORTF("unknown string property - dev: %d, prop: %d", DeviceIndex(), prop);
 
-	OOVR_SOFT_ABORTF("unknown string property - dev: %d, prop: %d", DeviceIndex(), prop);
+	if (pErrorL)
+		*pErrorL = vr::TrackedProp_UnknownProperty;
+	return 0;
 }

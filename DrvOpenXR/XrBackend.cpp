@@ -26,7 +26,7 @@
 #include "../OpenOVR/convert.h"
 #include "generated/static_bases.gen.h"
 
-#include "OpenVR/interfaces/IVRCompositor_018.h"
+#include "generated/interfaces/IVRCompositor_018.h"
 
 #include <chrono>
 #include <type_traits>

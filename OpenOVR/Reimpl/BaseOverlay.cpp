@@ -209,7 +209,7 @@ EVROverlayError BaseOverlay::DestroyOverlay(VROverlayHandle_t ulOverlayHandle)
 	USEH();
 
 	if (highQualityOverlay == ulOverlayHandle)
-		highQualityOverlay = NULL;
+		highQualityOverlay = vr::k_ulOverlayHandleInvalid;
 
 	overlays.erase(overlay->key);
 	validOverlays.erase(overlay);
@@ -239,7 +239,7 @@ uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char* pch
 		if (pError)
 			*pError = VROverlayError_InvalidHandle;
 		if (unBufferSize != 0)
-			pchValue[0] = NULL;
+			pchValue = 0;
 		return 0;
 	}
 
@@ -267,7 +267,7 @@ uint32_t BaseOverlay::GetOverlayName(VROverlayHandle_t ulOverlayHandle, VR_OUT_S
 		if (pError)
 			*pError = VROverlayError_InvalidHandle;
 		if (unBufferSize != 0)
-			pchValue[0] = NULL;
+			pchValue[0] = 0;
 		return 0;
 	}
 
