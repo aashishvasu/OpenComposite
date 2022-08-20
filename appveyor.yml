@@ -23,15 +23,15 @@ build:
   verbosity: minimal
 on_success:
   - ps: >-
-    if ($env:PLATFORM -eq "x64") {
-      Push-AppveyorArtifact "build/$env:Configuration/bin/vrclient_x64.dll" -FileName "$env:Platform/openvr_api.dll"
-    }
-    else {
-      Push-AppveyorArtifact "build/$env:Configuration/bin/vrclient.dll" -FileName "$env:Platform/openvr_api.dll"
-    }
+      if ($env:PLATFORM -eq "x64") {
+        Push-AppveyorArtifact "build/bin/$env:Configuration/vrclient_x64.dll" -FileName "$env:Platform/openvr_api.dll"
+      }
+      else {
+        Push-AppveyorArtifact "build/bin/$env:Configuration/vrclient.dll" -FileName "$env:Platform/openvr_api.dll"
+      }
 
-    7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
+      7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
 
-    7z rn OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration" "OpenComposite"
+      7z rn OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration" "OpenComposite"
 
-    Push-AppveyorArtifact "OpenComposite.zip"
+      Push-AppveyorArtifact "OpenComposite.zip"

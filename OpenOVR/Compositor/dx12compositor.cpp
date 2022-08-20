@@ -70,7 +70,7 @@ void DX12Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 	if (cube) {
 		// LibOVR can only use square cubemaps, while SteamVR can use any shape
 		// Note we use CopySubresourceRegion later on, so this won't cause problems with that
-		srcDesc.Height = srcDesc.Width = min(srcDesc.Height, (UINT)srcDesc.Width);
+		srcDesc.Height = srcDesc.Width = std::min(srcDesc.Height, (UINT)srcDesc.Width);
 	}
 
 	bool usable = chain == NULL ? false : CheckChainCompatible(srcDesc, texture->eColorSpace);
