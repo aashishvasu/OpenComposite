@@ -14,16 +14,16 @@
 std::string InteractionProfile::TranslateAction(const std::string& inputPath) const
 {
 	if (!pathTranslationMap.empty() && !IsInputPathValid(inputPath)) {
-		// try translating path
+		std::string ret = inputPath;
 		for (auto& [key, val] : pathTranslationMap) {
-			size_t loc = inputPath.find(key);
+			size_t loc = ret.find(key);
 			if (loc != std::string::npos) {
 				// translate action!
-				std::string ret = inputPath.substr(0, loc) + val + inputPath.substr(loc + key.size());
-				OOVR_LOGF("Translated path %s to %s for profile %s", inputPath.c_str(), ret.c_str(), GetPath().c_str());
-				return ret;
+				ret = ret.substr(0, loc) + val + ret.substr(loc + key.size());
 			}
 		}
+		OOVR_LOGF("Translated path %s to %s for profile %s", inputPath.c_str(), ret.c_str(), GetPath().c_str());
+		return ret;
 	}
 	// either this path is already valid or it's invalid and not translatable
 	return inputPath;

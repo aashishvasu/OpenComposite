@@ -20,7 +20,6 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		"/user/hand/right/input/b/click",
 		"/user/hand/right/input/b/touch",
 		"/user/hand/right/input/system/click", // may not be available for application use
-		nullptr
 	};
 
 	const char* perHandPaths[] = {
@@ -36,19 +35,19 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		"input/grip/pose",
 		"input/aim/pose",
 		"output/haptic",
-		nullptr
 	};
 
-	for (const char** str = paths; *str; str++) {
-		validInputPaths.insert(*str);
+	for (const char* str : paths) {
+		validInputPaths.insert(str);
 	}
 
-	for (const char** str = perHandPaths; *str; str++) {
-		validInputPaths.insert("/user/hand/left/" + std::string(*str));
-		validInputPaths.insert("/user/hand/right/" + std::string(*str));
+	for (const char* str : perHandPaths) {
+		validInputPaths.insert("/user/hand/left/" + std::string(str));
+		validInputPaths.insert("/user/hand/right/" + std::string(str));
 	}
 
 	pathTranslationMap = {
+		{ "grip", "squeeze"},
 		{ "joystick", "thumbstick" },
 		{ "pull", "value" },
 		{ "grip/click", "squeeze/value" },

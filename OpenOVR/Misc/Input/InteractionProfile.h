@@ -92,9 +92,19 @@ protected:
 	// The set of valid input paths for an interaction profile. An interaction profile should fill this in its constructor.
 	std::unordered_set<std::string> validInputPaths;
 
+	struct translation_compare{
+		bool operator()(const std::string& lhs, const std::string& rhs) const{
+			if (lhs.size() != rhs.size())
+				return lhs.size() > rhs.size();
+			else
+				// without this, strings that are the same length will be considered the same length by the map
+				return lhs > rhs;
+		}
+	};
+
 	// A map with OpenVR action name parts as keys and OpenXR equivalents as values.
 	// For example, one common key, value pair might be "application_menu", "menu"
-	std::unordered_map<std::string, std::string> pathTranslationMap;
+	std::map<std::string, std::string, translation_compare> pathTranslationMap{};
 
 private:
 	bool donePostSetup = false;
