@@ -56,7 +56,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "grip/touch", "squeeze/value" },
 	};
 
-	this->bindingsLegacy.system = "input/system/click";
+//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime
 	this->bindingsLegacy.menu = "input/b/click";
 	this->bindingsLegacy.btnA = "input/a/click";
 	this->bindingsLegacy.btnATouch = "input/a/touch";
