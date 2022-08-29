@@ -2080,3 +2080,8 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
 
 	space = ctrl.aimPoseSpace;
 }
+
+bool BaseInput::IsActionsLoaded()
+{
+	return hasLoadedActions;
+}

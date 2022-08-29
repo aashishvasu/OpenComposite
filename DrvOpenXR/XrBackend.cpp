@@ -435,7 +435,7 @@ void XrBackend::SubmitFrames(bool showSkybox, bool postPresent)
 
 	XrCompositionLayerBaseHeader const* const* headers = nullptr;
 	XrCompositionLayerBaseHeader* app_layer = nullptr;
-	
+
 	int layer_count = 0;
 
 	// Apps can use layers to provide GUIs and loading screens where a 3D environment is not being rendered.
@@ -787,4 +787,3 @@ void XrBackend::OnOverlayTexture(const vr::Texture_t* texture)
 	if (!usingApplicationGraphicsAPI)
 		CheckOrInitCompositors(texture);
 }
-

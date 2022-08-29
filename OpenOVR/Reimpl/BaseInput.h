@@ -358,6 +358,8 @@ public: // INTERNAL FUNCTIONS
 
 	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space);
 
+	bool IsActionsLoaded();
+
 	/**
 	 * Get a number that increments each time xrSyncActions is called. Can be used to check if a cached input value
 	 * is current or not.

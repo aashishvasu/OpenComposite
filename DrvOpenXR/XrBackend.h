@@ -63,7 +63,7 @@ private:
 	bool submittedEyeTextures = false;
 
 	// If the app is using PostPresentHandoff then we need to delay when we submit frame data through xrEndFrame
-	// until after all frame and layer data has been submitted and PostPresentHandoff is called. Otherwise we 
+	// until after all frame and layer data has been submitted and PostPresentHandoff is called. Otherwise we
 	// might miss overlay elements for GUI or HUDs
 	bool postPresentStatus = false;
 

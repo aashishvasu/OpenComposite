@@ -149,8 +149,16 @@ void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 	XrSpace space = XR_NULL_HANDLE;
 	input->GetHandSpace(DeviceIndex(), space);
 
-	if (!space)
+	if (!space) {
+		// Lie and say the pose is valid if the actions haven't even been loaded yet.
+		// This is a workaround for games like DCS, which appear to require valid poses before
+		// it will even attempt to request the controller state (and thus create the actions).
+		if (!input->IsActionsLoaded()) {
+			pose->bPoseIsValid = true;
+			pose->eTrackingResult = vr::TrackingResult_Running_OK;
+		}
 		return;
+	}
 
 	xr_utils::PoseFromSpace(pose, space, origin);
 }
