@@ -350,15 +350,11 @@ void VkCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VR
 	if (ptrBounds) {
 		vr::VRTextureBounds_t bounds = *ptrBounds;
 
-		if (bounds.vMin > bounds.vMax) {
-			// TODO support vertically flipped images
-			XR_STUBBED(); // submitVerticallyFlipped = true;
-			float newMax = bounds.vMin;
-			bounds.vMin = bounds.vMax;
-			bounds.vMax = newMax;
-		} else {
-			// submitVerticallyFlipped = false;
-		}
+		// We may have bounds.vMin > bounds.vMax representing a vertically flipped
+		// image. Virtually all Vulkan implementations handle this (those supporting
+		// VK_KHR_Maintenance1 and those supporting Vulkan 1.1) so this will
+		// normally just work by default. TODO: detect version and either manually
+		// flip or error out if not supported.
 
 		viewport.offset.x = (int)(bounds.uMin * tex.m_nWidth);
 		viewport.offset.y = (int)(bounds.vMin * tex.m_nHeight);
