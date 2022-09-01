@@ -366,6 +366,9 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	if (!ReadJson(utf8to16(pchActionManifestPath), root))
 		OOVR_ABORT("Failed to open or parse input manifest");
 
+	// Random setting which is in the action manifest
+	allowSetDominantHand = root["supports_dominant_hand_setting"].asBool();
+
 	// Parse the actions
 	OOVR_LOG("Parsing actions...");
 	for (Json::Value item : root["actions"]) {
@@ -1096,14 +1099,11 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 		aas[i].actionSet = as->xr;
 
 		if (set.ulRestrictedToDevice != vr::k_ulInvalidInputValueHandle) {
-			OOVR_ABORTF("Active action set %s has ulRestrictedToDevice set, not yet implemented",
-			    as->fullName.c_str());
-
-			// Once we've got something to test it with, it should look something like this:
-			// index = ivhToDev(set.ulRestrictedToDevice);
-			// ITrackedDevice::HandType hand = dev->GetHand();
-			// LegacyControllerActions& ctrl = legacyControllers[hand];
-			// aas[i].subactionPath = ctrl.pathXr;
+			ITrackedDevice* dev = ivhToDev(set.ulRestrictedToDevice);
+			if (dev && dev->GetHand() != ITrackedDevice::HAND_NONE) {
+				LegacyControllerActions& ctrl = legacyControllers[dev->GetHand()];
+				aas[i].subactionPath = ctrl.handPathXr;
+			}
 		}
 	}
 
@@ -1459,11 +1459,20 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, In
 }
 EVRInputError BaseInput::GetDominantHand(vr::ETrackedControllerRole* peDominantHand)
 {
-	STUBBED();
+	// The API documentation says we need allowSetDominantHand for this, but that
+	// seems like a mistake (i.e. that comment was probably meant to be on
+	// SetDominantHand), so I'll just allow it always.
+	*peDominantHand = dominantHand;
+	return VRInputError_None;
 }
 EVRInputError BaseInput::SetDominantHand(vr::ETrackedControllerRole eDominantHand)
 {
-	STUBBED();
+	if (allowSetDominantHand) {
+		dominantHand = eDominantHand;
+		return VRInputError_None;
+	} else {
+		return VRInputError_PermissionDenied;
+	}
 }
 EVRInputError BaseInput::GetBoneCount(VRActionHandle_t action, uint32_t* pBoneCount)
 {
@@ -1481,7 +1490,8 @@ EVRInputError BaseInput::GetBoneName(VRActionHandle_t action, BoneIndex_t nBoneI
 }
 EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalReferencePose eReferencePose, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Skeletal reference transforms not implemented");
+	return vr::VRInputError_InvalidSkeleton;
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel)
 {
@@ -1710,7 +1720,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 	// TODO implement fStartSecondsFromNow - just assume most games leave it at or very close to zero
 
 	XrHapticVibration vibration = { XR_TYPE_HAPTIC_VIBRATION };
-	vibration.frequency = XR_FREQUENCY_UNSPECIFIED; // TODO we should maybe implement this?
+	vibration.frequency = fFrequency == 0.0f ? XR_FREQUENCY_UNSPECIFIED : fFrequency;
 	vibration.duration = (int)(fDurationSeconds * 1000000000.0f);
 	vibration.amplitude = fAmplitude;
 
@@ -1728,6 +1738,12 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 	// TODO find something that passes in non-matching values and see what results it wants, or try it with SteamVR
 	if (act->set != set) {
 		OOVR_ABORTF("GetActionOrigins: set mismatch %s vs %s", set->name.c_str(), act->fullName.c_str());
+	}
+
+	if (act->type == ActionType::Skeleton) {
+		// TODO what should this do?
+		OOVR_SOFT_ABORT("Skeleton action origins not implemented, returning error");
+		return VRInputError_InvalidHandle;
 	}
 
 	ZeroMemory(originsOut, originOutCount * sizeof(*originsOut));
@@ -1767,13 +1783,60 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize)
 {
-	STUBBED();
+	return GetOriginLocalizedName(origin, pchNameArray, unNameArraySize, VRInputString_All);
 }
+
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize,
     int32_t unStringSectionsToInclude)
 {
+	if (origin == vr::k_ulInvalidInputValueHandle)
+		return vr::VRInputError_InvalidHandle;
 
-	STUBBED();
+	ITrackedDevice* dev = ivhToDev(origin);
+
+	if (!dev) return VRInputError_InvalidHandle;
+
+	if (!pchNameArray || unNameArraySize == 0) return VRInputError_MaxCapacityReached;
+
+	std::string name;
+
+	if (unStringSectionsToInclude & VRInputString_Hand) {
+		switch (dev->GetHand()) {
+		case ITrackedDevice::HAND_LEFT:
+			name += "Left Hand ";
+			break;
+		case ITrackedDevice::HAND_RIGHT:
+			name += "Right Hand ";
+			break;
+		default:
+			name += "Unknown Hand ";
+			break;
+		}
+	}
+
+	if (unStringSectionsToInclude & VRInputString_ControllerType) {
+		name += "OpenXR Controller ";
+	}
+
+	if (unStringSectionsToInclude & VRInputString_InputSource) {
+		// TODO: what should go here?
+		//name += "Something ";
+	}
+
+	if (name.size() > 0) {
+		// Remove trailing space
+		name.erase(name.size() - 1);
+	}
+
+	const char *str = name.c_str();
+
+	size_t i;
+	for (i = 0; str[i] && i < unNameArraySize - 1; ++i) {
+		pchNameArray[i] = str[i];
+	}
+	pchNameArray[i] = 0;
+
+	return str[i] ? VRInputError_MaxCapacityReached : VRInputError_None;
 }
 
 EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t* info, uint32_t unOriginInfoSize)
@@ -1903,7 +1966,14 @@ EVRInputError BaseInput::OpenBindingUI(const char* pchAppKey, VRActionSetHandle_
 
 EVRInputError BaseInput::GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath, char* pchVariantArray, uint32_t unVariantArraySize)
 {
-	STUBBED();
+	if (unVariantArraySize == 0) {
+		return VRInputError_MaxCapacityReached;
+	}
+
+	OOVR_SOFT_ABORT("GetBindingVariant not implemented");
+
+	*pchVariantArray = 0;
+	return VRInputError_None;
 }
 
 BaseInput::Action* BaseInput::cast_AH(VRActionHandle_t handle)

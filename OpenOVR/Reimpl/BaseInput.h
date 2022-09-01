@@ -656,6 +656,9 @@ private:
 	std::vector<std::unique_ptr<class InteractionProfile>> interactionProfiles;
 	Registry<ActionSet> actionSets;
 	Registry<Action> actions;
+	bool allowSetDominantHand = false;
+
+	vr::ETrackedControllerRole dominantHand = vr::TrackedControllerRole_RightHand;
 
 	// TODO convert to Registry
 	std::unordered_map<std::string, std::unique_ptr<InputValueHandle>> inputHandleRegistry;
