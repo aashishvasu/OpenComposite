@@ -359,7 +359,7 @@ void BaseCompositor::FadeGrid(float fSeconds, bool bFadeIn)
 
 float BaseCompositor::GetCurrentGridAlpha()
 {
-	STUBBED();
+	return isInSkybox ? 1.0f : 0.0f;
 }
 
 ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t* pTextures, uint32_t unTextureCount)
@@ -539,28 +539,33 @@ bool BaseCompositor::IsMotionSmoothingEnabled()
 
 bool BaseCompositor::IsCurrentSceneFocusAppLoading()
 {
-	STUBBED();
+	return isInSkybox;
 }
 
 ovr_enum_t BaseCompositor::SetStageOverride_Async(const char* pchRenderModelPath, const HmdMatrix34_t* pTransform,
     const OOVR_Compositor_StageRenderSettings* pRenderSettings, uint32_t nSizeOfRenderSettings)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Stage override not implemented");
+	return VRCompositorError_None;
 }
 
 void BaseCompositor::ClearStageOverride()
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Stage override not implemented");
 }
 
 bool BaseCompositor::GetCompositorBenchmarkResults(Compositor_BenchmarkResults* pBenchmarkResults, uint32_t nSizeOfBenchmarkResults)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Compositor benchmarking not implemented");
+	return false;
 }
 
 ovr_enum_t BaseCompositor::GetLastPosePredictionIDs(uint32_t* pRenderPosePredictionID, uint32_t* pGamePosePredictionID)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Pose prediction IDs hardcoded at 0");
+	if (pRenderPosePredictionID) *pRenderPosePredictionID = 0;
+	if (pGamePosePredictionID) *pGamePosePredictionID = 0;
+	return VRCompositorError_None;
 }
 
 ovr_enum_t BaseCompositor::GetPosesForFrame(uint32_t unPosePredictionID, TrackedDevicePose_t* pPoseArray, uint32_t unPoseArrayCount)

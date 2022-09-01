@@ -142,7 +142,8 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 
 bool XrHMD::ComputeDistortion(vr::EVREye eEye, float fU, float fV, vr::DistortionCoordinates_t* pDistortionCoordinates)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Distortion computation not implemented for OpenXR");
+	return false;
 }
 
 vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
