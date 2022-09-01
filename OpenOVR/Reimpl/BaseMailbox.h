@@ -9,15 +9,17 @@ class BaseMailbox {
 public:
 	enum MboxErr {
 		VR_MBox_None = 0,
+		VR_MBox_NoMessage = 1,
+		VR_MBox_BufferTooShort = 2,
 	};
 
 	// TODO build up names and comments for these and their types
 
 	MboxErr RegisterMailbox(const char* name, OOVR_mbox_handle* handle);
 
-	MboxErr undoc2(OOVR_mbox_handle a);
+	MboxErr UnregisterMailbox(OOVR_mbox_handle mbox);
 
-	MboxErr undoc3(OOVR_mbox_handle a, const char* b, const char* c);
+	MboxErr SendMessage(OOVR_mbox_handle mbox, const char* type, const char* message);
 
 	MboxErr ReadMessage(OOVR_mbox_handle mbox, char* outBuf, uint32_t outBufLen, uint32_t* msgLen);
 };

@@ -24,8 +24,8 @@ class IVRMailbox
 {
 public:
 	virtual vrmb_typeb RegisterMailbox(const char *name, mbox_handle *handle) = 0;
-	virtual vrmb_typeb undoc2(mbox_handle handle) = 0;
-	virtual vrmb_typeb undoc3(mbox_handle handle, const char *b, const char *c) = 0;
+	virtual vrmb_typeb UnregisterMailbox(mbox_handle handle) = 0;
+	virtual vrmb_typeb SendMessage(mbox_handle handle, const char *type, const char *message) = 0;
 	virtual vrmb_typeb ReadMessage(mbox_handle mbox, char* outBuf, uint32_t outBufLen, uint32_t* msgLen) = 0;
 };
 

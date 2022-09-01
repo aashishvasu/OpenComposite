@@ -16,14 +16,16 @@ MboxErr BaseMailbox::RegisterMailbox(const char* name, OOVR_mbox_handle* handle)
 	return VR_MBox_None;
 }
 
-MboxErr BaseMailbox::undoc2(OOVR_mbox_handle a)
+MboxErr BaseMailbox::UnregisterMailbox(OOVR_mbox_handle mbox)
 {
-	STUBBED();
+	OOVR_LOGF("Pretending to unregister mailbox ID %d", (int)mbox);
+	return VR_MBox_None;
 }
 
-MboxErr BaseMailbox::undoc3(OOVR_mbox_handle a, const char* b, const char* c)
+MboxErr BaseMailbox::SendMessage(OOVR_mbox_handle mbox, const char* type, const char* message)
 {
-	STUBBED();
+	OOVR_LOGF("Pretending to send mailbox message, type '%s' contents '%s'", type, message);
+	return VR_MBox_None;
 }
 
 MboxErr BaseMailbox::ReadMessage(OOVR_mbox_handle mboxHandle, char* outBuf, uint32_t outBufLen, uint32_t* msgLen)
@@ -35,6 +37,22 @@ MboxErr BaseMailbox::ReadMessage(OOVR_mbox_handle mboxHandle, char* outBuf, uint
 	// In both cases, set msgLen
 	// If we don't have a message, return an unknown error code other than 0 and 2 (HL:A doesn't care).
 
-	// Fow now, just say we don't have a message
-	return (MboxErr)12345;
+	static bool recvdReadyMsg = false;
+	if (!recvdReadyMsg) {
+		recvdReadyMsg = true;
+
+		const std::string msg = R"({ "type": "ready", })";
+		*msgLen = msg.size();
+
+		if (outBufLen < msg.size() + 1) {
+			return VR_MBox_BufferTooShort;
+		}
+		strcpy(outBuf, msg.c_str());
+
+		OOVR_LOGF("Sending fake ready message '%s'", msg.c_str());
+		return VR_MBox_None;
+	}
+
+	// For now, just say we don't have a message
+	return VR_MBox_NoMessage;
 }
