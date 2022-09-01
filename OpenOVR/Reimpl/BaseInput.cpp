@@ -1485,7 +1485,15 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t action,
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel)
 {
-	STUBBED();
+	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
+		// We can't know if this should be partial or full, but I'm guessing
+		// applications don't care too much in practice
+		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Full;
+	} else {
+		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Estimated;
+	}
+
+	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace,
     EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray,
@@ -1552,20 +1560,99 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	// For now, just return with non-active data
 	return vr::VRInputError_None;
 }
-EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t action, EVRSummaryType eSummaryType, VRSkeletalSummaryData_t* pSkeletalSummaryData)
+EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, EVRSummaryType eSummaryType, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
-	OOVR_SOFT_ABORT("Skeletal summary not yet implemented");
+	GET_ACTION_FROM_HANDLE(action, actionHandle);
 
-	static int timer = 0;
-	timer++;
-	int cap = 100;
-	float v = (float)(timer % cap) / cap;
+	if (action == nullptr) {
+		return vr::VRInputError_None;
+	}
 
-	// Just put some fake values in for now until we can try and process out the real values
-	for (float& i : pSkeletalSummaryData->flFingerCurl)
-		i = sin(v) / 2.0f + 0.5f;
-	for (float& i : pSkeletalSummaryData->flFingerSplay)
-		i = 0.2;
+	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
+		// TODO: generate our own data as mentioned above. We might want to use the
+		// generated summary data to generate the bone data.
+		OOVR_SOFT_ABORT("Runtime does not support hand-tracking, skeletal summary data unavailable");
+		return vr::VRInputError_None;
+	}
+
+	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
+	locateInfo.baseSpace = legacyControllers[(int)action->skeletalHand].aimPoseSpace;
+	locateInfo.time = xr_gbl->GetBestTime();
+
+	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
+	locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
+	std::vector<XrHandJointLocationEXT> jointLocations(locations.jointCount);
+	locations.jointLocations = jointLocations.data();
+
+	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(handTrackers[(int)action->skeletalHand], &locateInfo, &locations));
+
+	if (!locations.isActive) {
+		// Leave empty-handed, IDK if this is the right error or not
+		return vr::VRInputError_InvalidSkeleton;
+	}
+
+	for (int i = 0; i < 5; ++i) {
+		XrHandJointLocationEXT metacarpal, proximal, tip;
+
+		switch (i) {
+		case 0: // thumb
+			metacarpal = jointLocations[XR_HAND_JOINT_THUMB_METACARPAL_EXT];
+			proximal = jointLocations[XR_HAND_JOINT_THUMB_PROXIMAL_EXT];
+			tip = jointLocations[XR_HAND_JOINT_THUMB_TIP_EXT];
+			break;
+		case 1: // index
+			metacarpal = jointLocations[XR_HAND_JOINT_INDEX_METACARPAL_EXT];
+			proximal = jointLocations[XR_HAND_JOINT_INDEX_PROXIMAL_EXT];
+			tip = jointLocations[XR_HAND_JOINT_INDEX_TIP_EXT];
+			break;
+		case 2: // middle
+			metacarpal = jointLocations[XR_HAND_JOINT_MIDDLE_METACARPAL_EXT];
+			proximal = jointLocations[XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT];
+			tip = jointLocations[XR_HAND_JOINT_MIDDLE_TIP_EXT];
+			break;
+		case 3: // ring
+			metacarpal = jointLocations[XR_HAND_JOINT_RING_METACARPAL_EXT];
+			proximal = jointLocations[XR_HAND_JOINT_RING_PROXIMAL_EXT];
+			tip = jointLocations[XR_HAND_JOINT_RING_TIP_EXT];
+			break;
+		case 4: // little
+			metacarpal = jointLocations[XR_HAND_JOINT_LITTLE_METACARPAL_EXT];
+			proximal = jointLocations[XR_HAND_JOINT_LITTLE_PROXIMAL_EXT];
+			tip = jointLocations[XR_HAND_JOINT_LITTLE_TIP_EXT];
+			break;
+		default:
+			break;
+		}
+
+		glm::vec3 metacarpalProximalDelta = X2G_v3f(metacarpal.pose.position) - X2G_v3f(proximal.pose.position);
+		glm::vec3 tipProximalDelta = X2G_v3f(tip.pose.position) - X2G_v3f(proximal.pose.position);
+
+		float dot = glm::dot(metacarpalProximalDelta, tipProximalDelta);
+		float a = glm::length(metacarpalProximalDelta);
+		float b = glm::length(tipProximalDelta);
+		// dot = a * b * cos(ang)
+
+		float curl;
+		if (a == 0.0f || b == 0.0f) {
+			// That's probably not meant to happen? But if two joints really do
+			// coincide then that probably means the hand is curled up
+			curl = 1.0f;
+		} else {
+			// Find the angle between these three joints
+			float angCos = dot / (a * b);
+			if (angCos < -1.0f) angCos = -1.0f;
+			if (angCos > 1.0f) angCos = 1.0f;
+			float ang = acosf(angCos);
+			curl = 1.0f - (ang / M_PI);
+		}
+
+		pSkeletalSummaryData->flFingerCurl[i] = curl;
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		OOVR_SOFT_ABORT("Finger splay hardcoded at 0.2");
+		pSkeletalSummaryData->flFingerSplay[i] = 0.2f; // TODO
+	}
 
 	return vr::VRInputError_None;
 }
