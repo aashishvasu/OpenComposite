@@ -686,9 +686,6 @@ void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceI
 		return;
 
 	if (unControllerDeviceIndex == leftHandIndex || unControllerDeviceIndex == rightHandIndex) {
-#ifndef OC_XR_PORT
-#error remove the Haptics class if we know we're not going to need it again
-#endif
 
 		// Similar to GetControllerState, wait until the input system is ready
 		if (!inputSystem) {
@@ -696,11 +693,9 @@ void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceI
 		}
 
 		inputSystem->TriggerLegacyHapticPulse(unControllerDeviceIndex, (uint64_t)usDurationMicroSec * 1000);
-		return;
 	}
-
-	// Invalid controller
-	STUBBED();
+	// if index is invalid, nothing to do
+	return;
 }
 
 const char* BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId)
