@@ -1,24 +1,28 @@
 **NOTE: This is a fork of https://gitlab.com/znixian/OpenOVR. I just like using Github more.**
 
-# OpenComposite - Play SteamVR games without SteamVR!
+# OpenComposite (OpenXR) - Play SteamVR games without SteamVR!
+[![Discord](https://img.shields.io/discord/499733750209314816.svg?style=for-the-badge&logo=discord&label=discord)](https://discord.gg/zYA6Tzs)
+[![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg?style=for-the-badge&logo=appveyor)](https://ci.appveyor.com/project/ZNix/openovr)
+---------------------------------------------
+# [GAME COMPATIBILITY SPREADSHEET](https://docs.google.com/spreadsheets/d/1s2SSuRt0oHm91RUZB-R-ef5BrfOtvP_jwDwb6FuMF9Q/edit#gid=2068512515)
+Feel free to comment on the spreadsheet for us to modify its information.
+------------------------------------------------------
 
-[![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
-[![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg)](https://ci.appveyor.com/project/ZNix/openovr)
+[TOC]
 
-OpenComposite (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
+OpenComposite OpenXR (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
-to the Oculus runtime. Think of it as a backwards version of ReVive, for the Rift.
+to the OpenXR runtime. Think of it as a backwards version of ReVive, for the OpenXR compatible headsets.
 
-This allows you to play SteamVR-based games on an Oculus Rift as though they were native titles, without
+This allows you to play SteamVR-based games on an OpenXR compatible headset as though they were native titles, without
 the use of SteamVR!
 
-Why would you want to do this? There are several of good reasons:
+Why would you want to do this? There are several good reasons:
 
 * Some users have trouble running SteamVR on their machines
 * While more work needs to be done on OpenComposite's side for this, it can potentially get slightly better
 performance due to several design decisions, due to not having to support the Vive
-* When you run a program it's guaranteed to show up in Oculus Home, while with SteamVR if you start the
-game when SteamVR is already running this won't happen.
+* OpenXR is less susceptible to the stuttering that has plagued SteamVR
 * Again a problem for some people but not others, SteamVR can take some time to start up
 * SteamVR is several gigabytes in side - that might be a problem for some people
 
@@ -27,38 +31,34 @@ that use versions of interfaces that I have yet to implement - this will result 
 you find a game that does this, please let me know (see below).
 
 There are several things missing though:
-- Oculus Touch models are not present. Some games (eg, *Skyrim*) will use their own models in this case. For other games, you
+- Hand controller models are not present. Some games (eg, *Skyrim*) will use their own models in this case. For other games, you
 might not see a controller model at all. Most games use their own hand models though, rather than displaying a model
 of your controller.
-- The virtual keyboard does not yet work in OpenGL-, DirectX12- or Vulkan-based games. This should only affect DOOM BFG and older
-versions of Vivecraft however.
+- The virtual keyboard does not yet.
 
-The games that I can confirm it works with are as follows:
-- Skyrim VR
-- VTOL VR
-- PAYDAY 2 VR
+\** Some Oculus headsets seem to be incompatible with OpenXR initialising with Vulkan for some games. If you have issues with AC or other games try putting initUsingVulkan=false in the opencomposite.ini (see [Configuration](https://gitlab.com/znixian/OpenOVR/-/tree/openxr#configuration-file) section for details.)
 
-It probably works in quite a few other games, but I have not tried them.
-
-## Downloading and installation
+# Downloading and installation
 
 OpenComposite can either be installed system-wide (all SteamVR-based games will use it automatically) or per-game (replace a DLL
 file for each game, this usually must be done each time said game is updated).
 
-### System-wide installation
+(Note that these instructions are intended for Windows, Linux users can scroll down to the [Linux specific](#linux-specific-info) section)
 
-Download the [OpenComposite Launcher](https://znix.xyz/OpenComposite/runtimeswitcher.php). Unzip it to a folder of your choosing,
+## System-wide installation
+
+Download the [OpenComposite Launcher](https://znix.xyz/OpenComposite/runtimeswitcher.php?branch=openxr). Unzip it to a folder of your choosing,
 and run `OpenComposite.exe`. Click 'Switch to OpenComposite', and wait while the DLLs are downloaded. Games will now run via OpenComposite
 rather than SteamVR.
 
 To update OpenComposite, run `OpenComposite.exe` again. The text at the bottom of the window will indicate if an update is available, and
 if so an update button will appear. Click it and OpenComposite will be updated.
 
-### Per-game installation
+## Per-game installation
 
 Download the DLLs:
-[32-bit](https://znix.xyz/OpenComposite/download.php?arch=x86)
-[64-bit](https://znix.xyz/OpenComposite/download.php?arch=x64)
+[32-bit](https://znix.xyz/OpenComposite/download.php?arch=x86&branch=openxr)
+[64-bit](https://znix.xyz/OpenComposite/download.php?arch=x64&branch=openxr)
 
 These come from [AppVeyor](https://ci.appveyor.com/project/ZNix/openovr) - whenever I push some new code, it will be compiled
 and uploaded to those links automatically.
@@ -73,22 +73,42 @@ you'll be able to switch back by starting SteamVR. This will make updating much 
 If you have any questions, feel free to jump on our Discord server:
 [![Discord](https://img.shields.io/discord/499733750209314816.svg)](https://discord.gg/zYA6Tzs)
 
-## Configuration file
+## Linux-specific info
+
+There are no builds available for Linux at this time: you'll have to build it manually for now (see [the section below on compiling](#compiling-for-developers)).
+After compiling, there are a few steps you'll have to follow:
+1. Get the runtime in place. This can be accomplished through one of the following methods:
+	- Set the VR_OVERRIDE variable to the build directory (in Steam launch options: `VR_OVERRIDE=<path to build directory> %command%`)
+	- Edit the OpenVR config file - typically located at `~/.config/openvr/openvrpaths.vrpath` - and in the "runtime" section, put the path to the build directory. Note that Steam likes to overwrite this file so you may need to set it to read only.
+	- For the elusive native Linux title, you can copy the `vrclient.so` over the game's `libopenvr_api.so`
+2. For games utilizing the Steam Runtime (most of them): you will need to work around the Steam Runtime. Here are some general tips for working around, as setups can differ:
+	- Any files located in your home directory will exist with no problems in the runtime. There is nothing to take into consideration with these paths, they will work fine.
+	- Any path located under `/usr` can be found under `/run/host/usr` in the runtime. For example, if you installed Monado system wide, the runtime json would be located at `/run/host/usr/share/openxr/1/openxr_monado.json`.
+	- Any other paths can be added using the `PRESSURE_VESSEL_FILESYSTEMS_RW` environment variable.
+
+As an example, here is what your Steam launch options might look like if you cloned OpenComposite to your home directory, used the VR_OVERRIDE environment variable, and installed Monado system wide:
+
+```
+VR_OVERRIDE=~/OpenOVR/build XR_RUNTIME_JSON=/run/host/usr/share/openxr/1/openxr_monado.json PRESSURE_VESSEL_FILESYSTEMS_RW=$XDG_RUNTIME_DIR/monado_comp_ipc %command%
+```
+
+Note that `$XDG_RUNTIME_DIR/monado_comp_ipc` is a socket used by Monado and required to be present for it to properly detect that Monado is running.
+
+You can read more about the `PRESSURE_VESSEL_FILESYSTEM_RW` variable and other environment variables utilized by the Steam Runtime [here](https://gitlab.steamos.cloud/steamrt/steam-runtime-tools/-/blob/master/pressure-vessel/wrap.1.md).
+
+# Configuration file
 
 On startup, OpenComposite searches for a file named `opencomposite.ini`, first next to the `openvr_api.dll` file, and if it can't find
 that, then it looks in the working directory (usually in the same folder as the EXE). If no file is found, that's fine and all
 the default values are used.
 
 This is it's configuration file, where you can specify a number of options. These are listed in `name=value` format, and you
-can define a comment by starting a like with `;` or a `#`. Note the option names **are** case sensitive. If you specify an invalid
+can define a comment by starting a line with `;` or a `#`. Note the option names **are** case sensitive. If you specify an invalid
 option, the game will immediately crash on startup. Any whitespace between the name, equals sign, and value is ignored, as is whitespace
 on the end of the line. Ensure your lines do not being with whitespace however.
 
 The available options are:
 
-* `enableAudio` - boolean, default `enabled`. Should OpenComposite redirect the game's audio to the Rift builtin audio. This means you
-don't have to set the Windows default audio device. This doesn't always work and can sometimes cause crashes, see below for
-more information about it.
 * `renderCustomHands` - boolean, default `enabled`. Should OpenComposite render custom hands. Disable this if you *really* dislike
 the hand models, and some games (like Skyrim) come with backup models that will be used instead.
 * `handColour` - colour, default `#4c4c4c`. The colour of the hands OpenComposite draws, as they currently lack proper textures.
@@ -107,6 +127,17 @@ the game to think controllers are connected, disable this option. See issue #25.
 such as the HMD or the Touch controllers. On some games, this causes a log entry to be generated every frame, which isn't great for performance
 and clutters up the log. This is potentially useful for troubleshooting, and was enabled by default before the config option existed. In general,
 unless you've been told to enable this (or you know what you're doing while troubleshooting) you don't need to enable this.
+* `enableHiddenMeshFix` - boolean, default `enabled`. Alter the coordinates of the hidden area mesh mask to fit within the view's projection. 
+The hidden area mesh mask defines a region to which the game will not draw and is used to mask off areas of the display that you typically cannot
+see in the headset. If you see odd black regions around the view then try disabling this fix.
+* `invertUsingShaders` - boolean, default `disabled`. Invert the image for display using shaders rather than replying on XR runtime and inverted FOV values. 
+Some games render the image inverted and rely on the runtime to display correctly. In OpenXR some runtimes don't do the inversion correctly.
+If so enable this option for OpenComposite to do the inversion when copying the image using shaders. This might have a minor cost in performance.
+* `initUsingVulkan` - boolean, default `true`. If available the temporary graphics adapter at start up will use Vulkan by default. This may be
+incompatible with some games. This will mostly affect Oculus headsets. 
+* `hiddenMeshVerticalScale` - float, default `1.0`. The scaling factor used for the hidden area mesh if supported by the application. The hidden area
+mesh is a region that the game doesn't render to. If you set this lower e.g. `0.8` then less will be drawn at the very top and very bottom of the image
+improving performance. Suggested range is `0.5` to `1.0`.
 
 The possible types are as follows:
 
@@ -132,46 +163,86 @@ handColour=#ffff00
 haptics = off
 ```
 
-## Audio Patching
-
-LibOVR includes functionality to tell a game what audio device it should output to, and thus when playing games using this API
-you don't have to change the default Windows audio device. Unfortunately, OpenVR has no such API and games using it almost always
-emit audio to the default audio device. OpenComposite includes a feature to fix this.
-
-Whenever you start a game using OpenComposite, it will attempt to patch the game's audio system (note this does **not** change the actual
-Windows audio device like SteamVR tries to, which causes a huge number of issues). This works in most of the games I tried it
-with. Depending on the game, one of three things can happen:
-
-1. The game sets up it's audio system before the OpenComposite DLL is loaded (should be very uncommon). Unfortunately there's not a lot
-I can do about this, and the audio plays through your default audio device.
-2. The game sets up it's audio system after the DLL is loaded, but before starting the VR system. This will send audio to your rift,
-same as if you'd set it as the default audio device. However, the fancy Oculus audio features (eg audio mirroring) won't work. This is
-probably the most common.
-3. The game sets up it's audio after setting up the VR system. This means the audio will work perfectly, including features like audio
-mirroring, as set up in the Oculus settings.
-
-Notes:
-
-1. If the game allows you to select an audio output, you must set it to the default output if you want the patching
-to take effect.
-2. This does not yet work with microphones - only your speakers.
-
-## Reporting a bug
+# Reporting a bug
 
 If you find an issue, missing interface, crash etc then *please* let me know about it.
 ([Opening a GitLab issue](https://gitlab.com/znixian/OpenOVR/issues/new) is the preferred
 way of doing this and you'll automatically get an email when it's fixed (if you let me know
 via a different method I'll probably make an issue and send you the link to help keep track of them).
 
-If you do not or cannot create or use a GitLab account for whatever reason, you can message me
-on Discord - I'm at ZNix#6217. If there is enough interest, I'll create a Discord server.
+If you do not or cannot create or use a GitLab account for whatever reason, you can join the [Discord server](https://discord.gg/zYA6Tzs) and report the issue in #bugs.
 
-In any case, please include the contents your `openovr_log` file - each time you start
-a game, this is created next to the EXE file and contains potentially invaluable debugging
-information. Please also say what caused the crash - did it crash on startup, or maybe after clicking
+In any case, please include the contents your `opencomposite.log` file which contains potentially
+invaluable debugging information. This log file can be found here:
+
+Windows - %localappdata%\\OpenComposite\\logs (Copy and paste that into explorer)
+Linux - $XDG_STATE_HOME/OpenComposite/logs (If XDG_STATE_HOME is not defined then check ~/.local/state/OpenComposite/logs)
+
+If those locations do not exist this may be due to some odd security restrictions, check the exe folder for opencomposite.log
+
+Please also say what caused the crash - did it crash on startup, or maybe after clicking
 load on the main menu, for example?
 
-## Licence
+# Compiling (**for developers**)
+
+Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR/-/tree/openxr-input-refactor) - it's under the GPLv3 licence.
+This project is built with CMake and follows a standard build process, so tools like CLion can be used to build it.
+The resulting library will be placed at `build/bin/linux64/vrclient.so` on Linux, `build/bin/vrclient_x64.dll` on Windows.
+
+## Windows specific
+
+If you want to use Vulkan support (enabled by default, remove `SUPPORT_VK` from the preprocessor definitions to compile without it), then
+download a [slimmed down copy of the Vulkan SDK with only `.lib` files and the headers](http://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z),
+and extract it to your `libs` directory (you can copy in the full SDK if you want, but it's far larger and probably better to install it
+by itself).
+
+This is how the resulting file structure should look:
+
+```
+OpenOVR: (or whatever folder you cloned/downloaded the repo into)
+	libs:
+		vulkan:
+			Include:
+			Lib:
+			Lib32:
+			LICENSE.txt
+			SDK_LICENSE.rtf
+			Vulkan.ico
+		openxr-sdk:
+	... etc
+```
+
+## Linux specific
+
+OpenComposite will search for Vulkan installed via your package manager. Cloning the Vulkan SDK is not necessary. 
+If not using an IDE with CMake support, a set of commands to successfully compile might look like this after navigating to the source directory:
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+## Miscellaneous
+
+OpenComposite relies fairly heavily on scripts that generate code, and this has *vastly* simplified things - 
+I expect the repo would contain roughly three to four times more code otherwise.
+
+There are two main scripts at work:
+
+1. A script to take various OpenVR header files, and split them into one header file for each
+version of each interface. This allows the project to reference many versions of the same interface.
+2. A script to generate the interface stubs - in LibOVR, there is one implementation of each interface,
+which are the base interfaces (eg `BaseSystem`, `BaseCompositor`, etc). There are then autogenerated 'stub'
+classes, which implement a binary-compatible version of one version of that interface (eg `GVRSystem_017`,
+`GVRSystem_015`, `GVRCompositor_022`), along with C-like `FnTable`s for them (which allow compatibility
+with other languages, very notably C#).
+
+These scripts are automatically run when buildling the project. If you have added or removed OpenVR headers this will cause CMake to rebuild
+the project, otherwise it will only rebuild a couple of files which is very quick.
+You can read more about why these scripts exist and how they work in the `doc/` folder of this repository.
+
+# Licence
 
 OpenComposite itself is Free Software under the GPLv3:
 
@@ -193,18 +264,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 [GPL Full Text](https://www.gnu.org/licenses/gpl-3.0-standalone.html). This also can be found in
 the `LICENCE.txt` file supplied with the source code.
 
-### LibOVR
+## OpenXR SDK
 
-The Oculus SDK (LibOVR) is also included in the binaries, however not in the source
-code repository.
+The OpenXR SDK is included as a git submodule. It's under the Apache 2 licence, the full text of
+which can be found under `libs/openxr-sdk/LICENSE`.
 
-```
-Copyright © Facebook Technologies, LLC and its affiliates. All rights reserved.
-
-The text of this may be found at: [https://developer.oculus.com/licenses/sdk-3.4.1/](https://developer.oculus.com/licenses/sdk-3.4.1/)
-```
-
-### OpenVR
+## OpenVR
 
 This program (and it's source code) includes several versions of the
 [OpenVR](https://github.com/ValveSoftware/openvr) headers. These are under the
@@ -216,152 +281,18 @@ Copyright (c) 2015, Valve Corporation
 All rights reserved.
 ```
 
-### audio-router
-
-This program contains code derived from [audio-router](https://github.com/audiorouterdev/audio-router). Audio-router
-is Free Software under the GPLv3, same as this project.
-
-### INIH
+## INIH
 
 This program uses the [inih](https://github.com/benhoyt/inih) INI parsing library by Ben Hoyt. This is available under
 the MIT licence, a copy of which can be found in the `LICENSE_INIH` file of this repository.
 
-### Microblink Build
+## Microblink Build
 
 This program uses a part of Psiha's and Microblink's [build](https://github.com/microblink/build) CMake utilities
 library. This is available under the two-clause BSD licence, a copy of which can be found in the `LICENCE_BUILD_UTIL.txt`
 file of this repository.
 
-## Compiling (**for developers**)
+## DebugBreak
 
-Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR) - it's under the GPLv3 licence.
-
-Download Visual Studio 2017 and it's C++ package. This may work on older versions of VS, but that break
-at any time.
-
-After cloning this repository, you must download [LibOVR](https://developer.oculus.com/downloads/package/oculus-sdk-for-windows/).
-The archive should contain a single folder, named `OculusSDK`. Place this into the `libs/libovr` folder in the repository root.
-
-Next, if you want to use Vulkan support (enabled by default, remove `SUPPORT_VK` from the preprocessor definitions to compile without it), then
-download a [slimmed down copy of the Vulkan SDK with only `.lib` files and the headers](http://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z),
-and extract it to your `libs` directory (you can copy in the full SDK if you want, but it's far larger and probably better to install it
-by itself).
-
-This is how the resulting file structure should look:
-
-```
-OpenOVR: (or whatever folder you cloned/downloaded the repo into)
-	libs:
-		libovr:
-			Place LibOVR Here.txt
-			OculusSDK:
-				LibOVR:
-				LibOVRKernel:
-				LICENSE.txt
-				... etc
-		vulkan:
-			Include:
-			Lib:
-			Lib32:
-			LICENSE.txt
-			SDK_LICENSE.rtf
-			Vulkan.ico
-
-	configure.cmd
-	OpenOVR.sln
-	... etc
-```
-
-Next, we need to configure the project. OpenComposite relies fairly heavily on scripts that
-generate code, and this has *vastly* simplified things - I expect the repo would contain
-roughly three to four times more code otherwise.
-
-There are two main scripts at work:
-
-1. A script to take various OpenVR header files, and split them into one header file for each
-version of each interface. This allows the project to reference many versions of the same interface.
-2. A script to generate the interface stubs - in LibOVR, there is one implementation of each interface,
-which are the base interfaces (eg `BaseSystem`, `BaseCompositor`, etc). There are then autogenerated 'stub'
-classes, which implement a binary-compatible version of one version of that interface (eg `GVRSystem_017`,
-`GVRSystem_015`, `GVRCompositor_022`), along with C-like `FnTable`s for them (which allow compatibility
-with other languages, very notably C#).
-
-Whenever you add or remove versions of OpenVR headers, or add or remove an interface or tell the
-generator to make a stub for one, you MUST re-run `generate.bat` (TODO port to GNU Bash, I only used Batch
-due to AppVeyor). If you have added or removed OpenVR headers this will cause Visual Studio to rebuild
-the project, otherwise it will only rebuild a couple of files which is very quick.
-
-Whenever you check out a new version of OpenComposite, you should run the configure script. If you don't, you're
-liable to get mysterious errors at both runtime and compiletime.
-
-(additionally the configure script can accept `clean` as an argument, which will make it delete all
-generated files - this is really only useful when debugging the scripts, though, and there is no need
-to use it otherwise)
-
-### Using the interface splitter
-
-To add a new version of OpenVR, download the header to an appropriately named file in `OpenOVR/OpenVR`,
-which is `openvr-version.h`. Please always ensure the version matches.
-
-Next, edit `OpenOVR/OpenVR/generate.py`, adding the new version number to the `versions` list at the
-top of the file. Ensure these are in the correct order - this makes sure the latest revision of any given
-interface is always used (interfaces are sometimes edited without incrementing their version numbers, when
-the changes don't affect the ABI - for example, adding items to an enumeration).
-
-Please also add all the interface files to the Visual Studio project, however not doing so will not stop
-the project from compiling.
-
-### Using the stub generator
-
-The stub generator has a list of interfaces at the top of it's file (`OpenOVR/Reimpl/generate.py`, in the
-`interfaces_list` variable). This lists each implemented interface, and there should be a corresponding
-`CVR*.cpp` file for each interface. This defines which versions of the interface are to be used.
-
-The format of the CVR ('stub definition') file is as follows:
-
-```
-#include "stdafx.h"
-#define GENFILE
-#include "BaseCommon.h"
-
-GEN_INTERFACE("InterfaceName", "123")
-// etc
-```
-
-(note the version **must** be exactly three digets long)
-
-Each `GEN_INTERFACE` macro (ignored by the compiler) instructs the stub generator to generate a stub
-for that interface for that file. There's no technical reason why you can't have one file generating
-the stubs for many interfaces - however, by convention each stub definition file corresponds to
-a single interface.
-
-Each stub definition file causes the generation of a header - `GVR*.gen.h` ('G' in GVR for
-'generated'). This header contains the class declaration for the associated stub, however it does
-not contain any definitions. These classes are named `CVR*_123`, where `123` is the version.
-
-The generator also generates a single C++ file (`stubs.gen.cpp`), which contains stub definitions for
-each method in the stub, and calls the associated method on the base class.
-
-If the generator finds a type declared in the OpenVR interface header, it takes the base name and prepends
-it with `OOVR_`. Therefore, you must declare these types in your base file.
-
-#### Overriding generated stubs
-
-Sometimes the autogenerated stubs are unsuitable in some way. In case this happens, just add the function
-definitions to the end of your stub definition file, and the generator will avoid generating it's own definition.
-
-So, prepend this to the end of your stub definition:
-
-```
-#include "GVRMyInterface.gen.h"
-
-void CVRMyInterface_123::MyFunc(...) {
-}
-```
-
-(note that if you have a lot of arguments and you wish to insert a linebreak in
-the declaration part of the function, end the line with a backslash or a comma)
-
-The stub generator will thus not generate a stub method for `CVRMyInterface_123::MyFunc`, and your definition will
-be used instead. Be careful though, as you need one function declaration per version, and with many versions this
-could get messy.
+This programme uses Scott Tsai's [DebugBreak](https://github.com/scottt/debugbreak) library when built on Linux. It's full
+text can be found in `LICENCE_DEBUG_BREAK.txt`.

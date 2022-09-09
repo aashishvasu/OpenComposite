@@ -3,30 +3,28 @@
 
 #include "Misc/Config.h"
 
-#include "OVR_CAPI.h"
 #include "convert.h"
-#include "libovr_wrapper.h"
 
-#include "Extras/OVR_Math.h"
-using namespace OVR;
+#include <glm/gtx/transform.hpp>
 
-using namespace std;
+using glm::mat4;
+using glm::quat;
+using glm::vec3;
+using glm::vec4;
 
 #include "BaseCompositor.h"
 #include "BaseOverlay.h"
 
 // For the left and right hand constants - TODO move them to their own file
 #include "BaseSystem.h"
-#include "static_bases.gen.h"
+#include "generated/static_bases.gen.h"
 
-// Need the LibOVR Vulkan headers for the GetVulkan[Device|Instance]ExtensionsRequired methods
-#if defined(SUPPORT_VK)
-#include "OVR_CAPI_Vk.h"
-#endif
-#if defined(SUPPORT_DX)
-#include "OVR_CAPI_D3D.h"
+// FIXME find a nice way to clean this up
+#ifdef SUPPORT_VK
+#include "../../DrvOpenXR/pub/DrvOpenXR.h"
 #endif
 
+#include "BaseClientCore.h"
 #include "Drivers/Backend.h"
 #include "Misc/ScopeGuard.h"
 
@@ -47,17 +45,17 @@ BaseCompositor::~BaseCompositor()
 
 void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin)
 {
-	ovrTrackingOrigin origin = ovrTrackingOrigin_FloorLevel;
+	XrReferenceSpaceType origin = XR_REFERENCE_SPACE_TYPE_STAGE;
 	if (eOrigin == TrackingUniverseSeated) {
-		origin = ovrTrackingOrigin_EyeLevel;
+		origin = XR_REFERENCE_SPACE_TYPE_LOCAL;
 	}
 
-	OOVR_FAILED_OVR_ABORT(ovr_SetTrackingOriginType(SESS, origin));
+	GetUnsafeBaseSystem()->currentSpace = origin;
 }
 
 ETrackingUniverseOrigin BaseCompositor::GetTrackingSpace()
 {
-	if (ovr_GetTrackingOriginType(SESS) == ovrTrackingOrigin_EyeLevel) {
+	if (GetUnsafeBaseSystem()->currentSpace == XR_REFERENCE_SPACE_TYPE_LOCAL) {
 		return TrackingUniverseSeated;
 	} else {
 		return TrackingUniverseStanding;
@@ -82,7 +80,7 @@ void BaseCompositor::GetSinglePoseRendering(ETrackingUniverseOrigin origin, Trac
 	BackendManager::Instance().GetSinglePose(origin, unDeviceIndex, pOutputPose, ETrackingStateType::TrackingStateType_Rendering);
 }
 
-Matrix4f BaseCompositor::GetHandTransform()
+mat4 BaseCompositor::GetHandTransform()
 {
 	float deg_to_rad = math_pi / 180;
 
@@ -94,15 +92,15 @@ Matrix4f BaseCompositor::GetHandTransform()
 	//  this to lock the controller perfectly flat.
 	// ovrPose.ThePose.Orientation = { 0,0,0,1 };
 
-	Vector3f rotateAxis = Vector3f(1, 0, 0);
-	Quatf rotation = Quatf(rotateAxis, controller_offset_angle * deg_to_rad); //count++ * 0.01f);
+	vec3 rotateAxis = vec3(1, 0, 0);
+	quat rotation = glm::rotate(controller_offset_angle * deg_to_rad, rotateAxis); // count++ * 0.01f);
 
-	Matrix4f transform(rotation);
+	mat4 transform(rotation);
 
 	// Controller offset
 	// Note this is about right, found by playing around in Unity until everything
 	//  roughly lines up. If you want to contribute better numbers, please go ahead!
-	transform.SetTranslation(Vector3f(0.0f, 0.0353f, -0.0451f));
+	transform[3] = vec4(0.0f, 0.0353f, -0.0451f, 1.0f);
 
 	return transform;
 }
@@ -111,9 +109,9 @@ ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t* renderPoseArray, ui
     TrackedDevicePose_t* gamePoseArray, uint32_t gamePoseArrayCount)
 {
 
-	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
+	ETrackingUniverseOrigin origin = GetTrackingSpace();
 
-	for (uint32_t i = 0; i < max(gamePoseArrayCount, renderPoseArrayCount); i++) {
+	for (uint32_t i = 0; i < std::max(gamePoseArrayCount, renderPoseArrayCount); i++) {
 		TrackedDevicePose_t* renderPose = NULL;
 		TrackedDevicePose_t* gamePose = NULL;
 
@@ -149,10 +147,8 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 		return VRCompositorError_IndexOutOfRange;
 	}
 
-	ETrackingUniverseOrigin origin = GetUnsafeBaseSystem()->_GetTrackingOrigin();
-
-	TrackedDevicePose_t pose;
-	GetSinglePoseRendering(origin, unDeviceIndex, &pose);
+	TrackedDevicePose_t pose{};
+	GetSinglePoseRendering(GetTrackingSpace(), unDeviceIndex, &pose);
 
 	if (pOutputPose) {
 		*pOutputPose = pose;
@@ -165,40 +161,55 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 	return VRCompositorError_None;
 }
 
+#if !defined(OC_XR_PORT) && defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 DX11Compositor* BaseCompositor::dxcomp;
+#endif
 
-Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, const OVR::Sizei& fovTextureSize)
+Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 {
 	Compositor* comp = nullptr;
 
 	switch (texture->eType) {
-#ifdef SUPPORT_GL
+#if defined(SUPPORT_GL)
 	case TextureType_OpenGL: {
-		comp = new GLCompositor(fovTextureSize);
+		// Double-cast to avoid a CLion warning
+		comp = new GLCompositor((GLuint)(intptr_t)texture->handle);
+		break;
+	}
+#elif defined(SUPPORT_GLES)
+	case TextureType_OpenGL: {
+		// Double-cast to avoid a CLion warning
+		comp = new GLESCompositor();
 		break;
 	}
 #endif
-#ifdef SUPPORT_DX
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	case TextureType_DirectX: {
 		if (!oovr_global_configuration.DX10Mode())
 			comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
+
+#if defined(SUPPORT_DX10) && !defined(OC_XR_PORT)
 		else
 			comp = new DX10Compositor((ID3D10Texture2D*)texture->handle);
 
 		dxcomp = (DX11Compositor*)comp;
+#else
+		else
+			STUBBED();
+#endif
 
 		break;
 	}
 #endif
-#if defined(SUPPORT_VK)
+#ifdef SUPPORT_VK
 	case TextureType_Vulkan: {
 		comp = new VkCompositor(texture);
 		break;
 	}
 #endif
-#if defined(SUPPORT_DX12)
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 	case TextureType_DirectX12: {
-		compositor = new DX12Compositor((D3D12TextureData_t*)texture->handle, fovTextureSize, chains);
+		comp = new DX12Compositor((D3D12TextureData_t*)texture->handle);
 		break;
 	}
 #endif
@@ -207,15 +218,15 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture, co
 		OOVR_ABORT(err.c_str());
 	}
 
-	if (comp->GetSwapChain() == NULL && texture->eType != TextureType_DirectX && texture->eType != TextureType_Vulkan) {
-		OOVR_ABORT("Failed to create texture.");
-	}
-
 	return comp;
 }
 
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VRTextureBounds_t* bounds, EVRSubmitFlags submitFlags)
 {
+	if (BaseClientCore::appType == vr::VRApplication_Background) {
+		OOVR_ABORT("Error - application with type VRApplication_Background should not be submitting!");
+	}
+
 	bool isFirstEye = !leftEyeSubmitted && !rightEyeSubmitted;
 
 	bool eyeState = false;
@@ -249,7 +260,7 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VR
 
 	if (leftEyeSubmitted && rightEyeSubmitted) {
 		if (!isNullRender)
-			BackendManager::Instance().SubmitFrames(isInSkybox);
+			BackendManager::Instance().SubmitFrames(isInSkybox, false);
 
 		leftEyeSubmitted = false;
 		rightEyeSubmitted = false;
@@ -272,15 +283,18 @@ void BaseCompositor::PostPresentHandoff()
 	//  are to be made to the frame, and it can begin the compositor - in the aforementioned cases, this would be
 	//  called directly after the last Submit call.
 	//
-	// On the other hand, LibOVR starts compositing as soon as ovr_EndFrame is called. So we don't have to do
-	//  anything here.
-	//
-	// TODO: use ovr_EndFrame and co instead of ovr_SubmitFrame for better performance, not just here but in all cases
-	//  that way we can call ovr_WaitToBeginFrame in WaitGetPoses to mimick SteamVR.
+	// Some apps provide a GUI through layers that are submitted after any eye textures are submitted. The app then
+	// calls PostPresentHandOff to signal that all data is submitted and compositor can start work. Mimick this by
+	// calling SubmitFrames with a flag to say it is called from this function.
+
+	BackendManager::Instance().SubmitFrames(isInSkybox, true);
 }
 
 bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32_t unFramesAgo)
 {
+	// "Sets oldest timing info if nFramesAgo is larger than the stored history." So if our history
+	// of timing records is only 1 we can just return that.
+
 	return BackendManager::Instance().GetFrameTiming(pTiming, unFramesAgo);
 
 	// TODO fill in the m_nNumVSyncsReadyForUse and uint32_t m_nNumVSyncsToFirstView fields, but only
@@ -289,7 +303,11 @@ bool BaseCompositor::GetFrameTiming(OOVR_Compositor_FrameTiming* pTiming, uint32
 
 uint32_t BaseCompositor::GetFrameTimings(OOVR_Compositor_FrameTiming* pTiming, uint32_t nFrames)
 {
-	STUBBED();
+	// This is a request to fill out an array of timing data. However only an arbitrary number
+	// of records are available with number being filled returned. In the case of only one record
+	// being available we can just send the most recent timing data and return 1.
+	bool populated = BackendManager::Instance().GetFrameTiming(pTiming, 1);
+	return populated ? 1 : 0;
 }
 
 bool BaseCompositor::GetFrameTiming(vr::Compositor_FrameTiming* pTiming, uint32_t unFramesAgo)
@@ -341,7 +359,7 @@ void BaseCompositor::FadeGrid(float fSeconds, bool bFadeIn)
 
 float BaseCompositor::GetCurrentGridAlpha()
 {
-	STUBBED();
+	return isInSkybox ? 1.0f : 0.0f;
 }
 
 ovr_enum_t BaseCompositor::SetSkyboxOverride(const Texture_t* pTextures, uint32_t unTextureCount)
@@ -430,24 +448,25 @@ void BaseCompositor::SuspendRendering(bool bSuspend)
 	// TODO
 	// I'm not sure what the purpose of this function is. If you know, please tell me.
 	// - ZNix
-	//STUBBED();
+	// STUBBED();
 }
 
-#if defined(SUPPORT_DX)
 ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView)
 {
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	return BackendManager::Instance().GetMirrorTextureD3D11(eEye, pD3D11DeviceOrResource, ppD3D11ShaderResourceView);
-}
 #else
-ovr_enum_t BaseCompositor::GetMirrorTextureD3D11(EVREye eEye, void* pD3D11DeviceOrResource, void** ppD3D11ShaderResourceView)
-{
 	OOVR_ABORT("Cannot get D3D mirror texture - D3D support disabled");
-}
 #endif
+}
 
 void BaseCompositor::ReleaseMirrorTextureD3D11(void* pD3D11ShaderResourceView)
 {
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	return BackendManager::Instance().ReleaseMirrorTextureD3D11(pD3D11ShaderResourceView);
+#else
+	OOVR_ABORT("Cannot get D3D mirror texture - D3D support disabled");
+#endif
 }
 
 ovr_enum_t BaseCompositor::GetMirrorTextureGL(EVREye eEye, glUInt_t* pglTextureId, glSharedTextureHandle_t* pglSharedTextureHandle)
@@ -470,25 +489,26 @@ void BaseCompositor::UnlockGLSharedTextureForAccess(glSharedTextureHandle_t glSh
 	STUBBED();
 }
 
-uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(VR_OUT_STRING() char* pchValue, uint32_t unBufferSize)
+uint32_t BaseCompositor::GetVulkanInstanceExtensionsRequired(char* pchValue, uint32_t unBufferSize)
 {
 #if defined(SUPPORT_VK)
-	// Whaddya know, the Oculus and Valve methods work almost identically...
-	OOVR_FAILED_OVR_ABORT(ovr_GetInstanceExtensionsVk(*ovr::luid, pchValue, &unBufferSize));
-	return unBufferSize;
+	// Whaddya know, the OpenXR, Oculus and Valve methods work almost identically...
+	uint32_t size;
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanInstanceExtensionsKHR(xr_instance, xr_system, unBufferSize, &size, pchValue));
+	return size;
 #else
-	STUBBED();
+	OOVR_ABORT("Vulkan support disabled");
 #endif
 }
 
 uint32_t BaseCompositor::GetVulkanDeviceExtensionsRequired(VkPhysicalDevice_T* pPhysicalDevice, char* pchValue, uint32_t unBufferSize)
 {
 #if defined(SUPPORT_VK)
-	// Use the default LUID, even if another physical device is passed in. TODO.
-	OOVR_FAILED_OVR_ABORT(ovr_GetDeviceExtensionsVk(*ovr::luid, pchValue, &unBufferSize));
-	return unBufferSize;
+	uint32_t size;
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanDeviceExtensionsKHR(xr_instance, xr_system, unBufferSize, &size, pchValue));
+	return size;
 #else
-	STUBBED();
+	OOVR_ABORT("Vulkan support disabled");
 #endif
 }
 
@@ -519,28 +539,33 @@ bool BaseCompositor::IsMotionSmoothingEnabled()
 
 bool BaseCompositor::IsCurrentSceneFocusAppLoading()
 {
-	STUBBED();
+	return isInSkybox;
 }
 
 ovr_enum_t BaseCompositor::SetStageOverride_Async(const char* pchRenderModelPath, const HmdMatrix34_t* pTransform,
     const OOVR_Compositor_StageRenderSettings* pRenderSettings, uint32_t nSizeOfRenderSettings)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Stage override not implemented");
+	return VRCompositorError_None;
 }
 
 void BaseCompositor::ClearStageOverride()
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Stage override not implemented");
 }
 
 bool BaseCompositor::GetCompositorBenchmarkResults(Compositor_BenchmarkResults* pBenchmarkResults, uint32_t nSizeOfBenchmarkResults)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Compositor benchmarking not implemented");
+	return false;
 }
 
 ovr_enum_t BaseCompositor::GetLastPosePredictionIDs(uint32_t* pRenderPosePredictionID, uint32_t* pGamePosePredictionID)
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("Pose prediction IDs hardcoded at 0");
+	if (pRenderPosePredictionID) *pRenderPosePredictionID = 0;
+	if (pGamePosePredictionID) *pGamePosePredictionID = 0;
+	return VRCompositorError_None;
 }
 
 ovr_enum_t BaseCompositor::GetPosesForFrame(uint32_t unPosePredictionID, TrackedDevicePose_t* pPoseArray, uint32_t unPoseArrayCount)

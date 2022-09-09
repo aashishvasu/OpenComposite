@@ -1,24 +1,26 @@
 #include "stdafx.h"
+
 #include "SudoFontMeta.h"
 
 #include "Misc/lodepng.h"
 
 #include <assert.h>
 
-using namespace std;
-
-vector<char> readBytes(vector<char> &data, size_t len) {
+std::vector<char> readBytes(std::vector<char>& data, size_t len)
+{
 	assert(len <= data.size());
-	vector<char> result(data.begin(), data.begin() + len);
+	std::vector<char> result(data.begin(), data.begin() + len);
 	data.erase(data.begin(), data.begin() + len);
 	return result;
 }
 
-template<typename T>
-T readData(vector<char> &data) {
+template <typename T>
+T readData(std::vector<char>& data)
+{
 	T val;
-	vector<char> sVal = readBytes(data, sizeof(val));
+	std::vector<char> sVal = readBytes(data, sizeof(val));
 	memcpy(&val, sVal.data(), sizeof(val));
+
 	return val;
 }
 
@@ -31,9 +33,10 @@ enum SectionID_t : uint16_t {
 	ID_END = 999,
 };
 
-SudoFontMeta::SudoFontMeta(vector<char> data, vector<char> image) {
+SudoFontMeta::SudoFontMeta(std::vector<char> data, std::vector<char> image)
+{
 	string headerReq = "\x0bSudoFont1.1";
-	vector<char> headerVec = readBytes(data, headerReq.length());
+	std::vector<char> headerVec = readBytes(data, headerReq.length());
 	string header(headerVec.data(), headerVec.size());
 	assert(header == headerReq);
 
@@ -47,7 +50,7 @@ SudoFontMeta::SudoFontMeta(vector<char> data, vector<char> image) {
 
 		auto sectionSize = readData<uint32_t>(data);
 
-		vector<char> sec = readBytes(data, sectionSize);
+		std::vector<char> sec = readBytes(data, sectionSize);
 
 		if (sectionID == ID_FONT_INFO) {
 			lineHeight = readData<uint16_t>(sec);
@@ -79,24 +82,25 @@ SudoFontMeta::SudoFontMeta(vector<char> data, vector<char> image) {
 
 	// Load the image itself
 	lodepng::decode(
-		pixel_data,
-		imgWidth, imgHeight,
-		(const uint8_t*)image.data(), image.size(),
-		LCT_RGBA, 8
-	);
+	    pixel_data,
+	    imgWidth, imgHeight,
+	    (const uint8_t*)image.data(), image.size(),
+	    LCT_RGBA, 8);
 
 	assert(origTexW == imgWidth);
 	assert(origTexH == imgHeight);
 }
 
-SudoFontMeta::~SudoFontMeta() {
+SudoFontMeta::~SudoFontMeta()
+{
 }
 
-void SudoFontMeta::Blit(wchar_t ch, int x, int y, int img_width, pix_t targetColour, pix_t *rawPixels, bool hpad) {
-	pix_t *pixels = (pix_t*)rawPixels;
-	const pix_t *font = (const pix_t*)pixel_data.data();
+void SudoFontMeta::Blit(wchar_t ch, int x, int y, int img_width, pix_t targetColour, pix_t* rawPixels, bool hpad)
+{
+	pix_t* pixels = (pix_t*)rawPixels;
+	const pix_t* font = (const pix_t*)pixel_data.data();
 
-	const CharInfo &info = chars.at(ch);
+	const CharInfo& info = chars.at(ch);
 
 	for (int ix = 0; ix < info.PackedWidth; ix++) {
 		for (int iy = 0; iy < info.PackedHeight; iy++) {
@@ -115,18 +119,20 @@ void SudoFontMeta::Blit(wchar_t ch, int x, int y, int img_width, pix_t targetCol
 
 			size_t idx = tx + ty * img_width;
 			assert(idx >= 0);
-			pix_t &out = pixels[idx];
+			pix_t& out = pixels[idx];
 			out = targetColour;
 		}
 	}
 }
 
-int SudoFontMeta::Width(wchar_t ch) {
-	const CharInfo &info = chars.at(ch);
+int SudoFontMeta::Width(wchar_t ch)
+{
+	const CharInfo& info = chars.at(ch);
 	return info.XAdvance;
 }
 
-int SudoFontMeta::Width(wstring str) {
+int SudoFontMeta::Width(wstring str)
+{
 	int width = 0;
 	for (wchar_t ch : str)
 		width += Width(ch);

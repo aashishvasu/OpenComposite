@@ -11,15 +11,19 @@
 template <typename Lambda>
 class ScopeGuard {
 public:
-	ScopeGuard(Lambda const& scopeExitLambda) : mScopeExitLambda(scopeExitLambda) {
+	ScopeGuard(Lambda const& scopeExitLambda)
+	    : mScopeExitLambda(scopeExitLambda)
+	{
 	}
 
-	~ScopeGuard() {
+	~ScopeGuard()
+	{
 		if (!mCommitted)
 			mScopeExitLambda();
 	}
 
-	void Dismiss() {
+	void Dismiss()
+	{
 		mCommitted = true;
 	}
 
@@ -29,6 +33,7 @@ private:
 };
 
 template <typename Lambda>
-ScopeGuard<Lambda> MakeScopeGuard(Lambda const& l) {
+ScopeGuard<Lambda> MakeScopeGuard(Lambda const& l)
+{
 	return ScopeGuard<Lambda>(l);
 };

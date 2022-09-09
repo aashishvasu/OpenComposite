@@ -1,0 +1,6 @@
+[submodule "libs/openxr-sdk"]
+	path = libs/openxr-sdk
+	url = https://github.com/KhronosGroup/OpenXR-SDK.git
+[submodule "libs/glm"]
+	path = libs/glm
+	url = https://github.com/g-truc/glm.git

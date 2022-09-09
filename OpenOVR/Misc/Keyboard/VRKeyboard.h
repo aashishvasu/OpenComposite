@@ -1,16 +1,18 @@
 #pragma once
-#include "OVR_CAPI.h"
 
+#ifndef OC_XR_PORT
 #include <d3d11.h>
+#endif
 
-#include <vector>
-#include <string>
-#include <memory>
 #include <codecvt>
 #include <functional>
+#include <locale>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "SudoFontMeta.h"
 #include "KeyboardLayout.h"
+#include "SudoFontMeta.h"
 
 class VRKeyboard {
 public:
@@ -24,13 +26,17 @@ public:
 		k_EGamepadTextInputModeSubmit = 2,
 	};
 
-	VRKeyboard(ID3D11Device *dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t dispatch, EGamepadTextInputMode inputMode);
+#ifndef OC_XR_PORT
+	VRKeyboard(ID3D11Device* dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t dispatch, EGamepadTextInputMode inputMode);
+#endif
 	~VRKeyboard();
 
 	std::wstring contents();
 	void contents(std::wstring);
 
-	ovrLayerHeader * Update();
+#ifndef OC_XR_PORT
+	ovrLayerHeader* Update();
+#endif
 
 	void HandleOverlayInput(vr::EVREye controllerDeviceIndex, vr::VRControllerState_t state, float time);
 
@@ -47,8 +53,10 @@ public:
 	void SetTransform(vr::HmdMatrix34_t transform);
 
 private:
-	ID3D11Device * const dev;
-	ID3D11DeviceContext *ctx;
+#ifndef OC_XR_PORT
+	ID3D11Device* const dev;
+	ID3D11DeviceContext* ctx;
+#endif
 
 	bool dirty = true;
 	bool closed = false;
@@ -62,9 +70,11 @@ private:
 	eventDispatch_t eventDispatch;
 	EGamepadTextInputMode inputMode;
 
+#ifndef OC_XR_PORT
 	ovrTextureSwapChain chain;
 	ovrTextureSwapChainDesc chainDesc;
 	ovrLayerQuad layer;
+#endif
 
 	std::unique_ptr<SudoFontMeta> font;
 	std::unique_ptr<KeyboardLayout> layout;

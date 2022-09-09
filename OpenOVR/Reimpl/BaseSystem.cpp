@@ -1,15 +1,14 @@
 #include "stdafx.h"
 #define BASE_IMPL
-#include "BaseSystem.h"
-#include "OVR_CAPI.h"
-#include "libovr_wrapper.h"
-#include "convert.h"
 #include "BaseCompositor.h"
+#include "BaseInput.h"
 #include "BaseOverlay.h"
-#include "Misc/Haptics.h"
-#include "Misc/Config.h"
-#include "static_bases.gen.h"
+#include "BaseSystem.h"
 #include "Drivers/Backend.h"
+#include "Misc/Config.h"
+#include "Misc/Haptics.h"
+#include "convert.h"
+#include "generated/static_bases.gen.h"
 
 #include <string>
 
@@ -20,72 +19,99 @@
 
 // Needed for GetOutputDevice if Vulkan is enabled
 #if defined(SUPPORT_VK)
+#include "../../DrvOpenXR/pub/DrvOpenXR.h"
+#ifndef OC_XR_PORT
 #include "OVR_CAPI_Vk.h"
 #endif
+#endif
 
-using namespace std;
+#include "Misc/xr_ext.h"
 
-BaseSystem::BaseSystem() {
-	// Set the default origin
-	_SetTrackingOrigin(origin);
+BaseSystem::BaseSystem()
+{
+	// The default origin is now set by the default value of currentSpace
 }
 
-void BaseSystem::GetRecommendedRenderTargetSize(uint32_t * width, uint32_t * height) {
+void BaseSystem::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
+{
 	BackendManager::Instance().GetPrimaryHMD()->GetRecommendedRenderTargetSize(width, height);
 }
 
-HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar) {
+HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar)
+{
 	return BackendManager::Instance().GetPrimaryHMD()->GetProjectionMatrix(eye, znear, zfar);
 }
 
-void BaseSystem::GetProjectionRaw(EVREye eye, float * pfLeft, float * pfRight, float * pfTop, float * pfBottom) {
+void BaseSystem::GetProjectionRaw(EVREye eye, float* pfLeft, float* pfRight, float* pfTop, float* pfBottom)
+{
 	return BackendManager::Instance().GetPrimaryHMD()->GetProjectionRaw(eye, pfLeft, pfRight, pfTop, pfBottom);
 }
 
-bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t * out) {
+bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t* out)
+{
 	return BackendManager::Instance().GetPrimaryHMD()->ComputeDistortion(eEye, fU, fV, out);
 }
 
-HmdMatrix34_t BaseSystem::GetEyeToHeadTransform(EVREye ovr_eye) {
+HmdMatrix34_t BaseSystem::GetEyeToHeadTransform(EVREye ovr_eye)
+{
 	return BackendManager::Instance().GetPrimaryHMD()->GetEyeToHeadTransform(ovr_eye);
 }
 
-bool BaseSystem::GetTimeSinceLastVsync(float * pfSecondsSinceLastVsync, uint64_t * pulFrameCounter) {
+bool BaseSystem::GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulFrameCounter)
+{
 	return BackendManager::Instance().GetPrimaryHMD()->GetTimeSinceLastVsync(pfSecondsSinceLastVsync, pulFrameCounter);
 }
 
-int32_t BaseSystem::GetD3D9AdapterIndex() {
+int32_t BaseSystem::GetD3D9AdapterIndex()
+{
 	STUBBED();
 }
 
-void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
+void BaseSystem::GetDXGIOutputInfo(int32_t* adapterIndex)
+{
 #ifdef SUPPORT_DX
-#define VALIDATE(x, msg) if (!(x)) { MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); exit(-1); }
 
-	LUID* luid = reinterpret_cast<LUID*>(ovr::luid);
+// TODO Turtle1331 use OOVR_ABORT from logging.h
+#ifdef WIN32
+#define VALIDATE(x, msg)                                                \
+	if (!(x)) {                                                         \
+		MessageBoxA(nullptr, (msg), "CVRSystem", MB_ICONERROR | MB_OK); \
+		exit(-1);                                                       \
+	}
+#else
+#define VALIDATE(x, msg) \
+	if (!(x)) {          \
+		exit(-42);       \
+	}
+#endif
 
-	//IDXGIFactory * DXGIFactory = nullptr;
-	//HRESULT hr = CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)(&DXGIFactory));
+	// See the comment on XrExt for why we have to use it
+	// FIXME dx12 support?
+	XrGraphicsRequirementsD3D11KHR graphicsRequirements = { XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR };
+	XrResult res = xr_ext->xrGetD3D11GraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements);
+	OOVR_FAILED_XR_ABORT(res);
+
 	IDXGIFactory* DXGIFactory = nullptr;
 	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&DXGIFactory));
 	VALIDATE((hr == ERROR_SUCCESS), "CreateDXGIFactory1 failed");
 
 	bool match = false;
-	IDXGIAdapter * Adapter = nullptr;
+	IDXGIAdapter* Adapter = nullptr;
 	for (UINT i = 0; DXGIFactory->EnumAdapters(i, &Adapter) != DXGI_ERROR_NOT_FOUND; ++i) {
 		DXGI_ADAPTER_DESC adapterDesc;
 		Adapter->GetDesc(&adapterDesc);
 
-		match = luid == nullptr || memcmp(&adapterDesc.AdapterLuid, luid, sizeof(LUID)) == 0;
+		match = memcmp(&adapterDesc.AdapterLuid, &graphicsRequirements.adapterLuid, sizeof(LUID)) == 0;
 
 		Adapter->Release();
 
 		if (match) {
 			*adapterIndex = i;
-			ovr::dxDeviceId = i;
 			break;
 		}
 	}
+
+	// TODO do something with graphicsRequirements.minFeatureLevel
 
 	DXGIFactory->Release();
 
@@ -98,60 +124,67 @@ void BaseSystem::GetDXGIOutputInfo(int32_t * adapterIndex) {
 #endif
 }
 
-void BaseSystem::GetOutputDevice(uint64_t * pnDevice, ETextureType textureType, VkInstance_T * pInstance) {
+void BaseSystem::GetOutputDevice(uint64_t* pnDevice, ETextureType textureType, VkInstance_T* pInstance)
+{
 
 	switch (textureType) {
 	case TextureType_Vulkan: {
 #if defined(SUPPORT_VK)
-		ovrResult res = ovr_GetSessionPhysicalDeviceVk(*ovr::session, *ovr::luid, pInstance, (VkPhysicalDevice*)pnDevice);
-		if (res) {
-			OOVR_ABORT("Cannot get Vulkan session physical device!");
-		}
+		VkPhysicalDevice physDev;
+		DrvOpenXR::VkGetPhysicalDevice(pInstance, &physDev);
+		*pnDevice = (uint64_t)physDev;
 #else
 		OOVR_ABORT("OpenComposite was compiled with Vulkan support disabled, and app attempted to use Vulkan!");
 #endif
+		break;
 	}
 	default:
 		OOVR_LOGF("Unsupported texture type for GetOutputDevice %d", textureType);
 	}
-
 }
 
-bool BaseSystem::IsDisplayOnDesktop() {
+bool BaseSystem::IsDisplayOnDesktop()
+{
 	return false; // Always in direct mode
 }
 
-bool BaseSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop) {
+bool BaseSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop)
+{
 	return false; // Always render in direct mode
 }
 
 void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigin, float predictedSecondsToPhotonsFromNow,
-	TrackedDevicePose_t * poseArray, uint32_t poseArrayCount) {
+    TrackedDevicePose_t* poseArray, uint32_t poseArrayCount)
+{
 
 	BackendManager::Instance().GetDeviceToAbsoluteTrackingPose(toOrigin, predictedSecondsToPhotonsFromNow, poseArray, poseArrayCount);
 }
 
-HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose() {
-	// TODO can we discover the player's seated height somehow?
-	// For now just add 0.5 meters
-	OVR::Matrix4f in;
-	in.Translation(OVR::Vector3f(0, 0.5, 0));
+HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
+{
+	glm::mat4 m;
+	XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, nullptr, 0, {} };
 
-	HmdMatrix34_t res;
-	O2S_om34(in, res);
-	return res;
+	OOVR_FAILED_XR_SOFT_ABORT(xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, xr_gbl->GetBestTime(), &location));
+
+	if ((location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) && (location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) {
+		m = glm::mat4(X2G_quat(location.pose.orientation));
+		m[3] = glm::vec4(X2G_v3f(location.pose.position), 1.0f);
+	}
+
+	return G2S_m34(m);
 }
 
-HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose() {
-	// These *are* the same coordinate systems
-	HmdMatrix34_t res;
-	O2S_om34(OVR::Matrix4f::Identity(), res);
-	return res;
+HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose()
+{
+	// These *are* the same coordinate systems? They were in LibOVR, let's assume they're the same here too
+	return G2S_m34(glm::mat4());
 }
 
 uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass targetClass,
-		vr::TrackedDeviceIndex_t *indexArray, uint32_t indexCount,
-		vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex) {
+    vr::TrackedDeviceIndex_t* indexArray, uint32_t indexCount,
+    vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex)
+{
 
 	uint32_t outCount = 0;
 
@@ -180,38 +213,42 @@ uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass ta
 	return outCount;
 }
 
-EDeviceActivityLevel BaseSystem::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId) {
+EDeviceActivityLevel BaseSystem::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId)
+{
 	// TODO implement
 	return k_EDeviceActivityLevel_UserInteraction;
 }
 
-void BaseSystem::ApplyTransform(TrackedDevicePose_t * pOutputPose, const TrackedDevicePose_t * pTrackedDevicePose, const HmdMatrix34_t * pTransform) {
-	STUBBED();
+void BaseSystem::ApplyTransform(TrackedDevicePose_t* pOutputPose, const TrackedDevicePose_t* pTrackedDevicePose, const HmdMatrix34_t* pTransform)
+{
+	OOVR_SOFT_ABORT("ApplyTransform is not implemented! This will probably break things if they're using it!");
 }
 
-vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType) {
+vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType)
+{
 	if (unDeviceType == TrackedControllerRole_LeftHand) {
 		return leftHandIndex;
-	}
-	else if (unDeviceType == TrackedControllerRole_RightHand) {
+	} else if (unDeviceType == TrackedControllerRole_RightHand) {
 		return rightHandIndex;
 	}
-	STUBBED();
+
+	// This is what SteamVR does for unknown devices
+	return -1;
 }
 
-vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex) {
+vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex)
+{
 	if (unDeviceIndex == leftHandIndex) {
 		return TrackedControllerRole_LeftHand;
-	}
-	else if (unDeviceIndex == rightHandIndex) {
+	} else if (unDeviceIndex == rightHandIndex) {
 		return TrackedControllerRole_RightHand;
-	}
-	else {
+	} else {
 		return TrackedControllerRole_Invalid;
 	}
 }
 
-ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex) {
+ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex)
+{
 	if (!IsTrackedDeviceConnected(deviceIndex))
 		return TrackedDeviceClass_Invalid;
 
@@ -227,12 +264,14 @@ ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t d
 	return TrackedDeviceClass_Invalid;
 }
 
-bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex) {
+bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
+{
 	return BackendManager::Instance().GetDevice(deviceIndex) != nullptr;
 }
 
-bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		*pErrorL = TrackedProp_InvalidDevice;
@@ -242,8 +281,9 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 	return dev->GetBoolTrackedDeviceProperty(prop, pErrorL);
 }
 
-float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		*pErrorL = TrackedProp_InvalidDevice;
@@ -253,8 +293,9 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 	return dev->GetFloatTrackedDeviceProperty(prop, pErrorL);
 }
 
-int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		*pErrorL = TrackedProp_InvalidDevice;
@@ -264,8 +305,9 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 	return dev->GetInt32TrackedDeviceProperty(prop, pErrorL);
 }
 
-uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		*pErrorL = TrackedProp_InvalidDevice;
@@ -275,8 +317,9 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 	return dev->GetUint64TrackedDeviceProperty(prop, pErrorL);
 }
 
-HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError * pErrorL) {
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		*pErrorL = TrackedProp_InvalidDevice;
@@ -286,8 +329,9 @@ HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceInde
 	return dev->GetMatrix34TrackedDeviceProperty(prop, pErrorL);
 }
 
-uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void * pBuffer, uint32_t unBufferSize, ETrackedPropertyError * pError) {
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, ETrackedPropertyError* pError)
+{
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		*pError = TrackedProp_InvalidDevice;
@@ -298,12 +342,13 @@ uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDe
 }
 
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
-	VR_OUT_STRING() char * value, uint32_t bufferSize, ETrackedPropertyError * pErrorL) {
+    VR_OUT_STRING() char* value, uint32_t bufferSize, ETrackedPropertyError* pErrorL)
+{
 
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		if(pErrorL)
+		if (pErrorL)
 			*pErrorL = TrackedProp_InvalidDevice;
 		return 0;
 	}
@@ -311,27 +356,65 @@ uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 	return dev->GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
 
-const char * BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error) {
-	STUBBED();
+const char* BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error)
+{
+#define ERR_CASE(err) \
+	case err:         \
+		return #err
+
+	switch (error) {
+		ERR_CASE(TrackedProp_Success);
+		ERR_CASE(TrackedProp_WrongDataType);
+		ERR_CASE(TrackedProp_WrongDeviceClass);
+		ERR_CASE(TrackedProp_BufferTooSmall);
+		ERR_CASE(TrackedProp_UnknownProperty);
+		ERR_CASE(TrackedProp_InvalidDevice);
+		ERR_CASE(TrackedProp_CouldNotContactServer);
+		ERR_CASE(TrackedProp_ValueNotProvidedByDevice);
+		ERR_CASE(TrackedProp_StringExceedsMaximumLength);
+		ERR_CASE(TrackedProp_NotYetAvailable);
+		ERR_CASE(TrackedProp_PermissionDenied);
+		ERR_CASE(TrackedProp_InvalidOperation);
+		ERR_CASE(TrackedProp_CannotWriteToWildcards);
+		ERR_CASE(TrackedProp_IPCReadFailure);
+		ERR_CASE(TrackedProp_OutOfMemory);
+		ERR_CASE(TrackedProp_InvalidContainer);
+
+	default: {
+		// Doesn't work across threads, but in practice shouldn't be an issue.
+		static char uknBuf[32];
+		memset(uknBuf, 0, sizeof(uknBuf));
+		snprintf(uknBuf, sizeof(uknBuf) - 1, "Unknown property error (%d)", (int)error);
+		return uknBuf;
+	}
+	}
+
+#undef ERR_CASE
 }
 
-bool BaseSystem::IsInputAvailable() {
-	return lastStatus.HasInputFocus;
+bool BaseSystem::IsInputAvailable()
+{
+	return BackendManager::Instance().IsInputAvailable();
 }
 
-bool BaseSystem::IsSteamVRDrawingControllers() {
-	return !lastStatus.HasInputFocus;
+bool BaseSystem::IsSteamVRDrawingControllers()
+{
+	return !IsInputAvailable();
 }
 
-bool BaseSystem::ShouldApplicationPause() {
-	return !lastStatus.HasInputFocus;
+bool BaseSystem::ShouldApplicationPause()
+{
+	return !IsInputAvailable();
 }
 
-bool BaseSystem::ShouldApplicationReduceRenderingWork() {
-	return lastStatus.OverlayPresent;
+bool BaseSystem::ShouldApplicationReduceRenderingWork()
+{
+	return !IsInputAvailable();
 }
 
-void BaseSystem::_OnPostFrame() {
+void BaseSystem::_OnPostFrame()
+{
+#ifndef OC_XR_PORT
 	ovrSessionStatus status;
 	ovr_GetSessionStatus(*ovr::session, &status);
 
@@ -349,10 +432,14 @@ void BaseSystem::_OnPostFrame() {
 
 		events.push(e);
 	}
+#endif
 
+#ifndef OC_XR_PORT
 	CheckControllerEvents(leftHandIndex, lastLeftHandState);
 	CheckControllerEvents(rightHandIndex, lastRightHandState);
+#endif
 
+#ifndef OC_XR_PORT
 	// Not exactly an event, but this is a convenient place to put it
 	// TODO move all the event handling out and run it per frame, and queue up events
 	// Also note this is done after all other events, as it doesn't set ShouldRecenter
@@ -366,25 +453,55 @@ void BaseSystem::_OnPostFrame() {
 	// Note this isn't called if handle_event is called, preventing one
 	//  event from firing despite another event also being changed in the same poll call
 	lastStatus = status;
+#endif
+
+	frameNumber++;
+
+	// Note: OpenXR event handling is now in XrBackend
+
+	// Create the input system, if the game hasn't already done so
+	// See the comment in GetControllerState for the rationale here
+	if (!inputSystem) {
+		inputSystem = GetBaseInput();
+
+		if (!inputSystem) {
+			inputSystem = GetCreateBaseInput();
+
+			// We used to load an empty manifest here. Instead, we now wait until games first read the legacy
+			// inputs. This way games that wait until several frames in to load their manifest will still work.
+		}
+	}
+
+	if (inputSystem) {
+		inputSystem->InternalUpdate();
+	}
 }
 
-void BaseSystem::_EnqueueEvent(const VREvent_t &e) {
+void BaseSystem::_EnqueueEvent(const VREvent_t& e)
+{
 	events.push(e);
 }
 
-void BaseSystem::_BlockInputsUntilReleased() {
+void BaseSystem::_BlockInputsUntilReleased()
+{
 	blockingInputsUntilRelease[0] = true;
 	blockingInputsUntilRelease[1] = true;
 }
 
-float BaseSystem::SGetIpd() {
-	ovrPosef &left = ovr::hmdToEyeViewPose[ovrEye_Left];
-	ovrPosef &right = ovr::hmdToEyeViewPose[ovrEye_Right];
-
-	return abs(left.Position.x - right.Position.x);
+float BaseSystem::SGetIpd()
+{
+	IHMD* dev = BackendManager::Instance().GetPrimaryHMD();
+	float ipd = dev->GetIPD();
+	static float lastIpd = NAN;
+	if (ipd != lastIpd) {
+		lastIpd = ipd;
+		OOVR_LOGF("IPD: %f", ipd);
+	}
+	return ipd;
 }
 
-void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerState_t &last) {
+void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerState_t& last)
+{
 	VRControllerState_t state;
 	GetControllerState(hand, &state, sizeof(state));
 
@@ -396,15 +513,15 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 		return;
 	}
 
-	VREvent_t ev_base;
+	VREvent_t ev_base{};
 	ev_base.trackedDeviceIndex = hand;
 	ev_base.eventAgeSeconds = 0; // TODO
 	ev_base.data.controller = { 0 };
 
 	TrackedDevicePose_t pose = { 0 };
-	BaseCompositor *compositor = GetUnsafeBaseCompositor();
+	BaseCompositor* compositor = GetUnsafeBaseCompositor();
 	if (compositor) {
-		compositor->GetSinglePoseRendering(origin, hand, &pose);
+		compositor->GetSinglePoseRendering(compositor->GetTrackingSpace(), hand, &pose);
 	}
 
 	// Check each possible button, and fire an event if it changed
@@ -437,11 +554,13 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 	last = state;
 }
 
-bool BaseSystem::PollNextEvent(VREvent_t * pEvent, uint32_t uncbVREvent) {
+bool BaseSystem::PollNextEvent(VREvent_t* pEvent, uint32_t uncbVREvent)
+{
 	return PollNextEventWithPose(TrackingUniverseStanding, pEvent, uncbVREvent, NULL);
 }
 
-bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t * pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t * pTrackedDevicePose) {
+bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t* pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t* pTrackedDevicePose)
+{
 	memset(pEvent, 0, uncbVREvent);
 
 	if (events.empty()) {
@@ -452,7 +571,7 @@ bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_
 	VREvent_t e = info.ev;
 	events.pop();
 
-	memcpy(pEvent, &e, min(uncbVREvent, sizeof(e)));
+	memcpy(pEvent, &e, std::min((size_t)uncbVREvent, sizeof(e)));
 
 	if (pTrackedDevicePose) {
 		*pTrackedDevicePose = info.pose;
@@ -461,28 +580,52 @@ bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_
 	return true;
 }
 
-const char * BaseSystem::GetEventTypeNameFromEnum(EVREventType eType) {
+const char* BaseSystem::GetEventTypeNameFromEnum(EVREventType eType)
+{
 	STUBBED();
 }
 
-HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type) {
+HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type)
+{
 	return BackendManager::Instance().GetPrimaryHMD()->GetHiddenAreaMesh(eEye, type);
 }
 
-bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t * controllerState, uint32_t controllerStateSize) {
+bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* controllerState, uint32_t controllerStateSize)
+{
 	if (sizeof(VRControllerState_t) != controllerStateSize)
 		OOVR_ABORT("Bad controller state size - was the host compiled with an older version of OpenVR?");
 
 	memset(controllerState, 0, controllerStateSize);
 
-	ITrackedDevice *dev = BackendManager::Instance().GetDevice(controllerDeviceIndex);
+#ifdef OC_XR_PORT
+	if (!inputSystem) {
+		inputSystem = GetBaseInput();
+	}
 
-	if(!dev)
+	// Since we can only bind the manifest once, and some games may never call it or may
+	//  try reading the controller state first, wait until the first frame has been submitted (returning
+	//  blank controller states until then) AND the game tries reading the controller state.
+	// This will work for both games that call this function before loading their manifest (do they really
+	//  exist? The comments mentioned that but it seems unlikely one ever actually did, and this bit may
+	//  be unnecessary.) and for games that load their manifest late (Jet Island does as of 29/05/2022).
+	// This won't work for games that need hand positions but don't use either legacy or new input, but
+	//  it seems unlikely any shipping game falls into that category.
+	if (!inputSystem) {
+		return true;
+	}
+	if (frameNumber > 0)
+		inputSystem->LoadEmptyManifestIfRequired();
+
+	return inputSystem->GetLegacyControllerState(controllerDeviceIndex, controllerState);
+#else
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(controllerDeviceIndex);
+
+	if (!dev)
 		return false;
 
 	bool state = dev->GetControllerState(controllerState);
 
-	if(!state)
+	if (!state)
 		return false;
 
 	// TODO do this properly
@@ -493,8 +636,7 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 	ovrHandType id = ovrHand_Count;
 	if (controllerDeviceIndex == leftHandIndex) {
 		id = ovrHand_Left;
-	}
-	else if (controllerDeviceIndex == rightHandIndex) {
+	} else if (controllerDeviceIndex == rightHandIndex) {
 		id = ovrHand_Right;
 	}
 
@@ -507,7 +649,7 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 	}
 
 	//  Send the data to the overlays
-	BaseOverlay *overlay = GetUnsafeBaseOverlay();
+	BaseOverlay* overlay = GetUnsafeBaseOverlay();
 	if (overlay) {
 		EVREye side = id == ovrHand_Left ? Eye_Left : Eye_Right;
 		bool passToApp = overlay->_HandleOverlayInput(side, controllerDeviceIndex, *controllerState);
@@ -526,162 +668,185 @@ blockInput:
 	memset(controllerState, 0, controllerStateSize);
 	controllerState->unPacketNum = packetNum;
 	return true;
+#endif
 }
 
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
-	vr::VRControllerState_t * pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t * pTrackedDevicePose) {
+    vr::VRControllerState_t* pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t* pTrackedDevicePose)
+{
 
 	BackendManager::Instance().GetSinglePose(eOrigin, unControllerDeviceIndex, pTrackedDevicePose, ETrackingStateType::TrackingStateType_Now);
 
 	return GetControllerState(unControllerDeviceIndex, pControllerState, unControllerStateSize);
 }
 
-void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec) {
+void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec)
+{
 	if (!oovr_global_configuration.Haptics())
 		return;
 
 	if (unControllerDeviceIndex == leftHandIndex || unControllerDeviceIndex == rightHandIndex) {
-		static Haptics haptics;
 
-		haptics.StartSimplePulse(unControllerDeviceIndex == leftHandIndex ? ovrControllerType_LTouch : ovrControllerType_RTouch, usDurationMicroSec);
+		// Similar to GetControllerState, wait until the input system is ready
+		if (!inputSystem) {
+			return;
+		}
 
-		return;
+		inputSystem->TriggerLegacyHapticPulse(unControllerDeviceIndex, (uint64_t)usDurationMicroSec * 1000);
+	}
+	// if index is invalid, nothing to do
+	return;
+}
+
+const char* BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId)
+{
+#define BTN_CASE(err) \
+	case err:         \
+		return #err
+
+	switch (eButtonId) {
+		BTN_CASE(k_EButton_System);
+		BTN_CASE(k_EButton_ApplicationMenu);
+		BTN_CASE(k_EButton_Grip);
+		BTN_CASE(k_EButton_DPad_Left);
+		BTN_CASE(k_EButton_DPad_Up);
+		BTN_CASE(k_EButton_DPad_Right);
+		BTN_CASE(k_EButton_DPad_Down);
+		BTN_CASE(k_EButton_A);
+		BTN_CASE(k_EButton_ProximitySensor);
+		BTN_CASE(k_EButton_Axis0);
+		BTN_CASE(k_EButton_Axis1);
+		BTN_CASE(k_EButton_Axis2);
+		BTN_CASE(k_EButton_Axis3);
+		BTN_CASE(k_EButton_Axis4);
+
+	default: {
+		// Doesn't work across threads, but in practice shouldn't be an issue.
+		static char uknBuf[32];
+		memset(uknBuf, 0, sizeof(uknBuf));
+		snprintf(uknBuf, sizeof(uknBuf) - 1, "Unknown EVRButtonId (%d)", (int)eButtonId);
+		return uknBuf;
+	}
 	}
 
-	// Invalid controller
+#undef BTN_CASE
+}
+
+const char* BaseSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType)
+{
+#define AXIS_CASE(err) \
+	case err:          \
+		return #err
+
+	switch (eAxisType) {
+		AXIS_CASE(k_eControllerAxis_None);
+		AXIS_CASE(k_eControllerAxis_TrackPad);
+		AXIS_CASE(k_eControllerAxis_Joystick);
+		AXIS_CASE(k_eControllerAxis_Trigger);
+	default: {
+		// Doesn't work across threads, but in practice shouldn't be an issue.
+		static char uknBuf[48];
+		memset(uknBuf, 0, sizeof(uknBuf));
+		snprintf(uknBuf, sizeof(uknBuf) - 1, "Unknown EVRControllerAxisType (%d)", (int)eAxisType);
+		return uknBuf;
+	}
+	}
+
+#undef AXIS_CASE
+}
+
+bool BaseSystem::CaptureInputFocus()
+{
 	STUBBED();
 }
 
-const char * BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId) {
+void BaseSystem::ReleaseInputFocus()
+{
 	STUBBED();
 }
 
-const char * BaseSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType) {
+bool BaseSystem::IsInputFocusCapturedByAnotherProcess()
+{
+	return !IsInputAvailable();
+}
+
+uint32_t BaseSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize)
+{
 	STUBBED();
 }
 
-bool BaseSystem::CaptureInputFocus() {
+vr::EVRFirmwareError BaseSystem::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t unDeviceIndex)
+{
 	STUBBED();
 }
 
-void BaseSystem::ReleaseInputFocus() {
+void BaseSystem::AcknowledgeQuit_Exiting()
+{
 	STUBBED();
 }
 
-bool BaseSystem::IsInputFocusCapturedByAnotherProcess() {
-	return !lastStatus.HasInputFocus;
-}
-
-uint32_t BaseSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize) {
+void BaseSystem::AcknowledgeQuit_UserPrompt()
+{
 	STUBBED();
 }
 
-vr::EVRFirmwareError BaseSystem::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t unDeviceIndex) {
+uint32_t BaseSystem::GetAppContainerFilePaths(VR_OUT_STRING() char* pchBuffer, uint32_t unBufferSize)
+{
 	STUBBED();
 }
 
-void BaseSystem::AcknowledgeQuit_Exiting() {
-	STUBBED();
+const char* BaseSystem::GetRuntimeVersion()
+{
+	return "1.16.8";
 }
 
-void BaseSystem::AcknowledgeQuit_UserPrompt() {
-	STUBBED();
-}
-
-uint32_t BaseSystem::GetAppContainerFilePaths(VR_OUT_STRING() char *pchBuffer, uint32_t unBufferSize) {
-	STUBBED();
-}
-
-const char *BaseSystem::GetRuntimeVersion() {
-	STUBBED();
-}
-
-DistortionCoordinates_t BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV) {
+DistortionCoordinates_t BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV)
+{
 	DistortionCoordinates_t out;
 	ComputeDistortion(eEye, fU, fV, &out);
 	return out;
 }
 
-HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar, EGraphicsAPIConvention convention) {
+HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar, EGraphicsAPIConvention convention)
+{
 	return BackendManager::Instance().GetPrimaryHMD()->GetProjectionMatrix(eye, znear, zfar, convention);
 }
 
-void BaseSystem::PerformanceTestEnableCapture(bool bEnable) {
+void BaseSystem::PerformanceTestEnableCapture(bool bEnable)
+{
 	STUBBED();
 }
 
-void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel) {
+void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel)
+{
 	STUBBED();
 }
 
 // Tracking origin stuff
-void BaseSystem::_SetTrackingOrigin(ETrackingUniverseOrigin eOrigin) {
-	origin = eOrigin;
+void BaseSystem::ResetSeatedZeroPose()
+{
+	if (BackendManager::Instance().IsGraphicsConfigured()) {
+		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
+		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity, 0, {} };
 
-	ovrTrackingOrigin ovrOrigin = ovrTrackingOrigin_FloorLevel;
-	if (eOrigin == TrackingUniverseSeated) {
-		ovrOrigin = ovrTrackingOrigin_EyeLevel;
+		OOVR_FAILED_XR_SOFT_ABORT(xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, xr_gbl->GetBestTime(), &location));
+
+		if ((location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) && (location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) {
+			static XrReferenceSpaceCreateInfo spaceInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr, XR_REFERENCE_SPACE_TYPE_LOCAL, { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } } };
+			XrVector3f rotatedPos;
+			auto rot = yRotation(location.pose.orientation, spaceInfo.poseInReferenceSpace.orientation);
+			rotate_vector_by_quaternion(location.pose.position, rot, rotatedPos);
+			spaceInfo.poseInReferenceSpace.position.x += rotatedPos.x;
+			spaceInfo.poseInReferenceSpace.position.y += rotatedPos.y;
+			spaceInfo.poseInReferenceSpace.position.z += rotatedPos.z;
+
+			spaceInfo.poseInReferenceSpace.orientation.y = rot.y;
+			spaceInfo.poseInReferenceSpace.orientation.w = rot.w;
+
+			spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+			auto oldSpace = xr_gbl->seatedSpace;
+			OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &xr_gbl->seatedSpace));
+			xrDestroySpace(oldSpace);
+		}
 	}
-
-	// When in dual-origin mode, always use the floor level as a base
-	if (usingDualOriginMode) {
-		ovrOrigin = ovrTrackingOrigin_FloorLevel;
-	}
-
-	OOVR_FAILED_OVR_ABORT(ovr_SetTrackingOriginType(*ovr::session, ovrOrigin));
-}
-
-ETrackingUniverseOrigin BaseSystem::_GetTrackingOrigin() {
-	return origin;
-}
-
-HmdMatrix34_t BaseSystem::_PoseToTrackingSpace(ETrackingUniverseOrigin toOrigin, ovrPosef pose) {
-	// Standard path, most games only use the origin they have selected
-	if (toOrigin == origin && !usingDualOriginMode) {
-		goto result;
-	}
-
-	if (!usingDualOriginMode) {
-		// TODO if usingDualOriginMode is false, then do the initial stuff
-		// otherwise the head position will jump around the first time this is used
-
-		// Enable the dual origin mode
-		usingDualOriginMode = true;
-
-		// Reset the origin, so LibOVR is now working relative to the floor
-		_SetTrackingOrigin(origin);
-
-		// Use the current height as the zero for the seated height
-		_ResetFakeSeatedHeight();
-	}
-
-	if (toOrigin == TrackingUniverseSeated) {
-		pose.Position.y -= fakeOriginHeight;
-	}
-
-result:
-	OVR::Posef thePose(pose);
-	OVR::Matrix4f hmdTransform(thePose);
-
-	HmdMatrix34_t result;
-	O2S_om34(hmdTransform, result);
-	return result;
-}
-
-ETrackingUniverseOrigin BaseSystem::_GetRenderTrackingOrigin() {
-	return usingDualOriginMode ? TrackingUniverseStanding : origin;
-}
-
-void BaseSystem::_ResetFakeSeatedHeight() {
-	ovrTrackingState state = ovr_GetTrackingState(*ovr::session, ovr_GetTimeInSeconds(), false);
-
-	fakeOriginHeight = state.HeadPose.ThePose.Position.y;
-}
-
-void BaseSystem::ResetSeatedZeroPose() {
-	// TODO should this only work when seated or whatever?
-	ovr_RecenterTrackingOrigin(*ovr::session);
-
-	if (usingDualOriginMode)
-		_ResetFakeSeatedHeight();
 }

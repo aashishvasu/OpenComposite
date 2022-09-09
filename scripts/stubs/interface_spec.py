@@ -3,13 +3,17 @@ import re
 import libparse
 import stubs.interface
 
+# Regex for matching GEN_INTERFACE macro
 geniface = re.compile("GEN_INTERFACE\(\"(?P<interface>\w+)\",\s*\"(?P<version>\d{3})\"(?:\s*,\s*(?P<flags>.*))?\s*\)")
+
+# Regex for matching BASE_FLAG macro
 baseflag = re.compile("BASE_FLAG\(\s*(?P<flag>[^=\s]*)\s*(=\s*(?P<value>[^=]*))?\s*\)")
+
 impldef = re.compile(r"^\w[\w\d\s:]*\s+[\*&]*\s*(?P<cls>[\w\d_]+)::(?P<name>[\w\d_]+)\s*\(.*\)")
 
 
 class InterfaceSpec:
-    def __init__(self, interfaces_dir, name):
+    def __init__(self, input_dir, headers_dir, output_dir, name):
         self.name = name
         self.versions = []
         self.manual_functions = dict()
@@ -19,7 +23,13 @@ class InterfaceSpec:
         # know what functions have been manually implemented.
         version_matches = []
 
-        with open(interfaces_dir / f"CVR{name}.cpp") as fi:
+        # Likely a better way to go about setting this...
+        # Takes advantage of the fact that InterfaceSpec is called before InterfaceDef
+        # (called from stubs.py)
+        stubs.interface.InterfaceDef.INTERFACES_DIR = output_dir
+        stubs.interface.InterfaceDef.HEADERS_DIR = headers_dir
+
+        with open(input_dir / f"CVR{name}.cpp") as fi:
             for line in libparse.nice_lines(fi):
 
                 match = geniface.match(line)

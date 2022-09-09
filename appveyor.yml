@@ -1,37 +1,37 @@
 version: 1.0.{build}
-image: Visual Studio 2017
+image: Visual Studio 2022
 configuration: Release
 platform:
   - Win32
   - x64
 install:
-  - ps: appveyor DownloadFile https://znix.xyz/random/ovr_sdk_win_1.26.0_public_nosamples.7z
+  - cmd: >-
+      git submodule update --init --recursive
   - ps: appveyor DownloadFile https://znix.xyz/random/vulkan-1.1.85.0-minisdk.7z
-  - ps: 7z x -olibs/libovr ovr_sdk_win_1.26.0_public_nosamples.7z
   - ps: 7z x -olibs vulkan-1.1.85.0-minisdk.7z
-  - ps: ./configure.cmd
 before_build:
-  - ps: nuget restore RuntimeSwitcher/packages.config -PackagesDirectory packages
+  - ps: nuget restore RuntimeSwitcher/RuntimeSwitcher.csproj -PackagesDirectory packages
   - ps: >-
       mkdir build;
       cd build
 
-      If ($env:Platform -Match "x64") {
-        cmake .. -G "Visual Studio 15 2017 Win64"
-      } Else {
-        cmake .. -G "Visual Studio 15 2017"
-      }
+      cmake .. -A $env:Platform
 
       cd ..
 build:
   project: build/OpenComposite.sln
   verbosity: minimal
 on_success:
-- ps: >-
-    Push-AppveyorArtifact "build/$env:Configuration/OCOVR.dll" -FileName "$env:Platform/openvr_api.dll"
+  - ps: >-
+      if ($env:PLATFORM -eq "x64") {
+        Push-AppveyorArtifact "build/bin/$env:Configuration/vrclient_x64.dll" -FileName "$env:Platform/openvr_api.dll"
+      }
+      else {
+        Push-AppveyorArtifact "build/bin/$env:Configuration/vrclient.dll" -FileName "$env:Platform/openvr_api.dll"
+      }
 
-    7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
+      7z a OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration"
 
-    7z rn OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration" "OpenComposite"
+      7z rn OpenComposite.zip "RuntimeSwitcher/bin/$env:Configuration" "OpenComposite"
 
-    Push-AppveyorArtifact "OpenComposite.zip"
+      Push-AppveyorArtifact "OpenComposite.zip"

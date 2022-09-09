@@ -76,7 +76,7 @@ namespace RuntimeSwitcher
             }
             else if (runtime == ocRuntimePath)
             {
-                statusLabel.Text = "OpenComposite";
+                statusLabel.Text = "OpenComposite (OpenXR)";
                 useOpenComposite.Enabled = false;
             }
             else
@@ -158,7 +158,7 @@ namespace RuntimeSwitcher
             {
                 downloads = true;
                 statusLabel.Text = "Downloading 32-bit DLL";
-                await DownloadFile(vrclient, "https://znix.xyz/OpenComposite/download.php?arch=x86");
+                await DownloadFile(vrclient, "https://znix.xyz/OpenComposite/download.php?arch=x86&branch=openxr");
             }
 
             string vrclient_x64 = ocBinPath + Path.DirectorySeparatorChar + "vrclient_x64.dll";
@@ -166,10 +166,11 @@ namespace RuntimeSwitcher
             {
                 downloads = true;
                 statusLabel.Text = "Downloading 64-bit DLL";
-                await DownloadFile(vrclient_x64, "https://znix.xyz/OpenComposite/download.php?arch=x64");
+                await DownloadFile(vrclient_x64, "https://znix.xyz/OpenComposite/download.php?arch=x64&branch=openxr");
             }
 
-            File.WriteAllText(revisionFilePath, await UpdateChecker.GetLatestHash());
+            if(downloads)
+                File.WriteAllText(revisionFilePath, await UpdateChecker.GetLatestHash());
 
             dllDownloadMutex.Release();
 

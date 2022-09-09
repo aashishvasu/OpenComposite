@@ -1,23 +1,25 @@
 #include "stdafx.h"
+
 #include "KeyboardLayout.h"
 #include "VRKeyboard.h"
 
 #include <algorithm>
 #include <cwctype>
 
-using namespace std;
-
-static void wstrim(wstring &s) {
+static void wstrim(wstring& s)
+{
 	s.erase(s.begin(), find_if(s.begin(), s.end(), [](wchar_t ch) {
 		return !std::iswspace(ch);
 	}));
 
 	s.erase(std::find_if(s.rbegin(), s.rend(), [](wchar_t ch) {
 		return !std::iswspace(ch);
-	}).base(), s.end());
+	}).base(),
+	    s.end());
 }
 
-static wstring pullstring(wstring &in) {
+static wstring pullstring(wstring& in)
+{
 	size_t wordlen = 0;
 
 	while (wordlen < in.length() && !std::iswspace(in[wordlen])) {
@@ -37,7 +39,8 @@ static wstring pullstring(wstring &in) {
 	return word;
 }
 
-static wchar_t escapeChar(const wstring &str) {
+static wchar_t escapeChar(const wstring& str)
+{
 	if (str[0] != '\\')
 		return str[0];
 
@@ -68,16 +71,17 @@ static wchar_t escapeChar(const wstring &str) {
 	OOVR_ABORT(msg.c_str());
 }
 
-KeyboardLayout::KeyboardLayout(std::vector<char> data) {
+KeyboardLayout::KeyboardLayout(std::vector<char> data)
+{
 	wstring contents = VRKeyboard::CHAR_CONV.from_bytes(string(data.data(), data.size()));
 
-	Key *last = nullptr;
+	Key* last = nullptr;
 
 	auto addKey = [&](wchar_t ch, wchar_t shift, float x, float y) -> Key& {
 		int id = (int)keys.size();
 
 		keys.push_back(Key());
-		Key &key = keys.back();
+		Key& key = keys.back();
 		last = &key;
 
 		key = { 0 };
@@ -179,7 +183,7 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data) {
 		if (wx.empty()) {
 			addNextKey(ch, shift);
 		} else {
-			Key &key = addKey(ch, shift, std::stof(wx), std::stof(wy));
+			Key& key = addKey(ch, shift, std::stof(wx), std::stof(wy));
 
 			wstring ww = pullstring(line);
 			wstring wh = pullstring(line);
@@ -200,11 +204,11 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data) {
 		OOVR_ABORT("Missing keyboard layout width specifier");
 
 	// Calculate the adjacent keys
-	for (Key &key : keys) {
+	for (Key& key : keys) {
 		int ids[4] = { -1, -1, -1, -1 };
 		float distances[4] = { 1000, 1000, 1000, 1000 };
 		// Find the nearest keys in each direction
-		for (Key &to : keys) {
+		for (Key& to : keys) {
 			if (&key == &to)
 				continue;
 
@@ -239,5 +243,6 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data) {
 	}
 }
 
-KeyboardLayout::~KeyboardLayout() {
+KeyboardLayout::~KeyboardLayout()
+{
 }

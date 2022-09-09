@@ -1,12 +1,12 @@
 #pragma once
-#include <OVR_CAPI.h>
+#include <openxr/openxr.h>
 
 class Haptics {
 public:
 	Haptics();
 	~Haptics();
 
-	void StartSimplePulse(ovrControllerType ctrl, unsigned int durationMicroseconds);
+	void StartSimplePulse(XrAction action, unsigned int durationMicroseconds);
 
 private:
 	bool leftRunning, rightRunning;

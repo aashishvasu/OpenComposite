@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "debug_helper.h"
 
 #if defined(_DEBUG)
@@ -6,20 +7,22 @@
 //******************************************************************************
 static const int MaxNameLen = 256;
 
-#include <Windows.h>
 #include "dbghelp.h"
+#include <Windows.h>
 #include <sstream>
-#pragma comment(lib,"Dbghelp.lib")
+#pragma comment(lib, "Dbghelp.lib")
 
 static HMODULE globalhModule;
-void DbgSetModule(HMODULE hModule) {
+void DbgSetModule(HMODULE hModule)
+{
 	globalhModule = hModule;
 	::SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_INCLUDE_32BIT_MODULES | SYMOPT_UNDNAME | SYMOPT_LOAD_LINES);
-	//if (!::SymInitialize(::GetCurrentProcess(), "http://msdl.microsoft.com/download/symbols", TRUE)) return false;
+	// if (!::SymInitialize(::GetCurrentProcess(), "http://msdl.microsoft.com/download/symbols", TRUE)) return false;
 	::SymInitialize(hModule, NULL, TRUE);
 }
 
-void GetStackWalk() {
+void GetStackWalk()
+{
 	std::string outWalk;
 
 	// Set up the symbol options so that we can gather information from the current
@@ -30,8 +33,8 @@ void GetStackWalk() {
 	if (!inited) {
 		// See DLLMain
 		//::SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_INCLUDE_32BIT_MODULES | SYMOPT_UNDNAME | SYMOPT_LOAD_LINES);
-		//if (!::SymInitialize(::GetCurrentProcess(), "http://msdl.microsoft.com/download/symbols", TRUE)) return false;
-		//if (!::SymInitialize(::GetCurrentProcess(), NULL, TRUE)) return;
+		// if (!::SymInitialize(::GetCurrentProcess(), "http://msdl.microsoft.com/download/symbols", TRUE)) return false;
+		// if (!::SymInitialize(::GetCurrentProcess(), NULL, TRUE)) return;
 		inited = true;
 	}
 
@@ -48,10 +51,10 @@ void GetStackWalk() {
 #else
 		DWORD dis = 0;
 #endif
-		IMAGEHLP_SYMBOL *pSym = NULL;
+		IMAGEHLP_SYMBOL* pSym = NULL;
 		BOOL res;
 
-		pSym = (IMAGEHLP_SYMBOL *)buffer;
+		pSym = (IMAGEHLP_SYMBOL*)buffer;
 		pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
 		pSym->MaxNameLength = MAX_PATH;
 
@@ -70,7 +73,7 @@ void GetStackWalk() {
 	//::SymCleanup(::GetCurrentProcess());
 
 	OOVR_LOG(outWalk.c_str());
-	MessageBoxA(NULL, outWalk.c_str(), "OOVR Stack Trace", MB_OK);
+	OOVR_MESSAGE(outWalk.c_str(), "OOVR Stack Trace");
 }
 
 //******************************************************************************

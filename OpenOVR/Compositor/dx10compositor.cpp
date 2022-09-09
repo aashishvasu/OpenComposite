@@ -1,14 +1,16 @@
 #include "stdafx.h"
-#include "compositor.h"
+
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX10) && defined(SUPPORT_DX11)
+
+#include "dx10compositor.h"
 
 #pragma warning(push)
-#pragma warning(disable : 4838)   // int to UINT truncation.
+#pragma warning(disable : 4838) // int to UINT truncation.
 #include <atlbase.h>
 #pragma warning(pop)
 
-#include "OVR_CAPI_D3D.h"
-
-static ID3D11Texture2D *tex10to11(ID3D10Texture2D *in) {
+static ID3D11Texture2D* tex10to11(ID3D10Texture2D* in)
+{
 	OOVR_FALSE_ABORT(in != nullptr);
 
 	CComQIPtr<ID3D11Texture2D> dx11Texture = in;
@@ -17,7 +19,9 @@ static ID3D11Texture2D *tex10to11(ID3D10Texture2D *in) {
 	return dx11Texture;
 }
 
-DX10Compositor::DX10Compositor(ID3D10Texture2D *initial) : DX11Compositor(tex10to11(initial)) {
+DX10Compositor::DX10Compositor(ID3D10Texture2D* initial)
+    : DX11Compositor(tex10to11(initial))
+{
 	device1 = device;
 	OOVR_FALSE_ABORT(device1 != nullptr);
 
@@ -34,16 +38,17 @@ DX10Compositor::DX10Compositor(ID3D10Texture2D *initial) : DX11Compositor(tex10t
 	}
 
 	OOVR_FAILED_DX_ABORT(device1->CreateDeviceContextState(
-		stateFlags,
-		&featureLevel,
-		1,
-		D3D11_SDK_VERSION,
-		__uuidof(ID3D11Device1),
-		nullptr,
-		&customContextState));
+	    stateFlags,
+	    &featureLevel,
+	    1,
+	    D3D11_SDK_VERSION,
+	    __uuidof(ID3D11Device1),
+	    nullptr,
+	    &customContextState));
 }
 
-void DX10Compositor::Invoke(const vr::Texture_t * texture) {
+void DX10Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
+{
 	CComQIPtr<ID3D11Texture2D> src = static_cast<IUnknown*>(texture->handle);
 	OOVR_FALSE_ABORT(src != nullptr);
 
@@ -51,14 +56,18 @@ void DX10Compositor::Invoke(const vr::Texture_t * texture) {
 	tex.handle = src;
 	tex.eColorSpace = texture->eColorSpace;
 	tex.eType = texture->eType;
-	DX11Compositor::Invoke(&tex);
+	DX11Compositor::Invoke(&tex, bounds);
 }
 
-void DX10Compositor::LoadSubmitContext() {
+void DX10Compositor::LoadSubmitContext()
+{
 	context1->SwapDeviceContextState(customContextState, &originalContextState);
 }
 
-void DX10Compositor::ResetSubmitContext() {
+void DX10Compositor::ResetSubmitContext()
+{
 	context1->SwapDeviceContextState(originalContextState, nullptr);
 	originalContextState.Release();
 }
+
+#endif
