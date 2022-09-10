@@ -164,7 +164,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #if defined(SUPPORT_GLES)
 	if (availableExtensions.count(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
-		apiFlags |= OC_SUPPORTED_GRAPHCIS_API_GLES;
+		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_GLES;
 	}
 #endif
 #if defined(ANDROID)
