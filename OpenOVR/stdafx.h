@@ -15,6 +15,11 @@
 
 // TODO: reference additional headers your program requires here
 
+// Disable the rgba and stpq vector components in GLM, as it makes debugging a huge pain
+// Do this here to make sure it's observed everywhere. It shouldn't cause ABI problems, but
+// it's still something we want to keep consistent.
+#define GLM_FORCE_XYZW_ONLY
+
 #define VR_API_EXPORT 1
 //#include "OpenVR/openvr.h"
 #include "custom_types.h"
