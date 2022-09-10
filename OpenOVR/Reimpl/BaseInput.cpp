@@ -1656,8 +1656,10 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 		} else {
 			// Find the angle between these three joints
 			float angCos = dot / (a * b);
-			if (angCos < -1.0f) angCos = -1.0f;
-			if (angCos > 1.0f) angCos = 1.0f;
+			if (angCos < -1.0f)
+				angCos = -1.0f;
+			if (angCos > 1.0f)
+				angCos = 1.0f;
 			float ang = acosf(angCos);
 			curl = 1.0f - (ang / M_PI);
 		}
@@ -1800,9 +1802,11 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 
 	ITrackedDevice* dev = ivhToDev(origin);
 
-	if (!dev) return VRInputError_InvalidHandle;
+	if (!dev)
+		return VRInputError_InvalidHandle;
 
-	if (!pchNameArray || unNameArraySize == 0) return VRInputError_MaxCapacityReached;
+	if (!pchNameArray || unNameArraySize == 0)
+		return VRInputError_MaxCapacityReached;
 
 	std::string name;
 
@@ -1826,7 +1830,7 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 
 	if (unStringSectionsToInclude & VRInputString_InputSource) {
 		// TODO: what should go here?
-		//name += "Something ";
+		// name += "Something ";
 	}
 
 	if (name.size() > 0) {
@@ -1834,7 +1838,7 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 		name.erase(name.size() - 1);
 	}
 
-	const char *str = name.c_str();
+	const char* str = name.c_str();
 
 	size_t i;
 	for (i = 0; str[i] && i < unNameArraySize - 1; ++i) {
