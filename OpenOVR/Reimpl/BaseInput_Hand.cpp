@@ -26,6 +26,15 @@ static void quaternionCopy(const T& src, U& dst)
 	dst.w = src.w;
 }
 
+static glm::mat4 readBoneTransform(const vr::VRBoneTransform_t& src)
+{
+	glm::quat srcQuat;
+	quaternionCopy(src.orientation, srcQuat);
+	glm::mat4 pose = glm::mat4_cast(srcQuat);
+	pose[3] = { src.position.v[0], src.position.v[1], src.position.v[2], 1.f };
+	return pose;
+}
+
 // Games that use this:
 // * NeosVR
 // Any others? Please add them to the list!
@@ -112,32 +121,19 @@ void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>&
 // This is just exactly what OC did before. It probably doesn't do the right thing.
 void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* out_transforms)
 {
-	// Annoyingly the coordinate system between this extension and OpenVR is also different. As per the wiki page:
-	// https://github.com/ValveSoftware/openvr/wiki/Hand-Skeleton
-	// The hands effectively sit on their sides in the bind pose. The right hand's palm faces -X and the left hand's
-	// palm faces +X. In the OpenXR extension, the hands are as they would be if you placed them on a table: palms on
-	// both hands are down (-Y) and the tops of your hands are up (+Y). Therefore the normal of your thumbnails are
-	// facing towards the opposite hand. Fortunately Z represents the same axis in both coordinate spaces.
-	// Therefore roll the right-hand clockwise 90deg around Z and the left hand counter-clockwise around Z (careful with
-	// what direction Z is if you're trying to visualise this).
-	float angle_mult;
-	if (!isRight) {
-		angle_mult = 1.0f; // Natural rotation is CCW, invert for clockwise
-	} else {
-		angle_mult = -1.0f;
-	}
-	glm::mat4 systemTransform = glm::rotate(glm::identity<glm::mat4>(), angle_mult * math_pi / 2.0f, glm::vec3(0, 0, 1));
+	// First, get everything into the SteamVR coordinate system, to avoid duplicating the delicate space conversion system
+	VRBoneTransform_t modelRelative[31];
+	ConvertHandModelSpace(joints, isRight, modelRelative);
 
 	// Load the data into the output bones, with the correct mapping
 	std::optional<XrHandJointEXT> parentId;
 	auto mapBone = [&](XrHandJointEXT xrId, int vrId) {
-		const XrHandJointLocationEXT& src = joints.at(xrId);
 		OOVR_FALSE_ABORT(vrId < 31);
+		const vr::VRBoneTransform_t& src = modelRelative[xrId];
 		vr::VRBoneTransform_t& out = out_transforms[vrId];
 
-		// Read the OpenXR transform
-		// I don't think there's anything we can do if the validity flags are false, so just ignore them
-		glm::mat4 pose = systemTransform * X2G_om34_pose(src.pose);
+		// Read the model-relative transform
+		glm::mat4 pose = readBoneTransform(src);
 
 		// All the OpenXR transforms are relative to the space we specified as baseSpace, in this case the grip pose. If the
 		// application wants each bone's transform relative to it's parent, apply that now.
@@ -146,8 +142,8 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 		// Tbone_in_model = Tparent_in_model * Tbone_in_parent
 		// inv(Tparent_in_model) * Tbone_in_model = Tbone_in_parent
 		if (parentId) {
-			const XrHandJointLocationEXT& parent = joints.at(parentId.value());
-			glm::mat4 parentPose = systemTransform * X2G_om34_pose(parent.pose);
+			const vr::VRBoneTransform_t& parent = modelRelative[parentId.value()];
+			glm::mat4 parentPose = readBoneTransform(parent);
 
 			pose = glm::affineInverse(parentPose) * pose;
 		}
@@ -156,7 +152,7 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 
 		glm::quat rotation(pose);
 		out.position = vr::HmdVector4_t{ pose[3][0], pose[3][1], pose[3][2], 1.f }; // What's the fourth value for?
-		out.orientation = vr::HmdQuaternionf_t{ rotation.w, rotation.x, rotation.y, rotation.z };
+		quaternionCopy(rotation, out.orientation);
 
 		// Update the parent to make it convenient to declare bones moving towards the finger tip
 		parentId = xrId;
