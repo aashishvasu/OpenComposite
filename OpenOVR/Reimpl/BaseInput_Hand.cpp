@@ -26,99 +26,79 @@ static void quaternionCopy(const T& src, U& dst)
 	dst.w = src.w;
 }
 
-static void transformJointModelSpace(const std::vector<XrHandJointLocationEXT>& joints, VRBoneTransform_t* out_transforms, XrHandJointEXT xrId, bool is_right)
-{
-	const XrHandJointLocationEXT& this_joint = joints[xrId];
-	const XrHandJointLocationEXT& parent_joint = joints[0];
-	glm::mat4 joint_global_pose = X2G_om34_pose(this_joint.pose);
-
-	glm::vec3 tr = { joint_global_pose[3][0], joint_global_pose[3][1], joint_global_pose[3][2] };
-
-	// Not a bug - xrIds match vrIds except for palm pose and aux bones.
-	vr::VRBoneTransform_t& out = out_transforms[xrId];
-
-	// Almost definitely wrong. Neos doesn't care about translations at all, so I can't test this.
-	out.position.v[0] = tr.y;
-	out.position.v[1] = is_right ? -tr.x : tr.x;
-	out.position.v[2] = -tr.z;
-	out.position.v[3] = 1.0f;
-
-	glm::mat3x3 mat(joint_global_pose);
-
-	// glm is column major.
-	// But I could be wrong documenting this here aaaaaa
-	// Fuck OpenVR.
-	// [ 0  0 -1]
-	// [ 0 -1  0]
-	// [-1  0  0]
-	glm::mat3x3 mat_mul_to_proposed_left_hand = { { 0, 0, -1 }, { 0, -1, 0 }, { -1, 0, 0 } };
-	// [ 0  0 -1]
-	// [ 0  1  0]
-	// [ 1  0  0]
-	glm::mat3x3 mat_mul_to_proposed_right_hand = { { 0, 0, 1 }, { 0, 1, 0 }, { -1, 0, 0 } };
-
-	glm::mat3x3 permuted_mat;
-	permuted_mat = mat * (is_right ? mat_mul_to_proposed_right_hand : mat_mul_to_proposed_left_hand);
-
-	// Also, the above matrix multiplication is just swapping and/or negating some rows of the 3x3 rotation matrix.
-	// You could accomplish this slightly faster without a matrix multiplication
-	// or possibly by smartly applying a quaternion rotation then swapping/negating some of the quat elements?
-	// Either way this seems clearest and we're not running on a Quest 2 so eh
-
-	glm::quat out_rotation(permuted_mat);
-
-	quaternionCopy(out_rotation, out.orientation);
-}
-
 // Games that use this:
 // * NeosVR
 // Any others? Please add them to the list!
-void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>& joints, const bool is_right, VRBoneTransform_t* out_transforms)
+void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
-	// Root seems to be totally 100% ignored by Neos. Let's set it to something not-insane.
-	out_transforms[eBone_Root].orientation = vr::HmdQuaternionf_t{ /* w */ 1, 0, 0, 0 };
-	out_transforms[eBone_Root].position = vr::HmdVector4_t{ 0, 0, 0, 1 };
+	// The root bone should just be left at identity? TODO check SteamVR
+	output[eBone_Root].orientation = vr::HmdQuaternionf_t{ /* w */ 1, 0, 0, 0 };
+	output[eBone_Root].position = vr::HmdVector4_t{ 0, 0, 0, 1 };
 
-	// Set the wrist bone position
-	// Yep, that's right, we literally just copy the position of the wrist from OpenXR into the wrist in OpenVR.
-	// I am beyond shocked that no axis flips were required considering the rest of my experience.
-	out_transforms[eBone_Wrist].position.v[0] = joints[XR_HAND_JOINT_WRIST_EXT].pose.position.x;
-	out_transforms[eBone_Wrist].position.v[1] = joints[XR_HAND_JOINT_WRIST_EXT].pose.position.y;
-	out_transforms[eBone_Wrist].position.v[2] = joints[XR_HAND_JOINT_WRIST_EXT].pose.position.z;
-	out_transforms[eBone_Wrist].position.v[3] = 1.0f;
+	// Note: go to https://gltf-viewer.donmccurdy.com/ and load up the hand glTF model from the test suite
+	// Turn the axes on and compare it to the OpenXR hand tracking extension diagram:
+	// https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html#_conventions_of_hand_joints
 
-	// Calculate the wrist bone orientation
-	// Note: This post-rotation stuff might be slightly wrong. It works with Index knuckles hand emulation and Index camera optical hand tracking, at least.
-	glm::quat wrist_rot;
-	quaternionCopy(joints[XR_HAND_JOINT_WRIST_EXT].pose.orientation, wrist_rot);
+	// The first transform we need is to place all the bones into the correct positions. We can swap a
+	// few axes around to convert between the different coordinate systems used by SteamVR and OpenXR.
+	glm::mat4 globalTransform = glm::zero<glm::mat4>();
+	globalTransform[1][0] = -1; // +X in SteamVR comes from -Y in OpenXR
+	globalTransform[0][1] = -1; // +Y in SteamVR comes from -X in OpenXR
+	globalTransform[2][2] = -1; // +Z in SteamVR comes from -Z in OpenXR
+	globalTransform[3][3] = 1;
 
-#if 0
-	// These paths should do the same thing.
-	glm::mat4 PostRotate_0_Rotate180X = glm::rotate(glm::identity<glm::mat4>(), math_pi, glm::vec3(1, 0, 0));
+	// We also need to apply a local transform to the coordinate spaces of the non-thumb fingers. This is because
+	// the bones are set up in such a way that their local-to-the-bone coordinate system that the geometry works
+	// in varies between SteamVR and OpenXR. Oddly this is rotated 90deg around the Y axis (local to that bone),
+	// which suggests it's not caused by rotating the bone.
+	// This has to be the first transform applied when calculating the bone's rotation, since it needs to rotate
+	// in the bone's local space rather than in model space.
+	glm::mat4 localTransform = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-90.f), { 0, 1, 0 });
 
-	// Note: this has to be the opposite between L and R. For now we only care about L, sooo
-	// -math_pi / 2.0f for L, M_PIf / 2.0f for R
-	glm::mat4 PostRotate_0_Rotate90Z = glm::rotate(glm::identity<glm::mat4>(), is_right ? math_pi / 2.0f : -M_PIf / 2.0f, glm::vec3(0, 0, 1));
+	// The wrist bone has it's own special transform, with all axes negated
+	glm::mat4 rightWristTransform = glm::scale(glm::identity<glm::mat4>(), { -1, -1, -1 });
 
-	glm::quat q(PostRotate_0_Rotate180X * PostRotate_0_Rotate90Z);
-	OOVR_LOGF("postrotate %f %f %f %f", q.w, q.x, q.y, q.z);
-#else
-	glm::quat q;
-	q.w = 0;
-	q.x = is_right ? -0.707107 : 0.707107;
-	q.y = 0.707107;
-	q.z = 0;
-#endif
+	// Wrists are a special case of being different between sides
+	glm::mat4 leftWristTransform = glm::zero<glm::mat4>();
+	leftWristTransform[1][0] = 1;
+	leftWristTransform[0][1] = 1;
+	leftWristTransform[2][2] = -1;
+	leftWristTransform[3][3] = 1;
 
-	glm::quat outRotation = wrist_rot * q;
-	quaternionCopy(outRotation, out_transforms[eBone_Wrist].orientation);
+	// And the left hand gets it's own special transform
+	glm::mat4 leftHandTransform = glm::scale(glm::identity<glm::mat4>(), { -1, -1, 1 });
 
-	for (int XrId = XR_HAND_JOINT_THUMB_METACARPAL_EXT; XrId <= XR_HAND_JOINT_LITTLE_TIP_EXT; XrId++) {
-		transformJointModelSpace(joints, out_transforms, (XrHandJointEXT)XrId, is_right);
+	for (int XrId = XR_HAND_JOINT_WRIST_EXT; XrId <= XR_HAND_JOINT_LITTLE_TIP_EXT; XrId++) {
+		const XrHandJointLocationEXT& this_joint = joints[XrId];
+		glm::mat4 pose = globalTransform * X2G_om34_pose(this_joint.pose);
+
+		// Not a bug - xrIds match vrIds except for palm pose and aux bones.
+		vr::VRBoneTransform_t& out = output[XrId];
+
+		// Position is easy enough...
+		out.position = { pose[3][0], pose[3][1], pose[3][2], 1.f };
+
+		// But the transform to correct the bone's local coordinate system varies between bones, so add
+		// that in here. It's also different on the left and right hands.
+		if (XrId == XR_HAND_JOINT_WRIST_EXT) {
+			if (isRight) {
+				pose *= rightWristTransform;
+			} else {
+				pose *= leftWristTransform;
+			}
+		} else {
+			pose *= localTransform;
+
+			if (!isRight) {
+				pose *= leftHandTransform;
+			}
+		}
+
+		glm::quat out_rotation(pose);
+		quaternionCopy(out_rotation, out.orientation);
 	}
-	// Todo: aux bones. Neos doesn't use them sooo
 
-	return;
+	OOVR_SOFT_ABORT("Aux bones not yet implemented!");
 }
 
 // END MODEL POSE STUFF
@@ -126,7 +106,7 @@ void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>&
 // RELATIVE POSE STUFF
 
 // This is just exactly what OC did before. It probably doesn't do the right thing.
-void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>& joints, const bool is_right, VRBoneTransform_t* out_transforms)
+void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* out_transforms)
 {
 	// Annoyingly the coordinate system between this extension and OpenVR is also different. As per the wiki page:
 	// https://github.com/ValveSoftware/openvr/wiki/Hand-Skeleton
@@ -137,7 +117,7 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 	// Therefore roll the right-hand clockwise 90deg around Z and the left hand counter-clockwise around Z (careful with
 	// what direction Z is if you're trying to visualise this).
 	float angle_mult;
-	if (!is_right) {
+	if (!isRight) {
 		angle_mult = 1.0f; // Natural rotation is CCW, invert for clockwise
 	} else {
 		angle_mult = -1.0f;

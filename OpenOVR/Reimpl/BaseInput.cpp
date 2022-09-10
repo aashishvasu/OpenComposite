@@ -1565,12 +1565,12 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 		return vr::VRInputError_InvalidSkeleton;
 	}
 
-	bool is_right = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
+	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
 	if (eTransformSpace == VRSkeletalTransformSpace_Model) {
-		ConvertHandModelSpace(jointLocations, is_right, pTransformArray);
+		ConvertHandModelSpace(jointLocations, isRight, pTransformArray);
 	} else {
-		ConvertHandParentSpace(jointLocations, is_right, pTransformArray);
+		ConvertHandParentSpace(jointLocations, isRight, pTransformArray);
 	}
 
 	// For now, just return with non-active data
