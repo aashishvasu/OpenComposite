@@ -56,6 +56,18 @@ void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>&
 	globalTransform[2][2] = -1; // +Z in SteamVR comes from -Z in OpenXR
 	globalTransform[3][3] = 1;
 
+	// Now rotate the hands to line up with how they should IRL
+	// It's kinda messy having these as separate transforms, but if you comment these out the skeletons
+	// should match the bind poses in the testing tool.
+	globalTransform = glm::rotate(globalTransform, glm::radians(180.f), { 0, 1, 0 });
+	if (isRight) {
+		globalTransform = glm::rotate(globalTransform, glm::radians(180.f), { 0, 0, 1 });
+	}
+
+	// Now they line up where they should when swapping between the Monado remote SteamVR driver (in Index emulation
+	// mode) and OpenComposite in the openvr-tests tool, but that seems to be misaligned because of the Index emulation
+	// mode.
+
 	// We also need to apply a local transform to the coordinate spaces of the non-thumb fingers. This is because
 	// the bones are set up in such a way that their local-to-the-bone coordinate system that the geometry works
 	// in varies between SteamVR and OpenXR. Oddly this is rotated 90deg around the Y axis (local to that bone),
