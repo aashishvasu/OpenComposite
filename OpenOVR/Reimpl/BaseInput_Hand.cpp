@@ -56,7 +56,11 @@ void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>&
 	glm::mat4 localTransform = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-90.f), { 0, 1, 0 });
 
 	// The wrist bone has it's own special transform, with all axes negated
-	glm::mat4 rightWristTransform = glm::scale(glm::identity<glm::mat4>(), { -1, -1, -1 });
+	glm::mat4 rightWristTransform = glm::zero<glm::mat4>();
+	rightWristTransform[1][0] = -1;
+	rightWristTransform[0][1] = -1;
+	rightWristTransform[2][2] = -1;
+	rightWristTransform[3][3] = 1;
 
 	// Wrists are a special case of being different between sides
 	glm::mat4 leftWristTransform = glm::zero<glm::mat4>();
