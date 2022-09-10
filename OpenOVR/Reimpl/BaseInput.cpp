@@ -671,6 +671,12 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 void BaseInput::BindInputsForSession()
 {
+	// If we haven't set up our actions yet, we don't have to do anything
+	// This can happen if the session restarts (so DrvOpenXR calls this) but the inputs haven't
+	// been set up.
+	if (!hasLoadedActions)
+		return;
+
 	// Since the session has changed, any actionspaces we previously created are now invalid
 	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
 		action->actionSpaces.clear();
