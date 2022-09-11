@@ -48,27 +48,7 @@ void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>&
 	// Turn the axes on and compare it to the OpenXR hand tracking extension diagram:
 	// https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html#_conventions_of_hand_joints
 
-	// The first transform we need is to place all the bones into the correct positions. We can swap a
-	// few axes around to convert between the different coordinate systems used by SteamVR and OpenXR.
-	glm::mat4 globalTransform = glm::zero<glm::mat4>();
-	globalTransform[1][0] = -1; // +X in SteamVR comes from -Y in OpenXR
-	globalTransform[0][1] = -1; // +Y in SteamVR comes from -X in OpenXR
-	globalTransform[2][2] = -1; // +Z in SteamVR comes from -Z in OpenXR
-	globalTransform[3][3] = 1;
-
-	// Now rotate the hands to line up with how they should IRL
-	// It's kinda messy having these as separate transforms, but if you comment these out the skeletons
-	// should match the bind poses in the testing tool.
-	globalTransform = glm::rotate(globalTransform, glm::radians(180.f), { 0, 1, 0 });
-	if (isRight) {
-		globalTransform = glm::rotate(globalTransform, glm::radians(180.f), { 0, 0, 1 });
-	}
-
-	// Now they line up where they should when swapping between the Monado remote SteamVR driver (in Index emulation
-	// mode) and OpenComposite in the openvr-tests tool, but that seems to be misaligned because of the Index emulation
-	// mode.
-
-	// We also need to apply a local transform to the coordinate spaces of the non-thumb fingers. This is because
+	// We need to apply a local transform to the coordinate spaces of the non-thumb fingers. This is because
 	// the bones are set up in such a way that their local-to-the-bone coordinate system that the geometry works
 	// in varies between SteamVR and OpenXR. Oddly this is rotated 90deg around the Y axis (local to that bone),
 	// which suggests it's not caused by rotating the bone.
@@ -95,7 +75,7 @@ void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>&
 
 	for (int XrId = XR_HAND_JOINT_WRIST_EXT; XrId <= XR_HAND_JOINT_LITTLE_TIP_EXT; XrId++) {
 		const XrHandJointLocationEXT& this_joint = joints[XrId];
-		glm::mat4 pose = globalTransform * X2G_om34_pose(this_joint.pose);
+		glm::mat4 pose = X2G_om34_pose(this_joint.pose);
 
 		// Not a bug - xrIds match vrIds except for palm pose and aux bones.
 		vr::VRBoneTransform_t& out = output[XrId];
