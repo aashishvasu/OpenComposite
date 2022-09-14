@@ -206,7 +206,6 @@ static std::string pathFromParts(const std::initializer_list<std::string>& parts
 }
 
 // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
-BaseInput::LegacyControllerActions::~LegacyControllerActions() = default;
 BaseInput::Action::~Action() = default;
 BaseInput::ActionSource::~ActionSource() = default;
 BaseInput::InputValueHandle::InputValueHandle() = default;
@@ -570,7 +569,8 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	// Map of OpenVR names (i.e. "vive_controller") to interaction profile pointers
 	std::unordered_map<std::string, InteractionProfile*> OVRNameToProfile;
 	for (const std::unique_ptr<InteractionProfile>& profile : interactionProfiles) {
-		OVRNameToProfile[profile->GetOpenVRName()] = profile.get();
+		if (profile->GetOpenVRName().has_value())
+			OVRNameToProfile[profile->GetOpenVRName().value()] = profile.get();
 	}
 
 	// For determining the best path for supported controllers that don't have a profile handled by the game (i.e. khr/simple_controller)
@@ -804,9 +804,11 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 					}
 
 					// check if parent is in dpadBindingParens
-					// get parent name: remove /user/hand and /input/ parts, add openvr name (so we don't i.e. confuse dpad bindings from the knuckles joystick with dpad bindings from the oculus joystick)
+					// get parent name: remove /user/hand and /input/ parts, add end of openxr path (so we don't i.e. confuse dpad bindings from the knuckles joystick with dpad bindings from the oculus joystick)
 					std::string to_delete[] = { "/user/hand/", "/input/" };
-					std::string parentName = importBasePath + "-" + profile.GetOpenVRName() + "-dpad-parent";
+					auto& path = profile.GetPath();
+					std::string end = path.substr(path.rfind("/")+1);
+					std::string parentName = importBasePath + "-" + end + "-dpad-parent";
 					for (const auto& str : to_delete) {
 						parentName.replace(parentName.find(str), str.size(), "");
 					}
@@ -2182,9 +2184,6 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 
 	// TODO implement the DPad actions
 	OOVR_LOG_ONCE("DPad emulation not yet implemented");
-#ifndef XR_STUBBED
-#error todo
-#endif
 
 	return true;
 }
@@ -2248,7 +2247,34 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
 	space = ctrl.aimPoseSpace;
 }
 
-bool BaseInput::IsActionsLoaded()
+bool BaseInput::AreActionsLoaded()
 {
 	return hasLoadedActions;
+}
+
+void BaseInput::UpdateInteractionProfile()
+{
+	XrInteractionProfileState state{ XR_TYPE_INTERACTION_PROFILE_STATE };
+	XrPath path;
+	xrStringToPath(xr_instance, "/user/hand/left", &path);
+	xrGetCurrentInteractionProfile(xr_session, path, &state);
+	if (state.interactionProfile == XR_NULL_PATH) {
+		xrStringToPath(xr_instance, "/user/hand/right", &path);
+		xrGetCurrentInteractionProfile(xr_session, path, &state);
+	}
+	if (state.interactionProfile != XR_NULL_PATH) {
+		uint32_t tmp;
+		char path_name[XR_MAX_PATH_LENGTH];
+		xrPathToString(xr_instance, state.interactionProfile, XR_MAX_PATH_LENGTH, &tmp, path_name);
+
+		for (auto& profile : interactionProfiles) {
+			if (profile->GetPath() == path_name) {
+				activeProfile = profile.get();
+				OOVR_LOGF("Using interaction profile: %s", path_name);
+				break;
+			}
+		}
+	} else {
+		activeProfile = nullptr;
+	}
 }

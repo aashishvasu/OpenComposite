@@ -73,6 +73,15 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 
 	this->bindingsLegacy.gripPoseAction = "input/grip/pose";
 	this->bindingsLegacy.aimPoseAction = "input/aim/pose";
+
+	hmdPropertiesMap = {
+		{vr::Prop_ManufacturerName_String, "Valve"},
+	};
+
+	propertiesMap = {
+		{vr::Prop_ModelNumber_String, {"Knuckles Left", "Knuckles Right"}},
+		{vr::Prop_ControllerType_String, {GetOpenVRName().value()}}
+	};
 }
 
 const std::string& IndexControllerInteractionProfile::GetPath() const
@@ -87,7 +96,7 @@ const InteractionProfile::LegacyBindings* IndexControllerInteractionProfile::Get
 	return &this->bindingsLegacy;
 }
 
-const char* IndexControllerInteractionProfile::GetOpenVRName() const
+std::optional<const char*> IndexControllerInteractionProfile::GetOpenVRName() const
 {
 	return "knuckles";
 }

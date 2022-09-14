@@ -94,29 +94,33 @@ uint32_t XrController::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty
 		return (uint32_t)strlen(out) + 1;                                                              \
 	}
 
-	// Just say we're a CV1, regardless of what actual device is connected
 	switch (type) {
 	case XCT_LEFT:
 		PROP(vr::Prop_RenderModelName_String, "renderLeftHand");
-		PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1 (Left Controller)");
-		PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Left"); // TODO is this different CV1 vs S?
+		PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Left");
 		break;
 	case XCT_RIGHT:
 		PROP(vr::Prop_RenderModelName_String, "renderRightHand");
-		PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1 (Right Controller)");
 		PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Right");
 		break;
 	case XCT_TRACKED_OBJECT:
 		PROP(vr::Prop_RenderModelName_String, "renderObject0");
-
-		// This is made up, and not at all verified with SteamVR
-		PROP(vr::Prop_ModelNumber_String, "Oculus Rift CV1 (Tracked Object 0)");
 		break;
 	default:
 		OOVR_ABORTF("Invalid controller type %d", type);
 	}
 
-	PROP(vr::Prop_ControllerType_String, "oculus_touch");
+	BaseInput* input = GetUnsafeBaseInput();
+
+	if (input){
+		std::optional<std::string> ret = input->GetProperty<std::string>(prop, GetHand());
+		if (ret.has_value()){
+			if (value != NULL && bufferSize > 0) {
+				strcpy_s(value, bufferSize, ret->c_str());
+			}
+			return ret->size()+1;
+		}
+	}
 
 	return XrTrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
@@ -153,7 +157,7 @@ void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 		// Lie and say the pose is valid if the actions haven't even been loaded yet.
 		// This is a workaround for games like DCS, which appear to require valid poses before
 		// it will even attempt to request the controller state (and thus create the actions).
-		if (!input->IsActionsLoaded()) {
+		if (!input->AreActionsLoaded()) {
 			pose->bPoseIsValid = true;
 			pose->eTrackingResult = vr::TrackingResult_Running_OK;
 		}

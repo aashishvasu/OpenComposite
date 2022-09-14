@@ -7,17 +7,50 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 
+#include "Drivers/Backend.h"
 #include "InputData.h"
-#include "Reimpl/BaseInput.h"
-
+#include "LegacyControllerActions.h"
 /**
  * Defines an interaction profile, as specified by 6.4 in the OpenXR spec.
+ * Implementing an interaction profile is fairly straightforward, view the other interaction profiles for examples.
+ * Be sure to add any implemented profiles to the interactionProfiles vector in BaseInput.cpp. (This is done in the BaseInput constructor.)
  */
 class InteractionProfile {
+private:
+	// types of properties that can be retrieved
+	using property_types = std::variant<
+	    bool, float, int32_t, uint64_t, vr::HmdMatrix34_t,
+	    const std::vector<uint32_t>, // array
+	    std::string // string
+	    >;
+
+	// helper struct for determining if a type is in our list of allowed types (property_types)
+	template <typename T, typename U>
+	struct in_variant : std::false_type {
+	};
+
+	template <typename T, typename... Ts>
+	struct in_variant<T, std::variant<Ts...>> : std::disjunction<std::is_same<T, Ts>...> {
+	};
+
+	// helper struct for ordering translationMap
+	struct translation_compare {
+		bool operator()(const std::string& lhs, const std::string& rhs) const
+		{
+			if (lhs.size() != rhs.size())
+				return lhs.size() > rhs.size();
+			else
+				// without this, strings that are the same length will be considered the same length by the map
+				return lhs > rhs;
+		}
+	};
+
 public:
 	virtual ~InteractionProfile() = default;
 
@@ -40,15 +73,11 @@ public:
 	 * /user/hand/right/input/grip/pose
 	 * /user/hand/right/input/aim/pose
 	 * /user/hand/right/output/haptic
-	 *
-	 * Note this does not include virtual inputs.
 	 */
 	const std::unordered_set<std::string>& GetValidInputPaths() const;
 
 	/**
 	 * Returns true if the given path is present in GetValidInputsPaths.
-	 *
-	 * This does not include virtual inputs.
 	 */
 	bool IsInputPathValid(const std::string& inputPath) const;
 
@@ -59,19 +88,36 @@ public:
 	std::string TranslateAction(const std::string& inputPath) const;
 
 	/**
-	 * Returns the name for the profile as recognized by OpenVR.
-	 * If null, this device must not be recognized by OpenVR.
+	 * Returns the name for the profile as recognized by OpenVR, if it is recognized by it.
 	 */
-	virtual const char* GetOpenVRName() const = 0;
+	virtual std::optional<const char*> GetOpenVRName() const = 0;
 
 	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
 	 */
-	void AddLegacyBindings(const BaseInput::LegacyControllerActions& actions, std::vector<XrActionSuggestedBinding>& bindings) const;
+	void AddLegacyBindings(const LegacyControllerActions& actions, std::vector<XrActionSuggestedBinding>& bindings) const;
+
+	/**
+	 * Get the requested property from the profile, if it exists.
+	 * If hand == HAND_NONE, this will retrieve the HMD version of the property.
+	 */
+	template <typename T>
+	requires(in_variant<T, property_types>::value)
+	    std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::HandType hand)
+	{
+		using enum ITrackedDevice::HandType;
+		if (hand != HAND_NONE && propertiesMap.contains(property)) {
+			hand_values_type ret = propertiesMap[property];
+			return std::get<T>((hand == HAND_RIGHT && ret.right.has_value()) ? ret.right.value() : ret.left);
+		} else if (hmdPropertiesMap.contains(property)) {
+			return std::get<T>(hmdPropertiesMap[property]);
+		}
+		return std::nullopt;
+	}
 
 protected:
 	struct LegacyBindings {
-		// Matches up with BaseInput::LegacyControllerActions - see it for comments
+		// Matches up with LegacyControllerActions - see it for comments
 		// Specifies the path for each action
 		// These paths are relative to the hand - eg, use input/trigger/value not /user/hand/left/input/trigger/value
 		const char* system = nullptr;
@@ -87,25 +133,35 @@ protected:
 		const char *gripPoseAction = nullptr, *aimPoseAction = nullptr;
 	};
 
+	/*
+	 * Returns a legacy bindings struct for the given interaction profile.
+	 */
 	virtual const LegacyBindings* GetLegacyBindings(const std::string& handPath) const = 0;
 
 	// The set of valid input paths for an interaction profile. An interaction profile should fill this in its constructor.
 	std::unordered_set<std::string> validInputPaths;
 
-	struct translation_compare{
-		bool operator()(const std::string& lhs, const std::string& rhs) const{
-			if (lhs.size() != rhs.size())
-				return lhs.size() > rhs.size();
-			else
-				// without this, strings that are the same length will be considered the same length by the map
-				return lhs > rhs;
-		}
-	};
-
 	// A map with OpenVR action name parts as keys and OpenXR equivalents as values.
 	// For example, one common key, value pair might be "application_menu", "menu"
-	std::map<std::string, std::string, translation_compare> pathTranslationMap{};
+	std::map<std::string, std::string, translation_compare> pathTranslationMap;
 
-private:
-	bool donePostSetup = false;
+	// A map for HMD properties.
+	// Note that for a SteamVR supported device can be extracted from the SteamVR System Report,
+	// in the properties.json section
+	// HMD Properties an interaction profile should implement:
+	// - Prop_ManufacturerName_String
+	std::unordered_map<vr::ETrackedDeviceProperty, property_types> hmdPropertiesMap;
+
+	template <typename T>
+	struct hand_values_type {
+		T left;
+		std::optional<T> right;
+	};
+
+	// A map for controller properties
+	// If a value for the right hand isn't provided, the one for the left hand will be used.
+	// Controller Properties an interaction profile should implement:
+	// - Prop_ModelNumber_String
+	// - Prop_ControllerType_String
+	std::unordered_map<vr::ETrackedDeviceProperty, hand_values_type<property_types>> propertiesMap;
 };

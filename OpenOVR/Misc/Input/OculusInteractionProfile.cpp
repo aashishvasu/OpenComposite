@@ -60,7 +60,14 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	// pose/handgrip
 	// pose/tip
 
-	// TODO long-click versions of the buttons
+	hmdPropertiesMap = {
+		{vr::Prop_ManufacturerName_String, "Oculus"},
+	};
+
+	propertiesMap = {
+		{vr::Prop_ModelNumber_String, {"Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)"}},
+		{vr::Prop_ControllerType_String, {GetOpenVRName().value()}}
+	};
 }
 
 const std::string& OculusTouchInteractionProfile::GetPath() const
@@ -117,7 +124,7 @@ const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLega
 	return &bindings;
 }
 
-const char* OculusTouchInteractionProfile::GetOpenVRName() const
+std::optional<const char*> OculusTouchInteractionProfile::GetOpenVRName() const
 {
 	return "oculus_touch";
 }

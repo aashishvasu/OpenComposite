@@ -39,7 +39,7 @@ bool InteractionProfile::IsInputPathValid(const std::string& inputPath) const
 	return validInputPaths.find(inputPath) != validInputPaths.end();
 }
 
-void InteractionProfile::AddLegacyBindings(const BaseInput::LegacyControllerActions& ctrl, std::vector<XrActionSuggestedBinding>& bindings) const
+void InteractionProfile::AddLegacyBindings(const LegacyControllerActions& ctrl, std::vector<XrActionSuggestedBinding>& bindings) const
 {
 	auto create = [&](XrAction action, const char* path) {
 		// Not supported on this controller?

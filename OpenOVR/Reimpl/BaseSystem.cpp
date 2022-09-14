@@ -266,6 +266,22 @@ ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t d
 
 bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
 {
+	// HACK: Beat Saber does not appear to respect controller properties changing without the controller being replugged.
+	// The game requests controller properties pretty much immediately after starting, yet we don't know what controllers we have until
+	// we pass binding suggestions to the runtime and retrieve the active interaction profile.
+	// What we'll do is simulate controllers being unplugged and replugged after actions are loaded, so that controller properties are detected correctly.
+	// Note that this means this function probably shouldn't be called from our code for controllers, to avoid messing this up.
+	
+	static bool last_loaded[] = {false, false};
+	auto actions_loaded = GetUnsafeBaseInput() && GetUnsafeBaseInput()->AreActionsLoaded();
+	if (deviceIndex == 1 || deviceIndex == 2) {
+		bool ret = actions_loaded == last_loaded[deviceIndex-1];
+
+		if (!ret){
+			last_loaded[deviceIndex-1] = actions_loaded;
+		}
+		return ret;
+	}
 	return BackendManager::Instance().GetDevice(deviceIndex) != nullptr;
 }
 
@@ -344,7 +360,6 @@ uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDe
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
     VR_OUT_STRING() char* value, uint32_t bufferSize, ETrackedPropertyError* pErrorL)
 {
-
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -414,47 +429,6 @@ bool BaseSystem::ShouldApplicationReduceRenderingWork()
 
 void BaseSystem::_OnPostFrame()
 {
-#ifndef OC_XR_PORT
-	ovrSessionStatus status;
-	ovr_GetSessionStatus(*ovr::session, &status);
-
-	if (status.ShouldQuit && !lastStatus.ShouldQuit) {
-		VREvent_t e;
-
-		e.eventType = VREvent_Quit;
-		e.trackedDeviceIndex = k_unTrackedDeviceIndex_Hmd;
-		e.eventAgeSeconds = 0; // Is this required for quit events?
-
-		VREvent_Process_t data;
-		data.bForced = false;
-		data.pid = data.oldPid = 0; // TODO but probably very rarely used
-		e.data.process = data;
-
-		events.push(e);
-	}
-#endif
-
-#ifndef OC_XR_PORT
-	CheckControllerEvents(leftHandIndex, lastLeftHandState);
-	CheckControllerEvents(rightHandIndex, lastRightHandState);
-#endif
-
-#ifndef OC_XR_PORT
-	// Not exactly an event, but this is a convenient place to put it
-	// TODO move all the event handling out and run it per frame, and queue up events
-	// Also note this is done after all other events, as it doesn't set ShouldRecenter
-	// and thus could end up resetting the pose several times if it occured at the same time
-	// as another event
-	if (status.ShouldRecenter && !lastStatus.ShouldRecenter) {
-		// Why on earth doesn't OpenVR have a recenter event?!
-		ResetSeatedZeroPose();
-	}
-
-	// Note this isn't called if handle_event is called, preventing one
-	//  event from firing despite another event also being changed in the same poll call
-	lastStatus = status;
-#endif
-
 	frameNumber++;
 
 	// Note: OpenXR event handling is now in XrBackend
@@ -597,7 +571,6 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 
 	memset(controllerState, 0, controllerStateSize);
 
-#ifdef OC_XR_PORT
 	if (!inputSystem) {
 		inputSystem = GetBaseInput();
 	}
@@ -617,58 +590,6 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 		inputSystem->LoadEmptyManifestIfRequired();
 
 	return inputSystem->GetLegacyControllerState(controllerDeviceIndex, controllerState);
-#else
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(controllerDeviceIndex);
-
-	if (!dev)
-		return false;
-
-	bool state = dev->GetControllerState(controllerState);
-
-	if (!state)
-		return false;
-
-	// TODO do this properly
-	static uint32_t unPacketNum = 0;
-	controllerState->unPacketNum = unPacketNum++;
-
-	// Check if we're blocking input
-	ovrHandType id = ovrHand_Count;
-	if (controllerDeviceIndex == leftHandIndex) {
-		id = ovrHand_Left;
-	} else if (controllerDeviceIndex == rightHandIndex) {
-		id = ovrHand_Right;
-	}
-
-	if (id != ovrHand_Count && blockingInputsUntilRelease[id]) {
-		if (controllerState->ulButtonPressed)
-			goto blockInput;
-
-		// Inputs released, permit input again
-		blockingInputsUntilRelease[id] = false;
-	}
-
-	//  Send the data to the overlays
-	BaseOverlay* overlay = GetUnsafeBaseOverlay();
-	if (overlay) {
-		EVREye side = id == ovrHand_Left ? Eye_Left : Eye_Right;
-		bool passToApp = overlay->_HandleOverlayInput(side, controllerDeviceIndex, *controllerState);
-
-		if (!passToApp) {
-			goto blockInput;
-
-			// TODO pass this to IsInputFocusCapturedByAnotherProcess
-		}
-	}
-
-	return true;
-
-blockInput:
-	uint32_t packetNum = controllerState->unPacketNum;
-	memset(controllerState, 0, controllerStateSize);
-	controllerState->unPacketNum = packetNum;
-	return true;
-#endif
 }
 
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,

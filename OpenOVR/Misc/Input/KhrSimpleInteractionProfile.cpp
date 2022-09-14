@@ -57,7 +57,7 @@ const InteractionProfile::LegacyBindings* KhrSimpleInteractionProfile::GetLegacy
 	return &bindings;
 }
 
-const char* KhrSimpleInteractionProfile::GetOpenVRName() const
+std::optional<const char*> KhrSimpleInteractionProfile::GetOpenVRName() const
 {
-	return "generic";
+	return std::nullopt;
 }

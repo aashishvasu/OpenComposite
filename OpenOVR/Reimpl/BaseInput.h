@@ -4,16 +4,19 @@
 // FIXME don't do that, it's ugly and slows down the build when modifying headers
 #include "../BaseCommon.h"
 
-#include "../Drivers/Backend.h"
-#include "../Misc/json/json.h"
+#include "Drivers/Backend.h"
+#include "Misc/json/json.h"
 #include <array>
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#include "../Misc/Input/InputData.h"
+#include "Misc/Input/InputData.h"
+#include "Misc/Input/LegacyControllerActions.h"
+#include "Misc/Input/InteractionProfile.h"
 
 typedef vr::EVRSkeletalTrackingLevel OOVR_EVRSkeletalTrackingLevel;
 
@@ -358,7 +361,17 @@ public: // INTERNAL FUNCTIONS
 
 	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space);
 
-	bool IsActionsLoaded();
+	bool AreActionsLoaded();
+
+	// Gets a property from the current active interaction profile, if there is an active profile and if the property is known.
+	// A hand type of HAND_NONE will grab an HMD property.
+	template <typename T>
+	std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::HandType hand) {
+		return (activeProfile) ? activeProfile->GetProperty<T>(property, hand) : std::nullopt;
+	}
+
+	// Requests the current interaction profile from the runtime
+	void UpdateInteractionProfile();
 
 	/**
 	 * Get a number that increments each time xrSyncActions is called. Can be used to check if a cached input value
@@ -653,7 +666,7 @@ private:
 	bool hasLoadedActions = false;
 	std::string loadedActionsPath;
 	bool usingLegacyInput = false;
-	std::vector<std::unique_ptr<class InteractionProfile>> interactionProfiles;
+	std::vector<std::unique_ptr<InteractionProfile>> interactionProfiles;
 	Registry<ActionSet> actionSets;
 	Registry<Action> actions;
 	bool allowSetDominantHand = false;
@@ -679,7 +692,7 @@ private:
 		"/user/hand/right",
 	};
 
-	void LoadBindingsSet(const class InteractionProfile& profile, const std::string& bindingsPath);
+	void LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath);
 
 	void CreateLegacyActions();
 
@@ -688,35 +701,6 @@ private:
 	 */
 	static int DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx);
 
-	struct LegacyControllerActions {
-		~LegacyControllerActions(); // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
-
-		std::string handPath; // eg /user/hand/left
-		XrPath handPathXr;
-		ITrackedDevice::HandType handType;
-
-		// Matches up with EVRButtonId
-		XrAction system; // 'system' button, on Vive the SteamVR buttons, on Oculus Touch the menu button on the left controller
-		XrAction menu, menuTouch; // Upper button on touch controller (B/Y), application button on Vive
-		XrAction btnA, btnATouch; // Lower button on touch controller - A/X, not present on Vive
-
-		XrAction stickX, stickY, stickBtn, stickBtnTouch; // Axis0
-
-		// For the trigger and grip, we use separate actions for digital and analogue input. If the physical input is analogue it
-		// saves us from having to implement hysteresis (and the runtime probably knows what the appropriate thresholds are better
-		// than we do) and generally gives more flexibility on exotic hardware, as the user can rebind them separately.
-		XrAction trigger, triggerClick, triggerTouch; // Axis1
-		XrAction grip, gripClick; // Axis2
-
-		XrAction haptic;
-
-		// Note: the 'grip' pose runs along the axis of the Touch controller, the 'aim' pose comes
-		// straight out the front if you're holding it neutral. They correspond to the old Oculus
-		// and SteamVR poses.
-		// Note: The skeletal input functions all work inside the grip space, not sure if SteamVR does it this way.
-		XrAction gripPoseAction, aimPoseAction;
-		XrSpace gripPoseSpace, aimPoseSpace;
-	};
 	LegacyControllerActions legacyControllers[2] = {};
 
 	// From https://github.com/ValveSoftware/openvr/wiki/Hand-Skeleton
@@ -784,5 +768,7 @@ private:
 	 */
 	XrResult getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
 
-	friend class InteractionProfile;
+	InteractionProfile* activeProfile = nullptr;
+
+	friend InteractionProfile;
 };

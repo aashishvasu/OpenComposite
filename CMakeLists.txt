@@ -8,6 +8,7 @@ endif ()
 cmake_minimum_required(VERSION 3.16)
 project(OpenComposite)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Options
 
@@ -187,7 +188,7 @@ add_library(DrvOpenXR STATIC
 	${GENERATED_DIR}/static_bases.gen.h
 )
 target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub ${CMAKE_BINARY_DIR})
-target_include_directories(DrvOpenXR PRIVATE DrvOpenXR)
+target_include_directories(DrvOpenXR PRIVATE DrvOpenXR OpenOVR)
 target_link_libraries(DrvOpenXR PUBLIC OpenVR OpenXR glm)
 target_compile_definitions(DrvOpenXR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS} -D_CRT_SECURE_NO_WARNINGS)
 source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)

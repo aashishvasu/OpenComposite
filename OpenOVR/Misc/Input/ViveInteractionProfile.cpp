@@ -28,6 +28,17 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 		{ "grip/click", "squeeze/click" },
 		{ "pull", "value" }
 	};
+
+	hmdPropertiesMap = {
+		{vr::Prop_ManufacturerName_String, "HTC"},
+		{vr::Prop_ModelNumber_String, "Vive. MV"},
+		{vr::Prop_ControllerType_String, "vive"},
+	};
+
+	propertiesMap = {
+		{vr::Prop_ModelNumber_String, {"Vive. Controller MV"}},
+		{vr::Prop_ControllerType_String, {GetOpenVRName().value()}},
+	};
 }
 
 const std::string& ViveWandInteractionProfile::GetPath() const
@@ -57,7 +68,7 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 	return &bindings;
 }
 
-const char* ViveWandInteractionProfile::GetOpenVRName() const
+std::optional<const char*> ViveWandInteractionProfile::GetOpenVRName() const
 {
 	return "vive_controller";
 }
