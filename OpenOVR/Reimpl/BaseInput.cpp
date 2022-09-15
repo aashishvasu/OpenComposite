@@ -26,6 +26,8 @@
 #include "Misc/Input/KhrSimpleInteractionProfile.h"
 #include "Misc/Input/OculusInteractionProfile.h"
 #include "Misc/Input/ViveInteractionProfile.h"
+#include "Misc/Input/HolographicInteractionProfile.h"
+#include "Misc/Input/ReverbG2InteractionProfile.h"
 #include "Misc/xrmoreutils.h"
 
 using namespace vr;
@@ -320,6 +322,10 @@ T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T
 BaseInput::BaseInput()
     : actionSets(XR_MAX_ACTION_SET_NAME_SIZE), actions(XR_MAX_ACTION_NAME_SIZE)
 {
+	if (xr_ext->G2Controller_Available())
+		interactionProfiles.emplace_back(std::make_unique<ReverbG2InteractionProfile>());
+
+	interactionProfiles.emplace_back(std::make_unique<HolographicInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<IndexControllerInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<ViveWandInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<OculusTouchInteractionProfile>());

@@ -34,6 +34,8 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 			hasVisMask = true;
 		if (strcmp(ext, XR_EXT_HAND_TRACKING_EXTENSION_NAME) == 0)
 			hasHandTracking = true;
+		if (strcmp(ext, XR_EXT_HP_MIXED_REALITY_CONTROLLER_EXTENSION_NAME) == 0)
+			supportsG2Controller = true;
 	}
 
 #define XR_BIND(name, function) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function))

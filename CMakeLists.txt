@@ -247,6 +247,8 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.cpp
 	OpenOVR/Misc/Input/ViveInteractionProfile.cpp
 	OpenOVR/Misc/Input/IndexControllerInteractionProfile.cpp
+	OpenOVR/Misc/Input/HolographicInteractionProfile.cpp
+	OpenOVR/Misc/Input/ReverbG2InteractionProfile.cpp
 	OpenOVR/OpenOVR.cpp
 	OpenOVR/Reimpl/BaseApplications.cpp
 	OpenOVR/Reimpl/BaseChaperone.cpp
