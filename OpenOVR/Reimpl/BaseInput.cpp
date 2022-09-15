@@ -857,14 +857,17 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 					} else {
 						// touch dpad
 						dpad_info.click = false;
-						if (parent_iter->second.touchAction == XR_NULL_HANDLE) {
+						std::string touchPath = profile.TranslateAction(importBasePath + "/touch");
+						if (!profile.IsInputPathValid(touchPath)) {
+							OOVR_LOGF("WARNING: Path %s does not exist for the touch dpad.", touchPath.c_str());
+						} else if (parent_iter->second.touchAction == XR_NULL_HANDLE) {
 							std::string touch_name = parentName + "-touch";
 							strcpy_arr(info.actionName, touch_name.c_str());
 							info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
 							strcpy_arr(info.localizedActionName, touch_name.c_str());
 							OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.touchAction));
 							XrPath suggested_path;
-							OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/touch").c_str(), &suggested_path));
+							OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, touchPath.c_str(), &suggested_path));
 							bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.touchAction, suggested_path });
 						}
 					}
@@ -1201,11 +1204,14 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* g
 			getInfo->action = iter->second.clickAction;
 			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &click_state));
 			active = click_state.currentState;
-		} else {
+		} else if (iter->second.touchAction != XR_NULL_HANDLE) {
 			XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
 			getInfo->action = iter->second.touchAction;
 			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &touch_state));
 			active = touch_state.currentState;
+		} else {
+			// touch dpad, but our dpad parent doesn't have a touch input
+			active = true;
 		}
 
 		if (active && within_bounds) {
@@ -2187,9 +2193,6 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	VRControllerAxis_t& grip = state->rAxis[2];
 	grip.x = readFloat(ctrl.grip);
 	grip.y = 0;
-
-	// TODO implement the DPad actions
-	OOVR_LOG_ONCE("DPad emulation not yet implemented");
 
 	return true;
 }
