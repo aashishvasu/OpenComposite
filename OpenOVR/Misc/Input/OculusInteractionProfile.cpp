@@ -47,7 +47,7 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	}
 
 	pathTranslationMap = {
-		{ "grip", "squeeze"},
+		{ "grip", "squeeze" },
 		{ "joystick", "thumbstick" },
 		{ "pull", "value" },
 		{ "grip/click", "squeeze/value" },
@@ -61,12 +61,12 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	// pose/tip
 
 	hmdPropertiesMap = {
-		{vr::Prop_ManufacturerName_String, "Oculus"},
+		{ vr::Prop_ManufacturerName_String, "Oculus" },
 	};
 
 	propertiesMap = {
-		{vr::Prop_ModelNumber_String, {"Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)"}},
-		{vr::Prop_ControllerType_String, {GetOpenVRName().value()}}
+		{ vr::Prop_ModelNumber_String, { "Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)" } },
+		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
 }
 

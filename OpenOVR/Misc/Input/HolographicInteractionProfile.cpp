@@ -29,18 +29,18 @@ HolographicInteractionProfile::HolographicInteractionProfile()
 		{ "application_menu", "menu" },
 		{ "grip", "squeeze" },
 		{ "pull", "value" },
-		{ "force", "value"},
-		{ "trigger/click", "trigger/value"},
-		{ "joystick", "thumbstick"}
+		{ "force", "value" },
+		{ "trigger/click", "trigger/value" },
+		{ "joystick", "thumbstick" }
 	};
 
 	hmdPropertiesMap = {
-		{vr::Prop_ManufacturerName_String, "WindowsMR"},
+		{ vr::Prop_ManufacturerName_String, "WindowsMR" },
 	};
 
 	propertiesMap = {
-		{vr::Prop_ModelNumber_String, {"WindowsMR"}},
-		{vr::Prop_ControllerType_String, {GetOpenVRName().value()}},
+		{ vr::Prop_ModelNumber_String, { "WindowsMR" } },
+		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
 	};
 }
 
@@ -59,7 +59,7 @@ const InteractionProfile::LegacyBindings* HolographicInteractionProfile::GetLega
 {
 	static LegacyBindings bindings = {};
 
-	// Games that use legacy bindings will typically just not use the thumbstick, 
+	// Games that use legacy bindings will typically just not use the thumbstick,
 	// but most users would probably prefer to use it, so let's use it.
 	if (!bindings.menu) {
 		bindings.menu = "input/menu/click";

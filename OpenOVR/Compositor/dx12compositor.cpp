@@ -8,7 +8,6 @@
 
 #include <atlbase.h>
 
-
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
 
@@ -16,7 +15,6 @@
 
 #include "../Misc/Config.h"
 #include "../Misc/xr_ext.h"
-
 
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
@@ -26,15 +24,14 @@ using namespace std;
 using glm::min;
 
 namespace {
-	void WaitForFence(ID3D12Fence* fence, UINT64 completionValue, HANDLE waitEvent)
-	{
-		if (fence->GetCompletedValue() < completionValue) {
-			fence->SetEventOnCompletion(completionValue, waitEvent);
-			WaitForSingleObject(waitEvent, INFINITE);
-		}
+void WaitForFence(ID3D12Fence* fence, UINT64 completionValue, HANDLE waitEvent)
+{
+	if (fence->GetCompletedValue() < completionValue) {
+		fence->SetEventOnCompletion(completionValue, waitEvent);
+		WaitForSingleObject(waitEvent, INFINITE);
 	}
 }
-
+} // namespace
 
 DX12Compositor::DX12Compositor(D3D12TextureData_t* td)
 {
@@ -175,7 +172,7 @@ void DX12Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 }
 
 void DX12Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
-{	
+{
 	D3D12TextureData_t* input = (D3D12TextureData_t*)texture->handle;
 
 	// OpenXR swap chain doesn't support weird formats like DXGI_FORMAT_BC1_TYPELESS
@@ -229,10 +226,9 @@ void DX12Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	sourceRegion.front = 0;
 	sourceRegion.back = 1;
 
-
 	commandList->CopyResource(imagesHandles[currentIndex].texture, input->m_pResource);
 
-	commandList->Close();	    
+	commandList->Close();
 	ID3D12CommandList* set[] = { commandList };
 	queue->ExecuteCommandLists(1, set);
 
@@ -244,7 +240,6 @@ void DX12Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 	queue->Signal(frameFences[currentIndex].Get(), fenceValue);
 	fenceValues[currentIndex] = fenceValue;
 	++currentFenceValue;
-
 }
 
 void DX12Compositor::InvokeCubemap(const vr::Texture_t* textures)

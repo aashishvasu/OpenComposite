@@ -2,20 +2,19 @@
 #include "stdafx.h"
 #include "steamvr_abi.h"
 
-// Only use this on Windows. This is because on Linux, where ELF uses a single pool of symbol names rather 
-// than namespacing them by DLL. Thus in the following somewhat obscure case you could have issues when 
+// Only use this on Windows. This is because on Linux, where ELF uses a single pool of symbol names rather
+// than namespacing them by DLL. Thus in the following somewhat obscure case you could have issues when
 // using modern versions of OpenVR:
 //
 // - The compiler decided not to inline one of the functions from openvr.h (unlikely but possible)
-// - The VR-related code is in a shared library loaded with RTLD_LAZY (could certainly happen for a game 
+// - The VR-related code is in a shared library loaded with RTLD_LAZY (could certainly happen for a game
 //   engine with a module system)
-// - The function is only used after VR initialisation (highly likely - you wouldn't likely call VRCompositor 
+// - The function is only used after VR initialisation (highly likely - you wouldn't likely call VRCompositor
 //   before startup)
 //
 // It's also unlikely this will be needed on Linux.
 
 #ifdef _WIN32
-
 
 namespace OpenVR_v0_9_12 {
 

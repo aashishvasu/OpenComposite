@@ -21,9 +21,9 @@
 #endif
 
 // FIXME find a better way to send the OnPostFrame call?
+#include "../OpenOVR/Reimpl/BaseInput.h"
 #include "../OpenOVR/Reimpl/BaseOverlay.h"
 #include "../OpenOVR/Reimpl/BaseSystem.h"
-#include "../OpenOVR/Reimpl/BaseInput.h"
 #include "../OpenOVR/convert.h"
 #include "generated/static_bases.gen.h"
 
@@ -741,7 +741,7 @@ void XrBackend::PumpEvents()
 			if (input)
 				input->UpdateInteractionProfile();
 			auto system = GetUnsafeBaseSystem();
-			if (system){
+			if (system) {
 				VREvent_t profile = { VREvent_TrackedDeviceUpdated, 0 };
 				system->_EnqueueEvent(profile);
 			}

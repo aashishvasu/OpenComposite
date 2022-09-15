@@ -6,9 +6,9 @@
 
 #include "../OpenOVR/Misc/Config.h"
 #include "../OpenOVR/Misc/xrmoreutils.h"
+#include "../OpenOVR/Reimpl/BaseInput.h"
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/convert.h"
-#include "../OpenOVR/Reimpl/BaseInput.h"
 #include "generated/static_bases.gen.h"
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
@@ -379,13 +379,13 @@ uint32_t XrHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
 
 	BaseInput* input = GetUnsafeBaseInput();
 
-	if (input){
+	if (input) {
 		std::optional<std::string> ret = input->GetProperty<std::string>(prop, ITrackedDevice::HAND_NONE);
-		if (ret.has_value()){
+		if (ret.has_value()) {
 			if (value != NULL && bufferSize > 0) {
 				strcpy_s(value, bufferSize, ret->c_str());
 			}
-			return ret->size()+1;
+			return ret->size() + 1;
 		}
 	}
 

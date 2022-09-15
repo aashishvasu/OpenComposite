@@ -563,8 +563,10 @@ bool BaseCompositor::GetCompositorBenchmarkResults(Compositor_BenchmarkResults* 
 ovr_enum_t BaseCompositor::GetLastPosePredictionIDs(uint32_t* pRenderPosePredictionID, uint32_t* pGamePosePredictionID)
 {
 	OOVR_SOFT_ABORT("Pose prediction IDs hardcoded at 0");
-	if (pRenderPosePredictionID) *pRenderPosePredictionID = 0;
-	if (pGamePosePredictionID) *pGamePosePredictionID = 0;
+	if (pRenderPosePredictionID)
+		*pRenderPosePredictionID = 0;
+	if (pGamePosePredictionID)
+		*pGamePosePredictionID = 0;
 	return VRCompositorError_None;
 }
 

@@ -22,12 +22,12 @@
 #include <set>
 #include <utility>
 
+#include "Misc/Input/HolographicInteractionProfile.h"
 #include "Misc/Input/IndexControllerInteractionProfile.h"
 #include "Misc/Input/KhrSimpleInteractionProfile.h"
 #include "Misc/Input/OculusInteractionProfile.h"
-#include "Misc/Input/ViveInteractionProfile.h"
-#include "Misc/Input/HolographicInteractionProfile.h"
 #include "Misc/Input/ReverbG2InteractionProfile.h"
+#include "Misc/Input/ViveInteractionProfile.h"
 #include "Misc/xrmoreutils.h"
 
 using namespace vr;
@@ -813,7 +813,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 					// get parent name: remove /user/hand and /input/ parts, add end of openxr path (so we don't i.e. confuse dpad bindings from the knuckles joystick with dpad bindings from the oculus joystick)
 					std::string to_delete[] = { "/user/hand/", "/input/" };
 					auto& path = profile.GetPath();
-					std::string end = path.substr(path.rfind("/")+1);
+					std::string end = path.substr(path.rfind("/") + 1);
 					std::string parentName = importBasePath + "-" + end + "-dpad-parent";
 					for (const auto& str : to_delete) {
 						parentName.replace(parentName.find(str), str.size(), "");

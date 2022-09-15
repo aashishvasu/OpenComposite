@@ -170,7 +170,7 @@ public:
 	    vr::EVRSubmitFlags submitFlags,                                                                                                            \
 	    bool isFirstEye) APPEND;                                                                                                                   \
                                                                                                                                                    \
-	PREPEND void SubmitFrames(bool showSkybox, bool postPresent) APPEND;                                                                                             \
+	PREPEND void SubmitFrames(bool showSkybox, bool postPresent) APPEND;                                                                           \
                                                                                                                                                    \
 	PREPEND IBackend::openvr_enum_t SetSkyboxOverride(const vr::Texture_t* pTextures, uint32_t unTextureCount) APPEND;                             \
                                                                                                                                                    \

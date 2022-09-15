@@ -38,7 +38,7 @@ ReverbG2InteractionProfile::ReverbG2InteractionProfile()
 	}
 
 	pathTranslationMap = {
-		{ "grip", "squeeze"},
+		{ "grip", "squeeze" },
 		{ "joystick", "thumbstick" },
 		{ "pull", "value" },
 		{ "grip/click", "squeeze/value" },
@@ -47,12 +47,12 @@ ReverbG2InteractionProfile::ReverbG2InteractionProfile()
 	};
 
 	hmdPropertiesMap = {
-		{vr::Prop_ManufacturerName_String, "WindowsMR"},
+		{ vr::Prop_ManufacturerName_String, "WindowsMR" },
 	};
 
 	propertiesMap = {
-		{vr::Prop_ModelNumber_String, {"WindowsMR"}},
-		{vr::Prop_ControllerType_String, {GetOpenVRName().value()}},
+		{ vr::Prop_ModelNumber_String, { "WindowsMR" } },
+		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
 	};
 }
 

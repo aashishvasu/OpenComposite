@@ -271,14 +271,14 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
 	// we pass binding suggestions to the runtime and retrieve the active interaction profile.
 	// What we'll do is simulate controllers being unplugged and replugged after actions are loaded, so that controller properties are detected correctly.
 	// Note that this means this function probably shouldn't be called from our code for controllers, to avoid messing this up.
-	
-	static bool last_loaded[] = {false, false};
+
+	static bool last_loaded[] = { false, false };
 	auto actions_loaded = GetUnsafeBaseInput() && GetUnsafeBaseInput()->AreActionsLoaded();
 	if (deviceIndex == 1 || deviceIndex == 2) {
-		bool ret = actions_loaded == last_loaded[deviceIndex-1];
+		bool ret = actions_loaded == last_loaded[deviceIndex - 1];
 
-		if (!ret){
-			last_loaded[deviceIndex-1] = actions_loaded;
+		if (!ret) {
+			last_loaded[deviceIndex - 1] = actions_loaded;
 		}
 		return ret;
 	}

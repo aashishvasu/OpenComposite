@@ -19,13 +19,13 @@ GEN_INTERFACE("System", "022")
 #include "generated/GVRSystem.gen.h"
 
 // Old methods that don't take size arguments
-bool CVRSystem_009::PollNextEvent(vr::VREvent_t* pEvent) 
-{ 
+bool CVRSystem_009::PollNextEvent(vr::VREvent_t* pEvent)
+{
 	return base->PollNextEvent(pEvent, sizeof(vr::VREvent_t));
 }
 
 bool CVRSystem_009::PollNextEventWithPose(vr::ETrackingUniverseOrigin eOrigin, vr::VREvent_t* pEvent, vr::TrackedDevicePose_t* pTrackedDevicePose)
-{ 
+{
 	return base->PollNextEventWithPose(eOrigin, pEvent, sizeof(vr::VREvent_t), pTrackedDevicePose);
 }
 

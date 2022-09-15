@@ -25,7 +25,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		"/input/trackpad/y",
 		"/input/trackpad/force",
 		"/input/trackpad/touch",
-		"/input/trackpad", 
+		"/input/trackpad",
 		"/input/grip/pose",
 		"/input/aim/pose",
 		"/output/haptic"
@@ -56,7 +56,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "grip/touch", "squeeze/value" },
 	};
 
-//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime
+	//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime
 	this->bindingsLegacy.menu = "input/b/click";
 	this->bindingsLegacy.btnA = "input/a/click";
 	this->bindingsLegacy.btnATouch = "input/a/touch";
@@ -75,12 +75,12 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	this->bindingsLegacy.aimPoseAction = "input/aim/pose";
 
 	hmdPropertiesMap = {
-		{vr::Prop_ManufacturerName_String, "Valve"},
+		{ vr::Prop_ManufacturerName_String, "Valve" },
 	};
 
 	propertiesMap = {
-		{vr::Prop_ModelNumber_String, {"Knuckles Left", "Knuckles Right"}},
-		{vr::Prop_ControllerType_String, {GetOpenVRName().value()}}
+		{ vr::Prop_ModelNumber_String, { "Knuckles Left", "Knuckles Right" } },
+		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
 }
 

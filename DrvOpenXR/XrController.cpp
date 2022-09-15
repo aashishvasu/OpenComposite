@@ -112,13 +112,13 @@ uint32_t XrController::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty
 
 	BaseInput* input = GetUnsafeBaseInput();
 
-	if (input){
+	if (input) {
 		std::optional<std::string> ret = input->GetProperty<std::string>(prop, GetHand());
-		if (ret.has_value()){
+		if (ret.has_value()) {
 			if (value != NULL && bufferSize > 0) {
 				strcpy_s(value, bufferSize, ret->c_str());
 			}
-			return ret->size()+1;
+			return ret->size() + 1;
 		}
 	}
 
