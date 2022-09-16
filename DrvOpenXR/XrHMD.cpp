@@ -346,11 +346,8 @@ float XrHMD::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::
 	case vr::Prop_UserHeadToEyeDepthMeters_Float:
 		// TODO ensure this has the correct sign, though it seems to always be zero anyway
 		// In any case, see: https://github.com/ValveSoftware/openvr/issues/398
-#ifdef OC_XR_PORT
-		XR_STUBBED();
-#else
-		return ovr::hmdToEyeViewPose[ovrEye_Left].Position.z;
-#endif
+		OOVR_SOFT_ABORT("Unsupported eye relief depth setting");
+		return 0;
 	default:
 		break;
 	}

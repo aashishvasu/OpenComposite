@@ -20,7 +20,7 @@ protected:
 	 */
 	virtual void ReadSwapchainImages() = 0;
 
-	void CheckCreateSwapChain(GLuint image);
+	void CheckCreateSwapChain(int width, int height, GLuint rawFormat);
 
 	/**
 	 * 'Normalise' an OpenGL internalFormat. glCopyImageSubData doesn't need exactly the same

@@ -79,7 +79,40 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 	// Double-cast to suppress CLion warning
 	auto src = (GLuint)(intptr_t)texture->handle;
 
-	CheckCreateSwapChain(src);
+	// Calculate how large the area to copy is
+	GLsizei inputWidth, inputHeight, rawFormat;
+	glBindTexture(GL_TEXTURE_2D, src); // Sadly even GLES3.2 doesn't have glGetTextureLevelParameteriv which takes the image directly
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &inputWidth);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &inputHeight);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &rawFormat);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	XrRect2Di viewport;
+	if (bounds) {
+		vr::VRTextureBounds_t newBounds = *bounds;
+		if (newBounds.vMin > newBounds.vMax) {
+			float newMax = newBounds.vMin;
+			newBounds.vMin = newBounds.vMax;
+			newBounds.vMax = newMax;
+
+			// Vertical flip not yet implemented!
+			XR_STUBBED(); // submitVerticallyFlipped = true;
+		} else {
+			// submitVerticallyFlipped = false;
+		}
+
+		viewport.offset.x = (int)(newBounds.uMin * (float)inputWidth);
+		viewport.offset.y = (int)(newBounds.vMin * (float)inputHeight);
+		viewport.extent.width = (int)((newBounds.uMax - newBounds.uMin) * (float)inputWidth);
+		viewport.extent.height = (int)((newBounds.vMax - newBounds.vMin) * (float)inputHeight);
+	} else {
+		viewport.offset.x = viewport.offset.y = 0;
+		viewport.extent.width = inputWidth;
+		viewport.extent.height = inputHeight;
+
+		// submitVerticallyFlipped = false;
+	}
+
+	CheckCreateSwapChain(viewport.extent.width, viewport.extent.height, rawFormat);
 
 	// First reserve an image from the swapchain
 	XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
@@ -102,9 +135,9 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 	// Actually copy the image across
 	GLuint dst = images.at(currentIndex);
 	glCopyImageSubData(
-	    src, GL_TEXTURE_2D, 0, 0, 0, 0, // 0 == no mipmapping, next three are xyz
+	    src, GL_TEXTURE_2D, 0, viewport.offset.x, viewport.offset.y, 0, // 0 == no mipmapping, next three are xyz
 	    dst, GL_TEXTURE_2D, 0, 0, 0, 0, // Same as above but for the destination
-	    createInfo.width, createInfo.height, 1 // Region of the output texture to copy into (in this case, everything)
+	    (int)createInfo.width, (int)createInfo.height, 1 // Region of the output texture to copy into (in this case, everything)
 	);
 
 	// Abort if there was an OpenGL error
@@ -133,32 +166,13 @@ void GLBaseCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr
 	XrSwapchainSubImage& subImage = layer.subImage;
 	subImage.swapchain = chain;
 	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
+
+	// Setup the viewport to cover the whole image
+	// The bounds are accounted for when copying the image into the temporary buffer
 	XrRect2Di& viewport = subImage.imageRect;
-	if (ptrBounds) {
-		vr::VRTextureBounds_t bounds = *ptrBounds;
-
-		if (bounds.vMin > bounds.vMax) {
-			float newMax = bounds.vMin;
-			bounds.vMin = bounds.vMax;
-			bounds.vMax = newMax;
-
-			// Vertical flip not yet implemented!
-			XR_STUBBED(); // submitVerticallyFlipped = true;
-		} else {
-			// submitVerticallyFlipped = false;
-		}
-
-		viewport.offset.x = (int)(bounds.uMin * createInfo.width);
-		viewport.offset.y = (int)(bounds.vMin * createInfo.height);
-		viewport.extent.width = (int)((bounds.uMax - bounds.uMin) * createInfo.width);
-		viewport.extent.height = (int)((bounds.vMax - bounds.vMin) * createInfo.height);
-	} else {
-		viewport.offset.x = viewport.offset.y = 0;
-		viewport.extent.width = createInfo.width;
-		viewport.extent.height = createInfo.height;
-
-		// submitVerticallyFlipped = false;
-	}
+	viewport.offset.x = viewport.offset.y = 0;
+	viewport.extent.width = createInfo.width;
+	viewport.extent.height = createInfo.height;
 }
 
 void GLBaseCompositor::InvokeCubemap(const vr::Texture_t* textures)
@@ -166,14 +180,8 @@ void GLBaseCompositor::InvokeCubemap(const vr::Texture_t* textures)
 	OOVR_ABORT("GLCompositor::InvokeCubemap: Not yet supported!");
 }
 
-void GLBaseCompositor::CheckCreateSwapChain(GLuint image)
+void GLBaseCompositor::CheckCreateSwapChain(int width, int height, GLuint rawFormat)
 {
-	GLsizei width, height, rawFormat;
-	glBindTexture(GL_TEXTURE_2D, image); // Sadly even GLES3.2 doesn't have glGetTextureLevelParameteriv which takes the image directly
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &rawFormat);
-
 	// See the comment for NormaliseFormat as to why we're doing this
 	GLuint format = NormaliseFormat(rawFormat);
 
@@ -186,11 +194,14 @@ void GLBaseCompositor::CheckCreateSwapChain(GLuint image)
 	desc.mipCount = 1; // TODO srcDesc.MipLevels;
 	desc.sampleCount = 1;
 	desc.arraySize = 1;
+	desc.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 
 	// If the format has changed (or this is the first call), continue on to create the swapchain
 	if (memcmp(&desc, &createInfo, sizeof(desc)) == 0) {
 		return;
 	}
+
+	OOVR_LOGF("Creating new OpenGL swapchain: %dx%d with format %d", width, height, format);
 
 	// Make sure our format is supported
 	uint32_t formatCount;

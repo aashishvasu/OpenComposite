@@ -671,6 +671,12 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 void BaseInput::BindInputsForSession()
 {
+	// If we haven't set up our actions yet, we don't have to do anything
+	// This can happen if the session restarts (so DrvOpenXR calls this) but the inputs haven't
+	// been set up.
+	if (!hasLoadedActions)
+		return;
+
 	// Since the session has changed, any actionspaces we previously created are now invalid
 	for (const std::unique_ptr<Action>& action : actions.GetItems()) {
 		action->actionSpaces.clear();
@@ -1340,7 +1346,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 
 	// Skeletons go through the legacy input thing, since they're tightly bound to either hand
 	if (act->type == ActionType::Skeleton) {
-		XrSpace space = legacyControllers[act->skeletalHand].gripPoseSpace;
+		XrSpace space = legacyControllers[act->skeletalHand].aimPoseSpace;
 
 		pActionData->bActive = true; // TODO this should probably come from reading the skeleton data
 		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle; // TODO implement activeOrigin
@@ -1559,12 +1565,12 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 		return vr::VRInputError_InvalidSkeleton;
 	}
 
-	bool is_right = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
+	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
 	if (eTransformSpace == VRSkeletalTransformSpace_Model) {
-		ConvertHandModelSpace(jointLocations, is_right, pTransformArray);
+		ConvertHandModelSpace(jointLocations, isRight, pTransformArray);
 	} else {
-		ConvertHandParentSpace(jointLocations, is_right, pTransformArray);
+		ConvertHandParentSpace(jointLocations, isRight, pTransformArray);
 	}
 
 	// For now, just return with non-active data
@@ -1650,8 +1656,10 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 		} else {
 			// Find the angle between these three joints
 			float angCos = dot / (a * b);
-			if (angCos < -1.0f) angCos = -1.0f;
-			if (angCos > 1.0f) angCos = 1.0f;
+			if (angCos < -1.0f)
+				angCos = -1.0f;
+			if (angCos > 1.0f)
+				angCos = 1.0f;
 			float ang = acosf(angCos);
 			curl = 1.0f - (ang / M_PI);
 		}
@@ -1794,9 +1802,11 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 
 	ITrackedDevice* dev = ivhToDev(origin);
 
-	if (!dev) return VRInputError_InvalidHandle;
+	if (!dev)
+		return VRInputError_InvalidHandle;
 
-	if (!pchNameArray || unNameArraySize == 0) return VRInputError_MaxCapacityReached;
+	if (!pchNameArray || unNameArraySize == 0)
+		return VRInputError_MaxCapacityReached;
 
 	std::string name;
 
@@ -1820,7 +1830,7 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 
 	if (unStringSectionsToInclude & VRInputString_InputSource) {
 		// TODO: what should go here?
-		//name += "Something ";
+		// name += "Something ";
 	}
 
 	if (name.size() > 0) {
@@ -1828,7 +1838,7 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 		name.erase(name.size() - 1);
 	}
 
-	const char *str = name.c_str();
+	const char* str = name.c_str();
 
 	size_t i;
 	for (i = 0; str[i] && i < unNameArraySize - 1; ++i) {
