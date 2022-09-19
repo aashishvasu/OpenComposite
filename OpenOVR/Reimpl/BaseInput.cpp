@@ -330,6 +330,13 @@ BaseInput::BaseInput()
 	interactionProfiles.emplace_back(std::make_unique<ViveWandInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<OculusTouchInteractionProfile>());
 	interactionProfiles.emplace_back(std::make_unique<KhrSimpleInteractionProfile>());
+
+	// Initialise the subaction path constants
+	for (const std::string& str : allSubactionPathNames) {
+		XrPath path;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
+		allSubactionPaths.push_back(path);
+	}
 }
 BaseInput::~BaseInput()
 {
@@ -344,13 +351,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 {
 	OOVR_LOGF("Loading manifest file '%s'", pchActionManifestPath);
 
-	// Initialise the subaction path constants
-	allSubactionPaths.clear();
-	for (const std::string& str : allSubactionPathNames) {
-		XrPath path;
-		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
-		allSubactionPaths.push_back(path);
-	}
 
 	//////////////
 	//// Load the actions from the manifest file
