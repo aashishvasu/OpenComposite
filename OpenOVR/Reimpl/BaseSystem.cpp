@@ -11,6 +11,8 @@
 #include "generated/static_bases.gen.h"
 
 #include <string>
+#include <cinttypes>
+#include <ranges>
 
 #ifdef SUPPORT_DX
 #include <dxgi.h> // for GetDefaultAdapterLuid
@@ -26,6 +28,66 @@
 #endif
 
 #include "Misc/xr_ext.h"
+
+namespace {
+
+class PropertyPrinter {
+private:
+	const vr::ETrackedDeviceProperty prop;
+	const vr::TrackedDeviceIndex_t idx;
+
+public:
+	PropertyPrinter(vr::ETrackedDeviceProperty prop, vr::TrackedDeviceIndex_t idx, const char* type_name)
+	    : prop(prop), idx(idx)
+	{
+		if (oovr_global_configuration.LogGetTrackedProperty())
+			OOVR_LOGF("Requested %s property %u for device %u", type_name, prop, idx);
+	}
+
+#define DEF_PRINT_RESULT(type, specifier, expr)                                \
+	void print_result(type result)                                         \
+	{                                                                      \
+		if (oovr_global_configuration.LogGetTrackedProperty())             \
+			OOVR_LOGF("dev: %u | prop: %u | result: " specifier, idx, prop, expr); \
+	}
+
+	DEF_PRINT_RESULT(bool, "%s", (result) ? "true" : "false")
+	DEF_PRINT_RESULT(float, "%f", result)
+	DEF_PRINT_RESULT(int32_t, "%" PRIi32, result)
+	DEF_PRINT_RESULT(uint64_t, "%" PRIu64, result)
+	DEF_PRINT_RESULT(char*, "%s", result)
+
+	void print_result(HmdMatrix34_t result) {
+		if (!oovr_global_configuration.LogGetTrackedProperty()) return;
+		std::string matrix = "[";
+		for (size_t i = 0; i<3; i++){
+			matrix.append(" [");
+			for (size_t j=0; j<4; j++){
+				matrix.append(std::to_string(result.m[i][j]));
+				if (j < 3)
+					matrix.append(", ");
+			}
+			matrix.push_back(']');
+			if (i<2)
+				matrix.push_back(',');
+		}
+		OOVR_LOGF("dev: %u | prop: %u | result: %s", idx, prop, matrix.c_str());
+	}
+
+	template <std::ranges::forward_range T>
+	void print_result(const T& result){
+		std::string array = "{";
+		for (auto item : result){
+			array.append(std::to_string(item) + ", ");
+		}
+		array.erase(array.end() - 2, array.end());
+		array.push_back('}');
+		OOVR_LOGF("dev: %u | prop: %u | result: %s", idx, prop, array.c_str());
+	}
+
+};
+
+} // namespace
 
 BaseSystem::BaseSystem()
 {
@@ -287,6 +349,7 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "bool");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -294,11 +357,14 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 		return false;
 	}
 
-	return dev->GetBoolTrackedDeviceProperty(prop, pErrorL);
+	bool ret = dev->GetBoolTrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
 }
 
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "float");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -306,11 +372,14 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 		return 0;
 	}
 
-	return dev->GetFloatTrackedDeviceProperty(prop, pErrorL);
+	float ret = dev->GetFloatTrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
 }
 
 int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "int32_t");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -318,11 +387,14 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 		return 0;
 	}
 
-	return dev->GetInt32TrackedDeviceProperty(prop, pErrorL);
+	int32_t ret = dev->GetInt32TrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
 }
 
 uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "uint64_t");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -330,11 +402,14 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 		return 0;
 	}
 
-	return dev->GetUint64TrackedDeviceProperty(prop, pErrorL);
+	uint64_t ret = dev->GetUint64TrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
 }
 
 HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "HmdMatrix34_t");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -342,24 +417,51 @@ HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceInde
 		return { 0 };
 	}
 
-	return dev->GetMatrix34TrackedDeviceProperty(prop, pErrorL);
+
+	HmdMatrix34_t ret = dev->GetMatrix34TrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
 }
 
 uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, ETrackedPropertyError* pError)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "array");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		*pError = TrackedProp_InvalidDevice;
-		return { 0 };
+		return 0;
 	}
 
-	return dev->GetArrayTrackedDeviceProperty(prop, propType, pBuffer, unBufferSize, pError);
+
+	uint32_t ret = dev->GetArrayTrackedDeviceProperty(prop, propType, pBuffer, unBufferSize, pError);
+	if (oovr_global_configuration.LogGetTrackedProperty()) {
+#define ARRAY_CASE(tag_type, actual_type)\
+		case k_un##tag_type##PropertyTag:\
+			{\
+				actual_type* buffer = static_cast<actual_type*>(pBuffer);\
+				auto r = std::ranges::subrange(buffer, buffer+unBufferSize);\
+				p.print_result(r);\
+			}\
+			break
+		switch (propType) {
+			ARRAY_CASE(Float, float);
+			ARRAY_CASE(Int32, int32_t);
+			ARRAY_CASE(Uint64, uint64_t);
+			ARRAY_CASE(Bool, bool);
+			ARRAY_CASE(Double, double);
+			default:
+				OOVR_LOGF("WARNING: Was not able to log array with PropertyTypeTag %" PRIu32 "!" , propType);
+				break;
+		}
+	}
+	return ret;
 }
 
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
     VR_OUT_STRING() char* value, uint32_t bufferSize, ETrackedPropertyError* pErrorL)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "string");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -368,7 +470,9 @@ uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 		return 0;
 	}
 
-	return dev->GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
+	uint32_t ret = dev->GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
+	p.print_result(value);
+	return ret;
 }
 
 const char* BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error)
