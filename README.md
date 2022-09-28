@@ -107,35 +107,31 @@ on the end of the line. Ensure your lines do not being with whitespace however.
 
 The available options are:
 
-* `renderCustomHands` - boolean, default `enabled`. Should OpenComposite render custom hands. Disable this if you *really* dislike
-the hand models, and some games (like Skyrim) come with backup models that will be used instead.
-* `handColour` - colour, default `#4c4c4c`. The colour of the hands OpenComposite draws, as they currently lack proper textures.
-* `supersampleRatio` - float, default `1.0`. The supersample ratio in use - this is similar to what you would enter into SteamVR,
-a value of `145%` in SteamVR is a value of `1.45` here. A value of `80%` in SteamVR is `0.8` here, and so on. Higher numbers improve
-graphics, at a major performance cost.
-* `haptics` - boolean, default `enabled`. Should haptic feedback to the Touch controllers be enabled.
-* `admitUnknownProps` - boolean, default `disabled`. If asked for a tracked device property it does not understand, should OpenComposite
-set that as an error and let the game continue. Enabling this may cause severe and hard-to-detect side-effects, and as such if a property
-is missing, please report it and let it get fixed like that. However, some (very few) games (namely Vivecraft) will query every property
-they know about, even if never using all but a few of them. In these cases, you should enable it.
-* `forceConnectedTouch` - boolean, default `enabled`. If this is enabled, games are always told that the Touch controllers are connected,
-even if they are not. This ensures controllers will work if they were asleep when the game was started. If you use a gamepad and don't want
-the game to think controllers are connected, disable this option. See issue #25.
-* `logGetTrackedProperty` - boolean, default `disabled`. Print logging information when the app requests information about tracked devices,
-such as the HMD or the Touch controllers. On some games, this causes a log entry to be generated every frame, which isn't great for performance
-and clutters up the log. This is potentially useful for troubleshooting, and was enabled by default before the config option existed. In general,
-unless you've been told to enable this (or you know what you're doing while troubleshooting) you don't need to enable this.
-* `enableHiddenMeshFix` - boolean, default `enabled`. Alter the coordinates of the hidden area mesh mask to fit within the view's projection. 
-The hidden area mesh mask defines a region to which the game will not draw and is used to mask off areas of the display that you typically cannot
-see in the headset. If you see odd black regions around the view then try disabling this fix.
-* `invertUsingShaders` - boolean, default `disabled`. Invert the image for display using shaders rather than replying on XR runtime and inverted FOV values. 
-Some games render the image inverted and rely on the runtime to display correctly. In OpenXR some runtimes don't do the inversion correctly.
-If so enable this option for OpenComposite to do the inversion when copying the image using shaders. This might have a minor cost in performance.
-* `initUsingVulkan` - boolean, default `true`. If available the temporary graphics adapter at start up will use Vulkan by default. This may be
-incompatible with some games. This will mostly affect Oculus headsets. 
-* `hiddenMeshVerticalScale` - float, default `1.0`. The scaling factor used for the hidden area mesh if supported by the application. The hidden area
-mesh is a region that the game doesn't render to. If you set this lower e.g. `0.8` then less will be drawn at the very top and very bottom of the image
-improving performance. Suggested range is `0.5` to `1.0`.
+* `renderCustomHands` - boolean, default `enabled`. 
+	* Should OpenComposite render custom hands. Disable this if you *really* dislike the hand models, and some games (like Skyrim) come with backup models that will be used instead.
+* `handColour` - colour, default `#4c4c4c`. 
+	* The colour of the hands OpenComposite draws, as they currently lack proper textures.
+* `supersampleRatio` - float, default `1.0`. 
+	* The supersample ratio in use - this is similar to what you would enter into SteamVR, a value of `145%` in SteamVR is a value of `1.45` here. A value of `80%` in SteamVR is `0.8` here, and so on. Higher numbers improve graphics, at a major performance cost.
+* `haptics` - boolean, default `enabled`. 
+	* Should haptic feedback to the Touch controllers be enabled.
+* `admitUnknownProps` - boolean, default `disabled`. 
+	* If asked for a tracked device property it does not understand, should OpenComposite ignore it.
+* `forceConnectedTouch` - boolean, default `enabled`. 
+	* If this is enabled, games are always told that the Touch controllers are connected, even if they are not. This ensures controllers will work if they were asleep when the game was started. If you use a gamepad and don't want
+the game to think controllers are connected, disable this option. See issue #25. 
+* `logGetTrackedProperty` - boolean, default `disabled`. 
+	* Print logging information when the app requests information about tracked devices, such as the HMD or the Touch controllers. On some games, this causes a log entry to be generated every frame, which isn't great for performance and clutters up the log. This is potentially useful for troubleshooting, and was enabled by default before the config option existed. In general, unless you've been told to enable this (or you know what you're doing while troubleshooting) you don't need to enable this.
+* `enableHiddenMeshFix` - boolean, default `enabled`. 
+	* Alter the coordinates of the hidden area mesh mask to fit within the view's projection. The hidden area mesh mask defines a region to which the game will not draw and is used to mask off areas of the display that you typically cannot see in the headset. If you see odd black regions around the view then try disabling this fix.
+* `invertUsingShaders` - boolean, default `disabled`. 
+	* Invert the image for display using shaders rather than replying on XR runtime and inverted FOV values. Some games render the image inverted and rely on the runtime to display correctly. In OpenXR some runtimes don't do the inversion correctly. If so enable this option for OpenComposite to do the inversion when copying the image using shaders. This might have a minor cost in performance.
+* `initUsingVulkan` - boolean, default `true`. 
+	* If available the temporary graphics adapter at start up will use Vulkan by default. This may be incompatible with some games. This will mostly affect Oculus headsets. 
+* `hiddenMeshVerticalScale` - float, default `1.0`. 
+	* The scaling factor used for the hidden area mesh if supported by the application. The hidden area mesh is a region that the game doesn't render to. If you set this lower e.g. `0.8` then less will be drawn at the very top and very bottom of the image improving performance. Suggested range is `0.5` to `1.0`.
+* `logAllOpenVRCalls` - boolean, default `false`
+	* Log every OpenVR call a game makes. Similar to `logGetTrackedProperty`, this clutters logs and should not be enabled unless necessary.
 
 The possible types are as follows:
 

@@ -104,8 +104,10 @@ std::shared_ptr<{cls}> GetCreate{getter_name}() {{
             if namespace in f.return_type:
                 return_str += f" ({f.return_type})"
 
-            fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()})"
-                     f"{{ {return_str} base->{f.name}({nargs}); }}\n")
+            fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()}) {{\n"
+                     "\tif (oovr_global_configuration.LogAllOpenVRCalls())\n"
+                     f"\t\tOOVR_LOG(\"Entered function (from interface {ver.namespace()})\");\n"
+                     f"\t{return_str} base->{f.name}({nargs});\n}}\n")
 
         # Generate the fntable
         _build_fntable(fi, ver)
