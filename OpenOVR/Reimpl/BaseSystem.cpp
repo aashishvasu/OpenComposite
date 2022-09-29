@@ -12,7 +12,6 @@
 
 #include <string>
 #include <cinttypes>
-#include <ranges>
 
 #ifdef SUPPORT_DX
 #include <dxgi.h> // for GetDefaultAdapterLuid
@@ -74,11 +73,11 @@ public:
 		OOVR_LOGF("dev: %u | prop: %u | result: %s", idx, prop, matrix.c_str());
 	}
 
-	template <std::ranges::forward_range T>
-	void print_result(const T& result){
+	template <typename T>
+	void print_result(const T* buffer, size_t size){
 		std::string array = "{";
-		for (auto item : result){
-			array.append(std::to_string(item) + ", ");
+		for (size_t i = 0; i < size; i++){
+			array.append(std::to_string(buffer[i]) + ", ");
 		}
 		array.erase(array.end() - 2, array.end());
 		array.push_back('}');
@@ -440,8 +439,7 @@ uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDe
 		case k_un##tag_type##PropertyTag:\
 			{\
 				actual_type* buffer = static_cast<actual_type*>(pBuffer);\
-				auto r = std::ranges::subrange(buffer, buffer+unBufferSize);\
-				p.print_result(r);\
+				p.print_result(buffer, unBufferSize);\
 			}\
 			break
 		switch (propType) {
