@@ -1,6 +1,8 @@
 #pragma once
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
+#include "custom_types.h"
 #include "generated/interfaces/IVRSystem_017.h"
+#include "openxr/openxr.h"
 #include <queue>
 
 using namespace vr;

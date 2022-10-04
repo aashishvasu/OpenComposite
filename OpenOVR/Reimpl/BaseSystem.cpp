@@ -10,8 +10,8 @@
 #include "convert.h"
 #include "generated/static_bases.gen.h"
 
-#include <string>
 #include <cinttypes>
+#include <string>
 
 #ifdef SUPPORT_DX
 #include <dxgi.h> // for GetDefaultAdapterLuid
@@ -43,10 +43,10 @@ public:
 			OOVR_LOGF("Requested %s property %u for device %u", type_name, prop, idx);
 	}
 
-#define DEF_PRINT_RESULT(type, specifier, expr)                                \
-	void print_result(type result)                                         \
-	{                                                                      \
-		if (oovr_global_configuration.LogGetTrackedProperty())             \
+#define DEF_PRINT_RESULT(type, specifier, expr)                                    \
+	void print_result(type result)                                                 \
+	{                                                                              \
+		if (oovr_global_configuration.LogGetTrackedProperty())                     \
 			OOVR_LOGF("dev: %u | prop: %u | result: " specifier, idx, prop, expr); \
 	}
 
@@ -56,34 +56,36 @@ public:
 	DEF_PRINT_RESULT(uint64_t, "%" PRIu64, result)
 	DEF_PRINT_RESULT(char*, "%s", result)
 
-	void print_result(HmdMatrix34_t result) {
-		if (!oovr_global_configuration.LogGetTrackedProperty()) return;
+	void print_result(HmdMatrix34_t result)
+	{
+		if (!oovr_global_configuration.LogGetTrackedProperty())
+			return;
 		std::string matrix = "[";
-		for (size_t i = 0; i<3; i++){
+		for (size_t i = 0; i < 3; i++) {
 			matrix.append(" [");
-			for (size_t j=0; j<4; j++){
+			for (size_t j = 0; j < 4; j++) {
 				matrix.append(std::to_string(result.m[i][j]));
 				if (j < 3)
 					matrix.append(", ");
 			}
 			matrix.push_back(']');
-			if (i<2)
+			if (i < 2)
 				matrix.push_back(',');
 		}
 		OOVR_LOGF("dev: %u | prop: %u | result: %s", idx, prop, matrix.c_str());
 	}
 
 	template <typename T>
-	void print_result(const T* buffer, size_t size){
+	void print_result(const T* buffer, size_t size)
+	{
 		std::string array = "{";
-		for (size_t i = 0; i < size; i++){
+		for (size_t i = 0; i < size; i++) {
 			array.append(std::to_string(buffer[i]) + ", ");
 		}
 		array.erase(array.end() - 2, array.end());
 		array.push_back('}');
 		OOVR_LOGF("dev: %u | prop: %u | result: %s", idx, prop, array.c_str());
 	}
-
 };
 
 } // namespace
@@ -327,22 +329,6 @@ ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t d
 
 bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
 {
-	// HACK: Beat Saber does not appear to respect controller properties changing without the controller being replugged.
-	// The game requests controller properties pretty much immediately after starting, yet we don't know what controllers we have until
-	// we pass binding suggestions to the runtime and retrieve the active interaction profile.
-	// What we'll do is simulate controllers being unplugged and replugged after actions are loaded, so that controller properties are detected correctly.
-	// Note that this means this function probably shouldn't be called from our code for controllers, to avoid messing this up.
-
-	static bool last_loaded[] = { false, false };
-	auto actions_loaded = GetUnsafeBaseInput() && GetUnsafeBaseInput()->AreActionsLoaded();
-	if (deviceIndex == 1 || deviceIndex == 2) {
-		bool ret = actions_loaded == last_loaded[deviceIndex - 1];
-
-		if (!ret) {
-			last_loaded[deviceIndex - 1] = actions_loaded;
-		}
-		return ret;
-	}
 	return BackendManager::Instance().GetDevice(deviceIndex) != nullptr;
 }
 
@@ -352,7 +338,8 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
 		return false;
 	}
 
@@ -367,7 +354,8 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
 		return 0;
 	}
 
@@ -382,7 +370,8 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
 		return 0;
 	}
 
@@ -397,7 +386,8 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
 		return 0;
 	}
 
@@ -412,10 +402,10 @@ HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceInde
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
 		return { 0 };
 	}
-
 
 	HmdMatrix34_t ret = dev->GetMatrix34TrackedDeviceProperty(prop, pErrorL);
 	p.print_result(ret);
@@ -428,29 +418,27 @@ uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDe
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		*pError = TrackedProp_InvalidDevice;
+		if (pError)
+			*pError = TrackedProp_InvalidDevice;
 		return 0;
 	}
 
-
 	uint32_t ret = dev->GetArrayTrackedDeviceProperty(prop, propType, pBuffer, unBufferSize, pError);
 	if (oovr_global_configuration.LogGetTrackedProperty()) {
-#define ARRAY_CASE(tag_type, actual_type)\
-		case k_un##tag_type##PropertyTag:\
-			{\
-				actual_type* buffer = static_cast<actual_type*>(pBuffer);\
-				p.print_result(buffer, unBufferSize);\
-			}\
-			break
+#define ARRAY_CASE(tag_type, actual_type)                         \
+	case k_un##tag_type##PropertyTag: {                           \
+		actual_type* buffer = static_cast<actual_type*>(pBuffer); \
+		p.print_result(buffer, unBufferSize);                     \
+	} break
 		switch (propType) {
 			ARRAY_CASE(Float, float);
 			ARRAY_CASE(Int32, int32_t);
 			ARRAY_CASE(Uint64, uint64_t);
 			ARRAY_CASE(Bool, bool);
 			ARRAY_CASE(Double, double);
-			default:
-				OOVR_LOGF("WARNING: Was not able to log array with PropertyTypeTag %" PRIu32 "!" , propType);
-				break;
+		default:
+			OOVR_LOGF("WARNING: Was not able to log array with PropertyTypeTag %" PRIu32 "!", propType);
+			break;
 		}
 	}
 	return ret;
@@ -868,7 +856,7 @@ void BaseSystem::ResetSeatedZeroPose()
 
 			spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
 			auto oldSpace = xr_gbl->seatedSpace;
-			OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &xr_gbl->seatedSpace));
+			OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session.get(), &spaceInfo, &xr_gbl->seatedSpace));
 			xrDestroySpace(oldSpace);
 		}
 	}

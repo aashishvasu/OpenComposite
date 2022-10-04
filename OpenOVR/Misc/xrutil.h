@@ -1,9 +1,9 @@
 #pragma once
 
 #include "generated/interfaces/vrtypes.h"
-
+#include <mutex>
 #include <openxr/openxr.h>
-
+#include <shared_mutex>
 // Note: Xru stands for openXR Utilities
 
 /**
@@ -30,7 +30,7 @@ enum XruEye : int {
 #define LINUX_STUBBED() \
 	OOVR_ABORTF("Hit not-yet-ported-to-Linux stubbed function at %s:%d func %s", __FILE__, __LINE__, __func__);
 
-// Useful maths typedefs
+// Useful maths typ
 // NOTE: THESE ARE DEPRECATED, REMOVE, AND USE THE GLM NAMES
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/mat4x4.hpp>
@@ -70,6 +70,52 @@ public:
 	XrTime GetBestTime();
 };
 
+class SessionLock;
+// A wrapper around the XrSession to prevent session destruction while it's being accessed
+class SessionWrapper {
+
+	std::shared_mutex mutex;
+	XrSession session = XR_NULL_HANDLE;
+	friend SessionLock;
+
+public:
+	/*
+	 * Gets a reference to the underlying XrSession that won't be changed while in use.
+	 */
+	XrSession& get();
+
+	/*
+	 * Provides a RAII-style lock on accesses to the XrSession. Prevents any other thread from obtaining get() or lock_shared().
+	 */
+	SessionLock lock();
+
+	/*
+	 * Provides a RAII-style lock on modification to the XrSession. Prevents any other thread from obtaining lock().
+	 */
+	[[nodiscard]] SessionLock lock_shared();
+
+	/*
+	 * Resets the underlying XrSession to XR_NULL_HANDLE. Does not actually call xrDestroySession.
+	 */
+	void reset();
+};
+
+// This class is to prevent having to litter mutexes everywhere.
+// It gets a shared_lock or lock on the session mutex and the mutex gets unlocked (on destruction)
+// after whatever function call needs the session completes.
+class SessionLock {
+	std::shared_lock<std::shared_mutex> shared_lock;
+	std::unique_lock<std::shared_mutex> lock;
+	SessionWrapper& parent;
+	bool owner = false;
+	inline static thread_local bool thread_owns_lock = false;
+
+public:
+	SessionLock(SessionWrapper& p, bool exclusive);
+	~SessionLock();
+	operator XrSession&();
+};
+
 XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin);
 XrSpace xr_space_from_ref_space_type(XrReferenceSpaceType spaceType);
 
@@ -77,7 +123,7 @@ XrQuaternionf yRotation(XrQuaternionf& q, XrQuaternionf& r);
 void rotate_vector_by_quaternion(const XrVector3f& v, const XrQuaternionf& q, XrVector3f& vprime);
 
 extern XrInstance xr_instance;
-extern XrSession xr_session;
+extern SessionWrapper xr_session;
 extern XrSystemId xr_system;
 XrViewConfigurationView& xr_main_view(XruEye view_id);
 extern XrSessionGlobals* xr_gbl;

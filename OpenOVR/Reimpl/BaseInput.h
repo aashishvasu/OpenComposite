@@ -363,16 +363,11 @@ public: // INTERNAL FUNCTIONS
 
 	bool AreActionsLoaded();
 
-	// Gets a property from the current active interaction profile, if there is an active profile and if the property is known.
-	// A hand type of HAND_NONE will grab an HMD property.
-	template <typename T>
-	std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::HandType hand)
-	{
-		return (activeProfile) ? activeProfile->GetProperty<T>(property, hand) : std::nullopt;
-	}
-
-	// Requests the current interaction profile from the runtime
-	void UpdateInteractionProfile();
+	/**
+	 * Tries to force the runtime to expose an interaction profile.
+	 * Called from XrBackend::PumpEvents if we haven't found an interaction profile.
+	 */
+	void QueryForInteractionProfile();
 
 	/**
 	 * Get a number that increments each time xrSyncActions is called. Can be used to check if a cached input value
@@ -667,7 +662,6 @@ private:
 	bool hasLoadedActions = false;
 	std::string loadedActionsPath;
 	bool usingLegacyInput = false;
-	std::vector<std::unique_ptr<InteractionProfile>> interactionProfiles;
 	Registry<ActionSet> actionSets;
 	Registry<Action> actions;
 	bool allowSetDominantHand = false;
@@ -768,8 +762,4 @@ private:
 	 * Get the state for a digital action, which could be bound to a DPad action.
 	 */
 	XrResult getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
-
-	InteractionProfile* activeProfile = nullptr;
-
-	friend InteractionProfile;
 };

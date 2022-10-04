@@ -7,7 +7,7 @@
 #include "xr_ext.h"
 
 XrInstance xr_instance = XR_NULL_HANDLE;
-XrSession xr_session = XR_NULL_HANDLE;
+SessionWrapper xr_session;
 XrSystemId xr_system = XR_NULL_SYSTEM_ID;
 XrViewConfigurationView xr_main_views[XruEyeCount] = {};
 XrSessionGlobals* xr_gbl = nullptr;
@@ -97,13 +97,13 @@ XrSessionGlobals::XrSessionGlobals()
 	spaceInfo.poseInReferenceSpace.orientation = G2X_quat(glm::identity<glm::quat>());
 
 	spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
-	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &floorSpace));
+	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session.get(), &spaceInfo, &floorSpace));
 
 	spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
-	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &seatedSpace));
+	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session.get(), &spaceInfo, &seatedSpace));
 
 	spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &viewSpace));
+	OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session.get(), &spaceInfo, &viewSpace));
 
 	// Read the system properties, including those for hand-tracking
 	if (xr_ext->handTrackingExtensionAvailable())
@@ -191,3 +191,45 @@ void rotate_vector_by_quaternion(const XrVector3f& v, const XrQuaternionf& q, Xr
 	    + (s * s - v3_dot(u, u)) * v
 	    + 2.0f * s * v3_cross(u, v);
 }
+
+XrSession& SessionWrapper::get()
+{
+	return SessionLock(*this, false);
+}
+
+SessionLock SessionWrapper::lock_shared()
+{
+	return SessionLock(*this, false);
+}
+
+SessionLock SessionWrapper::lock()
+{
+	return SessionLock(*this, true);
+}
+
+void SessionWrapper::reset()
+{
+	session = XR_NULL_HANDLE;
+}
+
+SessionLock::SessionLock(SessionWrapper& p, bool exclusive)
+    : parent(p)
+{
+	if (!thread_owns_lock) {
+		if (exclusive)
+			lock = std::unique_lock(p.mutex);
+		else
+			shared_lock = std::shared_lock(p.mutex);
+
+		thread_owns_lock = true;
+		owner = true;
+	}
+}
+
+SessionLock::~SessionLock()
+{
+	if (owner)
+		thread_owns_lock = false;
+}
+
+SessionLock::operator XrSession&() { return parent.session; }

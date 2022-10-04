@@ -129,7 +129,7 @@ void DX12Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 		desc.arraySize = 1;
 		desc.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT | XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 
-		XrResult result = xrCreateSwapchain(xr_session, &desc, &chain);
+		XrResult result = xrCreateSwapchain(xr_session.get(), &desc, &chain);
 		if (!XR_SUCCEEDED(result))
 			OOVR_ABORTF("Cannot create DX texture swap chain: err %d", result);
 

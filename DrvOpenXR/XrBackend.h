@@ -38,13 +38,40 @@ public:
 
 	void PrepareForSessionShutdown();
 
+	/**
+	 * Restarts the session to allow for inputs to be attached to the session, if necessary.
+	 * To be called from BaseInput whenever it's attempting to attach the game actions.
+	 * Restarting the session should only be necessary if we've already created the infoSet.
+	 */
+	static void MaybeRestartForInputs();
+
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
-	std::unique_ptr<XrController> hand_left = std::make_unique<XrController>(XrController::XCT_LEFT);
-	std::unique_ptr<XrController> hand_right = std::make_unique<XrController>(XrController::XCT_RIGHT);
+	std::unique_ptr<XrController> hand_left;
+	std::unique_ptr<XrController> hand_right;
 
 	void CheckOrInitCompositors(const vr::Texture_t* tex);
 	std::unique_ptr<Compositor> compositors[XruEyeCount];
+
+	/**
+	 * Updates the current interaction profile in use according to the runtime.
+	 * This will set the XrHMD's interaction profile, as well as create the XrControllers
+	 * and set their interaction profiles accordingly.
+	 * This allows for games to retrieve correct per-controller OpenVR properties that they request.
+	 * Called from PumpEvents on an INTERACTION_PROFILE_CHANGED event.
+	 */
+	void UpdateInteractionProfile();
+
+	/**
+	 * Attempts to force the runtime to expose an interaction profile
+	 * (i.e., send an INTERACTION_PROFILE_CHANGED event).
+	 * If this is called before the game's actions have been attached to the session by BaseInput
+	 * (which is the case for essentially all legacy input games), the session will have to be restarted
+	 * to attach the actual inputs. BaseInput handles this when attaching its inputs.
+	 */
+	void QueryForInteractionProfile();
+	void CreateInfoSet();
+	void BindInfoSet();
 
 	// Whether we've restarted the session to use the application's rendering API yet
 	bool usingApplicationGraphicsAPI = false;
@@ -71,4 +98,31 @@ private:
 	uint32_t nFrameIndex = 0;
 
 	double frameSubmitTimeUs = 0.0;
+
+	// Action set and action used for querying for the interaction profile
+	inline static XrActionSet infoSet = XR_NULL_HANDLE;
+	XrAction infoAction = XR_NULL_HANDLE;
+	XrPath subactionPaths[2] = { XR_NULL_PATH, XR_NULL_PATH };
+
+	// Abstract class for holding a graphics binding.
+	class BindingBase {
+	public:
+		virtual void* asVoid() = 0;
+		virtual ~BindingBase() = default;
+	};
+
+	// A wrapper around a graphics binding type, subclassing BindingBase
+	// It is templated to allow storing any of the possible graphics bindings and getting a void* to it, as necessary for xrCreateSession (in DrvOpenXR::SetupSession)
+	template <typename T>
+	class BindingWrapper : public BindingBase {
+		T data;
+
+	public:
+		BindingWrapper(T data)
+		    : data(data) {}
+		void* asVoid() override { return &data; }
+	};
+
+	// The current graphics binding, used for restarting the session
+	inline static std::unique_ptr<BindingBase> graphicsBinding = nullptr;
 };

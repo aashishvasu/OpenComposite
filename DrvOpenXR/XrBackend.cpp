@@ -3,6 +3,7 @@
 //
 
 #include "XrBackend.h"
+#include "generated/interfaces/vrtypes.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -30,6 +31,7 @@
 #include "generated/interfaces/IVRCompositor_018.h"
 
 #include <chrono>
+#include <ranges>
 #include <type_traits>
 
 XrBackend::XrBackend()
@@ -155,6 +157,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			d3dInfo.type = XR_TYPE_GRAPHICS_BINDING_D3D11_KHR;
 			d3dInfo.device = dev;
 			DrvOpenXR::SetupSession(&d3dInfo);
+			graphicsBinding = std::make_unique<BindingWrapper<decltype(d3dInfo)>>(d3dInfo);
 
 			dev->Release();
 #else
@@ -178,6 +181,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			d3dInfo.device = device.Get();
 			d3dInfo.queue = d3dTexData->m_pCommandQueue;
 			DrvOpenXR::SetupSession(&d3dInfo);
+			graphicsBinding = std::make_unique<BindingWrapper<decltype(d3dInfo)>>(d3dInfo);
 
 #ifdef _DEBUG
 			ComPtr<ID3D12Debug> debugController;
@@ -220,6 +224,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			);
 
 			DrvOpenXR::SetupSession(&binding);
+			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
 
 			// BAD BAD BAD BAD. Writes into rtQueue in vkcompositor.h so we have a queue that came from the runtime
 
@@ -247,6 +252,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			}
 
 			DrvOpenXR::SetupSession(&binding);
+			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
 #else
 			// Only support xlib for now (same as Monado)
 			// TODO wayland
@@ -277,6 +283,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			binding.glxContext = glXGetCurrentContext();
 
 			DrvOpenXR::SetupSession(&binding);
+			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
 #endif
 			// End of platform-specific code
 
@@ -295,6 +302,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			binding.next = nullptr;
 
 			DrvOpenXR::SetupSession(&binding);
+			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
 
 #else
 			OOVR_ABORT("Application is trying to submit an OpenGL texture, which OpenComposite supports but is disabled in this build");
@@ -326,14 +334,17 @@ void XrBackend::WaitForTrackingData()
 	XrFrameWaitInfo waitInfo{ XR_TYPE_FRAME_WAIT_INFO };
 	XrFrameState state{ XR_TYPE_FRAME_STATE };
 
-	OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session, &waitInfo, &state));
-	xr_gbl->nextPredictedFrameTime = state.predictedDisplayTime;
+	{
+		auto lock = xr_session.lock_shared();
+		OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session.get(), &waitInfo, &state));
+		xr_gbl->nextPredictedFrameTime = state.predictedDisplayTime;
 
-	// FIXME loop until this returns true?
-	// OOVR_FALSE_ABORT(state.shouldRender);
+		// FIXME loop until this returns true?
+		// OOVR_FALSE_ABORT(state.shouldRender);
 
-	XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
-	OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session, &beginInfo));
+		XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
+		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session.get(), &beginInfo));
+	}
 
 	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
 	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
@@ -342,7 +353,7 @@ void XrBackend::WaitForTrackingData()
 	XrViewState viewState = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, views));
+	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &viewState, XruEyeCount, &viewCount, views));
 
 	for (int eye = 0; eye < XruEyeCount; eye++) {
 		projectionViews[eye].fov = views[eye].fov;
@@ -472,7 +483,7 @@ void XrBackend::SubmitFrames(bool showSkybox, bool postPresent)
 	info.layers = headers;
 	info.layerCount = layer_count;
 
-	OOVR_FAILED_XR_SOFT_ABORT(xrEndFrame(xr_session, &info));
+	OOVR_FAILED_XR_SOFT_ABORT(xrEndFrame(xr_session.get(), &info));
 
 	BaseSystem* sys = GetUnsafeBaseSystem();
 	if (sys) {
@@ -500,7 +511,7 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		XrFrameWaitInfo waitInfo{ XR_TYPE_FRAME_WAIT_INFO };
 		XrFrameState state{ XR_TYPE_FRAME_STATE };
 
-		OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session, &waitInfo, &state));
+		OOVR_FAILED_XR_ABORT(xrWaitFrame(xr_session.get(), &waitInfo, &state));
 		xr_gbl->nextPredictedFrameTime = state.predictedDisplayTime;
 
 		// This submits a frame when a skybox override is set. This is designed around rFactor2 where the skybox is used as
@@ -510,7 +521,7 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		// not yet implemented since it's not currently worth the hassle, but if someone in the future wants to do it:
 		// TODO submit skybox frames in their own thread.
 		XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
-		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session, &beginInfo));
+		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session.get(), &beginInfo));
 
 		static std::unique_ptr<Compositor> compositor = nullptr;
 
@@ -549,7 +560,7 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		info.layers = layers;
 		info.layerCount = 1;
 
-		OOVR_FAILED_XR_SOFT_ABORT(xrEndFrame(xr_session, &info));
+		OOVR_FAILED_XR_SOFT_ABORT(xrEndFrame(xr_session.get(), &info));
 
 	} else {
 		OOVR_SOFT_ABORT("Unsupported texture count");
@@ -638,7 +649,7 @@ bool XrBackend::GetPlayAreaPoints(vr::HmdVector3_t* points, int* count)
 		*count = 0;
 
 	XrExtent2Df bounds;
-	XrResult res = xrGetReferenceSpaceBoundsRect(xr_session, XR_REFERENCE_SPACE_TYPE_STAGE, &bounds);
+	XrResult res = xrGetReferenceSpaceBoundsRect(xr_session.get(), XR_REFERENCE_SPACE_TYPE_STAGE, &bounds);
 
 	if (res == XR_SPACE_BOUNDS_UNAVAILABLE)
 		return false;
@@ -691,7 +702,7 @@ void XrBackend::PumpEvents()
 
 		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
 			auto* changed = (XrEventDataSessionStateChanged*)&ev;
-			OOVR_FALSE_ABORT(changed->session == xr_session);
+			OOVR_FALSE_ABORT(changed->session == xr_session.get());
 			sessionState = changed->state;
 
 			// Monado bug: it returns 0 for this value (at least for the first two states)
@@ -707,7 +718,7 @@ void XrBackend::PumpEvents()
 				// Start the session running - this means we're supposed to start submitting frames
 				XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
 				beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-				OOVR_FAILED_XR_ABORT(xrBeginSession(xr_session, &beginInfo));
+				OOVR_FAILED_XR_ABORT(xrBeginSession(xr_session.get(), &beginInfo));
 				sessionActive = true;
 				break;
 			}
@@ -715,7 +726,7 @@ void XrBackend::PumpEvents()
 				// End the session. The session is still valid and we can still query some information
 				// from it, but we're not allowed to submit frames anymore. This is done when the engagement
 				// sensor detects the user has taken off the headset, for example.
-				OOVR_FAILED_XR_ABORT(xrEndSession(xr_session));
+				OOVR_FAILED_XR_ABORT(xrEndSession(xr_session.get()));
 				sessionActive = false;
 				renderingFrame = false;
 				break;
@@ -734,18 +745,33 @@ void XrBackend::PumpEvents()
 				// suppress clion warning about missing branches
 				break;
 			}
+		} else if (ev.type == XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED) {
+			UpdateInteractionProfile();
 		}
 
-		if (ev.type == XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED) {
-			auto input = GetUnsafeBaseInput();
-			if (input)
-				input->UpdateInteractionProfile();
-			auto system = GetUnsafeBaseSystem();
-			if (system) {
-				VREvent_t profile = { VREvent_TrackedDeviceUpdated, 0 };
-				system->_EnqueueEvent(profile);
-			}
-		}
+	} // while loop
+
+	/*
+	   We check for AreActionsLoaded here because:
+	   1. Games using legacy input call xrSyncActions every frame anyway, so the runtime should
+	      give us an interaction profile without us forcing it
+	   2. Games using an action manifest should be calling UpdateActionState every frame, which calls xrSyncActions.
+	      This means the only games we wouldn't be able to confidently grab an interaction profile from
+	      would be ones where an action manifest is loaded but UpdateActionState is not being called
+	      (because the game checks IsTrackedDeviceConnected or something),
+	      and hopefully no game like that exists.
+	   Some runtimes (WMR) do not instantly return an interaction profile,
+	   so we will keep tryinig to query it until it does.
+
+	   Note that we check that the session is focused because this means that the application
+	   has already submitted a frame, that frame is visible, and we have input focus.
+	   Waiting until the application has input focus allows us to avoid unnecessarily restarting the
+	   session when we can't even receive input anyway, as well as before the session is restarted for
+	   the temporary session.
+   */
+	BaseInput* input = GetUnsafeBaseInput();
+	if (input && !input->AreActionsLoaded() && sessionState == XR_SESSION_STATE_FOCUSED && !hand_left && !hand_right) {
+		QueryForInteractionProfile();
 	}
 }
 
@@ -753,6 +779,7 @@ void XrBackend::OnSessionCreated()
 {
 	sessionState = XR_SESSION_STATE_UNKNOWN;
 	sessionActive = false;
+	renderingFrame = false;
 
 	PumpEvents();
 
@@ -779,6 +806,11 @@ void XrBackend::PrepareForSessionShutdown()
 	for (std::unique_ptr<Compositor>& c : compositors) {
 		c.reset();
 	}
+	if (infoSet != XR_NULL_HANDLE) {
+		OOVR_FAILED_XR_ABORT(xrDestroyActionSet(infoSet));
+		infoSet = XR_NULL_HANDLE;
+		infoAction = XR_NULL_HANDLE;
+	}
 }
 
 // On Android, add an event poll function for use while sleeping
@@ -798,4 +830,161 @@ void XrBackend::OnOverlayTexture(const vr::Texture_t* texture)
 {
 	if (!usingApplicationGraphicsAPI)
 		CheckOrInitCompositors(texture);
+}
+
+void XrBackend::UpdateInteractionProfile()
+{
+	struct hand_info {
+		const char* pathstr;
+		std::unique_ptr<XrController>& controller;
+		const XrController::XrControllerType hand;
+	};
+
+	hand_info hands[] = {
+		{ .pathstr = "/user/hand/left", .controller = hand_left, .hand = XrController::XCT_LEFT },
+		{ .pathstr = "/user/hand/right", .controller = hand_right, .hand = XrController::XCT_RIGHT }
+	};
+
+	for (hand_info& info : hands) {
+		XrInteractionProfileState state{ XR_TYPE_INTERACTION_PROFILE_STATE };
+		XrPath path;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, info.pathstr, &path));
+		OOVR_FAILED_XR_ABORT(xrGetCurrentInteractionProfile(xr_session.get(), path, &state));
+
+		// interaction profile detected
+		if (state.interactionProfile != XR_NULL_PATH) {
+			uint32_t tmp;
+			char path_name[XR_MAX_PATH_LENGTH];
+			OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, state.interactionProfile, XR_MAX_PATH_LENGTH, &tmp, path_name));
+
+			for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
+				if (profile->GetPath() == path_name) {
+					OOVR_LOGF("%s - Using interaction profile: %s", info.pathstr, path_name);
+					info.controller = std::make_unique<XrController>(info.hand, *profile);
+					hmd->SetInteractionProfile(profile.get());
+					BaseSystem* system = GetUnsafeBaseSystem();
+					if (system) {
+						VREvent_t event = {
+							.eventType = VREvent_TrackedDeviceActivated,
+							.trackedDeviceIndex = (TrackedDeviceIndex_t)info.hand + 1
+						};
+						system->_EnqueueEvent(event);
+						event = {
+							.eventType = VREvent_TrackedDeviceUpdated,
+							.trackedDeviceIndex = 0
+						};
+						system->_EnqueueEvent(event);
+					}
+					break;
+				}
+			}
+			if (!hand_left && !hand_right) {
+				// Runtime returned an unknown interaction profile!
+				OOVR_ABORTF("Runtiime unexpectedly returned an unknown interaction profile: %s", path_name);
+			}
+		} else {
+			// interaction profile lost/not detected
+			OOVR_LOGF("%s - No interaction profile detected", info.pathstr);
+			if (info.controller) {
+				info.controller.reset();
+				BaseSystem* system = GetUnsafeBaseSystem();
+				if (system) {
+					VREvent_t event = {
+						.eventType = VREvent_TrackedDeviceDeactivated,
+						.trackedDeviceIndex = (TrackedDeviceIndex_t)info.hand + 1
+					};
+					system->_EnqueueEvent(event);
+				}
+			}
+		}
+	}
+}
+
+void XrBackend::MaybeRestartForInputs()
+{
+	// if we haven't setup infoSet, no need to restart
+	if (infoSet == XR_NULL_HANDLE)
+		return;
+
+	OOVR_FALSE_ABORT(graphicsBinding);
+	OOVR_LOG("Restarting session for inputs...");
+	DrvOpenXR::SetupSession(graphicsBinding->asVoid());
+	OOVR_LOG("Session restart successful!");
+}
+
+void XrBackend::QueryForInteractionProfile()
+{
+	// Note that we want to avoid using BaseInput here because it would allow for games to call GetControllerState before rendering
+	// and then we'd have to recreate the session twice, once for the input state and once for when the game submits a frame
+	if (subactionPaths[0] == XR_NULL_PATH) {
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, "/user/hand/left", &subactionPaths[0]));
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, "/user/hand/right", &subactionPaths[1]));
+	}
+
+	if (infoSet == XR_NULL_HANDLE) {
+		OOVR_LOG("Creating infoset");
+		CreateInfoSet();
+		BindInfoSet();
+	}
+
+	// Interaction profiles are updated after xrSyncActions, so we'll try to make the runtime give us one by calling xrSyncActions.
+	XrActiveActionSet active[2] = {
+		{ .actionSet = infoSet, .subactionPath = subactionPaths[0] },
+		{ .actionSet = infoSet, .subactionPath = subactionPaths[1] },
+	};
+
+	XrActionsSyncInfo info{ XR_TYPE_ACTIONS_SYNC_INFO };
+	info.countActiveActionSets = 2;
+	info.activeActionSets = active;
+
+	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session.get(), &info));
+}
+
+void XrBackend::CreateInfoSet()
+{
+	XrActionSetCreateInfo set_info{ XR_TYPE_ACTION_SET_CREATE_INFO };
+	strcpy_s(set_info.actionSetName, XR_MAX_ACTION_SET_NAME_SIZE, "opencomposite-internal-info-set");
+	strcpy_s(set_info.localizedActionSetName, XR_MAX_LOCALIZED_ACTION_SET_NAME_SIZE, "OpenComposite internal info set");
+	OOVR_FAILED_XR_ABORT(xrCreateActionSet(xr_instance, &set_info, &infoSet));
+
+	XrActionCreateInfo act_info{ XR_TYPE_ACTION_CREATE_INFO };
+	strcpy_s(act_info.actionName, XR_MAX_ACTION_NAME_SIZE, "opencomposite-internal-info-act");
+	strcpy_s(act_info.localizedActionName, XR_MAX_LOCALIZED_ACTION_NAME_SIZE, "OpenComposite internal info action");
+	act_info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+	act_info.countSubactionPaths = std::size(subactionPaths);
+	act_info.subactionPaths = subactionPaths;
+	OOVR_FAILED_XR_ABORT(xrCreateAction(infoSet, &act_info, &infoAction));
+}
+
+void XrBackend::BindInfoSet()
+{
+	for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
+		XrPath interactionProfilePath;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile->GetPath().c_str(), &interactionProfilePath));
+		XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+
+		std::vector<XrActionSuggestedBinding> bindings;
+		// grabs the first found paths ending in /click for each subaction path
+		for (const std::string& path_name : { "/user/hand/left", "/user/hand/right" }) {
+			auto click_path = std::ranges::find_if(profile->GetValidInputPaths(),
+			    [&path_name](std::string s) -> bool {
+				    return s.find("/click") != s.npos && s.find(path_name) != s.npos;
+			    });
+			XrPath path;
+			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, click_path->c_str(), &path));
+			bindings.push_back({ .action = infoAction, .binding = path });
+
+			suggestedBindings.interactionProfile = interactionProfilePath;
+			suggestedBindings.suggestedBindings = bindings.data();
+			suggestedBindings.countSuggestedBindings = bindings.size();
+
+			OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
+		}
+	}
+
+	// Attach the info set by itself. We will have to restart the session once the game attaches its real inputs.
+	XrSessionActionSetsAttachInfo info{ XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
+	info.countActionSets = 1;
+	info.actionSets = &infoSet;
+	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session.get(), &info));
 }

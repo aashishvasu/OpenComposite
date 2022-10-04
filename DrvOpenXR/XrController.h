@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Misc/Input/InteractionProfile.h"
 #include "XrTrackedDevice.h"
 
 class XrController : public XrTrackedDevice {
@@ -10,7 +11,7 @@ public:
 		XCT_TRACKED_OBJECT,
 	};
 
-	explicit XrController(XrControllerType type);
+	explicit XrController(XrControllerType type, const InteractionProfile& profile);
 
 	HandType GetHand() override;
 
@@ -25,4 +26,5 @@ public:
 
 private:
 	XrControllerType type;
+	const InteractionProfile& profile;
 };

@@ -5,16 +5,26 @@
 #include "../OpenOVR/Reimpl/BaseInput.h"
 #include "generated/static_bases.gen.h"
 
-XrController::XrController(XrController::XrControllerType type)
-    : type(type)
+XrController::XrController(XrController::XrControllerType type, const InteractionProfile& profile)
+    : type(type), profile(profile)
 {
+	InitialiseDevice(GetHand() + 1);
 }
+
+#define TRY_PROFILE_PROP(type)                                                \
+	do {                                                                      \
+		std::optional<type> ret = profile.GetProperty<type>(prop, GetHand()); \
+		if (ret.has_value())                                                  \
+			return *ret;                                                      \
+	} while (0)
 
 // properties
 bool XrController::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
+
+	TRY_PROFILE_PROP(bool);
 
 	switch (prop) {
 	case vr::Prop_DeviceProvidesBatteryStatus_Bool:
@@ -28,6 +38,8 @@ int32_t XrController::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty p
 {
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
+
+	TRY_PROFILE_PROP(int32_t);
 
 	// Continue to pretend to be a CV1
 	// Don't apply the inputs to the tracking object
@@ -59,6 +71,8 @@ uint64_t XrController::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
 
+	TRY_PROFILE_PROP(uint64_t);
+
 	// This is for the old input system, which we don't initially need
 	if (prop == vr::Prop_SupportedButtons_Uint64) {
 		// Just assume we're an Oculus Touch-style controller and enable all the buttons.
@@ -86,6 +100,14 @@ uint32_t XrController::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
 
+	std::optional<std::string> ret = profile.GetProperty<std::string>(prop, GetHand());
+	if (ret.has_value()) {
+		if (value != NULL && bufferSize > 0) {
+			strcpy_s(value, bufferSize, ret->c_str());
+		}
+		return ret->size() + 1;
+	}
+
 #define PROP(in, out)                                                                                  \
 	if (prop == in) {                                                                                  \
 		if (value != NULL && bufferSize > 0) {                                                         \
@@ -108,18 +130,6 @@ uint32_t XrController::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty
 		break;
 	default:
 		OOVR_ABORTF("Invalid controller type %d", type);
-	}
-
-	BaseInput* input = GetUnsafeBaseInput();
-
-	if (input) {
-		std::optional<std::string> ret = input->GetProperty<std::string>(prop, GetHand());
-		if (ret.has_value()) {
-			if (value != NULL && bufferSize > 0) {
-				strcpy_s(value, bufferSize, ret->c_str());
-			}
-			return ret->size() + 1;
-		}
 	}
 
 	return XrTrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);

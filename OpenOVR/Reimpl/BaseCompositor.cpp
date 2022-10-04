@@ -255,15 +255,20 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VR
 		OOVR_ABORT("Cannot mismatch first and second eye renders");
 	}
 
-	if (!textureNull)
-		BackendManager::Instance().StoreEyeTexture(eye, texture, bounds, submitFlags, isFirstEye);
+	{
+		// Turns out games (Beat Saber in particular) really do not like the session being restarted
+		// while they're in the middle of submitting a frame.
+		auto lock = xr_session.lock_shared();
+		if (!textureNull)
+			BackendManager::Instance().StoreEyeTexture(eye, texture, bounds, submitFlags, isFirstEye);
 
-	if (leftEyeSubmitted && rightEyeSubmitted) {
-		if (!isNullRender)
-			BackendManager::Instance().SubmitFrames(isInSkybox, false);
+		if (leftEyeSubmitted && rightEyeSubmitted) {
+			if (!isNullRender)
+				BackendManager::Instance().SubmitFrames(isInSkybox, false);
 
-		leftEyeSubmitted = false;
-		rightEyeSubmitted = false;
+			leftEyeSubmitted = false;
+			rightEyeSubmitted = false;
+		}
 	}
 
 	return VRCompositorError_None;

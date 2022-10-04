@@ -213,7 +213,7 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 
 		OOVR_LOGF("Format: %d", tex->m_nFormat);
 
-		OOVR_FAILED_XR_ABORT(xrCreateSwapchain(xr_session, &createInfo, &chain));
+		OOVR_FAILED_XR_ABORT(xrCreateSwapchain(xr_session.get(), &createInfo, &chain));
 
 		// Perform a layout transition, since the textures come
 		//  as VK_IMAGE_LAYOUT_UNDEFINED, at least at the time of writing.

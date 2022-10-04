@@ -281,6 +281,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 void DrvOpenXR::SetupSession(const void* graphicsBinding)
 {
+	// SetupSession is used to restart the session, and as such, we want to prevent other threads from attempting to use the session
+	// while we're rebuilding it (otherwise we get gross nondescript crashes), so we will put a lock on it here.
+	auto lock = xr_session.lock();
 	if (xr_gbl) {
 		ShutdownSession();
 	}
@@ -292,7 +295,7 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 	sessionInfo.type = XR_TYPE_SESSION_CREATE_INFO;
 	sessionInfo.systemId = xr_system;
 	sessionInfo.next = graphicsBinding;
-	OOVR_FAILED_XR_ABORT(xrCreateSession(xr_instance, &sessionInfo, &xr_session));
+	OOVR_FAILED_XR_ABORT(xrCreateSession(xr_instance, &sessionInfo, &xr_session.get()));
 
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
 	xr_gbl = new XrSessionGlobals();
@@ -327,8 +330,8 @@ void DrvOpenXR::ShutdownSession()
 	// Hey it turns out that xrDestroySession can be called whenever - how convenient
 	// OOVR_FAILED_XR_ABORT(xrRequestExitSession(xr_session));
 
-	OOVR_FAILED_XR_ABORT(xrDestroySession(xr_session));
-	xr_session = XR_NULL_HANDLE;
+	OOVR_FAILED_XR_ABORT(xrDestroySession(xr_session.get()));
+	xr_session.reset();
 
 	// Destroy the graphics after destroying the session, otherwise when the runtime goes to destroy it's swapchain
 	// it will be sad, in a probably SEGFAULT-y way.
@@ -337,7 +340,7 @@ void DrvOpenXR::ShutdownSession()
 
 void DrvOpenXR::FullShutdown()
 {
-	if (xr_session)
+	if (xr_session.get())
 		ShutdownSession();
 
 #ifdef _DEBUG

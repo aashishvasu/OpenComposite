@@ -54,6 +54,13 @@ private:
 public:
 	virtual ~InteractionProfile() = default;
 
+	using ProfileList = std::vector<std::unique_ptr<InteractionProfile>>;
+	/**
+	 * Gets a list of all of the possible interaction profiles.
+	 * If implementing a new profile, be sure to add it here!
+	 */
+	static const ProfileList& GetProfileList();
+
 	/**
 	 * Get the path of the profile as used by xrSuggestInteractionProfileBindings, for
 	 * example /interaction_profiles/khr/simple_controller.
@@ -104,13 +111,14 @@ public:
 	template <typename T>
 	requires(in_variant<T, property_types>::value)
 	    std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::HandType hand)
+	const
 	{
 		using enum ITrackedDevice::HandType;
 		if (hand != HAND_NONE && propertiesMap.contains(property)) {
-			hand_values_type ret = propertiesMap[property];
+			hand_values_type ret = propertiesMap.at(property);
 			return std::get<T>((hand == HAND_RIGHT && ret.right.has_value()) ? ret.right.value() : ret.left);
 		} else if (hmdPropertiesMap.contains(property)) {
-			return std::get<T>(hmdPropertiesMap[property]);
+			return std::get<T>(hmdPropertiesMap.at(property));
 		}
 		return std::nullopt;
 	}
