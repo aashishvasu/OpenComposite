@@ -26,9 +26,8 @@ struct LegacyControllerActions {
 
 	XrAction haptic;
 
-	// Note: the 'grip' pose runs along the axis of the Touch controller, the 'aim' pose comes
-	// straight out the front if you're holding it neutral. They correspond to the old Oculus
-	// and SteamVR poses.
+	// Note: the 'grip' pose is like the natural holding pose of a controller, the 'aim' pose
+	// is a (runtime dependent) way for essentially using a controller like a pointer.
 	// Note: The skeletal input functions all work inside the grip space, not sure if SteamVR does it this way.
 	XrAction gripPoseAction, aimPoseAction;
 	XrSpace gripPoseSpace, aimPoseSpace;

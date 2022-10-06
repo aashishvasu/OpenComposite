@@ -2253,7 +2253,8 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
 	ITrackedDevice::HandType hand = dev->GetHand();
 	LegacyControllerActions& ctrl = legacyControllers[hand];
 
-	space = ctrl.aimPoseSpace;
+	// OpenVR games are typically expecting a "raw"/natural controller pose, and the grip pose is the closest analog to that.
+	space = ctrl.gripPoseSpace;
 }
 
 bool BaseInput::AreActionsLoaded()
