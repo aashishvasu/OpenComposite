@@ -19,7 +19,8 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		"/user/hand/right/input/a/touch",
 		"/user/hand/right/input/b/click",
 		"/user/hand/right/input/b/touch",
-		"/user/hand/right/input/system/click", // may not be available for application use
+		// Runtimes are not required to support the system button paths, and no OpenVR game can use it anyway.
+		//"/user/hand/right/input/system/click",
 	};
 
 	const char* perHandPaths[] = {

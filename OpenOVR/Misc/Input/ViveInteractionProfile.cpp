@@ -3,7 +3,8 @@
 ViveWandInteractionProfile::ViveWandInteractionProfile()
 {
 	std::string paths[] = {
-		"/input/system/click",
+		// Runtimes are not required to support the system button paths, and no OpenVR game can use them anyway.
+		//"/input/system/click",
 		"/input/squeeze/click",
 		"/input/menu/click",
 		"/input/trigger/click",

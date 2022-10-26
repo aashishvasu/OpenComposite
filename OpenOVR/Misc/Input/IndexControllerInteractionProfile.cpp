@@ -5,8 +5,9 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 {
 	// Figured these out from OpenXR spec section 6.4
 	std::string paths[] = {
-		"/input/system/click", // may not be available for application use
-		"/input/system/touch", // may not be available for application use
+		// Runtimes are not required to support the system button paths, and no OpenVR game can use them anyway.
+		//"/input/system/click",
+		//"/input/system/touch",
 		"/input/a/click",
 		"/input/a/touch",
 		"/input/b/click",
