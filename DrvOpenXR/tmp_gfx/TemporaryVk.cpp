@@ -81,14 +81,18 @@ TemporaryVk::TemporaryVk()
 	queueInfo.pQueuePriorities = &priority;
 
 	// Now create the logical device
-	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanDeviceExtensionsKHR(xr_instance, xr_system, 0, &extCap, nullptr));
-	std::string deviceExtensionsStr;
-	deviceExtensionsStr.resize(extCap, 0);
-	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanDeviceExtensionsKHR(xr_instance, xr_system, deviceExtensionsStr.size(), &extCap, (char*)deviceExtensionsStr.data()));
+	VkDeviceCreateInfo devCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 
 	std::vector<std::string> deviceExtensionsStore;
 	std::vector<const char*> deviceExtensionsCstr;
-	parseExtensionsStr(deviceExtensionsStr, deviceExtensionsStore, deviceExtensionsCstr);
+
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanDeviceExtensionsKHR(xr_instance, xr_system, 0, &extCap, nullptr));
+	if (extCap > 1) {
+		std::string deviceExtensionsStr;
+		deviceExtensionsStr.resize(extCap, 0);
+		OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanDeviceExtensionsKHR(xr_instance, xr_system, deviceExtensionsStr.size(), &extCap, (char*)deviceExtensionsStr.data()));
+		parseExtensionsStr(deviceExtensionsStr, deviceExtensionsStore, deviceExtensionsCstr);
+	}
 
 	// Needed if the app ends up using Vulkan
 	deviceExtensionsCstr.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
@@ -99,7 +103,6 @@ TemporaryVk::TemporaryVk()
 	deviceExtensionsCstr.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 #endif
 
-	VkDeviceCreateInfo devCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 	devCreateInfo.enabledExtensionCount = deviceExtensionsCstr.size();
 	devCreateInfo.ppEnabledExtensionNames = deviceExtensionsCstr.data();
 
