@@ -38,20 +38,26 @@ TemporaryVk::TemporaryVk()
 	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanGraphicsRequirementsKHR(xr_instance, xr_system, &req));
 
 	// Create a Vulkan instance that the runtime will find suitable
+	VkInstanceCreateInfo createInfo{ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
+
 	uint32_t extCap;
 	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanInstanceExtensionsKHR(xr_instance, xr_system, 0, &extCap, nullptr));
-	std::string xrInstanceExtensions;
-	xrInstanceExtensions.resize(extCap, 0);
-	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanInstanceExtensionsKHR(xr_instance, xr_system, xrInstanceExtensions.size(), &extCap, (char*)xrInstanceExtensions.data()));
 
 	std::vector<std::string> instanceExtensionsStore;
 	std::vector<const char*> instanceExtensionsCstr;
-	parseExtensionsStr(xrInstanceExtensions, instanceExtensionsStore, instanceExtensionsCstr);
 
-	VkInstanceCreateInfo createInfo{ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
-	createInfo.enabledExtensionCount = instanceExtensionsCstr.size();
-	createInfo.ppEnabledExtensionNames = instanceExtensionsCstr.data();
-	// Don't use any layers here
+	// Make sure we actually have extensions to add - if not, runtime should only return buffer size of 1 for null terminator
+	if (extCap > 1) {
+		std::string xrInstanceExtensions;
+		xrInstanceExtensions.resize(extCap, 0);
+		OOVR_FAILED_XR_ABORT(xr_ext->xrGetVulkanInstanceExtensionsKHR(xr_instance, xr_system, xrInstanceExtensions.size(), &extCap, (char*)xrInstanceExtensions.data()));
+
+		parseExtensionsStr(xrInstanceExtensions, instanceExtensionsStore, instanceExtensionsCstr);
+
+		createInfo.enabledExtensionCount = instanceExtensionsCstr.size();
+		createInfo.ppEnabledExtensionNames = instanceExtensionsCstr.data();
+		// Don't use any layers here
+	}
 
 	OOVR_FAILED_VK_ABORT(vkCreateInstance(&createInfo, nullptr, &instance));
 
