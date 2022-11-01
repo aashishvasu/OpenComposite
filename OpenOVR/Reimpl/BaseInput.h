@@ -364,12 +364,6 @@ public: // INTERNAL FUNCTIONS
 	bool AreActionsLoaded();
 
 	/**
-	 * Tries to force the runtime to expose an interaction profile.
-	 * Called from XrBackend::PumpEvents if we haven't found an interaction profile.
-	 */
-	void QueryForInteractionProfile();
-
-	/**
 	 * Get a number that increments each time xrSyncActions is called. Can be used to check if a cached input value
 	 * is current or not.
 	 */
@@ -693,6 +687,7 @@ private:
 
 	void LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath);
 
+	void LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
 	void CreateLegacyActions();
 
 	/**
@@ -765,5 +760,5 @@ private:
 	/**
 	 * Get the state for a digital action, which could be bound to a DPad action.
 	 */
-	XrResult getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
+	XrResult getBooleanOrDpadData(Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
 };
