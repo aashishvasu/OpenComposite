@@ -1105,7 +1105,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 			if (pSets[i].nPriority != priority) {
 				ActionSet* as1 = cast_ASH(pSets[0].ulActionSet);
 				ActionSet* curAs = cast_ASH(pSets[1].ulActionSet);
-				OOVR_ABORTF("Active action set %s (%d) and %s (%d) have different priorities, this is not yet supported",
+				OOVR_SOFT_ABORTF("Active action set %s (%d) and %s (%d) have different priorities, this is not yet supported",
 				    as1->fullName.c_str(), curAs->fullName.c_str());
 			}
 		}
