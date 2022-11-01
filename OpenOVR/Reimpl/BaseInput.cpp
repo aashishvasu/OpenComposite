@@ -313,6 +313,18 @@ T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T
 	return ptr;
 }
 
+template <typename T>
+void BaseInput::Registry<T>::Reset()
+{
+	// We want to preserve handlesByName and namesByHandle, because handles are supposed to always be accessible
+	// from the same values regardless of if said handles are actually currently valid
+	// In the case of NomaiVR, it will set an action manifest, get all the action handles, and then set another (identical) manifest
+	// We can clear the actual item storage though, since these will no longer be valid
+	itemsByHandle.clear();
+	itemsByName.clear();
+	storage.clear();
+}
+
 // ---
 
 BaseInput::BaseInput()
@@ -347,10 +359,20 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		if (loadedActionsPath == pchActionManifestPath)
 			return vr::VRInputError_None;
 
-		OOVR_ABORT("Cannot re-load actions!");
+		OOVR_LOG("Received another manifest! Restarting session to reattach inputs...");
+		for (std::unique_ptr<ActionSet>& as : actionSets.GetItems()) {
+			OOVR_FAILED_XR_ABORT(xrDestroyActionSet(as->xr));
+		}
+		OOVR_FAILED_XR_ABORT(xrDestroyActionSet(legacyInputsSet));
+		legacyInputsSet = XR_NULL_HANDLE;
+		actions.Reset();
+		actionSets.Reset();
+		DpadBindingInfo::parents.clear();
 	}
 
+	restartingSession = true;
 	XrBackend::MaybeRestartForInputs();
+	restartingSession = false;
 
 	hasLoadedActions = true;
 	loadedActionsPath = pchActionManifestPath;
@@ -623,7 +645,9 @@ void BaseInput::LoadEmptyManifestIfRequired()
 	if (hasLoadedActions)
 		return;
 
+	restartingSession = true;
 	XrBackend::MaybeRestartForInputs();
+	restartingSession = false;
 
 	OOVR_LOG("Loading virtual empty manifest");
 
@@ -657,14 +681,11 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 void BaseInput::BindInputsForSession()
 {
-	// If we haven't set up our actions yet, we don't have to do anything
-	// This can happen if the session restarts (so DrvOpenXR calls this) but the inputs haven't
-	// been set up.
-	if (!hasLoadedActions)
+	// This is called from DrvOpenXR::SetupSession. If we requested a session restart ourselves, we're also
+	// going to bind the inputs ourselves anyway, so we don't want to do that twice.
+	// If we didn't request the restart but we also haven't even loaded actions yet, there's nothing to bind yet.
+	if (restartingSession || !hasLoadedActions)
 		return;
-
-	// Since we're attaching new inputs we want to be sure no other inputs are lingering around
-	XrBackend::MaybeRestartForInputs();
 
 	// Since the session has changed, any actionspaces we previously created are now invalid
 	for (const std::unique_ptr<Action>& action : actions.GetItems()) {

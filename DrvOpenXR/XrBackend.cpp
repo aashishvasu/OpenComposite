@@ -30,13 +30,40 @@
 
 #include "generated/interfaces/IVRCompositor_018.h"
 
+#include "tmp_gfx/TemporaryGraphics.h"
+
+#if defined(SUPPORT_VK)
+#include "tmp_gfx/TemporaryVk.h"
+#endif
+
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+#include "tmp_gfx/TemporaryD3D11.h"
+#endif
+
 #include <chrono>
 #include <ranges>
 #include <type_traits>
 
-XrBackend::XrBackend()
+std::unique_ptr<TemporaryGraphics> XrBackend::temporaryGraphics = nullptr;
+XrBackend::XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx)
 {
 	memset(projectionViews, 0, sizeof(projectionViews));
+
+	// setup temporaryGraphics
+
+#if defined(SUPPORT_VK)
+	if (useVulkanTmpGfx) {
+		temporaryGraphics = std::make_unique<TemporaryVk>();
+	}
+#endif
+
+#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
+	if (!temporaryGraphics && useD3D11TmpGfx) {
+		temporaryGraphics = std::make_unique<TemporaryD3D11>();
+	}
+#endif
+
+	OOVR_FALSE_ABORT(temporaryGraphics);
 
 	// setup the device indexes
 	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
@@ -156,8 +183,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			XrGraphicsBindingD3D11KHR d3dInfo{};
 			d3dInfo.type = XR_TYPE_GRAPHICS_BINDING_D3D11_KHR;
 			d3dInfo.device = dev;
-			DrvOpenXR::SetupSession(&d3dInfo);
-			graphicsBinding = std::make_unique<BindingWrapper<decltype(d3dInfo)>>(d3dInfo);
+			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingD3D11KHR>>(d3dInfo);
+			DrvOpenXR::SetupSession();
 
 			dev->Release();
 #else
@@ -180,8 +207,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			d3dInfo.type = XR_TYPE_GRAPHICS_BINDING_D3D12_KHR;
 			d3dInfo.device = device.Get();
 			d3dInfo.queue = d3dTexData->m_pCommandQueue;
-			DrvOpenXR::SetupSession(&d3dInfo);
-			graphicsBinding = std::make_unique<BindingWrapper<decltype(d3dInfo)>>(d3dInfo);
+			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingD3D12KHR>>(d3dInfo);
+			DrvOpenXR::SetupSession();
 
 #ifdef _DEBUG
 			ComPtr<ID3D12Debug> debugController;
@@ -223,8 +250,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			    binding.queueIndex //
 			);
 
-			DrvOpenXR::SetupSession(&binding);
-			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
+			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingVulkanKHR>>(binding);
+			DrvOpenXR::SetupSession();
 
 			// BAD BAD BAD BAD. Writes into rtQueue in vkcompositor.h so we have a queue that came from the runtime
 
@@ -251,8 +278,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 				OOVR_ABORTF("Null OpenGL GLRC or DC: %p,%p", (void*)binding.hGLRC, (void*)binding.hDC);
 			}
 
-			DrvOpenXR::SetupSession(&binding);
-			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
+			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingOpenGLWin32KHR>>(binding);
+			DrvOpenXR::SetupSession();
 #else
 			// Only support xlib for now (same as Monado)
 			// TODO wayland
@@ -282,8 +309,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			binding.glxDrawable = glXGetCurrentDrawable();
 			binding.glxContext = glXGetCurrentContext();
 
-			DrvOpenXR::SetupSession(&binding);
-			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
+			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingOpenGLXlibKHR>>(binding);
+			DrvOpenXR::SetupSession();
 #endif
 			// End of platform-specific code
 
@@ -301,8 +328,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			OOVR_FALSE_ABORT(binding.type == XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR);
 			binding.next = nullptr;
 
-			DrvOpenXR::SetupSession(&binding);
-			graphicsBinding = std::make_unique<BindingWrapper<decltype(binding)>>(binding);
+			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingOpenGLESAndroidKHR>>(binding);
+			DrvOpenXR::SetupSession();
 
 #else
 			OOVR_ABORT("Application is trying to submit an OpenGL texture, which OpenComposite supports but is disabled in this build");
@@ -312,6 +339,9 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 		default:
 			OOVR_ABORTF("Invalid/unknown texture type %d", tex->eType);
 		}
+
+		// Real graphics binding should be setup now - get rid of temporary graphics
+		temporaryGraphics.reset();
 	}
 
 	for (std::unique_ptr<Compositor>& compositor : compositors) {
@@ -902,13 +932,13 @@ void XrBackend::UpdateInteractionProfile()
 
 void XrBackend::MaybeRestartForInputs()
 {
-	// if we haven't setup infoSet, no need to restart
-	if (infoSet == XR_NULL_HANDLE)
+	// if we haven't attached any actions to the session (infoSet or game actions), no need to restart
+	BaseInput* input = GetUnsafeBaseInput();
+	if (infoSet == XR_NULL_HANDLE && (!input || !input->AreActionsLoaded()))
 		return;
 
-	OOVR_FALSE_ABORT(graphicsBinding);
 	OOVR_LOG("Restarting session for inputs...");
-	DrvOpenXR::SetupSession(graphicsBinding->asVoid());
+	DrvOpenXR::SetupSession();
 	OOVR_LOG("Session restart successful!");
 }
 
@@ -988,3 +1018,50 @@ void XrBackend::BindInfoSet()
 	info.actionSets = &infoSet;
 	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session.get(), &info));
 }
+
+const void* XrBackend::GetCurrentGraphicsBinding()
+{
+	if (graphicsBinding) {
+		return graphicsBinding->asVoid();
+	}
+	OOVR_FALSE_ABORT(temporaryGraphics);
+	return temporaryGraphics->GetGraphicsBinding();
+}
+
+#ifdef SUPPORT_VK
+void XrBackend::VkGetPhysicalDevice(VkInstance instance, VkPhysicalDevice* out)
+{
+	*out = VK_NULL_HANDLE;
+
+	TemporaryVk* vk = temporaryGraphics->GetAsVk();
+	if (vk == nullptr)
+		OOVR_ABORT("Not using temporary Vulkan instance");
+
+	// Find the UUID of the physical device the temporary instance is running on
+	VkPhysicalDeviceIDProperties idProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES };
+	VkPhysicalDeviceProperties2 props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &idProps };
+	vkGetPhysicalDeviceProperties2(vk->physicalDevice, &props);
+
+	// Look through all the physical devices on the target instance and find the matching one
+	uint32_t devCount;
+	OOVR_FAILED_VK_ABORT(vkEnumeratePhysicalDevices(instance, &devCount, nullptr));
+	std::vector<VkPhysicalDevice> physicalDevices(devCount);
+	OOVR_FAILED_VK_ABORT(vkEnumeratePhysicalDevices(instance, &devCount, physicalDevices.data()));
+
+	for (VkPhysicalDevice phy : physicalDevices) {
+		VkPhysicalDeviceIDProperties devIdProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES };
+		VkPhysicalDeviceProperties2 devProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &devIdProps };
+		vkGetPhysicalDeviceProperties2(phy, &devProps);
+
+		if (memcmp(devIdProps.deviceUUID, idProps.deviceUUID, sizeof(devIdProps.deviceUUID)) != 0)
+			continue;
+
+		// Found it
+		*out = phy;
+		return;
+	}
+
+	OOVR_ABORT("Could not find matching Vulkan physical device for instance");
+}
+
+#endif

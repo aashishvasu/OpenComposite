@@ -15,7 +15,7 @@ class XrBackend : public IBackend {
 public:
 	DECLARE_BACKEND_FUNCS(virtual, override);
 
-	XrBackend();
+	XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx);
 	~XrBackend() override;
 
 	/**
@@ -38,12 +38,18 @@ public:
 
 	void PrepareForSessionShutdown();
 
+	const void* GetCurrentGraphicsBinding();
+
 	/**
 	 * Restarts the session to allow for inputs to be attached to the session, if necessary.
 	 * To be called from BaseInput whenever it's attempting to attach the game actions.
 	 * Restarting the session should only be necessary if we've already created the infoSet.
 	 */
 	static void MaybeRestartForInputs();
+
+#ifdef SUPPORT_VK
+	static void VkGetPhysicalDevice(VkInstance instance, VkPhysicalDevice* out);
+#endif
 
 private:
 	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
@@ -107,22 +113,24 @@ private:
 	// Abstract class for holding a graphics binding.
 	class BindingBase {
 	public:
-		virtual void* asVoid() = 0;
+		virtual const void* asVoid() = 0;
 		virtual ~BindingBase() = default;
 	};
 
 	// A wrapper around a graphics binding type, subclassing BindingBase
-	// It is templated to allow storing any of the possible graphics bindings and getting a void* to it, as necessary for xrCreateSession (in DrvOpenXR::SetupSession)
+	// It is templated to allow storing any of the possible graphics bindings and getting a void* to it,
+	// as necessary for xrCreateSession (in DrvOpenXR::SetupSession)
 	template <typename T>
 	class BindingWrapper : public BindingBase {
-		T data;
+		const T data;
 
 	public:
 		BindingWrapper(T data)
 		    : data(data) {}
-		void* asVoid() override { return &data; }
+		const void* asVoid() override { return &data; }
 	};
 
 	// The current graphics binding, used for restarting the session
 	inline static std::unique_ptr<BindingBase> graphicsBinding = nullptr;
+	static std::unique_ptr<class TemporaryGraphics> temporaryGraphics;
 };

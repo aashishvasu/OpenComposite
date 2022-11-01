@@ -10,15 +10,6 @@
 #include "../OpenOVR/Reimpl/BaseInput.h"
 #include "XrBackend.h"
 #include "generated/static_bases.gen.h"
-#include "tmp_gfx/TemporaryGraphics.h"
-
-#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-#include "tmp_gfx/TemporaryD3D11.h"
-#endif
-
-#if defined(SUPPORT_VK)
-#include "tmp_gfx/TemporaryVk.h"
-#endif
 
 #include <memory>
 #include <set>
@@ -26,7 +17,6 @@
 
 static XrBackend* currentBackend;
 static bool initialised = false;
-static std::unique_ptr<TemporaryGraphics> temporaryGraphics;
 
 #ifdef _WIN32
 std::string GetExeName()
@@ -140,31 +130,31 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	if (availableExtensions.count("XR_KHR_D3D11_enable")) {
 		extensions.push_back("XR_KHR_D3D11_enable");
-		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D11;
+		apiFlags |= XR_SUPPORTED_GRAPHICS_API_D3D11;
 	}
 #endif
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 	if (availableExtensions.count("XR_KHR_D3D12_enable")) {
 		extensions.push_back("XR_KHR_D3D12_enable");
-		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_D3D12;
+		apiFlags |= XR_SUPPORTED_GRAPHICS_API_D3D12;
 	}
 #endif
 #if defined(SUPPORT_VK)
 	if (availableExtensions.count(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
-		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_VK;
+		apiFlags |= XR_SUPPORTED_GRAPHICS_API_VK;
 	}
 #endif
 #if defined(SUPPORT_GL)
 	if (availableExtensions.count(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
-		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_GL;
+		apiFlags |= XR_SUPPORTED_GRAPHICS_API_GL;
 	}
 #endif
 #if defined(SUPPORT_GLES)
 	if (availableExtensions.count(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
-		apiFlags |= XR_SUPPORTED_GRAPHCIS_API_GLES;
+		apiFlags |= XR_SUPPORTED_GRAPHICS_API_GLES;
 	}
 #endif
 #if defined(ANDROID)
@@ -248,38 +238,23 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	// Create a session - this tells the runtime that sooner or later we'd like to submit frames
 	// This is when we have to choose what graphics API to use
 
-	if (!temporaryGraphics) {
-#if defined(SUPPORT_VK)
-		if ((apiFlags & XR_SUPPORTED_GRAPHCIS_API_VK) && oovr_global_configuration.InitUsingVulkan()) {
-			temporaryGraphics = std::make_unique<TemporaryVk>();
-		}
-#endif
-
-#if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
-		if (!temporaryGraphics && (apiFlags & XR_SUPPORTED_GRAPHCIS_API_D3D11)) {
-			temporaryGraphics = std::make_unique<TemporaryD3D11>();
-		}
-#endif
+	bool useVulkanTmpGfx = (apiFlags & XR_SUPPORTED_GRAPHICS_API_VK) && oovr_global_configuration.InitUsingVulkan();
+	bool useD3D11TmpGfx = (apiFlags & XR_SUPPORTED_GRAPHICS_API_D3D11);
 
 #if !defined(SUPPORT_VK) && !defined(SUPPORT_DX) && !defined(SUPPORT_DX11)
 #error No available temporary graphics implementation
 #endif
 
-		OOVR_FALSE_ABORT(temporaryGraphics);
-	}
-
 	// Build a backend that works with OpenXR
-	currentBackend = new XrBackend();
+	currentBackend = new XrBackend(useVulkanTmpGfx, useD3D11TmpGfx);
 
-	// FIXME HACK HACK HACK hardcode D3D11 now, since xrCreateSession returns XR_ERROR_GRAPHICS_DEVICE_INVALID if
-	//  you don't pass it a graphics binding. Unfortunately we don't know what graphics API the game is using (much
-	//  less have a handle to it) until it submits it's first frame.
-	SetupSession(temporaryGraphics->GetGraphicsBinding());
+	// Setup our OpenXR session
+	SetupSession();
 
 	return currentBackend;
 }
 
-void DrvOpenXR::SetupSession(const void* graphicsBinding)
+void DrvOpenXR::SetupSession()
 {
 	// SetupSession is used to restart the session, and as such, we want to prevent other threads from attempting to use the session
 	// while we're rebuilding it (otherwise we get gross nondescript crashes), so we will put a lock on it here.
@@ -288,13 +263,10 @@ void DrvOpenXR::SetupSession(const void* graphicsBinding)
 		ShutdownSession();
 	}
 
-	if (temporaryGraphics && graphicsBinding != temporaryGraphics->GetGraphicsBinding())
-		temporaryGraphics.reset();
-
 	XrSessionCreateInfo sessionInfo{};
 	sessionInfo.type = XR_TYPE_SESSION_CREATE_INFO;
 	sessionInfo.systemId = xr_system;
-	sessionInfo.next = graphicsBinding;
+	sessionInfo.next = currentBackend->GetCurrentGraphicsBinding();
 	OOVR_FAILED_XR_ABORT(xrCreateSession(xr_instance, &sessionInfo, &xr_session.get()));
 
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
@@ -332,10 +304,6 @@ void DrvOpenXR::ShutdownSession()
 
 	OOVR_FAILED_XR_ABORT(xrDestroySession(xr_session.get()));
 	xr_session.reset();
-
-	// Destroy the graphics after destroying the session, otherwise when the runtime goes to destroy it's swapchain
-	// it will be sad, in a probably SEGFAULT-y way.
-	temporaryGraphics.reset();
 }
 
 void DrvOpenXR::FullShutdown()
@@ -358,41 +326,3 @@ void DrvOpenXR::FullShutdown()
 	initialised = false;
 	currentBackend = nullptr;
 }
-
-#ifdef SUPPORT_VK
-void DrvOpenXR::VkGetPhysicalDevice(VkInstance instance, VkPhysicalDevice* out)
-{
-	*out = VK_NULL_HANDLE;
-
-	TemporaryVk* vk = temporaryGraphics->GetAsVk();
-	if (vk == nullptr)
-		OOVR_ABORT("Not using temporary Vulkan instance");
-
-	// Find the UUID of the physical device the temporary instance is running on
-	VkPhysicalDeviceIDProperties idProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES };
-	VkPhysicalDeviceProperties2 props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &idProps };
-	vkGetPhysicalDeviceProperties2(vk->physicalDevice, &props);
-
-	// Look through all the physical devices on the target instance and find the matching one
-	uint32_t devCount;
-	OOVR_FAILED_VK_ABORT(vkEnumeratePhysicalDevices(instance, &devCount, nullptr));
-	std::vector<VkPhysicalDevice> physicalDevices(devCount);
-	OOVR_FAILED_VK_ABORT(vkEnumeratePhysicalDevices(instance, &devCount, physicalDevices.data()));
-
-	for (VkPhysicalDevice phy : physicalDevices) {
-		VkPhysicalDeviceIDProperties devIdProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES };
-		VkPhysicalDeviceProperties2 devProps = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &devIdProps };
-		vkGetPhysicalDeviceProperties2(phy, &devProps);
-
-		if (memcmp(devIdProps.deviceUUID, idProps.deviceUUID, sizeof(devIdProps.deviceUUID)) != 0)
-			continue;
-
-		// Found it
-		*out = phy;
-		return;
-	}
-
-	OOVR_ABORT("Could not find matching Vulkan physical device for instance");
-}
-
-#endif

@@ -20,7 +20,7 @@
 
 // Needed for GetOutputDevice if Vulkan is enabled
 #if defined(SUPPORT_VK)
-#include "../../DrvOpenXR/pub/DrvOpenXR.h"
+#include "../../DrvOpenXR/XrBackend.h"
 #ifndef OC_XR_PORT
 #include "OVR_CAPI_Vk.h"
 #endif
@@ -194,7 +194,7 @@ void BaseSystem::GetOutputDevice(uint64_t* pnDevice, ETextureType textureType, V
 	case TextureType_Vulkan: {
 #if defined(SUPPORT_VK)
 		VkPhysicalDevice physDev;
-		DrvOpenXR::VkGetPhysicalDevice(pInstance, &physDev);
+		XrBackend::VkGetPhysicalDevice(pInstance, &physDev);
 		*pnDevice = (uint64_t)physDev;
 #else
 		OOVR_ABORT("OpenComposite was compiled with Vulkan support disabled, and app attempted to use Vulkan!");

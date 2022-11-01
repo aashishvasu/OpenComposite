@@ -489,7 +489,7 @@ private:
 		inline static std::unordered_map<std::string, ParentActions> parents;
 
 		// Deadzone for dpad.
-		static constexpr float dpadDeadzoneRadius = 0.2;
+		static constexpr float dpadDeadzoneRadius = 0.5;
 
 		// These are angles for the different dpad segments.
 		// For example, the north dpad area exists between 45deg and 135deg, the east between -45deg and 45deg, etc
@@ -628,6 +628,7 @@ private:
 		// Function for shortening or looking up a shortened version of a name (if it exists)
 		// Necessary because OpenXR has defined limits on name lengths, while OpenVR appears to have no such limits
 		std::string ShortenOrLookupName(const std::string& longName);
+		void Reset();
 
 	private:
 		// A map of names to handles, used in the common case of not-the-first call
@@ -665,6 +666,9 @@ private:
 	Registry<ActionSet> actionSets;
 	Registry<Action> actions;
 	bool allowSetDominantHand = false;
+	// True while we are in the middle of a session restart request
+	// Necessary for BindInputsForSession (see comments there)
+	bool restartingSession = false;
 
 	vr::ETrackedControllerRole dominantHand = vr::TrackedControllerRole_RightHand;
 

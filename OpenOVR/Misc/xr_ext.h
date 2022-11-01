@@ -55,11 +55,11 @@
 typedef uint32_t XrGraphicsApiSupportedFlags;
 
 // Flag bits for supported graphics apis
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_D3D11 = 0x0001;
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_D3D12 = 0x0002;
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_GL = 0x0004;
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_GLES = 0x0008;
-static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHCIS_API_VK = 0x0010;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_D3D11 = 0x0001;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_D3D12 = 0x0002;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_GL = 0x0004;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_GLES = 0x0008;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_VK = 0x0010;
 
 /**
  * A wrapper class for the function pointers to OpenXR extensions.
