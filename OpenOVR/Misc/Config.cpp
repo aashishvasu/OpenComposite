@@ -188,6 +188,11 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 Config::Config()
 {
+	// Initialise using Vulkan if D3D11 is unavailable
+#if !defined(SUPPORT_DX11)
+	initUsingVulkan = true;
+#endif
+
 	// If we're on Windows, look for a config file next to the DLL
 	// If we're on Linux, skip that and just check the working directory.
 #ifdef _WIN32

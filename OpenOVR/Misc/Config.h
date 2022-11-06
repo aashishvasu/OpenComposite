@@ -49,7 +49,7 @@ private:
 	bool enableAppRequestedCubemap = true;
 	bool enableHiddenMeshFix = true;
 	bool invertUsingShaders = false;
-	bool initUsingVulkan = true;
+	bool initUsingVulkan = false;
 	float hiddenMeshVerticalScale = 1.0f;
 	bool logAllOpenVRCalls = false;
 };
