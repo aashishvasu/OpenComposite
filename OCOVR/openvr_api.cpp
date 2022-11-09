@@ -20,6 +20,8 @@
 #include "Drivers/DriverManager.h"
 #include "DrvOpenXR.h"
 
+using namespace vr;
+
 // Binary-compatible openvr_api.dll implementation
 static bool running;
 static bool running_ovr; // are we in an apptype which uses LibOVR?

@@ -44,6 +44,8 @@
 #include <ranges>
 #include <type_traits>
 
+using namespace vr;
+
 std::unique_ptr<TemporaryGraphics> XrBackend::temporaryGraphics = nullptr;
 XrBackend::XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx)
 {

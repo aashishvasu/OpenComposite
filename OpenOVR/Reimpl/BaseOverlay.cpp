@@ -14,6 +14,8 @@
 using glm::mat4;
 using glm::vec3;
 
+using namespace vr;
+
 // Class to represent an overlay
 class BaseOverlay::OverlayData {
 public:

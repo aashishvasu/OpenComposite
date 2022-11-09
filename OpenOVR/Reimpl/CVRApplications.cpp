@@ -3,7 +3,7 @@
 #include "BaseCommon.h"
 
 // ~0 is all bits true, so it can be used on any apptype except for the bootstrapper
-BASE_FLAG([APPTYPE] = ~(1ull << VRApplication_Bootstrapper))
+BASE_FLAG([APPTYPE] = ~(1ull << vr::VRApplication_Bootstrapper))
 
 GEN_INTERFACE("Applications", "002")
 GEN_INTERFACE("Applications", "004")
