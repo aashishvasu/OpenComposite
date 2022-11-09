@@ -100,13 +100,20 @@ void oovr_message_raw(const char* message, const char* title);
 	}
 
 // TODO does OpenXR have an equivalent of ovr_GetLastErrorInfo?
-#define OOVR_FAILED_XR_ABORT(expression)                                              \
-	do {                                                                              \
-		XrResult failed_xr_abort_result = (expression);                               \
-		if (XR_FAILED(failed_xr_abort_result)) {                                      \
-			OOVR_ABORTF("OpenXR Call failed, aborting. %s:%d %s. Error code: %d\n%s", \
-			    __FILE__, __LINE__, __func__, failed_xr_abort_result, #expression);   \
-		}                                                                             \
+#define OOVR_FAILED_XR_ABORT(expression)                                                  \
+	do {                                                                                  \
+		XrResult failed_xr_abort_result = (expression);                                   \
+		if (XR_FAILED(failed_xr_abort_result)) {                                          \
+			if (xr_instance != XR_NULL_HANDLE) {                                          \
+				char buf[XR_MAX_RESULT_STRING_SIZE];                                      \
+				xrResultToString(xr_instance, failed_xr_abort_result, buf);               \
+				OOVR_ABORTF("OpenXR Call failed, aborting. %s:%d %s. Error code: %s\n%s", \
+				    __FILE__, __LINE__, __func__, buf, #expression);                      \
+			} else {                                                                      \
+				OOVR_ABORTF("OpenXR Call failed, aborting. %s:%d %s. Error code: %d\n%s", \
+				    __FILE__, __LINE__, __func__, failed_xr_abort_result, #expression);   \
+			}                                                                             \
+		}                                                                                 \
 	} while (0)
 
 #define OOVR_FAILED_XR_SOFT_ABORT(expression)                                       \

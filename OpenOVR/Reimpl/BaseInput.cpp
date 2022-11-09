@@ -1378,7 +1378,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 
 	// Skeletons go through the legacy input thing, since they're tightly bound to either hand
 	if (act->type == ActionType::Skeleton) {
-		XrSpace space = legacyControllers[act->skeletalHand].aimPoseSpace;
+		XrSpace space = legacyControllers[act->skeletalHand].gripPoseSpace;
 
 		pActionData->bActive = true; // TODO this should probably come from reading the skeleton data
 		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle; // TODO implement activeOrigin
