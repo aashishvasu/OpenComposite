@@ -106,3 +106,21 @@ const InteractionProfile::ProfileList& InteractionProfile::GetProfileList()
 	}
 	return profiles;
 }
+
+InteractionProfile* InteractionProfile::GetProfileByPath(const string& name)
+{
+	std::map<std::string, InteractionProfile*> byPath;
+	if (byPath.empty()) {
+		for (const std::unique_ptr<InteractionProfile>& profile : GetProfileList()) {
+			byPath[profile->GetPath()] = profile.get();
+		}
+	}
+	if (!byPath.contains(name))
+		OOVR_ABORTF("Could not find interaction profile '%s'", name.c_str());
+	return byPath.at(name);
+}
+
+glm::mat4 InteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const
+{
+	return glm::identity<glm::mat4>();
+}

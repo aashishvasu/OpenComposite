@@ -100,6 +100,22 @@ public:
 	virtual std::optional<const char*> GetOpenVRName() const = 0;
 
 	/**
+	 * Returns the transform matrix from grip space to the SteamVR controller pose.
+	 *
+	 * This only affects games which use the controller's pose directly, without using
+	 * BaseRenderModels::GetComponentState to find the offset of a component they care
+	 * about, such as the aim or grip component.
+	 *
+	 * This should solve a string fairly longstanding issue, most infamously with Boneworks:
+	 * https://gitlab.com/znixian/OpenOVR/-/issues/152
+	 *
+	 * This is quite ugly since it's inherently controller-specific.
+	 *
+	 * By default, this returns the identity matrix.
+	 */
+	virtual glm::mat4 GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const;
+
+	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
 	 */
 	void AddLegacyBindings(const LegacyControllerActions& actions, std::vector<XrActionSuggestedBinding>& bindings) const;

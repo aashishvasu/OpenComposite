@@ -2065,34 +2065,6 @@ bool BaseInput::checkRestrictToDevice(vr::VRInputValueHandle_t restrictToDevice,
 	return subactionPath == ivh->devicePath;
 }
 
-VRInputValueHandle_t BaseInput::devToIVH(vr::TrackedDeviceIndex_t index)
-{
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(index);
-	if (!dev) {
-		OOVR_SOFT_ABORTF("Invalid non-existent device IVH lookup: %d", index);
-		return 0;
-	}
-
-	ITrackedDevice::HandType hand = dev->GetHand();
-
-	const char* path = nullptr;
-	switch (hand) {
-	case ITrackedDevice::HAND_LEFT:
-		path = "/user/hand/left";
-		break;
-	case ITrackedDevice::HAND_RIGHT:
-		path = "/user/hand/right";
-		break;
-	default:
-		OOVR_SOFT_ABORTF("Cannot do IVH lookup for device %d - not a hand", index);
-		return 0;
-	}
-
-	VRInputValueHandle_t handle = 0;
-	OOVR_FALSE_ABORT(GetInputSourceHandle(path, &handle) == VRInputError_None);
-	return handle;
-}
-
 VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const char* subactionPath)
 {
 	// FIXME the docs for xrEnumerateBoundSourcesForAction are wrong and will be updated (source: rpavlik). They don't
@@ -2256,7 +2228,7 @@ int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 	}
 }
 
-void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
+void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, bool aimPose)
 {
 	space = XR_NULL_HANDLE;
 
@@ -2269,10 +2241,14 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
 		return;
 
 	ITrackedDevice::HandType hand = dev->GetHand();
+	GetHandSpace(hand, space, aimPose);
+}
+
+void BaseInput::GetHandSpace(ITrackedDevice::HandType hand, XrSpace& space, bool aimPose)
+{
 	LegacyControllerActions& ctrl = legacyControllers[hand];
 
-	// OpenVR games are typically expecting a "raw"/natural controller pose, and the grip pose is the closest analog to that.
-	space = ctrl.gripPoseSpace;
+	space = aimPose ? ctrl.aimPoseSpace : ctrl.gripPoseSpace;
 }
 
 bool BaseInput::AreActionsLoaded()

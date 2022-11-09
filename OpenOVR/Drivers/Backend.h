@@ -6,6 +6,9 @@
 // for OOVR_Compositor_FrameTiming
 #include "../OpenOVR/Reimpl/BaseCompositor.h"
 
+// Avoid including InteractionProfile for a single use
+class InteractionProfile;
+
 enum ETrackingStateType {
 	/**
 	 * Use the latest available tracking data
@@ -87,6 +90,13 @@ public:
 	 * Get the hand represented by this device, if any. Used mainly for the input system.
 	 */
 	virtual HandType GetHand();
+
+	/**
+	 * Get the interaction profile that best represents this controller, or null if this isn't a controller or there isn't a suitable profile.
+	 *
+	 * This should be used as little as possible, since the interaction-related stuff should generally be kept inside the controller.
+	 */
+	virtual const InteractionProfile* GetInteractionProfile();
 
 	///////
 	vr::TrackedDeviceIndex_t DeviceIndex();

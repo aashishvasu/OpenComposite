@@ -359,7 +359,11 @@ public: // INTERNAL FUNCTIONS
 
 	void TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDeviceIndex, uint64_t durationNanos);
 
-	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space);
+	// aimPose defaults to false (grip), since OpenVR games are typically expecting a "raw"/natural controller pose, and
+	// the grip pose is the closest analog to that.
+	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, bool aimPose = false);
+
+	void GetHandSpace(ITrackedDevice::HandType hand, XrSpace& space, bool aimPose);
 
 	bool AreActionsLoaded();
 
@@ -744,7 +748,6 @@ private:
 	ActionSet* cast_ASH(VRActionSetHandle_t);
 	static InputValueHandle* cast_IVH(VRInputValueHandle_t);
 	static ITrackedDevice* ivhToDev(VRInputValueHandle_t handle);
-	VRInputValueHandle_t devToIVH(vr::TrackedDeviceIndex_t index);
 	static bool checkRestrictToDevice(vr::VRInputValueHandle_t restrict, XrPath subactionPath);
 
 	/**

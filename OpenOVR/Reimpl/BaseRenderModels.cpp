@@ -3,15 +3,20 @@
 #include "BaseRenderModels.h"
 #include "Misc/Config.h"
 #include "convert.h"
+#include "generated/static_bases.gen.h"
 #include "resources.h"
 
 // Used for the hand offsets
 #include "BaseCompositor.h"
+#include "BaseInput.h"
+#include "BaseSystem.h"
+#include "Misc/Input/InteractionProfile.h"
 
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/transform.hpp>
 
 using glm::mat4;
@@ -470,6 +475,29 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
     const vr::VRControllerState_t* pControllerState, const OOVR_RenderModel_ControllerMode_State_t* pState,
     OOVR_RenderModel_ComponentState_t* pComponentState)
 {
+	// On the Quest 2 Touch controllers, here's SteamVR's poses for the base, handgrip and tip components:
+	// Left  base:     mat4x4((-1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 0.999976, 0.006981, 0.000000), (-0.000000, 0.006981, -0.999976, 0.000000), (-0.003400, -0.003400, 0.149100, 1.000000))
+	// Right base:     mat4x4((-1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 0.999976, 0.006981, 0.000000), (-0.000000, 0.006981, -0.999976, 0.000000), (0.003400, -0.003400, 0.149100, 1.000000))
+	// Left  handgrip: mat4x4((1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 0.996138, 0.087799, 0.000000), (0.000000, -0.087799, 0.996138, 0.000000), (0.000000, 0.003000, 0.097000, 1.000000))
+	// Right handgrip: mat4x4((1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 0.996138, 0.087799, 0.000000), (0.000000, -0.087799, 0.996138, 0.000000), (0.000000, 0.003000, 0.097000, 1.000000))
+	// Left  tip:      mat4x4((1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 0.794415, -0.607376, 0.000000), (0.000000, 0.607376, 0.794415, 0.000000), (0.016694, -0.025220, 0.024687, 1.000000))
+	// Right tip:      mat4x4((1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 0.794415, -0.607376, 0.000000), (0.000000, 0.607376, 0.794415, 0.000000), (-0.016694, -0.025220, 0.024687, 1.000000))
+
+	ZeroMemory(pComponentState, sizeof(*pComponentState));
+
+	std::string componentName = pchComponentName;
+	std::string renderModelName = pchRenderModelName;
+
+	// See if we can get it properly
+	bool success = TryGetComponentState(renderModelName, componentName, pComponentState);
+	if (success)
+		return true;
+
+	// Log a warning about this component, but only do so once
+	if (!warnedAboutComponents.contains(componentName)) {
+		OOVR_LOGF("Unknown component %s - returning a fake identity component", componentName.c_str());
+		warnedAboutComponents.insert(componentName);
+	}
 
 	vr::HmdMatrix34_t ident = { 0 };
 	ident.m[0][0] = ident.m[1][1] = ident.m[2][2] = 1;
@@ -479,6 +507,56 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 
 	pComponentState->uProperties = VRComponentProperty_IsVisible | VRComponentProperty_IsStatic;
 
+	return true;
+}
+
+bool BaseRenderModels::TryGetComponentState(const std::string& renderModelName, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result)
+{
+	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
+	if (renderModelName == "renderLeftHand") {
+		hand = ITrackedDevice::HAND_LEFT;
+	} else if (renderModelName == "renderRightHand") {
+		hand = ITrackedDevice::HAND_RIGHT;
+	}
+
+	// If SteamVR's version of the grip or aim space is specified, look up the offset of it from the one we're using as standard.
+	if (!(componentName == "handgrip" || componentName == "tip") || hand == ITrackedDevice::HAND_NONE) {
+		return false;
+	}
+
+	bool isAim = componentName == "tip";
+	XrSpace componentSpace, gripSpace;
+	GetBaseInput()->GetHandSpace(hand, componentSpace, isAim);
+	GetBaseInput()->GetHandSpace(hand, gripSpace, false);
+
+	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
+
+	if (!componentSpace || !gripSpace || !dev) {
+		return false;
+	}
+
+	// If the hand position is offset, then this needs to account for it
+	glm::mat4 handToGripSpace = glm::identity<glm::mat4>();
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+	if (profile) {
+		handToGripSpace = glm::affineInverse(profile->GetGripToSteamVRTransform(hand));
+	}
+
+	XrSpaceLocation location = { XR_TYPE_SPACE_LOCATION };
+	OOVR_FAILED_XR_ABORT(xrLocateSpace(componentSpace, gripSpace, xr_gbl->GetBestTime(), &location));
+
+	if ((location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) == 0) {
+		// If the location is invalid, there's not really a lot we can do. Just use the
+		// last known position as is currently in pose.
+		OOVR_LOG_ONCE("Relative component location is not valid");
+	}
+
+	glm::mat4 gripToComponentSpace = X2G_om34_pose(location.pose);
+	glm::mat4 handToComponentSpace = handToGripSpace * gripToComponentSpace;
+
+	result->mTrackingToComponentLocal = G2S_m34(handToComponentSpace);
+	result->mTrackingToComponentRenderModel = G2S_m34(handToComponentSpace);
+	result->uProperties = VRComponentProperty_IsVisible | VRComponentProperty_IsStatic;
 	return true;
 }
 

@@ -1,6 +1,9 @@
 #pragma once
 #include "BaseCommon.h"
 
+#include <set>
+#include <string>
+
 enum OOVR_EVRRenderModelError : int;
 struct OOVR_RenderModel_t;
 typedef int32_t OOVR_TextureID_t;
@@ -10,6 +13,11 @@ typedef vr::RenderModel_ComponentState_t OOVR_RenderModel_ComponentState_t;
 
 class BaseRenderModels {
 private:
+	/** Try to find a component, if possible. This is the core of GetComponentState, which itself handles the case where this fails. */
+	bool TryGetComponentState(const std::string& renderModelName, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result);
+
+	std::set<std::string> warnedAboutComponents;
+
 public:
 	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name
 	 * from the Prop_RenderModelName_String property or an absolute path name to a render model on disk.

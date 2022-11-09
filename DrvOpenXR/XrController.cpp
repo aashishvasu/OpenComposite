@@ -161,7 +161,9 @@ void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 
 	// TODO do something with TrackingState
 	XrSpace space = XR_NULL_HANDLE;
-	input->GetHandSpace(DeviceIndex(), space);
+
+	// Specifically use grip pose, since that's what InteractionProfile::GetGripToSteamVRTransform uses
+	GetBaseInput()->GetHandSpace(DeviceIndex(), space, false);
 
 	if (!space) {
 		// Lie and say the pose is valid if the actions haven't even been loaded yet.
@@ -174,5 +176,18 @@ void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 		return;
 	}
 
-	xr_utils::PoseFromSpace(pose, space, origin);
+	// Find the hand transform matrix, and include that
+	glm::mat4 transform = profile.GetGripToSteamVRTransform(GetHand());
+
+	xr_utils::PoseFromSpace(pose, space, origin, transform);
+}
+
+vr::ETrackedDeviceClass XrController::GetTrackedDeviceClass()
+{
+	return vr::TrackedDeviceClass_Controller;
+}
+
+const InteractionProfile* XrController::GetInteractionProfile()
+{
+	return &profile;
 }

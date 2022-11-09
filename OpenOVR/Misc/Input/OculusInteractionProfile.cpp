@@ -6,6 +6,8 @@
 
 #include "OculusInteractionProfile.h"
 
+#include <glm/gtc/matrix_inverse.hpp>
+
 OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 {
 
@@ -69,6 +71,19 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		{ vr::Prop_ModelNumber_String, { "Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
+
+	// Setup the grip-to-steamvr space matrices
+
+	// This is the matrices pulled from GetComponentState("handgrip") with SteamVR - they're
+	// the opposite of what we want, since they transform from the SteamVR space to the grip space.
+	// Both hands have the same matrix.
+	glm::mat4 inverseHandTransform = {
+		{ 1.000000, 0.000000, 0.000000, 0.000000 }, // Column 0
+		{ 0.000000, 0.996138, 0.087799, 0.000000 }, // Column 1
+		{ 0.000000, -0.087799, 0.996138, 0.000000 }, // Column 2
+		{ 0.000000, 0.003000, 0.097000, 1.000000 }, // Column 3 (translation)
+	};
+	handTransform = glm::affineInverse(inverseHandTransform);
 }
 
 const std::string& OculusTouchInteractionProfile::GetPath() const
@@ -128,4 +143,9 @@ const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLega
 std::optional<const char*> OculusTouchInteractionProfile::GetOpenVRName() const
 {
 	return "oculus_touch";
+}
+
+glm::mat4 OculusTouchInteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const
+{
+	return handTransform;
 }
