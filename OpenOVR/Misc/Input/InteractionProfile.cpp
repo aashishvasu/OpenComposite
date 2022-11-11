@@ -124,3 +124,13 @@ glm::mat4 InteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType
 {
 	return glm::identity<glm::mat4>();
 }
+
+std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevice::HandType hand, const std::string& name) const
+{
+	std::unordered_map<std::string, glm::mat4> transforms = hand == ITrackedDevice::HAND_RIGHT ? rightComponentTransforms : leftComponentTransforms;
+	const auto iter = transforms.find(name);
+	if (iter == transforms.end())
+		return {};
+	else
+		return iter->second;
+}

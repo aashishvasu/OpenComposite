@@ -16,6 +16,7 @@
 #include "Drivers/Backend.h"
 #include "InputData.h"
 #include "LegacyControllerActions.h"
+
 /**
  * Defines an interaction profile, as specified by 6.4 in the OpenXR spec.
  * Implementing an interaction profile is fairly straightforward, view the other interaction profiles for examples.
@@ -116,6 +117,19 @@ public:
 	virtual glm::mat4 GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const;
 
 	/**
+	 * Get the transform of a controller component relative to the SteamVR hand position (when
+	 * GetGripToSteamVRTransform has been accounted for).
+	 *
+	 * By default no components are specified, but interaction profiles can override this
+	 * to better match SteamVR. The numbers for the matrix can be obtained from SteamVR by
+	 * calling VRRenderModels()->GetComponentState().
+	 *
+	 * For the 'tip' pose in particular, the OpenXR aim space should be used if this function
+	 * does not provide anything.
+	 */
+	std::optional<glm::mat4> GetComponentTransform(ITrackedDevice::HandType hand, const std::string& name) const;
+
+	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
 	 */
 	void AddLegacyBindings(const LegacyControllerActions& actions, std::vector<XrActionSuggestedBinding>& bindings) const;
@@ -188,4 +202,11 @@ protected:
 	// - Prop_ModelNumber_String
 	// - Prop_ControllerType_String
 	std::unordered_map<vr::ETrackedDeviceProperty, hand_values_type<property_types>> propertiesMap;
+
+	/**
+	 * The transforms of the 'components' of the controller, as exposed via BaseRenderModels::GetComponentState.
+	 *
+	 * Don't manually set 'handgrip' - instead, use GetComponentTransform.
+	 */
+	std::unordered_map<std::string, glm::mat4> leftComponentTransforms, rightComponentTransforms;
 };

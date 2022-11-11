@@ -1,6 +1,8 @@
 #pragma once
 #include "BaseCommon.h"
 
+#include "Drivers/Backend.h"
+
 #include <set>
 #include <string>
 
@@ -13,10 +15,11 @@ typedef vr::RenderModel_ComponentState_t OOVR_RenderModel_ComponentState_t;
 
 class BaseRenderModels {
 private:
-	/** Try to find a component, if possible. This is the core of GetComponentState, which itself handles the case where this fails. */
-	bool TryGetComponentState(const std::string& renderModelName, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result);
-
 	std::set<std::string> warnedAboutComponents;
+
+public: // INTERNAL FUNCTIONS
+	/** Try to find a component, if possible. This is the core of GetComponentState, which itself handles the case where this fails. */
+	bool TryGetComponentState(ITrackedDevice::HandType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result);
 
 public:
 	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name

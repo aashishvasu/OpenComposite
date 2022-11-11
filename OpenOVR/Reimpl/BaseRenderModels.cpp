@@ -488,8 +488,17 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 	std::string componentName = pchComponentName;
 	std::string renderModelName = pchRenderModelName;
 
+	ITrackedDevice::HandType hand;
+	if (renderModelName == "renderLeftHand") {
+		hand = ITrackedDevice::HAND_LEFT;
+	} else if (renderModelName == "renderRightHand") {
+		hand = ITrackedDevice::HAND_RIGHT;
+	} else {
+		hand = ITrackedDevice::HAND_NONE;
+	}
+
 	// See if we can get it properly
-	bool success = TryGetComponentState(renderModelName, componentName, pComponentState);
+	bool success = TryGetComponentState(hand, componentName, pComponentState);
 	if (success)
 		return true;
 
@@ -510,36 +519,52 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 	return true;
 }
 
-bool BaseRenderModels::TryGetComponentState(const std::string& renderModelName, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result)
+bool BaseRenderModels::TryGetComponentState(ITrackedDevice::HandType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result)
 {
-	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
-	if (renderModelName == "renderLeftHand") {
-		hand = ITrackedDevice::HAND_LEFT;
-	} else if (renderModelName == "renderRightHand") {
-		hand = ITrackedDevice::HAND_RIGHT;
-	}
-
-	// If SteamVR's version of the grip or aim space is specified, look up the offset of it from the one we're using as standard.
-	if (!(componentName == "handgrip" || componentName == "tip") || hand == ITrackedDevice::HAND_NONE) {
+	if (hand == ITrackedDevice::HAND_NONE)
 		return false;
-	}
-
-	bool isAim = componentName == "tip";
-	XrSpace componentSpace, gripSpace;
-	GetBaseInput()->GetHandSpace(hand, componentSpace, isAim);
-	GetBaseInput()->GetHandSpace(hand, gripSpace, false);
 
 	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
-
-	if (!componentSpace || !gripSpace || !dev) {
+	if (!dev)
 		return false;
+
+	// See if there's a manually-defined transform
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+	if (profile) {
+		std::optional<glm::mat4> transform = profile->GetComponentTransform(hand, componentName);
+		if (transform) {
+			result->mTrackingToComponentLocal = G2S_m34(transform.value());
+			result->mTrackingToComponentRenderModel = G2S_m34(transform.value());
+			result->uProperties = VRComponentProperty_IsVisible | VRComponentProperty_IsStatic;
+			return true;
+		}
 	}
 
 	// If the hand position is offset, then this needs to account for it
 	glm::mat4 handToGripSpace = glm::identity<glm::mat4>();
-	const InteractionProfile* profile = dev->GetInteractionProfile();
 	if (profile) {
 		handToGripSpace = glm::affineInverse(profile->GetGripToSteamVRTransform(hand));
+	}
+
+	// The grip space is simple - it's just the hand-to-grip transform matrix
+	if (componentName == "handgrip") {
+		result->mTrackingToComponentLocal = G2S_m34(handToGripSpace);
+		result->mTrackingToComponentRenderModel = G2S_m34(handToGripSpace);
+		result->uProperties = VRComponentProperty_IsVisible | VRComponentProperty_IsStatic;
+		return true;
+	}
+
+	// If it's not manually specified, calculate the 'tip' position to match up with the OpenXR aim pose.
+	if (componentName != "tip") {
+		return false;
+	}
+
+	XrSpace componentSpace, gripSpace;
+	GetBaseInput()->GetHandSpace(hand, componentSpace, true);
+	GetBaseInput()->GetHandSpace(hand, gripSpace, false);
+
+	if (!componentSpace || !gripSpace) {
+		return false;
 	}
 
 	XrSpaceLocation location = { XR_TYPE_SPACE_LOCATION };
