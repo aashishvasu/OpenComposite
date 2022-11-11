@@ -39,6 +39,7 @@ void O2S_v3f(const Vec3& in, vr::HmdVector3_t& out)
 
 void O2S_om34(const Mat4& in, HmdMatrix34_t& out)
 {
+	// Doesn't transpose, TODO remove
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 4; x++) {
 			out.m[y][x] = in[y][x];
@@ -48,6 +49,7 @@ void O2S_om34(const Mat4& in, HmdMatrix34_t& out)
 
 void S2O_om44(const HmdMatrix34_t& in, Mat4& out)
 {
+	// Doesn't transpose, TODO remove
 	out = glm::identity<Mat4>();
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 4; x++) {
@@ -166,6 +168,21 @@ vr::HmdMatrix34_t G2S_m34(const glm::mat4& mat)
 #pragma unroll
 		for (int y = 0; y < 4; y++) {
 			out.m[x][y] = mat[y][x];
+		}
+	}
+	return out;
+}
+
+glm::mat4 S2G_m34(const vr::HmdMatrix34_t& mat)
+{
+	glm::mat4 out = glm::identity<glm::mat4>();
+
+	// See the G2S_m34 comments
+#pragma unroll
+	for (int x = 0; x < 3; x++) {
+#pragma unroll
+		for (int y = 0; y < 4; y++) {
+			out[y][x] = mat.m[x][y];
 		}
 	}
 	return out;

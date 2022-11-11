@@ -51,13 +51,14 @@ void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit
 
 // Log once function - useful for warning that a function called many times isn't implemented, while using
 // a workaround to make something mostly work.
-#define OOVR_LOG_ONCE(msg)                                                                         \
+#define OOVR_LOG_ONCE(msg) OOVR_LOG_ONCEF(msg, nullptr)
+#define OOVR_LOG_ONCEF(msg, ...)                                                                   \
 	do {                                                                                           \
 		/* We don't need the function suffix, but it makes it easier to recognise in a debugger */ \
 		static bool oovr_hit_log_once_##__FUNCTION__ = false;                                      \
 		if (!oovr_hit_log_once_##__FUNCTION__) {                                                   \
 			oovr_hit_log_once_##__FUNCTION__ = true;                                               \
-			OOVR_LOG("[once] " msg);                                                               \
+			OOVR_LOGF("[once] " msg, __VA_ARGS__);                                                 \
 		}                                                                                          \
 	} while (false)
 

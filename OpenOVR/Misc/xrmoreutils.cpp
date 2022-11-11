@@ -25,11 +25,11 @@ void xr_utils::PoseFromSpace(vr::TrackedDevicePose_t* pose, XrSpace space, vr::E
 		mat = mat * extraTransform.value();
 	}
 
-	// TODO velocity
 	pose->bDeviceIsConnected = true;
 	pose->bPoseIsValid = (info.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0;
 	pose->mDeviceToAbsoluteTracking = G2S_m34(mat);
 	pose->eTrackingResult = pose->bPoseIsValid ? vr::TrackingResult_Running_OK : vr::TrackingResult_Running_OutOfRange;
-	pose->vVelocity = X2S_v3f(velocity.linearVelocity);
-	pose->vAngularVelocity = X2S_v3f(velocity.angularVelocity);
+	pose->vVelocity = X2S_v3f(velocity.linearVelocity); // No offsetting transform - this is in world-space
+	pose->vAngularVelocity = X2S_v3f(velocity.angularVelocity); // TODO find out if this needs a transform
+
 }

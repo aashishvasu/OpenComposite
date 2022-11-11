@@ -24,6 +24,9 @@
 
 #include "Misc/xrmoreutils.h"
 
+// Use RenderModels for the pose offsets, which are the same as component positions
+#include "BaseRenderModels.h"
+
 using namespace vr;
 
 #include "../DrvOpenXR/XrBackend.h"
@@ -563,8 +566,8 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			info.actionType = XR_ACTION_TYPE_VIBRATION_OUTPUT;
 			break;
 		case ActionType::Pose:
-			info.actionType = XR_ACTION_TYPE_POSE_INPUT;
-			break;
+			// Poses are special, since they have offsets
+			continue;
 		case ActionType::Skeleton:
 			// Don't actually create an action for skeletons, since we'll get their data from the hand tracking extension.
 			continue;
@@ -824,28 +827,39 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 			if (action == nullptr)
 				OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
 
-			// Translate over the paths - TODO find out what all the valid ones are
-			std::string pathStr;
-			if (specPath == "/user/hand/left/pose/raw" || specPath == "/user/hand/left/pose/aim") {
-				pathStr = "/user/hand/left/input/aim/pose";
-			} else if (specPath == "/user/hand/right/pose/raw" || specPath == "/user/hand/right/pose/aim") {
-				pathStr = "/user/hand/right/input/aim/pose";
-			} else if (specPath == "/user/hand/left/pose/grip") {
-				pathStr = "/user/hand/left/input/grip/pose";
-			} else if (specPath == "/user/hand/right/pose/grip") {
-				pathStr = "/user/hand/right/input/grip/pose";
-			} else {
-				OOVR_LOGF("WARNING: Ignoring unknown pose path '%s'", specPath.c_str());
+			PoseBindingInfo info;
+
+			// Find which hand this is from - on a path like /user/hand/left/pose/raw, after this
+			// we're left with pose/raw.
+			std::string withoutPrefix = specPath;
+			info.hand = ParseAndRemoveHandPrefix(withoutPrefix);
+			if (info.hand == ITrackedDevice::HAND_NONE) {
+				OOVR_LOGF("WARNING: Ignoring invalid pose binding '%s' for %s, bad hand prefix", specPath.c_str(), action->fullName.c_str());
 				continue;
 			}
 
-			if (!profile.IsInputPathValid(pathStr)) {
-				OOVR_ABORTF("Built invalid input path %s from pose action %s", pathStr.c_str(), actionName.c_str());
+			// Parse the paths, matching them up with the components they correspond to
+			if (withoutPrefix == "pose/raw" || withoutPrefix == "pose/aim") {
+				info.point = PoseBindingPoint::RAW;
+			} else if (withoutPrefix == "pose/grip" || withoutPrefix == "pose/handgrip") {
+				// Not sure if /grip is valid or not, but it was there previously so we'll continue with it...
+				info.point = PoseBindingPoint::HANDGRIP;
+			} else if (withoutPrefix == "pose/base") {
+				info.point = PoseBindingPoint::BASE;
+			} else if (withoutPrefix == "pose/tip") {
+				info.point = PoseBindingPoint::TIP;
+			} else {
+				OOVR_LOGF("WARNING: Ignoring unknown pose path '%s' (%s) for action %s", specPath.c_str(), withoutPrefix.c_str(), action->fullName.c_str());
+				continue;
 			}
 
-			XrPath path;
-			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
-			bindings.push_back(XrActionSuggestedBinding{ action->xr, path });
+			// We only accommodate one binding per hand, since having multiple doesn't make sense - either
+			// a hand is tracked or not, since we derive everything from the grip pose.
+			if (info.hand == ITrackedDevice::HAND_LEFT) {
+				action->poseBindingsLeft[&profile] = info;
+			} else {
+				action->poseBindingsRight[&profile] = info;
+			}
 		}
 
 		for (const auto& item : setJson["haptics"]) {
@@ -1390,50 +1404,96 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	if (act->type != ActionType::Pose)
 		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
 
-	// Initialise the action spaces array if required
-	if (act->actionSpaces.empty())
-		act->actionSpaces.resize(allSubactionPaths.size());
+	const InputValueHandle* restrictToDevice = nullptr;
+	if (ulRestrictToDevice)
+		restrictToDevice = cast_IVH(ulRestrictToDevice);
 
-	// Unfortunately to implement activeOrigin we have to loop through and query each action state
-	for (int i = 0; i < allSubactionPaths.size(); i++) {
-		XrPath subactionPath = allSubactionPaths[i];
-		if (!checkRestrictToDevice(ulRestrictToDevice, subactionPath))
+	for (int handNum = 0; handNum < 2; handNum++) {
+		// Check this hand is permitted
+		ITrackedDevice::HandType handType = handNum == 0 ? ITrackedDevice::HAND_LEFT : ITrackedDevice::HAND_RIGHT;
+		InputSource sourceType = handNum == 0 ? InputSource::HAND_LEFT : InputSource::HAND_RIGHT;
+
+		if (restrictToDevice && restrictToDevice->type != sourceType) {
+			continue;
+		}
+
+		// Find the device for this hand, and look up it's interaction profile
+		ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(handType);
+		if (!dev)
 			continue;
 
-		// Get the info, which only says if it's active or not
-		XrActionStateGetInfo getInfo = { XR_TYPE_ACTION_STATE_GET_INFO };
-		getInfo.action = act->xr;
-		// Note we can't cleanly set subactionPath here, since the returned pose may be incorrect if the
-		//  runtime made the space from the other controller. It's unlikely to ever be a significant issue
-		//  though since it'll only occur if the pose is bound to multiple inputs.
-		// Anyway we do have to have this, otherwise this will read from either controller's state and
-		//  we'll always read the first device as the active origin.
-		getInfo.subactionPath = subactionPath;
-		XrActionStatePose state = { XR_TYPE_ACTION_STATE_POSE };
-		OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session.get(), &getInfo, &state));
+		const InteractionProfile* profile = dev->GetInteractionProfile();
+		if (!profile)
+			continue;
 
-		pActionData->bActive = state.isActive;
-		pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
+		const auto& bindings = handType == ITrackedDevice::HAND_LEFT ? act->poseBindingsLeft : act->poseBindingsRight;
+		const auto bindingIter = bindings.find(profile);
+		if (bindingIter == bindings.end())
+			continue;
+		const PoseBindingInfo& binding = bindingIter->second;
 
-		if (state.isActive) {
-			// Create the action space if it doesn't already exist - note there's one action space per subaction path
-			XrSpace& actionSpace = act->actionSpaces.at(i);
-			if (!actionSpace) {
-				XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
-				info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
-				info.action = act->xr;
-				info.subactionPath = subactionPath;
-				OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session.get(), &info, &actionSpace));
+		// TODO use predicted time
+
+		// Regardless of whether valid data is available, this action is bound
+		pActionData->bActive = true;
+
+		// TODO make sure this is correct
+		pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[handNum].c_str());
+
+		vr::TrackedDevicePose_t rawPose = {};
+		dev->GetPose(eOrigin, &rawPose, TrackingStateType_Now);
+
+		if (rawPose.bPoseIsValid) {
+			glm::mat4 handMat = S2G_m34(rawPose.mDeviceToAbsoluteTracking);
+
+			const char* componentName = nullptr;
+			switch (binding.point) {
+			case PoseBindingPoint::RAW:
+				// No component name
+				break;
+			case PoseBindingPoint::BASE:
+				componentName = "base";
+				break;
+			case PoseBindingPoint::HANDGRIP:
+				componentName = "handgrip";
+				break;
+			case PoseBindingPoint::TIP:
+				componentName = "tip";
+				break;
 			}
 
-			xr_utils::PoseFromSpace(&pActionData->pose, actionSpace, eOrigin);
+			// Add the component transform, if required
+			OOVR_RenderModel_ComponentState_t state = {};
+			bool hasTransform = false;
+			glm::mat4 transform = glm::identity<glm::mat4>();
+			if (componentName) {
+				hasTransform = GetBaseRenderModels()->TryGetComponentState(handType, componentName, &state);
+			}
+			if (hasTransform) {
+				transform = S2G_m34(state.mTrackingToComponentLocal);
+
+				handMat = handMat * transform;
+			}
+
+			// Store the final hand matrix
+			pActionData->pose.mDeviceToAbsoluteTracking = G2S_m34(handMat);
+			pActionData->pose.bPoseIsValid = true;
+			pActionData->pose.bDeviceIsConnected = true;
+			pActionData->pose.eTrackingResult = rawPose.eTrackingResult;
+
+			// The velocity stays in the original coordinate system, no translation required
+			pActionData->pose.vVelocity = rawPose.vVelocity;
+
+			// TODO what about angular velocity?
+			pActionData->pose.vAngularVelocity = rawPose.vAngularVelocity;
 		}
 
 		// TODO implement the deltas
 
-		// Stop as soon as we find the first available input
-		if (state.isActive)
-			break;
+		// Stop as soon as we find the first available input (and a disconnected controller is
+		// fine to count as available - that's probably not how it should be, but it'd be a
+		// pain to do it properly)
+		break;
 	}
 
 	return VRInputError_None;
@@ -1780,9 +1840,9 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 		OOVR_ABORTF("GetActionOrigins: set mismatch %s vs %s", set->name.c_str(), act->fullName.c_str());
 	}
 
-	if (act->type == ActionType::Skeleton) {
+	if (act->type == ActionType::Skeleton || act->type == ActionType::Pose) {
 		// TODO what should this do?
-		OOVR_SOFT_ABORT("Skeleton action origins not implemented, returning error");
+		OOVR_SOFT_ABORT("Skeleton and pose action origins not implemented, returning error");
 		return VRInputError_InvalidHandle;
 	}
 
@@ -2254,4 +2314,22 @@ void BaseInput::GetHandSpace(ITrackedDevice::HandType hand, XrSpace& space, bool
 bool BaseInput::AreActionsLoaded()
 {
 	return hasLoadedActions;
+}
+
+ITrackedDevice::HandType BaseInput::ParseAndRemoveHandPrefix(std::string& toModify)
+{
+	static std::string leftPrefix = "/user/hand/left/";
+	static std::string rightPrefix = "/user/hand/right/";
+
+	if (toModify.starts_with(leftPrefix)) {
+		toModify.erase(toModify.begin(), toModify.begin() + (int)leftPrefix.size());
+		return ITrackedDevice::HAND_LEFT;
+	}
+
+	if (toModify.starts_with(rightPrefix)) {
+		toModify.erase(toModify.begin(), toModify.begin() + (int)rightPrefix.size());
+		return ITrackedDevice::HAND_RIGHT;
+	}
+
+	return ITrackedDevice::HAND_NONE;
 }

@@ -506,6 +506,18 @@ private:
 		bool lastState = false;
 	};
 
+	enum class PoseBindingPoint {
+		RAW, // From /raw or /aim - this is the pose returned by WaitGetPoses
+		BASE, // This is the pose from the 'base' component
+		HANDGRIP, // This is the pose from the 'handgrip' component, matching the OpenXR grip action
+		TIP, // This is the pose from the 'tip' component
+	};
+
+	struct PoseBindingInfo {
+		PoseBindingPoint point = PoseBindingPoint::RAW;
+		ITrackedDevice::HandType hand = ITrackedDevice::HAND_LEFT;
+	};
+
 	struct Action {
 	private:
 		static constexpr size_t sources_size = 32;
@@ -554,6 +566,10 @@ private:
 		// first member of the pair is the parent name, the second is the corresponding binding info
 		using DpadGrouping = std::pair<std::string, DpadBindingInfo>;
 		std::vector<DpadGrouping> dpadBindings;
+
+		// If this is a pose action, we calculate it from the legacy pose inputs rather than giving it
+		// it's own OpenXR action, since it may need some special transforms to make it line up properly.
+		std::unordered_map<const InteractionProfile*, PoseBindingInfo> poseBindingsLeft, poseBindingsRight;
 	};
 
 	enum class InputSource {
@@ -749,6 +765,7 @@ private:
 	static InputValueHandle* cast_IVH(VRInputValueHandle_t);
 	static ITrackedDevice* ivhToDev(VRInputValueHandle_t handle);
 	static bool checkRestrictToDevice(vr::VRInputValueHandle_t restrict, XrPath subactionPath);
+	static ITrackedDevice::HandType ParseAndRemoveHandPrefix(std::string& toModify);
 
 	/**
 	 * Get the 'activeOrigin' corresponding to a particular sub-action path on a given action.
