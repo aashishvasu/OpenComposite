@@ -22,13 +22,11 @@
 #include <set>
 #include <utility>
 
-#include "Misc/Input/IndexControllerInteractionProfile.h"
-#include "Misc/Input/KhrSimpleInteractionProfile.h"
-#include "Misc/Input/OculusInteractionProfile.h"
-#include "Misc/Input/ViveInteractionProfile.h"
 #include "Misc/xrmoreutils.h"
 
 using namespace vr;
+
+#include "../DrvOpenXR/XrBackend.h"
 
 // On Android, the application must supply a function to load the contents of a file
 #include "Misc/android_api.h"
@@ -206,7 +204,6 @@ static std::string pathFromParts(const std::initializer_list<std::string>& parts
 }
 
 // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
-BaseInput::LegacyControllerActions::~LegacyControllerActions() = default;
 BaseInput::Action::~Action() = default;
 BaseInput::ActionSource::~ActionSource() = default;
 BaseInput::InputValueHandle::InputValueHandle() = default;
@@ -316,15 +313,29 @@ T* BaseInput::Registry<T>::Initialise(const std::string& name, std::unique_ptr<T
 	return ptr;
 }
 
+template <typename T>
+void BaseInput::Registry<T>::Reset()
+{
+	// We want to preserve handlesByName and namesByHandle, because handles are supposed to always be accessible
+	// from the same values regardless of if said handles are actually currently valid
+	// In the case of NomaiVR, it will set an action manifest, get all the action handles, and then set another (identical) manifest
+	// We can clear the actual item storage though, since these will no longer be valid
+	itemsByHandle.clear();
+	itemsByName.clear();
+	storage.clear();
+}
+
 // ---
 
 BaseInput::BaseInput()
     : actionSets(XR_MAX_ACTION_SET_NAME_SIZE), actions(XR_MAX_ACTION_NAME_SIZE)
 {
-	interactionProfiles.emplace_back(std::make_unique<IndexControllerInteractionProfile>());
-	interactionProfiles.emplace_back(std::make_unique<ViveWandInteractionProfile>());
-	interactionProfiles.emplace_back(std::make_unique<OculusTouchInteractionProfile>());
-	interactionProfiles.emplace_back(std::make_unique<KhrSimpleInteractionProfile>());
+	// Initialise the subaction path constants
+	for (const std::string& str : allSubactionPathNames) {
+		XrPath path;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
+		allSubactionPaths.push_back(path);
+	}
 }
 BaseInput::~BaseInput()
 {
@@ -339,14 +350,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 {
 	OOVR_LOGF("Loading manifest file '%s'", pchActionManifestPath);
 
-	// Initialise the subaction path constants
-	allSubactionPaths.clear();
-	for (const std::string& str : allSubactionPathNames) {
-		XrPath path;
-		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
-		allSubactionPaths.push_back(path);
-	}
-
 	//////////////
 	//// Load the actions from the manifest file
 	//////////////
@@ -356,8 +359,21 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		if (loadedActionsPath == pchActionManifestPath)
 			return vr::VRInputError_None;
 
-		OOVR_ABORT("Cannot re-load actions!");
+		OOVR_LOG("Received another manifest! Restarting session to reattach inputs...");
+		for (std::unique_ptr<ActionSet>& as : actionSets.GetItems()) {
+			OOVR_FAILED_XR_ABORT(xrDestroyActionSet(as->xr));
+		}
+		OOVR_FAILED_XR_ABORT(xrDestroyActionSet(legacyInputsSet));
+		legacyInputsSet = XR_NULL_HANDLE;
+		actions.Reset();
+		actionSets.Reset();
+		DpadBindingInfo::parents.clear();
 	}
+
+	restartingSession = true;
+	XrBackend::MaybeRestartForInputs();
+	restartingSession = false;
+
 	hasLoadedActions = true;
 	loadedActionsPath = pchActionManifestPath;
 
@@ -568,9 +584,13 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	// load all available bindings for known interaction profiles
 	OOVR_LOG("Loading known bindings...");
 	// Map of OpenVR names (i.e. "vive_controller") to interaction profile pointers
-	std::unordered_map<std::string, InteractionProfile*> OVRNameToProfile;
-	for (const std::unique_ptr<InteractionProfile>& profile : interactionProfiles) {
-		OVRNameToProfile[profile->GetOpenVRName()] = profile.get();
+	std::unordered_map<std::string, InteractionProfile*> OpenVRNameToProfile;
+	for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
+		if (profile->GetOpenVRName().has_value())
+			OpenVRNameToProfile[profile->GetOpenVRName().value()] = profile.get();
+		else
+			// Add any unrecognized profiles (simple controller) to the end so it still gets assigned a profile
+			OpenVRNameToProfile[profile->GetPath()] = profile.get();
 	}
 
 	// For determining the best path for supported controllers that don't have a profile handled by the game (i.e. khr/simple_controller)
@@ -590,11 +610,11 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 		// look if we know about this OpenVR name
 		// have to loop through every binding type because default_bindings is an array for some reason
-		auto iter = OVRNameToProfile.find(controller_type);
-		if (iter != OVRNameToProfile.end()) {
+		auto iter = OpenVRNameToProfile.find(controller_type);
+		if (iter != OpenVRNameToProfile.end()) {
 			LoadBindingsSet(*(iter->second), path);
 			// profile has been bound: we don't need it in our map anymore
-			OVRNameToProfile.erase(iter);
+			OpenVRNameToProfile.erase(iter);
 		}
 
 		// get priority for remaining unbound profiles
@@ -611,26 +631,12 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	}
 
 	// remaining profiles: bind to our backup path
-	for (auto& [name, profile_ptr] : OVRNameToProfile) {
+	for (auto& [name, profile_ptr] : OpenVRNameToProfile) {
 		LoadBindingsSet(*profile_ptr, backupPath);
 	}
 
 	// Attach everything to the current session
 	BindInputsForSession();
-
-	// Print the input profile for debugging
-	XrInteractionProfileState ips = { XR_TYPE_INTERACTION_PROFILE_STATE };
-	xrGetCurrentInteractionProfile(xr_session, legacyControllers[0].handPathXr, &ips);
-	char inputProfile[128];
-	ZeroMemory(inputProfile, sizeof(inputProfile));
-	uint32_t len;
-	if (ips.interactionProfile == XR_NULL_PATH)
-		strcpy(inputProfile, "<OC NULL>");
-	else
-		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, ips.interactionProfile,
-		    sizeof(inputProfile) - 1, &len, inputProfile));
-	OOVR_LOGF("Using input profile: '%s'\n", inputProfile);
-
 	return vr::VRInputError_None;
 }
 
@@ -638,6 +644,10 @@ void BaseInput::LoadEmptyManifestIfRequired()
 {
 	if (hasLoadedActions)
 		return;
+
+	restartingSession = true;
+	XrBackend::MaybeRestartForInputs();
+	restartingSession = false;
 
 	OOVR_LOG("Loading virtual empty manifest");
 
@@ -648,7 +658,7 @@ void BaseInput::LoadEmptyManifestIfRequired()
 	CreateLegacyActions();
 
 	// Load in the suggested bindings for the legacy input actions
-	for (const std::unique_ptr<InteractionProfile>& profile : interactionProfiles) {
+	for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
 		std::vector<XrActionSuggestedBinding> bindings;
 		for (const auto& legacyController : legacyControllers) {
 			profile->AddLegacyBindings(legacyController, bindings);
@@ -671,10 +681,10 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 void BaseInput::BindInputsForSession()
 {
-	// If we haven't set up our actions yet, we don't have to do anything
-	// This can happen if the session restarts (so DrvOpenXR calls this) but the inputs haven't
-	// been set up.
-	if (!hasLoadedActions)
+	// This is called from DrvOpenXR::SetupSession. If we requested a session restart ourselves, we're also
+	// going to bind the inputs ourselves anyway, so we don't want to do that twice.
+	// If we didn't request the restart but we also haven't even loaded actions yet, there's nothing to bind yet.
+	if (restartingSession || !hasLoadedActions)
 		return;
 
 	// Since the session has changed, any actionspaces we previously created are now invalid
@@ -693,9 +703,9 @@ void BaseInput::BindInputsForSession()
 		XrActionSpaceCreateInfo info = { XR_TYPE_ACTION_SPACE_CREATE_INFO };
 		info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
 		info.action = lca.gripPoseAction;
-		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &lca.gripPoseSpace));
+		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session.get(), &info, &lca.gripPoseSpace));
 		info.action = lca.aimPoseAction;
-		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &lca.aimPoseSpace));
+		OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session.get(), &info, &lca.aimPoseSpace));
 	}
 
 	// Note: even if actionSets is empty, we always still want to load the legacy set.
@@ -711,7 +721,7 @@ void BaseInput::BindInputsForSession()
 	XrSessionActionSetsAttachInfo attachInfo = { XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
 	attachInfo.actionSets = sets.data();
 	attachInfo.countActionSets = sets.size();
-	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session, &attachInfo));
+	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session.get(), &attachInfo));
 
 	// Setup hand tracking if supported
 	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
@@ -719,7 +729,7 @@ void BaseInput::BindInputsForSession()
 		for (int i = 0; i < 2; i++) {
 			createInfo.hand = i == 0 ? XR_HAND_LEFT_EXT : XR_HAND_RIGHT_EXT;
 			createInfo.handJointSet = XR_HAND_JOINT_SET_DEFAULT_EXT;
-			OOVR_FAILED_XR_ABORT(xr_ext->xrCreateHandTrackerEXT(xr_session, &createInfo, &handTrackers[i]));
+			OOVR_FAILED_XR_ABORT(xr_ext->xrCreateHandTrackerEXT(xr_session.get(), &createInfo, &handTrackers[i]));
 		}
 	}
 }
@@ -780,90 +790,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 				}
 
 				if (srcJson["mode"].asString() == "dpad") {
-					// special case for dpad: we need to create additional inputs and read them ourselves
-					// verify that we actually have an input that can be used as an dpad for this profile
-					std::string parentPath = profile.TranslateAction(importBasePath);
-					if (!profile.IsInputPathValid(parentPath)) {
-						OOVR_LOGF("WARNING: No such input path %s for profile %s, cannot bind dpad inputs, skipping", parentPath.c_str(), profile.GetPath().c_str());
-						continue;
-					}
-
-					// check direction
-					auto dir_iter = DpadBindingInfo::directionMap.find(inputName);
-					if (dir_iter == DpadBindingInfo::directionMap.end()) {
-						OOVR_LOGF("WARNING: Unknown dpad direction %s given, skipping binding", inputName.c_str());
-						continue;
-					}
-					DpadBindingInfo dpad_info;
-					dpad_info.direction = dir_iter->second;
-
-					std::string sub_mode = srcJson["parameters"]["sub_mode"].asString();
-					if (sub_mode != "touch" && sub_mode != "click") {
-						OOVR_LOGF("WARNING: Unknown dpad sub mode %s given, skipping binding", sub_mode.c_str());
-						continue;
-					}
-
-					// check if parent is in dpadBindingParens
-					// get parent name: remove /user/hand and /input/ parts, add openvr name (so we don't i.e. confuse dpad bindings from the knuckles joystick with dpad bindings from the oculus joystick)
-					std::string to_delete[] = { "/user/hand/", "/input/" };
-					std::string parentName = importBasePath + "-" + profile.GetOpenVRName() + "-dpad-parent";
-					for (const auto& str : to_delete) {
-						parentName.replace(parentName.find(str), str.size(), "");
-					}
-
-					XrActionCreateInfo info{ XR_TYPE_ACTION_CREATE_INFO };
-					// dpads can be on either hand: need to set subaction paths for GetAnalogActionData
-					info.subactionPaths = allSubactionPaths.data();
-					info.countSubactionPaths = allSubactionPaths.size();
-
-					auto parent_iter = DpadBindingInfo::parents.find(parentName);
-					if (parent_iter == DpadBindingInfo::parents.end()) {
-						// create mapping
-						DpadBindingInfo::parents.insert({ parentName, {} });
-						parent_iter = DpadBindingInfo::parents.find(parentName);
-
-						// create action for getting parent data (i.e. trackpad location)
-						strcpy_arr(info.actionName, parentName.c_str());
-						info.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
-						strcpy_arr(info.localizedActionName, parentName.c_str()); // TODO localization
-						OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.vectorAction));
-
-						// add parent to bindings
-						XrPath suggested_path;
-						OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath).c_str(), &suggested_path));
-						bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.vectorAction, suggested_path });
-					}
-
-					if (sub_mode == "click") {
-						dpad_info.click = true;
-						if (parent_iter->second.clickAction == XR_NULL_HANDLE) {
-							std::string click_name = parentName + "-click";
-							strcpy_arr(info.actionName, click_name.c_str());
-							info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-							strcpy_arr(info.localizedActionName, click_name.c_str());
-							OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction));
-							XrPath suggested_path;
-							OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path));
-							bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.clickAction, suggested_path });
-						}
-					} else {
-						// touch dpad
-						dpad_info.click = false;
-						if (parent_iter->second.touchAction == XR_NULL_HANDLE) {
-							std::string touch_name = parentName + "-touch";
-							strcpy_arr(info.actionName, touch_name.c_str());
-							info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-							strcpy_arr(info.localizedActionName, touch_name.c_str());
-							OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.touchAction));
-							XrPath suggested_path;
-							OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/touch").c_str(), &suggested_path));
-							bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.touchAction, suggested_path });
-						}
-					}
-
-					// add dpad parent to action
-					action->dpadBindings.push_back({ parentName, dpad_info });
-
+					LoadDpadAction(profile, importBasePath, inputName, srcJson["parameters"]["sub_mode"].asString(), action, bindings);
 					continue;
 				}
 
@@ -961,6 +888,99 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 	suggestedBindings.suggestedBindings = bindings.data();
 	suggestedBindings.countSuggestedBindings = bindings.size();
 	OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
+}
+
+void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings)
+{
+	// special case for dpad: we need to create additional inputs and read them ourselves
+	// verify that we actually have an input that can be used as an dpad for this profile
+	std::string parentPath = profile.TranslateAction(importBasePath);
+	if (!profile.IsInputPathValid(parentPath)) {
+		OOVR_LOGF("WARNING: No such input path %s for profile %s, cannot bind dpad inputs, skipping", parentPath.c_str(), profile.GetPath().c_str());
+		return;
+	}
+
+	// check direction
+	auto dir_iter = DpadBindingInfo::directionMap.find(inputName);
+	if (dir_iter == DpadBindingInfo::directionMap.end()) {
+		OOVR_LOGF("WARNING: Unknown dpad direction %s given, skipping binding", inputName.c_str());
+		return;
+	}
+	DpadBindingInfo dpad_info;
+	dpad_info.direction = dir_iter->second;
+
+	if (subMode != "touch" && subMode != "click") {
+		OOVR_LOGF("WARNING: Unknown dpad sub mode %s given, skipping binding", subMode.c_str());
+		return;
+	}
+
+	// check if parent is in dpadBindingParens
+	// get parent name: remove /user/hand and /input/ parts, add end of openxr path (so we don't i.e. confuse dpad bindings from the knuckles joystick with dpad bindings from the oculus joystick)
+	std::string to_delete[] = { "/user/hand/", "/input/" };
+	auto& path = profile.GetPath();
+	std::string end = path.substr(path.rfind("/") + 1);
+	std::string parentName = importBasePath + "-" + end + "-dpad-parent";
+	for (const auto& str : to_delete) {
+		parentName.replace(parentName.find(str), str.size(), "");
+	}
+
+	XrActionCreateInfo info{ XR_TYPE_ACTION_CREATE_INFO };
+	// dpads can be on either hand: need to set subaction paths for GetAnalogActionData
+	info.subactionPaths = allSubactionPaths.data();
+	info.countSubactionPaths = allSubactionPaths.size();
+
+	auto parent_iter = DpadBindingInfo::parents.find(parentName);
+	if (parent_iter == DpadBindingInfo::parents.end()) {
+		// create mapping
+		DpadBindingInfo::parents.insert({ parentName, DpadBindingInfo::ParentActions{} });
+		parent_iter = DpadBindingInfo::parents.find(parentName);
+
+		// create action for getting parent data (i.e. trackpad location)
+		strcpy_arr(info.actionName, parentName.c_str());
+		info.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
+		strcpy_arr(info.localizedActionName, parentName.c_str()); // TODO localization
+		OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.vectorAction));
+
+		// add parent to bindings
+		XrPath suggested_path;
+		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath).c_str(), &suggested_path));
+		bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.vectorAction, suggested_path });
+	}
+
+	if (subMode == "click") {
+		dpad_info.click = true;
+		if (parent_iter->second.clickAction == XR_NULL_HANDLE) {
+			std::string click_name = parentName + "-click";
+			strcpy_arr(info.actionName, click_name.c_str());
+			info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+			strcpy_arr(info.localizedActionName, click_name.c_str());
+			OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction));
+
+			XrPath suggested_path;
+			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path));
+			bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.clickAction, suggested_path });
+		}
+	} else {
+		// touch dpad
+		dpad_info.click = false;
+		std::string touchPath = profile.TranslateAction(importBasePath + "/touch");
+		if (!profile.IsInputPathValid(touchPath)) {
+			OOVR_LOGF("WARNING: Path %s does not exist for the touch dpad.", touchPath.c_str());
+		} else if (parent_iter->second.touchAction == XR_NULL_HANDLE) {
+			std::string touch_name = parentName + "-touch";
+			strcpy_arr(info.actionName, touch_name.c_str());
+			info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+			strcpy_arr(info.localizedActionName, touch_name.c_str());
+			OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.touchAction));
+
+			XrPath suggested_path;
+			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, touchPath.c_str(), &suggested_path));
+			bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.touchAction, suggested_path });
+		}
+	}
+
+	// add dpad parent to action
+	action->dpadBindings.push_back({ parentName, dpad_info });
 }
 
 void BaseInput::CreateLegacyActions()
@@ -1090,7 +1110,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 			if (pSets[i].nPriority != priority) {
 				ActionSet* as1 = cast_ASH(pSets[0].ulActionSet);
 				ActionSet* curAs = cast_ASH(pSets[1].ulActionSet);
-				OOVR_ABORTF("Active action set %s (%d) and %s (%d) have different priorities, this is not yet supported",
+				OOVR_SOFT_ABORTF("Active action set %s (%d) and %s (%d) have different priorities, this is not yet supported",
 				    as1->fullName.c_str(), curAs->fullName.c_str());
 			}
 		}
@@ -1119,7 +1139,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	XrActionsSyncInfo syncInfo = { XR_TYPE_ACTIONS_SYNC_INFO };
 	syncInfo.activeActionSets = aas.data();
 	syncInfo.countActiveActionSets = aas.size();
-	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
+	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session.get(), &syncInfo));
 	syncSerial++;
 
 	return VRInputError_None;
@@ -1135,16 +1155,24 @@ void BaseInput::InternalUpdate()
 	XrActionsSyncInfo syncInfo = { XR_TYPE_ACTIONS_SYNC_INFO };
 	syncInfo.activeActionSets = &aas;
 	syncInfo.countActiveActionSets = 1;
-	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session, &syncInfo));
+	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session.get(), &syncInfo));
 	syncSerial++;
 }
 
-XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
+XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
 {
 	*state = { XR_TYPE_ACTION_STATE_BOOLEAN };
-	if (action.dpadBindings.empty()) {
-		return xrGetActionStateBoolean(xr_session, getInfo, state);
+
+	// If an action is bound to a dpad action in every profile, action.xr will be XR_NULL_HANDLE
+	if (action.xr != XR_NULL_HANDLE) {
+		XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
+		OOVR_FAILED_XR_ABORT(ret);
+
+		// actions could be bound to regular buttons and dpad buttons
+		if (action.dpadBindings.empty() || state->currentState == XR_TRUE)
+			return ret;
 	}
+
 	// dpad bindings: need to read parent state(s) and fill in state ourselves
 	for (auto& [parent_name, dpad_info] : action.dpadBindings) {
 		// if we've already determined one of the bindings is active no need to continue
@@ -1154,8 +1182,9 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* g
 		XrActionStateVector2f parent_state = { XR_TYPE_ACTION_STATE_VECTOR2F };
 		auto iter = DpadBindingInfo::parents.find(parent_name);
 		OOVR_FALSE_ABORT(iter != DpadBindingInfo::parents.end());
-		getInfo->action = iter->second.vectorAction;
-		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, getInfo, &parent_state));
+		XrActionStateGetInfo info2 = *getInfo;
+		info2.action = iter->second.vectorAction;
+		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session.get(), &info2, &parent_state));
 
 		// convert to polar coordinates
 		// angle is in radians
@@ -1190,14 +1219,17 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, XrActionStateGetInfo* g
 		bool active;
 		if (dpad_info.click) {
 			XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
-			getInfo->action = iter->second.clickAction;
-			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &click_state));
+			info2.action = iter->second.clickAction;
+			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
 			active = click_state.currentState;
-		} else {
+		} else if (iter->second.touchAction != XR_NULL_HANDLE) {
 			XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
-			getInfo->action = iter->second.touchAction;
-			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, getInfo, &touch_state));
+			info2.action = iter->second.touchAction;
+			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &touch_state));
 			active = touch_state.currentState;
+		} else {
+			// touch dpad, but our dpad parent doesn't have a touch input
+			active = true;
 		}
 
 		if (active && within_bounds) {
@@ -1284,7 +1316,7 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 		switch (act->type) {
 		case ActionType::Vector1: {
 			XrActionStateFloat state = { XR_TYPE_ACTION_STATE_FLOAT };
-			OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session, &getInfo, &state));
+			OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &getInfo, &state));
 
 			float lengthSq = state.currentState * state.currentState;
 			if (lengthSq < maxLengthSq || !state.isActive)
@@ -1303,7 +1335,7 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 		}
 		case ActionType::Vector2: {
 			XrActionStateVector2f state = { XR_TYPE_ACTION_STATE_VECTOR2F };
-			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session, &getInfo, &state));
+			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session.get(), &getInfo, &state));
 
 			float lengthSq = state.currentState.x * state.currentState.x + state.currentState.y * state.currentState.y;
 			if (lengthSq < maxLengthSq || !state.isActive)
@@ -1346,7 +1378,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 
 	// Skeletons go through the legacy input thing, since they're tightly bound to either hand
 	if (act->type == ActionType::Skeleton) {
-		XrSpace space = legacyControllers[act->skeletalHand].aimPoseSpace;
+		XrSpace space = legacyControllers[act->skeletalHand].gripPoseSpace;
 
 		pActionData->bActive = true; // TODO this should probably come from reading the skeleton data
 		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle; // TODO implement activeOrigin
@@ -1378,7 +1410,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		//  we'll always read the first device as the active origin.
 		getInfo.subactionPath = subactionPath;
 		XrActionStatePose state = { XR_TYPE_ACTION_STATE_POSE };
-		OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session, &getInfo, &state));
+		OOVR_FAILED_XR_ABORT(xrGetActionStatePose(xr_session.get(), &getInfo, &state));
 
 		pActionData->bActive = state.isActive;
 		pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
@@ -1391,7 +1423,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 				info.poseInActionSpace = S2O_om34_pose(G2S_m34(glm::identity<glm::mat4>()));
 				info.action = act->xr;
 				info.subactionPath = subactionPath;
-				OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session, &info, &actionSpace));
+				OOVR_FAILED_XR_ABORT(xrCreateActionSpace(xr_session.get(), &info, &actionSpace));
 			}
 
 			xr_utils::PoseFromSpace(&pActionData->pose, actionSpace, eOrigin);
@@ -1732,7 +1764,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 	vibration.duration = (int)(fDurationSeconds * 1000000000.0f);
 	vibration.amplitude = fAmplitude;
 
-	OOVR_FAILED_XR_ABORT(xrApplyHapticFeedback(xr_session, &info, (XrHapticBaseHeader*)&vibration));
+	OOVR_FAILED_XR_ABORT(xrApplyHapticFeedback(xr_session.get(), &info, (XrHapticBaseHeader*)&vibration));
 
 	return VRInputError_None;
 }
@@ -1763,7 +1795,7 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 	// 20 will be more than enough, saves a second call
 	XrPath tmp[20];
 	uint32_t count;
-	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &info, std::size(tmp), &count, tmp));
+	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session.get(), &info, std::size(tmp), &count, tmp));
 
 	// Now for each source find the /user/hand/abc substring that it starts with
 	char buff[XR_MAX_PATH_LENGTH + 1];
@@ -1886,9 +1918,9 @@ EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOV
 	XrBoundSourcesForActionEnumerateInfo enumInfo = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
 	enumInfo.action = action->xr;
 	uint32_t sourcesCount;
-	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &enumInfo, 0, &sourcesCount, nullptr));
+	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session.get(), &enumInfo, 0, &sourcesCount, nullptr));
 	std::vector<XrPath> boundActionPaths(sourcesCount);
-	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &enumInfo, boundActionPaths.size(), &sourcesCount, boundActionPaths.data()));
+	OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session.get(), &enumInfo, boundActionPaths.size(), &sourcesCount, boundActionPaths.data()));
 
 	// TODO should we return an error if there are no sources bound?
 
@@ -2072,7 +2104,7 @@ VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const 
 		// Get the attached sources
 		XrBoundSourcesForActionEnumerateInfo enumInfo = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
 		enumInfo.action = action->xr;
-		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session, &enumInfo,
+		OOVR_FAILED_XR_ABORT(xrEnumerateBoundSourcesForAction(xr_session.get(), &enumInfo,
 		    std::size(action->sources), &action->sourcesCount, action->sources));
 
 		// Convert the source paths to strings
@@ -2130,13 +2162,13 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 
 		if (action) {
 			getInfo.action = action;
-			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, &getInfo, &xs));
+			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &getInfo, &xs));
 			state->ulButtonPressed |= (uint64_t)(xs.currentState != 0) << shift;
 		}
 
 		if (touch != XR_NULL_HANDLE) {
 			getInfo.action = touch;
-			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session, &getInfo, &xs));
+			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &getInfo, &xs));
 			state->ulButtonTouched |= (uint64_t)(xs.currentState != 0) << shift;
 		}
 	};
@@ -2160,7 +2192,7 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 		getInfo.action = action;
 
 		XrActionStateFloat as = { XR_TYPE_ACTION_STATE_FLOAT };
-		OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session, &getInfo, &as));
+		OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &getInfo, &as));
 		if (as.isActive) {
 			return as.currentState;
 		} else {
@@ -2179,12 +2211,6 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	VRControllerAxis_t& grip = state->rAxis[2];
 	grip.x = readFloat(ctrl.grip);
 	grip.y = 0;
-
-	// TODO implement the DPad actions
-	OOVR_LOG_ONCE("DPad emulation not yet implemented");
-#ifndef XR_STUBBED
-#error todo
-#endif
 
 	return true;
 }
@@ -2209,7 +2235,7 @@ void BaseInput::TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDevi
 	vibration.duration = durationNanos;
 	vibration.amplitude = 1;
 
-	OOVR_FAILED_XR_ABORT(xrApplyHapticFeedback(xr_session, &info, (XrHapticBaseHeader*)&vibration));
+	OOVR_FAILED_XR_ABORT(xrApplyHapticFeedback(xr_session.get(), &info, (XrHapticBaseHeader*)&vibration));
 }
 
 int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
@@ -2245,10 +2271,11 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space)
 	ITrackedDevice::HandType hand = dev->GetHand();
 	LegacyControllerActions& ctrl = legacyControllers[hand];
 
-	space = ctrl.aimPoseSpace;
+	// OpenVR games are typically expecting a "raw"/natural controller pose, and the grip pose is the closest analog to that.
+	space = ctrl.gripPoseSpace;
 }
 
-bool BaseInput::IsActionsLoaded()
+bool BaseInput::AreActionsLoaded()
 {
 	return hasLoadedActions;
 }

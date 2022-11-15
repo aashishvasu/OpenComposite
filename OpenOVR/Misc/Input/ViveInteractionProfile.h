@@ -7,7 +7,7 @@ public:
 	ViveWandInteractionProfile();
 
 	const std::string& GetPath() const override;
-	const char* GetOpenVRName() const override;
+	std::optional<const char*> GetOpenVRName() const override;
 
 protected:
 	const LegacyBindings* GetLegacyBindings(const std::string& handPath) const override;

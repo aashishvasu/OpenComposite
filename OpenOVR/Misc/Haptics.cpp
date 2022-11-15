@@ -21,7 +21,7 @@ void Haptics::StartSimplePulse(XrAction action, unsigned int durationMicrosecond
 	haptic.duration = durationMicroseconds * 1000; // duration is in nanoseconds
 	haptic.amplitude = 1;
 	haptic.frequency = XR_FREQUENCY_UNSPECIFIED;
-	XrResult result = xrApplyHapticFeedback(xr_session, &info, (const XrHapticBaseHeader*)&haptic);
+	XrResult result = xrApplyHapticFeedback(xr_session.get(), &info, (const XrHapticBaseHeader*)&haptic);
 	// TODO error checking
 
 	OOVR_ABORT("Haptics not yet implemented"); // TODO check everything works

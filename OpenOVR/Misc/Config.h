@@ -22,6 +22,7 @@ public:
 	inline bool InvertUsingShaders() const { return invertUsingShaders; }
 	inline bool InitUsingVulkan() const { return initUsingVulkan; }
 	float HiddenMeshVerticalScale() const { return hiddenMeshVerticalScale; }
+	inline bool LogAllOpenVRCalls() const { return logAllOpenVRCalls; }
 
 private:
 	static int ini_handler(
@@ -50,6 +51,7 @@ private:
 	bool invertUsingShaders = false;
 	bool initUsingVulkan = true;
 	float hiddenMeshVerticalScale = 1.0f;
+	bool logAllOpenVRCalls = false;
 };
 
 extern Config oovr_global_configuration;

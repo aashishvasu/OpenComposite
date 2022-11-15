@@ -6,6 +6,7 @@
 
 #include "XrDriverPrivate.h"
 
+#include "Misc/Input/InteractionProfile.h"
 #include "XrTrackedDevice.h"
 
 // This warning tells us that a method (GetPose) was overridden by one of our parent classes
@@ -14,6 +15,8 @@
 #pragma warning(disable : 4250)
 
 class XrHMD : public XrTrackedDevice, public IHMD {
+	const InteractionProfile* profile = nullptr;
+
 public:
 	// Override the GetPose implementation to use the difference between spaces, in the hope it'll make the
 	// head positioning possibly more accurate.
@@ -70,6 +73,8 @@ public:
 	uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char* pchValue,
 	    uint32_t unBufferSize, vr::ETrackedPropertyError* pErrorL) override;
 	int32_t GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL) override;
+
+	void SetInteractionProfile(const InteractionProfile* profile);
 };
 
 #pragma warning(pop)

@@ -1,6 +1,8 @@
 #pragma once
 #include "../BaseCommon.h" // TODO don't import from OCOVR, and remove the "../"
+#include "custom_types.h"
 #include "generated/interfaces/IVRSystem_017.h"
+#include "openxr/openxr.h"
 #include <queue>
 
 using namespace vr;
@@ -20,9 +22,6 @@ private:
 		    : ev(ev), pose(pose) {}
 	};
 
-#ifndef OC_XR_PORT
-	ovrSessionStatus lastStatus;
-#endif
 	std::queue<event_info_t> events;
 
 	VRControllerState_t lastLeftHandState = { 0 };
@@ -42,10 +41,6 @@ public:
 	void _BlockInputsUntilReleased();
 
 	// These are going to be widely used elsewhere, so make them public
-	// TODO set these up
-#ifndef OC_XR_PORT
-#error TODO set these up
-#endif
 	XrReferenceSpaceType currentSpace = XR_REFERENCE_SPACE_TYPE_STAGE; // The standing/stage origin is the default
 
 private:

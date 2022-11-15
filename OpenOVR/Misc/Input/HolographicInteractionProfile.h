@@ -1,14 +1,11 @@
-//
-// Created by znix on 17/04/2022.
-//
-
+// Interaction profile from the WMR "Holographic" controllers - feature a trackpad and joystick
 #pragma once
 
 #include "InteractionProfile.h"
 
-class KhrSimpleInteractionProfile : public InteractionProfile {
+class HolographicInteractionProfile : public InteractionProfile {
 public:
-	KhrSimpleInteractionProfile();
+	HolographicInteractionProfile();
 
 	const std::string& GetPath() const override;
 	std::optional<const char*> GetOpenVRName() const override;

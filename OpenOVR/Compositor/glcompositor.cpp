@@ -205,9 +205,9 @@ void GLBaseCompositor::CheckCreateSwapChain(int width, int height, GLuint rawFor
 
 	// Make sure our format is supported
 	uint32_t formatCount;
-	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainFormats(xr_session, 0, &formatCount, nullptr));
+	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainFormats(xr_session.get(), 0, &formatCount, nullptr));
 	std::vector<int64_t> formats(formatCount);
-	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainFormats(xr_session, formatCount, &formatCount, formats.data()));
+	OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainFormats(xr_session.get(), formatCount, &formatCount, formats.data()));
 
 	if (std::count(formats.begin(), formats.end(), format) == 0) {
 		OOVR_LOG("Missing format for swapchain creation. Valid formats:");
@@ -225,7 +225,7 @@ void GLBaseCompositor::CheckCreateSwapChain(int width, int height, GLuint rawFor
 
 	// Create the new one
 	createInfo = desc;
-	OOVR_FAILED_XR_ABORT(xrCreateSwapchain(xr_session, &desc, &chain));
+	OOVR_FAILED_XR_ABORT(xrCreateSwapchain(xr_session.get(), &desc, &chain));
 
 	// Enumerate all the swapchain images
 	ReadSwapchainImages();

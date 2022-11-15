@@ -16,9 +16,10 @@ void xr_utils::PoseFromSpace(vr::TrackedDevicePose_t* pose, XrSpace space, vr::E
 
 	OOVR_FAILED_XR_SOFT_ABORT(xrLocateSpace(space, baseSpace, xr_gbl->GetBestTime(), &info));
 
-	// TODO velocity
 	pose->bDeviceIsConnected = true;
 	pose->bPoseIsValid = (info.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0;
 	pose->mDeviceToAbsoluteTracking = G2S_m34(X2G_om34_pose(info.pose));
 	pose->eTrackingResult = pose->bPoseIsValid ? vr::TrackingResult_Running_OK : vr::TrackingResult_Running_OutOfRange;
+	pose->vVelocity = X2S_v3f(velocity.linearVelocity);
+	pose->vAngularVelocity = X2S_v3f(velocity.angularVelocity);
 }

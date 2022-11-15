@@ -153,6 +153,7 @@ int Config::ini_handler(void* user, const char* pSection,
 		CFGOPT(bool, invertUsingShaders);
 		CFGOPT(bool, initUsingVulkan);
 		CFGOPT(float, hiddenMeshVerticalScale);
+		CFGOPT(bool, logAllOpenVRCalls);
 	}
 
 #undef CFGOPT

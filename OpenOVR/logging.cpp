@@ -4,10 +4,10 @@
 #include "logging.h"
 #include <chrono>
 #include <ctime>
+#include <errno.h> // errno, ENOENT, EEXIST
 #include <fstream>
 #include <iostream>
 #include <stdarg.h>
-#include <errno.h> // errno, ENOENT, EEXIST
 #include <sys/stat.h> // stat
 #ifdef _WIN32
 #include <direct.h> // _mkdir
@@ -124,7 +124,6 @@ std::string GetEnv(const std::string& var)
 		return val;
 	}
 }
-
 
 #ifdef ANDROID
 #include <android/log.h>

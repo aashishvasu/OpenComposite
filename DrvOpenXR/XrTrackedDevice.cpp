@@ -46,10 +46,6 @@ uint32_t XrTrackedDevice::GetStringTrackedDeviceProperty(vr::ETrackedDevicePrope
 	}
 
 	// These have been validated against SteamVR
-	// TODO add an option to fake this out with 'lighthouse' and 'HTC' in case there is a compatibility issue
-	// Note that this is probably a safe choice regardless of what implementation we're using (probably
-	// with the sole exception of WMR) - every non-Oculus and non-WMR implementation post-dates SteamVR.
-	// Thus pretending everything is a Rift is probably the safe move.
 	PROP(vr::Prop_TrackingSystemName_String, "oculus");
 	PROP(vr::Prop_ManufacturerName_String, "Oculus");
 

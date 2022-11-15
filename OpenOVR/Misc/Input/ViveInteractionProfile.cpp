@@ -3,7 +3,8 @@
 ViveWandInteractionProfile::ViveWandInteractionProfile()
 {
 	std::string paths[] = {
-		"/input/system/click",
+		// Runtimes are not required to support the system button paths, and no OpenVR game can use them anyway.
+		//"/input/system/click",
 		"/input/squeeze/click",
 		"/input/menu/click",
 		"/input/trigger/click",
@@ -28,6 +29,17 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 		{ "grip/click", "squeeze/click" },
 		{ "pull", "value" }
 	};
+
+	hmdPropertiesMap = {
+		{ vr::Prop_ManufacturerName_String, "HTC" },
+		{ vr::Prop_ModelNumber_String, "Vive. MV" },
+		{ vr::Prop_ControllerType_String, "vive" },
+	};
+
+	propertiesMap = {
+		{ vr::Prop_ModelNumber_String, { "Vive. Controller MV" } },
+		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
+	};
 }
 
 const std::string& ViveWandInteractionProfile::GetPath() const
@@ -41,7 +53,7 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 	static LegacyBindings bindings = {};
 
 	if (!bindings.menu) {
-//		bindings.system = "input/system/click"; - causes issues on Oculus runtime
+		//		bindings.system = "input/system/click"; - causes issues on Oculus runtime
 		bindings.menu = "input/menu/click";
 		bindings.stickX = "input/trackpad/x";
 		bindings.stickY = "input/trackpad/y";
@@ -57,7 +69,7 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 	return &bindings;
 }
 
-const char* ViveWandInteractionProfile::GetOpenVRName() const
+std::optional<const char*> ViveWandInteractionProfile::GetOpenVRName() const
 {
 	return "vive_controller";
 }

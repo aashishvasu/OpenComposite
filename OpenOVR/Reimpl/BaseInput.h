@@ -4,16 +4,19 @@
 // FIXME don't do that, it's ugly and slows down the build when modifying headers
 #include "../BaseCommon.h"
 
-#include "../Drivers/Backend.h"
-#include "../Misc/json/json.h"
+#include "Drivers/Backend.h"
+#include "Misc/json/json.h"
 #include <array>
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#include "../Misc/Input/InputData.h"
+#include "Misc/Input/InputData.h"
+#include "Misc/Input/InteractionProfile.h"
+#include "Misc/Input/LegacyControllerActions.h"
 
 typedef vr::EVRSkeletalTrackingLevel OOVR_EVRSkeletalTrackingLevel;
 
@@ -358,7 +361,7 @@ public: // INTERNAL FUNCTIONS
 
 	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space);
 
-	bool IsActionsLoaded();
+	bool AreActionsLoaded();
 
 	/**
 	 * Get a number that increments each time xrSyncActions is called. Can be used to check if a cached input value
@@ -480,7 +483,7 @@ private:
 		inline static std::unordered_map<std::string, ParentActions> parents;
 
 		// Deadzone for dpad.
-		static constexpr float dpadDeadzoneRadius = 0.2;
+		static constexpr float dpadDeadzoneRadius = 0.5;
 
 		// These are angles for the different dpad segments.
 		// For example, the north dpad area exists between 45deg and 135deg, the east between -45deg and 45deg, etc
@@ -619,6 +622,7 @@ private:
 		// Function for shortening or looking up a shortened version of a name (if it exists)
 		// Necessary because OpenXR has defined limits on name lengths, while OpenVR appears to have no such limits
 		std::string ShortenOrLookupName(const std::string& longName);
+		void Reset();
 
 	private:
 		// A map of names to handles, used in the common case of not-the-first call
@@ -653,10 +657,12 @@ private:
 	bool hasLoadedActions = false;
 	std::string loadedActionsPath;
 	bool usingLegacyInput = false;
-	std::vector<std::unique_ptr<class InteractionProfile>> interactionProfiles;
 	Registry<ActionSet> actionSets;
 	Registry<Action> actions;
 	bool allowSetDominantHand = false;
+	// True while we are in the middle of a session restart request
+	// Necessary for BindInputsForSession (see comments there)
+	bool restartingSession = false;
 
 	vr::ETrackedControllerRole dominantHand = vr::TrackedControllerRole_RightHand;
 
@@ -679,8 +685,9 @@ private:
 		"/user/hand/right",
 	};
 
-	void LoadBindingsSet(const class InteractionProfile& profile, const std::string& bindingsPath);
+	void LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath);
 
+	void LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
 	void CreateLegacyActions();
 
 	/**
@@ -688,35 +695,6 @@ private:
 	 */
 	static int DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx);
 
-	struct LegacyControllerActions {
-		~LegacyControllerActions(); // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
-
-		std::string handPath; // eg /user/hand/left
-		XrPath handPathXr;
-		ITrackedDevice::HandType handType;
-
-		// Matches up with EVRButtonId
-		XrAction system; // 'system' button, on Vive the SteamVR buttons, on Oculus Touch the menu button on the left controller
-		XrAction menu, menuTouch; // Upper button on touch controller (B/Y), application button on Vive
-		XrAction btnA, btnATouch; // Lower button on touch controller - A/X, not present on Vive
-
-		XrAction stickX, stickY, stickBtn, stickBtnTouch; // Axis0
-
-		// For the trigger and grip, we use separate actions for digital and analogue input. If the physical input is analogue it
-		// saves us from having to implement hysteresis (and the runtime probably knows what the appropriate thresholds are better
-		// than we do) and generally gives more flexibility on exotic hardware, as the user can rebind them separately.
-		XrAction trigger, triggerClick, triggerTouch; // Axis1
-		XrAction grip, gripClick; // Axis2
-
-		XrAction haptic;
-
-		// Note: the 'grip' pose runs along the axis of the Touch controller, the 'aim' pose comes
-		// straight out the front if you're holding it neutral. They correspond to the old Oculus
-		// and SteamVR poses.
-		// Note: The skeletal input functions all work inside the grip space, not sure if SteamVR does it this way.
-		XrAction gripPoseAction, aimPoseAction;
-		XrSpace gripPoseSpace, aimPoseSpace;
-	};
 	LegacyControllerActions legacyControllers[2] = {};
 
 	// From https://github.com/ValveSoftware/openvr/wiki/Hand-Skeleton
@@ -782,7 +760,5 @@ private:
 	/**
 	 * Get the state for a digital action, which could be bound to a DPad action.
 	 */
-	XrResult getBooleanOrDpadData(Action& action, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
-
-	friend class InteractionProfile;
+	XrResult getBooleanOrDpadData(Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
 };

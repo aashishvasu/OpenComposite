@@ -33,9 +33,9 @@ private:
 	std::vector<ComPtr<ID3D12CommandAllocator>> commandAllocators;
 	std::vector<ComPtr<ID3D12GraphicsCommandList>> commandLists;
 
-	std::vector < HANDLE > frameFenceEvents;
-	std::vector < ComPtr<ID3D12Fence> > frameFences;
-	std::vector < UINT64 > fenceValues;
+	std::vector<HANDLE> frameFenceEvents;
+	std::vector<ComPtr<ID3D12Fence>> frameFences;
+	std::vector<UINT64> fenceValues;
 	UINT64 currentFenceValue;
 
 	std::vector<XrSwapchainImageD3D12KHR> imagesHandles;

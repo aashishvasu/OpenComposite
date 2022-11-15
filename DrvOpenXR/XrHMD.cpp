@@ -8,6 +8,8 @@
 #include "../OpenOVR/Misc/xrmoreutils.h"
 #include "../OpenOVR/Reimpl/BaseSystem.h"
 #include "../OpenOVR/convert.h"
+#include "generated/static_bases.gen.h"
+#include <thread>
 
 void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 {
@@ -38,7 +40,7 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	XrViewState state = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
+	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &state, XruEyeCount, &viewCount, views));
 	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
 
 	// Build the projection matrix
@@ -104,7 +106,7 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 	XrViewState state = { XR_TYPE_VIEW_STATE };
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
+	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &state, XruEyeCount, &viewCount, views));
 	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
 
 	XrFovf& fov = views[eEye].fov;
@@ -164,7 +166,7 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 		uint32_t viewCount = 0;
 		XrViewState viewState = { XR_TYPE_VIEW_STATE };
 		XrView _views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-		OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session, &locateInfo, &viewState, XruEyeCount, &viewCount, _views));
+		OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &viewState, XruEyeCount, &viewCount, _views));
 
 		if (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT && viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) {
 			OOVR_FALSE_ABORT(viewCount == XruEyeCount);
@@ -217,7 +219,7 @@ vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMe
 	// First find out what size we need to allocate
 	// Note that this doesn't return XR_ERROR_SIZE_INSUFFICIENT, since setting one of the input counts to zero is special-cased
 	XrVisibilityMaskKHR mask = { XR_TYPE_VISIBILITY_MASK_KHR };
-	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVisibilityMaskKHR(xr_session, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, eye, xrType, &mask));
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVisibilityMaskKHR(xr_session.get(), XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, eye, xrType, &mask));
 
 	// TODO handle cases where a mask isn't available
 
@@ -228,7 +230,7 @@ vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMe
 	mask.vertices = new XrVector2f[mask.vertexCapacityInput];
 
 	// Now actually request the mask data
-	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVisibilityMaskKHR(xr_session, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, eye, xrType, &mask));
+	OOVR_FAILED_XR_ABORT(xr_ext->xrGetVisibilityMaskKHR(xr_session.get(), XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, eye, xrType, &mask));
 
 	// Convert the data into something usable by SteamVR - it doesn't use indices
 	vr::HiddenAreaMesh_t result = {};
@@ -271,6 +273,26 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 {
 	// TODO use ETrackingStateType
 
+	/* HACK: it would be cleaner to have the xr_gbl access behind a lock_shared, however in Sairento,
+	   the game may submit its first frame while simulataneously calling GetControllerStateWithPose,
+	   resulting in the following sequence of events:
+	   1. Game calls BaseCompositor::Submit, which gets a lock_shared on the session (see the function for why)
+	   2. Submit calls XrBackend::StoreEyeTexture, which calls XrBackend::CheckOrInitCompositors, which calls
+	      DrvOpenXR::SetupSession, which attempts to get an exclusive lock on the session. However, it doesn't actually
+	      get an exclusive lock, but instead just reuses shared lock that we acquired back in BaseCompositor::Submit,
+	      because our session lock implemention only checks if the thread already has a lock on the session,
+	      not whether it is exclusive or shared.
+	   3. SetupSession deletes the session and xr_gbl, and GetPose simultaneously tries to access xr_gbl since at this point
+	      these both have shared locks on the session: segfault because xr_gbl is null right now!
+	   A solution around this would be to implement lock upgrading, but initial testing showed that that seems to be
+	   a lot of work for little gain in this small edge case, especially when we can just sleep for a little bit and
+	   still avoid the problem of xr_gbl being null, which should only happen on session restart anyway.
+	   Perhaps redesigning the locking mechanism would be a more fruitful venture in the future.
+	*/
+	while (!xr_gbl) {
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(20ms);
+	}
 	xr_utils::PoseFromSpace(pose, xr_gbl->viewSpace, origin);
 }
 
@@ -285,7 +307,7 @@ float XrHMD::GetIPD()
 	uint32_t viewCount = 0;
 	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
 
-	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session, &locateInfo, &state, XruEyeCount, &viewCount, views));
+	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &state, XruEyeCount, &viewCount, views));
 	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
 
 	static float ipd = 0.0064;
@@ -296,11 +318,22 @@ float XrHMD::GetIPD()
 	return ipd;
 }
 
+#define TRY_PROFILE_PROP(type)                                                     \
+	do {                                                                           \
+		if (profile) {                                                             \
+			std::optional<type> ret = profile->GetProperty<type>(prop, HAND_NONE); \
+			if (ret.has_value())                                                   \
+				return *ret;                                                       \
+		}                                                                          \
+	} while (0)
+
 // Properties
 bool XrHMD::GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL)
 {
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
+
+	TRY_PROFILE_PROP(bool);
 
 	switch (prop) {
 	case vr::Prop_DeviceProvidesBatteryStatus_Bool:
@@ -327,6 +360,8 @@ float XrHMD::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
 
+	TRY_PROFILE_PROP(float);
+
 	switch (prop) {
 	case vr::Prop_DisplayFrequency_Float:
 		return 90.0; // TODO use the real value
@@ -352,7 +387,7 @@ float XrHMD::GetFloatTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::
 		break;
 	}
 
-	return XrTrackedDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
+	return XrTrackedDevice::GetFloatTrackedDeviceProperty(prop, pErrorL);
 }
 
 uint32_t XrHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
@@ -361,6 +396,16 @@ uint32_t XrHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
 
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
+
+	if (profile) {
+		std::optional<std::string> ret = profile->GetProperty<std::string>(prop, HAND_NONE);
+		if (ret.has_value()) {
+			if (value != NULL && bufferSize > 0) {
+				strcpy_s(value, bufferSize, ret->c_str());
+			}
+			return ret->size() + 1;
+		}
+	}
 
 #define PROP(in, out)                                                                                      \
 	do {                                                                                                   \
@@ -372,12 +417,7 @@ uint32_t XrHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
 		}                                                                                                  \
 	} while (0)
 
-	// Pretend everything is a Quest 2 (because that's what I have the property JSON of in the openvr-tests repo)
-	PROP(vr::Prop_ModelNumber_String, "Oculus Quest2");
 	PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F");
-	PROP(vr::Prop_ControllerType_String, "rift");
-	PROP(vr::Prop_ExpectedControllerType_String, "oculus_touch");
-
 	PROP(vr::Prop_RenderModelName_String, "oculusHmdRenderModel");
 
 	return XrTrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
@@ -387,6 +427,8 @@ int32_t XrHMD::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr
 {
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_Success;
+
+	TRY_PROFILE_PROP(int32_t);
 
 	switch (prop) {
 	case vr::Prop_DeviceClass_Int32:
@@ -400,4 +442,9 @@ int32_t XrHMD::GetInt32TrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr
 	}
 
 	return ITrackedDevice::GetInt32TrackedDeviceProperty(prop, pErrorL);
+}
+
+void XrHMD::SetInteractionProfile(const InteractionProfile* profile)
+{
+	this->profile = profile;
 }

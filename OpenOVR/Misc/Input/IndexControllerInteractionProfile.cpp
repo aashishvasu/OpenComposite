@@ -5,8 +5,9 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 {
 	// Figured these out from OpenXR spec section 6.4
 	std::string paths[] = {
-		"/input/system/click", // may not be available for application use
-		"/input/system/touch", // may not be available for application use
+		// Runtimes are not required to support the system button paths, and no OpenVR game can use them anyway.
+		//"/input/system/click",
+		//"/input/system/touch",
 		"/input/a/click",
 		"/input/a/touch",
 		"/input/b/click",
@@ -25,7 +26,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		"/input/trackpad/y",
 		"/input/trackpad/force",
 		"/input/trackpad/touch",
-		"/input/trackpad", 
+		"/input/trackpad",
 		"/input/grip/pose",
 		"/input/aim/pose",
 		"/output/haptic"
@@ -56,7 +57,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "grip/touch", "squeeze/value" },
 	};
 
-//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime
+	//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime
 	this->bindingsLegacy.menu = "input/b/click";
 	this->bindingsLegacy.btnA = "input/a/click";
 	this->bindingsLegacy.btnATouch = "input/a/touch";
@@ -73,6 +74,15 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 
 	this->bindingsLegacy.gripPoseAction = "input/grip/pose";
 	this->bindingsLegacy.aimPoseAction = "input/aim/pose";
+
+	hmdPropertiesMap = {
+		{ vr::Prop_ManufacturerName_String, "Valve" },
+	};
+
+	propertiesMap = {
+		{ vr::Prop_ModelNumber_String, { "Knuckles Left", "Knuckles Right" } },
+		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
+	};
 }
 
 const std::string& IndexControllerInteractionProfile::GetPath() const
@@ -87,7 +97,7 @@ const InteractionProfile::LegacyBindings* IndexControllerInteractionProfile::Get
 	return &this->bindingsLegacy;
 }
 
-const char* IndexControllerInteractionProfile::GetOpenVRName() const
+std::optional<const char*> IndexControllerInteractionProfile::GetOpenVRName() const
 {
 	return "knuckles";
 }

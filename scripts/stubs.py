@@ -89,6 +89,7 @@ with open(output_dir / "stubs.gen.cpp", "w", newline='\n') as impl:
     #  for any non-static functions we define
     impl.write('#include "Reimpl/Interfaces.h"\n')
     impl.write(f'#include "{bases_header_fn.name}"\n')
+    impl.write('#include "Misc/Config.h"\n')
 
     for iface in interfaces:
         codegen.write_stubs(impl, iface)

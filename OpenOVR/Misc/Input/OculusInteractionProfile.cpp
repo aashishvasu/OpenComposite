@@ -19,7 +19,8 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		"/user/hand/right/input/a/touch",
 		"/user/hand/right/input/b/click",
 		"/user/hand/right/input/b/touch",
-		"/user/hand/right/input/system/click", // may not be available for application use
+		// Runtimes are not required to support the system button paths, and no OpenVR game can use it anyway.
+		//"/user/hand/right/input/system/click",
 	};
 
 	const char* perHandPaths[] = {
@@ -47,7 +48,7 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	}
 
 	pathTranslationMap = {
-		{ "grip", "squeeze"},
+		{ "grip", "squeeze" },
 		{ "joystick", "thumbstick" },
 		{ "pull", "value" },
 		{ "grip/click", "squeeze/value" },
@@ -60,7 +61,14 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	// pose/handgrip
 	// pose/tip
 
-	// TODO long-click versions of the buttons
+	hmdPropertiesMap = {
+		{ vr::Prop_ManufacturerName_String, "Oculus" },
+	};
+
+	propertiesMap = {
+		{ vr::Prop_ModelNumber_String, { "Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)" } },
+		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
+	};
 }
 
 const std::string& OculusTouchInteractionProfile::GetPath() const
@@ -117,7 +125,7 @@ const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLega
 	return &bindings;
 }
 
-const char* OculusTouchInteractionProfile::GetOpenVRName() const
+std::optional<const char*> OculusTouchInteractionProfile::GetOpenVRName() const
 {
 	return "oculus_touch";
 }

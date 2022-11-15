@@ -10,6 +10,7 @@
 #include "convert.h"
 #include "generated/static_bases.gen.h"
 
+#include <cinttypes>
 #include <string>
 
 #ifdef SUPPORT_DX
@@ -19,13 +20,75 @@
 
 // Needed for GetOutputDevice if Vulkan is enabled
 #if defined(SUPPORT_VK)
-#include "../../DrvOpenXR/pub/DrvOpenXR.h"
+#include "../../DrvOpenXR/XrBackend.h"
 #ifndef OC_XR_PORT
 #include "OVR_CAPI_Vk.h"
 #endif
 #endif
 
 #include "Misc/xr_ext.h"
+
+namespace {
+
+class PropertyPrinter {
+private:
+	const vr::ETrackedDeviceProperty prop;
+	const vr::TrackedDeviceIndex_t idx;
+
+public:
+	PropertyPrinter(vr::ETrackedDeviceProperty prop, vr::TrackedDeviceIndex_t idx, const char* type_name)
+	    : prop(prop), idx(idx)
+	{
+		if (oovr_global_configuration.LogGetTrackedProperty())
+			OOVR_LOGF("Requested %s property %u for device %u", type_name, prop, idx);
+	}
+
+#define DEF_PRINT_RESULT(type, specifier, expr)                                    \
+	void print_result(type result)                                                 \
+	{                                                                              \
+		if (oovr_global_configuration.LogGetTrackedProperty())                     \
+			OOVR_LOGF("dev: %u | prop: %u | result: " specifier, idx, prop, expr); \
+	}
+
+	DEF_PRINT_RESULT(bool, "%s", (result) ? "true" : "false")
+	DEF_PRINT_RESULT(float, "%f", result)
+	DEF_PRINT_RESULT(int32_t, "%" PRIi32, result)
+	DEF_PRINT_RESULT(uint64_t, "%" PRIu64, result)
+	DEF_PRINT_RESULT(char*, "%s", result)
+
+	void print_result(HmdMatrix34_t result)
+	{
+		if (!oovr_global_configuration.LogGetTrackedProperty())
+			return;
+		std::string matrix = "[";
+		for (size_t i = 0; i < 3; i++) {
+			matrix.append(" [");
+			for (size_t j = 0; j < 4; j++) {
+				matrix.append(std::to_string(result.m[i][j]));
+				if (j < 3)
+					matrix.append(", ");
+			}
+			matrix.push_back(']');
+			if (i < 2)
+				matrix.push_back(',');
+		}
+		OOVR_LOGF("dev: %u | prop: %u | result: %s", idx, prop, matrix.c_str());
+	}
+
+	template <typename T>
+	void print_result(const T* buffer, size_t size)
+	{
+		std::string array = "{";
+		for (size_t i = 0; i < size; i++) {
+			array.append(std::to_string(buffer[i]) + ", ");
+		}
+		array.erase(array.end() - 2, array.end());
+		array.push_back('}');
+		OOVR_LOGF("dev: %u | prop: %u | result: %s", idx, prop, array.c_str());
+	}
+};
+
+} // namespace
 
 BaseSystem::BaseSystem()
 {
@@ -131,7 +194,7 @@ void BaseSystem::GetOutputDevice(uint64_t* pnDevice, ETextureType textureType, V
 	case TextureType_Vulkan: {
 #if defined(SUPPORT_VK)
 		VkPhysicalDevice physDev;
-		DrvOpenXR::VkGetPhysicalDevice(pInstance, &physDev);
+		XrBackend::VkGetPhysicalDevice(pInstance, &physDev);
 		*pnDevice = (uint64_t)physDev;
 #else
 		OOVR_ABORT("OpenComposite was compiled with Vulkan support disabled, and app attempted to use Vulkan!");
@@ -271,80 +334,23 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	PropertyPrinter p(prop, unDeviceIndex, "bool");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
 		return false;
 	}
 
-	return dev->GetBoolTrackedDeviceProperty(prop, pErrorL);
+	bool ret = dev->GetBoolTrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
 }
 
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
-
-	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
-		return 0;
-	}
-
-	return dev->GetFloatTrackedDeviceProperty(prop, pErrorL);
-}
-
-int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
-{
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
-
-	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
-		return 0;
-	}
-
-	return dev->GetInt32TrackedDeviceProperty(prop, pErrorL);
-}
-
-uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
-{
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
-
-	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
-		return 0;
-	}
-
-	return dev->GetUint64TrackedDeviceProperty(prop, pErrorL);
-}
-
-HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
-{
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
-
-	if (!dev) {
-		*pErrorL = TrackedProp_InvalidDevice;
-		return { 0 };
-	}
-
-	return dev->GetMatrix34TrackedDeviceProperty(prop, pErrorL);
-}
-
-uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, ETrackedPropertyError* pError)
-{
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
-
-	if (!dev) {
-		*pError = TrackedProp_InvalidDevice;
-		return { 0 };
-	}
-
-	return dev->GetArrayTrackedDeviceProperty(prop, propType, pBuffer, unBufferSize, pError);
-}
-
-uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
-    VR_OUT_STRING() char* value, uint32_t bufferSize, ETrackedPropertyError* pErrorL)
-{
-
+	PropertyPrinter p(prop, unDeviceIndex, "float");
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
@@ -353,7 +359,106 @@ uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 		return 0;
 	}
 
-	return dev->GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
+	float ret = dev->GetFloatTrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
+}
+
+int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	PropertyPrinter p(prop, unDeviceIndex, "int32_t");
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+
+	if (!dev) {
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
+		return 0;
+	}
+
+	int32_t ret = dev->GetInt32TrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
+}
+
+uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	PropertyPrinter p(prop, unDeviceIndex, "uint64_t");
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+
+	if (!dev) {
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
+		return 0;
+	}
+
+	uint64_t ret = dev->GetUint64TrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
+}
+
+HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
+{
+	PropertyPrinter p(prop, unDeviceIndex, "HmdMatrix34_t");
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+
+	if (!dev) {
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
+		return { 0 };
+	}
+
+	HmdMatrix34_t ret = dev->GetMatrix34TrackedDeviceProperty(prop, pErrorL);
+	p.print_result(ret);
+	return ret;
+}
+
+uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, ETrackedPropertyError* pError)
+{
+	PropertyPrinter p(prop, unDeviceIndex, "array");
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+
+	if (!dev) {
+		if (pError)
+			*pError = TrackedProp_InvalidDevice;
+		return 0;
+	}
+
+	uint32_t ret = dev->GetArrayTrackedDeviceProperty(prop, propType, pBuffer, unBufferSize, pError);
+	if (oovr_global_configuration.LogGetTrackedProperty()) {
+#define ARRAY_CASE(tag_type, actual_type)                         \
+	case k_un##tag_type##PropertyTag: {                           \
+		actual_type* buffer = static_cast<actual_type*>(pBuffer); \
+		p.print_result(buffer, unBufferSize);                     \
+	} break
+		switch (propType) {
+			ARRAY_CASE(Float, float);
+			ARRAY_CASE(Int32, int32_t);
+			ARRAY_CASE(Uint64, uint64_t);
+			ARRAY_CASE(Bool, bool);
+			ARRAY_CASE(Double, double);
+		default:
+			OOVR_LOGF("WARNING: Was not able to log array with PropertyTypeTag %" PRIu32 "!", propType);
+			break;
+		}
+	}
+	return ret;
+}
+
+uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
+    VR_OUT_STRING() char* value, uint32_t bufferSize, ETrackedPropertyError* pErrorL)
+{
+	PropertyPrinter p(prop, unDeviceIndex, "string");
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+
+	if (!dev) {
+		if (pErrorL)
+			*pErrorL = TrackedProp_InvalidDevice;
+		return 0;
+	}
+
+	uint32_t ret = dev->GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
+	p.print_result(value);
+	return ret;
 }
 
 const char* BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error)
@@ -414,47 +519,6 @@ bool BaseSystem::ShouldApplicationReduceRenderingWork()
 
 void BaseSystem::_OnPostFrame()
 {
-#ifndef OC_XR_PORT
-	ovrSessionStatus status;
-	ovr_GetSessionStatus(*ovr::session, &status);
-
-	if (status.ShouldQuit && !lastStatus.ShouldQuit) {
-		VREvent_t e;
-
-		e.eventType = VREvent_Quit;
-		e.trackedDeviceIndex = k_unTrackedDeviceIndex_Hmd;
-		e.eventAgeSeconds = 0; // Is this required for quit events?
-
-		VREvent_Process_t data;
-		data.bForced = false;
-		data.pid = data.oldPid = 0; // TODO but probably very rarely used
-		e.data.process = data;
-
-		events.push(e);
-	}
-#endif
-
-#ifndef OC_XR_PORT
-	CheckControllerEvents(leftHandIndex, lastLeftHandState);
-	CheckControllerEvents(rightHandIndex, lastRightHandState);
-#endif
-
-#ifndef OC_XR_PORT
-	// Not exactly an event, but this is a convenient place to put it
-	// TODO move all the event handling out and run it per frame, and queue up events
-	// Also note this is done after all other events, as it doesn't set ShouldRecenter
-	// and thus could end up resetting the pose several times if it occured at the same time
-	// as another event
-	if (status.ShouldRecenter && !lastStatus.ShouldRecenter) {
-		// Why on earth doesn't OpenVR have a recenter event?!
-		ResetSeatedZeroPose();
-	}
-
-	// Note this isn't called if handle_event is called, preventing one
-	//  event from firing despite another event also being changed in the same poll call
-	lastStatus = status;
-#endif
-
 	frameNumber++;
 
 	// Note: OpenXR event handling is now in XrBackend
@@ -597,7 +661,6 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 
 	memset(controllerState, 0, controllerStateSize);
 
-#ifdef OC_XR_PORT
 	if (!inputSystem) {
 		inputSystem = GetBaseInput();
 	}
@@ -617,58 +680,6 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 		inputSystem->LoadEmptyManifestIfRequired();
 
 	return inputSystem->GetLegacyControllerState(controllerDeviceIndex, controllerState);
-#else
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(controllerDeviceIndex);
-
-	if (!dev)
-		return false;
-
-	bool state = dev->GetControllerState(controllerState);
-
-	if (!state)
-		return false;
-
-	// TODO do this properly
-	static uint32_t unPacketNum = 0;
-	controllerState->unPacketNum = unPacketNum++;
-
-	// Check if we're blocking input
-	ovrHandType id = ovrHand_Count;
-	if (controllerDeviceIndex == leftHandIndex) {
-		id = ovrHand_Left;
-	} else if (controllerDeviceIndex == rightHandIndex) {
-		id = ovrHand_Right;
-	}
-
-	if (id != ovrHand_Count && blockingInputsUntilRelease[id]) {
-		if (controllerState->ulButtonPressed)
-			goto blockInput;
-
-		// Inputs released, permit input again
-		blockingInputsUntilRelease[id] = false;
-	}
-
-	//  Send the data to the overlays
-	BaseOverlay* overlay = GetUnsafeBaseOverlay();
-	if (overlay) {
-		EVREye side = id == ovrHand_Left ? Eye_Left : Eye_Right;
-		bool passToApp = overlay->_HandleOverlayInput(side, controllerDeviceIndex, *controllerState);
-
-		if (!passToApp) {
-			goto blockInput;
-
-			// TODO pass this to IsInputFocusCapturedByAnotherProcess
-		}
-	}
-
-	return true;
-
-blockInput:
-	uint32_t packetNum = controllerState->unPacketNum;
-	memset(controllerState, 0, controllerStateSize);
-	controllerState->unPacketNum = packetNum;
-	return true;
-#endif
 }
 
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
@@ -845,7 +856,7 @@ void BaseSystem::ResetSeatedZeroPose()
 
 			spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
 			auto oldSpace = xr_gbl->seatedSpace;
-			OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session, &spaceInfo, &xr_gbl->seatedSpace));
+			OOVR_FAILED_XR_ABORT(xrCreateReferenceSpace(xr_session.get(), &spaceInfo, &xr_gbl->seatedSpace));
 			xrDestroySpace(oldSpace);
 		}
 	}

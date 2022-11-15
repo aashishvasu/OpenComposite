@@ -1,14 +1,10 @@
-//
-// Created by znix on 17/04/2022.
-//
-
 #pragma once
 
 #include "InteractionProfile.h"
 
-class KhrSimpleInteractionProfile : public InteractionProfile {
+class ReverbG2InteractionProfile : public InteractionProfile {
 public:
-	KhrSimpleInteractionProfile();
+	ReverbG2InteractionProfile();
 
 	const std::string& GetPath() const override;
 	std::optional<const char*> GetOpenVRName() const override;
