@@ -273,7 +273,9 @@ void BaseSettings::GetString(const char* pchSection, const char* pchSettingsKey,
 		}
 	} else if (section == kk::k_pch_audio_Section) {
 #ifdef OC_XR_PORT
-		STUBBED();
+		OOVR_SOFT_ABORT("k_pch_audio_Section unimplemented");
+		result = "";
+		goto found;
 #else
 		// Sansar, and hopefully other games (since this very nicely solves the audio device problem), uses the
 		//  auto-switching SteamVR audio devices.
