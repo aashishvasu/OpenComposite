@@ -3,12 +3,18 @@
 # OpenComposite (OpenXR) - Play SteamVR games without SteamVR!
 [![Discord](https://img.shields.io/discord/499733750209314816.svg?style=for-the-badge&logo=discord&label=discord)](https://discord.gg/zYA6Tzs)
 [![AppVeyor](https://img.shields.io/appveyor/ci/ZNix/openovr.svg?style=for-the-badge&logo=appveyor)](https://ci.appveyor.com/project/ZNix/openovr)
----------------------------------------------
+# [>>>Join the Discord here for support<<<](https://discord.gg/zYA6Tzs)
+# [Frequently Asked Questions](https://mbucchia.github.io/OpenXR-Toolkit/opencomposite.html)
+See the **Tips for using OpenComposite** section for solutions to common issues. Thanks to mbucchia for providing this FAQ.
+
 # [GAME COMPATIBILITY SPREADSHEET](https://docs.google.com/spreadsheets/d/1s2SSuRt0oHm91RUZB-R-ef5BrfOtvP_jwDwb6FuMF9Q/edit#gid=2068512515)
+
 Feel free to comment on the spreadsheet for us to modify its information.
-------------------------------------------------------
+
+<details><summary>Table of Contents</summary>
 
 [TOC]
+</details>
 
 OpenComposite OpenXR (previously known as OpenOVR - OpenVR for OculusVR - but renamed due to confusion with OpenVR) is
 an implementation of SteamVR's API - OpenVR, forwarding calls directly
@@ -144,13 +150,6 @@ are not case-sensitive, so `Enabled` or `tRUe` work fine.
 * float - a floating point (decimal) number, eg `123.456`.
 
 Example files:
-
-- Running a simulator on a powerful computer, and wearing external headphones so you don't want the audio redirected:
-
-```
-enableAudio=off
-supersampleRatio=1.4
-```
 
 - Running SkyrimVR with yellow hands, and haptic feedback disabled:
 
