@@ -252,13 +252,6 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingVulkanKHR>>(binding);
 			DrvOpenXR::SetupSession();
-
-			// BAD BAD BAD BAD. Writes into rtQueue in vkcompositor.h so we have a queue that came from the runtime
-
-			expectedDevice = binding.device;
-			expectedPhysicalDevice = binding.physicalDevice;
-			vkGetDeviceQueue(binding.device, 0, 0, &expectedQueue);
-
 			break;
 		}
 		case vr::TextureType_OpenGL: {
