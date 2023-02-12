@@ -43,7 +43,6 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "thumbstick/position", "thumbstick" },
 		{ "trackpad/position", "trackpad" },
 		{ "trackpad/click", "trackpad/touch" },
-		{ "trackpad/force", "trackpad/force" },
 
 		{ "pull", "value" },
 		{ "application_menu", "system" },
@@ -55,6 +54,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "grip/force", "squeeze/value" },
 		{ "grip/click", "squeeze/value" },
 		{ "grip/touch", "squeeze/value" },
+		{ "grip/value", "squeeze/value" },
 	};
 
 	//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime

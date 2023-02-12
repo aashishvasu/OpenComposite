@@ -16,6 +16,7 @@ ReverbG2InteractionProfile::ReverbG2InteractionProfile()
 		"/input/menu/click",
 		"/input/squeeze/value",
 		"/input/trigger/value",
+		"/input/thumbstick",
 		"/input/thumbstick/x",
 		"/input/thumbstick/y",
 		"/input/thumbstick/click",
