@@ -168,6 +168,10 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 		OOVR_LOG("Recreating OpenXR session for application graphics API");
 
+		// Shutdown old session - apparently Varjo doesn't like the session being destroyed
+		// after querying for graphics requirements.
+		DrvOpenXR::ShutdownSession();
+
 		switch (tex->eType) {
 		case vr::TextureType_DirectX: {
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
