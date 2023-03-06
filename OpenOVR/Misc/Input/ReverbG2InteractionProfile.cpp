@@ -55,6 +55,56 @@ ReverbG2InteractionProfile::ReverbG2InteractionProfile()
 		{ vr::Prop_ModelNumber_String, { "WindowsMR" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
 	};
+
+	// Setup the grip-to-steamvr space matrices
+	glm::mat4 inverseHandTransformLeft = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, -0.00553, 0.09689, 1.00000 }
+	};
+
+	glm::mat4 inverseHandTransformRight = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, -0.00553, 0.09689, 1.00000 }
+	};
+
+	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
+	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
+
+	// Set up the component transforms
+
+	glm::mat4 bodyLeft = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, -0.00553, 0.09689, 1.00000 }
+	};
+	glm::mat4 bodyRight = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, -0.00553, 0.09689, 1.00000 },
+	};
+	glm::mat4 tipLeft = {
+		{ 1.00000, 0.00000, 0.00000, 0.00000 },
+		{ -0.00000, 0.86635, 0.49944, 0.00000 },
+		{ 0.00000, -0.49944, 0.86635, 0.00000 },
+		{ -0.00068, -0.02634, 0.03009, 1.00000 }
+	};
+	glm::mat4 tipRight = {
+		{ 1.00000, 0.00000, 0.00000, 0.00000 },
+		{ -0.00000, 0.86635, 0.49944, 0.00000 },
+		{ 0.00000, -0.49944, 0.86635, 0.00000 },
+		{ 0.00068, -0.02634, 0.03009, 1.00000 }
+	};
+
+	leftComponentTransforms["body"] = glm::affineInverse(bodyLeft);
+	rightComponentTransforms["body"] = glm::affineInverse(bodyRight);
+	leftComponentTransforms["tip"] = glm::affineInverse(tipLeft);
+	rightComponentTransforms["tip"] = glm::affineInverse(tipRight);
 }
 
 const std::string& ReverbG2InteractionProfile::GetPath() const

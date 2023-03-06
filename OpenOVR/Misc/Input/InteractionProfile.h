@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <variant>
 #include <vector>
+#include <glm/gtc/matrix_inverse.hpp>
 
 #include "Drivers/Backend.h"
 #include "InputData.h"
