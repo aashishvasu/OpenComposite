@@ -812,6 +812,8 @@ EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInp
     const char* pchDescription, uint32_t unCharMax, const char* pchExistingText, bool bUseMinimalMode, uint64_t uUserValue,
     VRKeyboard::eventDispatch_t eventDispatch)
 {
+	// Submit a KeyboardDone event since the actual keyboard is not implemented yet.  This allows certain games to still proceed instead of crash.
+	SubmitPlaceholderKeyboardEvent(VREvent_KeyboardDone, eventDispatch, uUserValue);
 
 #ifndef OC_XR_PORT
 	if (!BaseCompositor::dxcomp)
@@ -830,12 +832,26 @@ EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInp
 	if (system) {
 		system->_BlockInputsUntilReleased();
 	}
-#else
-	STUBBED();
 #endif
 
 	return VROverlayError_None;
 }
+
+/** Placeholder method for submitting a KeyboardDone event when asked to show the keyboard since it is not implemented yet. **/
+void BaseOverlay::SubmitPlaceholderKeyboardEvent(vr::EVREventType ev, VRKeyboard::eventDispatch_t eventDispatch, uint64_t userValue)
+{
+	VREvent_Keyboard_t data = { 0 };
+	data.uUserValue = userValue;
+
+	VREvent_t evt = { 0 };
+	evt.eventType = ev;
+	evt.trackedDeviceIndex = 0;
+	evt.data.keyboard = data;
+
+	eventDispatch(evt);
+}
+
+
 EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
     const char* pchDescription, uint32_t unCharMax, const char* pchExistingText, bool bUseMinimalMode, uint64_t uUserValue)
 {
@@ -877,6 +893,9 @@ EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayH
 uint32_t BaseOverlay::GetKeyboardText(char* pchText, uint32_t cchText)
 {
 	string str = keyboard ? VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents()) : keyboardCache;
+
+	// Since keyboard is not functional yet, return this default text (Adventurer because this fix was made specifically for Skyrim VR)
+	str = "Adventurer";
 
 	// FFS, strncpy is secure.
 	strncpy_s(pchText, cchText, str.c_str(), cchText);

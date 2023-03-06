@@ -537,6 +537,9 @@ public:
 	/** Show the virtual keyboard to accept input **/
 	virtual vr::EVROverlayError ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char* pchDescription, uint32_t unCharMax, const char* pchExistingText, bool bUseMinimalMode, uint64_t uUserValue);
 
+	/** Placeholder method for submitting a KeyboardDone event when asked to show the keyboard since it is not implemented yet. **/
+	virtual void SubmitPlaceholderKeyboardEvent(vr::EVREventType ev, VRKeyboard::eventDispatch_t eventDispatch, uint64_t userValue);
+
 	/**
 	 * Show the virtual keyboard to accept input. In most cases, you should pass KeyboardFlag_Modal to enable modal overlay
 	 * behavior on the keyboard itself. See EKeyboardFlags for more.
