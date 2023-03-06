@@ -47,6 +47,7 @@ const InteractionProfile::LegacyBindings* KhrSimpleInteractionProfile::GetLegacy
 		// The stick, system button and grip are unsupported
 
 		bindings.trigger = "input/select/click";
+		bindings.triggerClick = "input/select/click";
 		bindings.menu = "input/menu/click";
 
 		bindings.haptic = "output/haptic";

@@ -66,7 +66,8 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	this->bindingsLegacy.stickY = "input/thumbstick/y";
 	this->bindingsLegacy.stickBtn = "input/thumbstick/click";
 	this->bindingsLegacy.stickBtnTouch = "input/thumbstick/touch";
-	this->bindingsLegacy.trigger = "input/trigger/click";
+	this->bindingsLegacy.trigger = "input/trigger/value";
+	this->bindingsLegacy.triggerClick = "/input/trigger/click";
 	this->bindingsLegacy.triggerTouch = "input/trigger/touch";
 
 	this->bindingsLegacy.grip = "input/squeeze/value";

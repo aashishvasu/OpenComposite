@@ -80,6 +80,7 @@ const InteractionProfile::LegacyBindings* ReverbG2InteractionProfile::GetLegacyB
 		bindings.stickY = "input/thumbstick/y";
 		bindings.stickBtn = "input/thumbstick/click";
 		bindings.trigger = "input/trigger/value";
+		bindings.triggerClick = "input/trigger/value";
 		bindings.triggerTouch = "input/trigger/value";
 		bindings.grip = "input/squeeze/value";
 		bindings.haptic = "output/haptic";
