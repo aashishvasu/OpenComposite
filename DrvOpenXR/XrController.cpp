@@ -77,6 +77,7 @@ uint64_t XrController::GetUint64TrackedDeviceProperty(vr::ETrackedDeviceProperty
 	if (prop == vr::Prop_SupportedButtons_Uint64) {
 		// Just assume we're an Oculus Touch-style controller and enable all the buttons.
 		uint64_t supported = 0;
+		supported |= vr::ButtonMaskFromId(vr::k_EButton_System);
 		supported |= vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu);
 		supported |= vr::ButtonMaskFromId(vr::k_EButton_Grip);
 		supported |= vr::ButtonMaskFromId(vr::k_EButton_Axis2);
