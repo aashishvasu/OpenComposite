@@ -197,12 +197,8 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 			// Vertex
 			vec3 v;
 			res >> v.x >> v.y >> v.z;
-
 			// Maya exports in cm, so translate that to meters
 			v *= 0.01f;
-
-			// Transform from the OVR pose to the SteamVR pose, and rotate the hand model at the same time
-			v = transform * vec4(v, 0);
 
 			verts.push_back(G2S_v3f(v));
 		} else if (op == "vt") {
@@ -214,10 +210,6 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 			// Normal
 			vec3 v;
 			res >> v.x >> v.y >> v.z;
-
-			// Transform from the OVR pose to the SteamVR pose
-			// Don't translate it though, since it's a normal
-			v = rotate * vec4(v, 0);
 
 			normals.push_back(G2S_v3f(v));
 		} else if (op == "f") {
@@ -238,7 +230,14 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 	OOVR_RenderModel_Vertex_t* vertexData_arr = new OOVR_RenderModel_Vertex_t[rm.unVertexCount];
 	rm.rVertexData = vertexData_arr;
 	for (uint32_t i = 0; i < rm.unVertexCount; i++) {
-		vertexData_arr[i] = vertexData[i];
+		vec4 vertex = vec4(vertexData[i].vPosition.v[0], vertexData[i].vPosition.v[1], vertexData[i].vPosition.v[2], 1.0f);
+		vertex = transform * vertex;
+		vertexData_arr[i].vPosition.v[0] = vertex.x;
+		vertexData_arr[i].vPosition.v[1] = vertex.y;
+		vertexData_arr[i].vPosition.v[2] = vertex.z;
+		vertexData_arr[i].vNormal = vertexData[i].vNormal;
+		vertexData_arr[i].rfTextureCoord[0] = vertexData[i].rfTextureCoord[0];
+		vertexData_arr[i].rfTextureCoord[1] = vertexData[i].rfTextureCoord[1];
 	}
 
 	uint16_t* indexData = new uint16_t[rm.unVertexCount];
