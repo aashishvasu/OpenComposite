@@ -63,6 +63,11 @@ public:
 	static const ProfileList& GetProfileList();
 
 	/**
+	 * Lookup an interaction profile from it's path, as returned by GetPath.
+	 */
+	static InteractionProfile* GetProfileByPath(const std::string& name);
+
+	/**
 	 * Get the path of the profile as used by xrSuggestInteractionProfileBindings, for
 	 * example /interaction_profiles/khr/simple_controller.
 	 */

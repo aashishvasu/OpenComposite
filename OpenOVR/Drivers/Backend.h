@@ -52,6 +52,10 @@ public:
 	    double absTime)
 	    = 0;
 
+	virtual vr::ETrackedDeviceClass GetTrackedDeviceClass() = 0;
+
+	virtual vr::ETrackedControllerRole GetControllerRole();
+
 	/** Returns a bool property. If the device index is not valid or the property is not a bool type this function will return false. */
 	virtual bool GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL);
 
@@ -113,7 +117,9 @@ class IHMD : public virtual ITrackedDevice {
 public:
 	virtual void GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height) = 0;
 
-	// from BaseSystem
+	vr::ETrackedDeviceClass GetTrackedDeviceClass() override;
+
+	// from BaseSystem	
 
 	/** The projection matrix for the specified eye */
 	virtual vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention = API_DirectX) = 0;
