@@ -74,41 +74,63 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 
 	// Setup the grip-to-steamvr space matrices
 
-	// This is the matrices pulled from GetComponentState("handgrip") with SteamVR - they're
-	// the opposite of what we want, since they transform from the SteamVR space to the grip space.
-	// Both hands have the same matrix.
-	glm::mat4 inverseHandTransform = {
-		{ 1.000000, 0.000000, 0.000000, 0.000000 }, // Column 0
-		{ 0.000000, 0.996138, 0.087799, 0.000000 }, // Column 1
-		{ 0.000000, -0.087799, 0.996138, 0.000000 }, // Column 2
-		{ 0.000000, 0.003000, 0.097000, 1.000000 }, // Column 3 (translation)
+	// New Data directly from the openxr-grip space for quest 2 controllers in steamvr
+	// SteamVR\resources\rendermodels\oculus_quest2_controller_left
+	/*
+	    "openxr_grip" : {
+	        "component_local":
+	        {
+	        "origin" : [ -0.007, -0.00182941, 0.1019482 ],
+	                   "rotate_xyz" : [ 20.6, 0.0, 0.0 ]
+	        }
+	    }
+	*/
+
+	// Setup the grip-to-steamvr space matrices
+
+	// Made from values in: SteamVR\resources\rendermodels\oculus_quest2_controller_left\oculus_quest2_controller_left.json
+	glm::mat4 inverseHandTransformLeft = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.93606, -0.35184, 0.00000 },
+		{ 0.00000, 0.35184, 0.93606, 0.00000 },
+		{ 0.00700, -0.00183, 0.10195, 1.00000 }
 	};
-	leftHandGripTransform = rightHandGripTransform = glm::affineInverse(inverseHandTransform);
+
+	// Made from values in: SteamVR\resources\rendermodels\oculus_quest2_controller_right\oculus_quest2_controller_right.json
+	glm::mat4 inverseHandTransformRight = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.93606, -0.35184, 0.00000 },
+		{ 0.00000, 0.35184, 0.93606, 0.00000 },
+		{ -0.00700, -0.00183, 0.10195, 1.00000 }
+	};
+
+	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
+	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
 
 	// Set up the component transforms
 	leftComponentTransforms["base"] = {
-		{ -1.000000, 0.000000, 0.000000, 0.000000 },
-		{ 0.000000, 0.999976, 0.006981, 0.000000 },
-		{ -0.000000, 0.006981, -0.999976, 0.000000 },
-		{ -0.003400, -0.003400, 0.149100, 1.000000 },
+		{ -1.00000, 0.00000, -0.00000, 0.00000 },
+		{ 0.00000, 0.99998, -0.00698, 0.00000 },
+		{ 0.00000, -0.00698, -0.99998, 0.00000 },
+		{ -0.00340, -0.00340, 0.14910, 1.00000 }
 	};
 	rightComponentTransforms["base"] = {
-		{ -1.000000, 0.000000, 0.000000, 0.000000 },
-		{ 0.000000, 0.999976, 0.006981, 0.000000 },
-		{ -0.000000, 0.006981, -0.999976, 0.000000 },
-		{ 0.003400, -0.003400, 0.149100, 1.000000 },
+		{ -1.00000, 0.00000, -0.00000, 0.00000 },
+		{ 0.00000, 0.99998, -0.00698, 0.00000 },
+		{ 0.00000, -0.00698, -0.99998, 0.00000 },
+		{ 0.00340, -0.00340, 0.14910, 1.00000 }
 	};
 	leftComponentTransforms["tip"] = {
-		{ 1.000000, 0.000000, 0.000000, 0.000000 },
-		{ 0.000000, 0.794415, -0.607376, 0.000000 },
-		{ 0.000000, 0.607376, 0.794415, 0.000000 },
-		{ 0.016694, -0.025220, 0.024687, 1.000000 },
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.79441, 0.60738, 0.00000 },
+		{ -0.00000, -0.60738, 0.79441, 0.00000 },
+		{ 0.01669, -0.02522, 0.02469, 1.00000 }
 	};
 	rightComponentTransforms["tip"] = {
-		{ 1.000000, 0.000000, 0.000000, 0.000000 },
-		{ 0.000000, 0.794415, -0.607376, 0.000000 },
-		{ 0.000000, 0.607376, 0.794415, 0.000000 },
-		{ -0.016694, -0.025220, 0.024687, 1.000000 },
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.79441, 0.60738, 0.00000 },
+		{ -0.00000, -0.60738, 0.79441, 0.00000 },
+		{ -0.01669, -0.02522, 0.02469, 1.00000 }
 	};
 }
 
