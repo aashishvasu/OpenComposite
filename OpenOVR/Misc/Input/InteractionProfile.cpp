@@ -109,7 +109,7 @@ const InteractionProfile::ProfileList& InteractionProfile::GetProfileList()
 
 InteractionProfile* InteractionProfile::GetProfileByPath(const string& name)
 {
-	std::map<std::string, InteractionProfile*> byPath;
+	static std::map<std::string, InteractionProfile*> byPath;
 	if (byPath.empty()) {
 		for (const std::unique_ptr<InteractionProfile>& profile : GetProfileList()) {
 			byPath[profile->GetPath()] = profile.get();
