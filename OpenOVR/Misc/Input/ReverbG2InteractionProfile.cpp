@@ -75,11 +75,12 @@ const InteractionProfile::LegacyBindings* ReverbG2InteractionProfile::GetLegacyB
 	LegacyBindings& bindings = allBindings[hand];
 
 	if (!bindings.menu) {
-		bindings.menu = "input/menu/click";
+		bindings.system = "input/menu/click";
 		bindings.stickX = "input/thumbstick/x";
 		bindings.stickY = "input/thumbstick/y";
 		bindings.stickBtn = "input/thumbstick/click";
 		bindings.trigger = "input/trigger/value";
+		bindings.triggerTouch = "input/trigger/value";
 		bindings.grip = "input/squeeze/value";
 		bindings.haptic = "output/haptic";
 		bindings.gripPoseAction = "input/grip/pose";
@@ -88,8 +89,10 @@ const InteractionProfile::LegacyBindings* ReverbG2InteractionProfile::GetLegacyB
 		// TODO: figure out mappings for buttons on controllers
 		if (handPath == "/user/hand/left") {
 			bindings.btnA = "input/x/click";
+			bindings.menu = "input/y/click";
 		} else {
 			bindings.btnA = "input/a/click";
+			bindings.menu = "input/b/click";
 		}
 	}
 
