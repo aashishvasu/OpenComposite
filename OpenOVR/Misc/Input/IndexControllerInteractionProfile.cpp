@@ -84,6 +84,31 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ vr::Prop_ModelNumber_String, { "Knuckles Left", "Knuckles Right" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
+
+	/*
+	* Values used to create this found here:
+	* SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_left\valve_controller_knu_1_0_left.json
+	*/
+	glm::mat4 inverseHandTransformLeft = {
+		{ 0.99933, -0.00528, -0.03614, 0.00000 },
+		{ -0.00449, 0.96417, -0.26525, 0.00000 },
+		{ 0.03624, 0.26523, 0.96350, 0.00000 },
+		{ 0.00000, -0.01500, 0.13000, 1.00000 }
+	};
+
+	/*
+	 * Values used to create this found here:
+	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_right\valve_controller_knu_1_0_right.json
+	 */
+	glm::mat4 inverseHandTransformRight = {
+		{ 0.99933, 0.00528, 0.03614, 0.00000 },
+		{ 0.00449, 0.96417, -0.26525, 0.00000 },
+		{ -0.03624, 0.26523, 0.96350, 0.00000 },
+		{ 0.00000, -0.01500, 0.13000, 1.00000 }
+	};
+
+	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
+	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
 }
 
 const std::string& IndexControllerInteractionProfile::GetPath() const
