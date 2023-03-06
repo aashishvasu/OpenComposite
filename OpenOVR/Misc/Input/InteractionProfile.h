@@ -214,4 +214,8 @@ protected:
 	 * Don't manually set 'handgrip' - instead, use GetComponentTransform.
 	 */
 	std::unordered_map<std::string, glm::mat4> leftComponentTransforms, rightComponentTransforms;
+
+	// Grip transforms for left and right hand
+	glm::mat4 leftHandGripTransform = glm::identity<glm::mat4>();
+	glm::mat4 rightHandGripTransform = glm::identity<glm::mat4>();
 };

@@ -83,7 +83,7 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		{ 0.000000, -0.087799, 0.996138, 0.000000 }, // Column 2
 		{ 0.000000, 0.003000, 0.097000, 1.000000 }, // Column 3 (translation)
 	};
-	handTransform = glm::affineInverse(inverseHandTransform);
+	leftHandGripTransform = rightHandGripTransform = glm::affineInverse(inverseHandTransform);
 
 	// Set up the component transforms
 	leftComponentTransforms["base"] = {
@@ -169,9 +169,4 @@ const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLega
 std::optional<const char*> OculusTouchInteractionProfile::GetOpenVRName() const
 {
 	return "oculus_touch";
-}
-
-glm::mat4 OculusTouchInteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const
-{
-	return handTransform;
 }

@@ -122,8 +122,14 @@ InteractionProfile* InteractionProfile::GetProfileByPath(const string& name)
 
 glm::mat4 InteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const
 {
+	if (hand == ITrackedDevice::HandType::HAND_LEFT) {
+		return leftHandGripTransform;
+	} else if (hand == ITrackedDevice::HandType::HAND_RIGHT) {
+		return rightHandGripTransform;
+	} 
 	return glm::identity<glm::mat4>();
 }
+
 
 std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevice::HandType hand, const std::string& name) const
 {
