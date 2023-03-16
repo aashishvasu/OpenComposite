@@ -46,7 +46,7 @@ private:
 			if (lhs.size() != rhs.size())
 				return lhs.size() > rhs.size();
 			else
-				// without this, strings that are the same length will be considered the same length by the map
+				// without this, strings that are the same length will be considered the same by the map
 				return lhs > rhs;
 		}
 	};

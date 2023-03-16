@@ -27,6 +27,7 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 	pathTranslationMap = {
 		{ "application_menu", "menu" },
 		{ "grip/click", "squeeze/click" },
+		{ "grip/value", "squeeze/click" },
 		{ "pull", "value" }
 	};
 

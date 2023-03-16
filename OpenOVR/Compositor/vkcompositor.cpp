@@ -14,63 +14,11 @@
 
 #include <vulkan/vulkan.h>
 
-VkPhysicalDevice expectedPhysicalDevice = NULL;
-VkDevice expectedDevice = NULL;
-VkQueue expectedQueue = NULL;
-
 #define ERR(msg)                                                                                                                                         \
 	do {                                                                                                                                                 \
 		std::string str = "Hit Vulkan-related error " + string(msg) + " at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
 		OOVR_ABORT(str.c_str());                                                                                                                         \
 	} while (0)
-
-// Start recording into a new command buffer that will only be executed once.
-static VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool)
-{
-	VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = commandPool;
-	allocInfo.commandBufferCount = 1;
-
-	VkCommandBuffer commandBuffer;
-	OOVR_FAILED_VK_ABORT(vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer));
-
-	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	OOVR_FAILED_VK_ABORT(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-
-	return commandBuffer;
-}
-
-static void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool, VkCommandBuffer commandBuffer, VkQueue queue)
-{
-	OOVR_FAILED_VK_ABORT(vkEndCommandBuffer(commandBuffer));
-
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	OOVR_FAILED_VK_ABORT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
-
-	OOVR_FAILED_VK_ABORT(vkQueueWaitIdle(queue));
-
-	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-}
-
-static void check_app_isnt_evil(const vr::VRVulkanTextureData_t* tex)
-{
-	if (tex->m_pPhysicalDevice != expectedPhysicalDevice) {
-		ERR("Texture VkPhysicalDevice isn't what we expected based on the first frame!");
-	}
-	if (tex->m_pDevice != expectedDevice) {
-		ERR("Texture VkDevice isn't what we expected based on the first frame!");
-	}
-	if (tex->m_pQueue != expectedQueue) {
-		ERR("Texture VkQueue isn't what we expected based on the first frame!");
-	}
-}
 
 static enum VkFormat handle_colorspace_auto(enum VkFormat ovrFormat)
 {
@@ -144,18 +92,14 @@ VkCompositor::VkCompositor(const vr::Texture_t* initialTexture)
 	appQueue = tex->m_pQueue;
 
 	VkCommandPoolCreateInfo poolInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	OOVR_FAILED_VK_ABORT(vkCreateCommandPool(tex->m_pDevice, &poolInfo, nullptr, &appCommandPool));
 }
 
 VkCompositor::~VkCompositor()
 {
+	// destroying command pool also frees command buffers
 	vkDestroyCommandPool(appDevice, appCommandPool, nullptr);
-
-	if (appImage != VK_NULL_HANDLE)
-		vkDestroyImage(appDevice, appImage, nullptr);
-
-	if (appSharedMem != VK_NULL_HANDLE)
-		vkFreeMemory(appDevice, appSharedMem, nullptr);
 }
 
 void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
@@ -166,14 +110,10 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		ERR("Cannot use NULL Vulkan image data (VRVulkanTextureData_t)");
 	}
 
-	check_app_isnt_evil(tex);
-
-	OOVR_FALSE_ABORT(appDevice == tex->m_pDevice);
-
-	//
-
-	// Set up a command buffer for both the app and runtime devices
-	VkCommandBuffer appCommandBuffer = beginSingleTimeCommands(tex->m_pDevice, appCommandPool);
+	// OpenXR only guarantees that the queue we initially gave it will have ownership of our swapchain image
+	// We could safeguard against any insane applications with a queue that we manage and copy to it,
+	// but it's simpler (and likely more performant) to just assume our app is sane.
+	OOVR_FALSE_ABORT(appQueue == tex->m_pQueue);
 
 	bool usable = chain != XR_NULL_HANDLE && CheckChainCompatible(*tex, createInfo, texture->eColorSpace);
 
@@ -183,6 +123,11 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		// First, delete the old chain if necessary
 		if (chain)
 			xrDestroySwapchain(chain);
+
+		// Free old command buffers if necessary
+		if (!appCommandBuffers.empty()) {
+			vkFreeCommandBuffers(appDevice, appCommandPool, appCommandBuffers.size(), appCommandBuffers.data());
+		}
 
 		// Make eye render buffer
 		createInfo = { XR_TYPE_SWAPCHAIN_CREATE_INFO };
@@ -195,7 +140,6 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		createInfo.sampleCount = tex->m_nSampleCount;
 		createInfo.arraySize = 1;
 
-		OOVR_LOGF("m_eColorSpace is %d", texture->eColorSpace);
 		switch (texture->eColorSpace) {
 		case vr::ColorSpace_Auto: {
 			createInfo.format = handle_colorspace_auto((VkFormat)tex->m_nFormat);
@@ -211,12 +155,7 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		}
 		}
 
-		OOVR_LOGF("Format: %d", tex->m_nFormat);
-
 		OOVR_FAILED_XR_ABORT(xrCreateSwapchain(xr_session.get(), &createInfo, &chain));
-
-		// Perform a layout transition, since the textures come
-		//  as VK_IMAGE_LAYOUT_UNDEFINED, at least at the time of writing.
 
 		uint32_t chainLength = 0;
 		OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, 0, &chainLength, nullptr));
@@ -225,23 +164,30 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 			swapchainImage.type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
 		OOVR_FAILED_XR_ABORT(xrEnumerateSwapchainImages(chain, swapchainImages.size(), &chainLength, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
-		std::vector<VkImageMemoryBarrier> rtBarriers, appBarriers;
-
-		// SetupMappedImages(appCommandBuffer, rtBarriers, appBarriers);
-
-		vkCmdPipelineBarrier(
-		    appCommandBuffer,
-		    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // Being inefficient here is fine, only runs on setup
-		    0,
-		    0, nullptr,
-		    0, nullptr,
-		    appBarriers.size(), appBarriers.data());
+		appCommandBuffers.resize(chainLength);
+		VkCommandBufferAllocateInfo bufInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+		bufInfo.commandPool = appCommandPool;
+		bufInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		bufInfo.commandBufferCount = chainLength;
+		OOVR_FAILED_VK_ABORT(vkAllocateCommandBuffers(appDevice, &bufInfo, appCommandBuffers.data()));
 	}
 
 	// First find the relevant image to render to
 	XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
 	uint32_t currentIndex;
 	OOVR_FAILED_XR_ABORT(xrAcquireSwapchainImage(chain, &acquireInfo, &currentIndex));
+
+	// Wait until the swapchain is ready - this makes sure the compositor isn't writing to it
+	// We don't have to pass in currentIndex since it uses the oldest acquired-but-not-waited-on
+	// image, so we should be careful with concurrency here.
+	XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
+	OOVR_FAILED_XR_ABORT(xrWaitSwapchainImage(chain, &waitInfo));
+
+	const VkCommandBuffer currentCommandBuffer = appCommandBuffers.at(currentIndex);
+	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	OOVR_FAILED_VK_ABORT(vkBeginCommandBuffer(currentCommandBuffer, &beginInfo));
 
 	// transition swapchain image to TRANSFER_DST for copy
 	VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
@@ -259,8 +205,8 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	barrier.subresourceRange.layerCount = 1;
 
 	vkCmdPipelineBarrier(
-	    appCommandBuffer,
-	    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+	    currentCommandBuffer,
+	    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
 	    0,
 	    0, nullptr,
 	    0, nullptr,
@@ -287,7 +233,7 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		// Todo - how do we tell which runtimes support multisampling?
 
 		vkCmdResolveImage( //
-		    appCommandBuffer, // commandbuffer
+		    currentCommandBuffer, // commandbuffer
 		    (VkImage)tex->m_nImage, // srcImage
 		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
 		    swapchainImages.at(currentIndex).image, // dstImage
@@ -297,7 +243,7 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		);
 	} else {
 		vkCmdCopyImage( //
-		    appCommandBuffer, // commandbuffer
+		    currentCommandBuffer, // commandbuffer
 		    (VkImage)tex->m_nImage, // srcImage
 		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
 		    swapchainImages.at(currentIndex).image, // dstImage
@@ -311,21 +257,21 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	vkCmdPipelineBarrier(
-	    appCommandBuffer, //
-	    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	    currentCommandBuffer, //
+	    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 	    0,
 	    0, nullptr,
 	    0, nullptr,
 	    1, &barrier);
 
-	// Copy the images from the application to the shared memory pool - this is fenced on the application finishing rendering
-	endSingleTimeCommands(tex->m_pDevice, appCommandPool, appCommandBuffer, tex->m_pQueue);
+	OOVR_FAILED_VK_ABORT(vkEndCommandBuffer(currentCommandBuffer));
 
-	// Wait until the swapchain is ready - this makes sure the compositor isn't writing to it
-	// We don't have to pass in currentIndex since it uses the oldest acquired-but-not-waited-on
-	// image, so we should be careful with concurrency here.
-	XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-	OOVR_FAILED_XR_ABORT(xrWaitSwapchainImage(chain, &waitInfo));
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &currentCommandBuffer;
+
+	OOVR_FAILED_VK_ABORT(vkQueueSubmit(tex->m_pQueue, 1, &submitInfo, VK_NULL_HANDLE));
 
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
 	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
