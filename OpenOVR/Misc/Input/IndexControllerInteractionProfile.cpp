@@ -87,7 +87,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 
 	/*
 	* Values used to create this found here:
-	* SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_left\valve_controller_knu_1_0_left.json
+	* SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_2_0_left\valve_controller_knu_2_0_left.json
 	*/
 	glm::mat4 inverseHandTransformLeft = {
 		{ 1.00000, -0.00000, 0.00000, 0.00000, },
@@ -98,7 +98,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 
 	/*
 	 * Values used to create this found here:
-	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_right\valve_controller_knu_1_0_right.json
+	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_2_0_right\valve_controller_knu_2_0_right.json
 	 */
 	glm::mat4 inverseHandTransformRight = {
 		{ 1.00000, -0.00000, 0.00000, 0.00000, },
@@ -107,8 +107,11 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ 0.00000, -0.02700, 0.14000, 1.00000, }
 	};
 
-	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
-	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
+	float angleInRadians = glm::radians(28.0f);
+	glm::mat4 yawRotationMatrix = glm::rotate(glm::mat4(1.0f), angleInRadians, glm::vec3(-1.0f, 0.0f, 0.0f));
+
+	leftHandGripTransform = yawRotationMatrix *  glm::affineInverse(inverseHandTransformLeft);
+	rightHandGripTransform = yawRotationMatrix *  glm::affineInverse(inverseHandTransformRight);
 	
 	// Set up the component transforms
 
