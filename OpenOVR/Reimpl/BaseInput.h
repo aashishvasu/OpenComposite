@@ -511,6 +511,8 @@ private:
 		BASE, // This is the pose from the 'base' component
 		HANDGRIP, // This is the pose from the 'handgrip' component, matching the OpenXR grip action
 		TIP, // This is the pose from the 'tip' component
+		BODY, // This is the pose from the 'body' component
+		GDC2015, // This is the pose from the 'gdc2015' component
 	};
 
 	struct PoseBindingInfo {

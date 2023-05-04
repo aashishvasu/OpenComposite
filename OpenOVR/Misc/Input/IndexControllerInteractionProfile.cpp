@@ -90,10 +90,10 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	* SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_left\valve_controller_knu_1_0_left.json
 	*/
 	glm::mat4 inverseHandTransformLeft = {
-		{ 0.99933, -0.00528, -0.03614, 0.00000 },
-		{ -0.00449, 0.96417, -0.26525, 0.00000 },
-		{ 0.03624, 0.26523, 0.96350, 0.00000 },
-		{ 0.00000, -0.01500, 0.13000, 1.00000 }
+		{ 1.00000, -0.00000, 0.00000, 0.00000, },
+		{ 0.00000, 0.98570, -0.16849, 0.00000, },
+		{ 0.00000, 0.16849, 0.98570, 0.00000, },
+		{ 0.00000, -0.02700, 0.14000, 1.00000, }
 	};
 
 	/*
@@ -101,14 +101,74 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_right\valve_controller_knu_1_0_right.json
 	 */
 	glm::mat4 inverseHandTransformRight = {
-		{ 0.99933, 0.00528, 0.03614, 0.00000 },
-		{ 0.00449, 0.96417, -0.26525, 0.00000 },
-		{ -0.03624, 0.26523, 0.96350, 0.00000 },
-		{ 0.00000, -0.01500, 0.13000, 1.00000 }
+		{ 1.00000, -0.00000, 0.00000, 0.00000, },
+		{ 0.00000, 0.98570, -0.16849, 0.00000, },
+		{ 0.00000, 0.16849, 0.98570, 0.00000, },
+		{ 0.00000, -0.02700, 0.14000, 1.00000, }
 	};
 
 	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
 	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
+	
+	// Set up the component transforms
+
+    glm::mat4 bodyLeft = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000, },
+		{ 0.00000, 1.00000, -0.00000, 0.00000, },
+		{ 0.00000, 0.00000, 1.00000, 0.00000, },
+		{ 0.00000, 0.00000, 0.00000, 1.00000, }
+    };
+    glm::mat4 bodyRight = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000, },
+		{ 0.00000, 1.00000, -0.00000, 0.00000, },
+		{ 0.00000, 0.00000, 1.00000, 0.00000, },
+		{ 0.00000, 0.00000, 0.00000, 1.00000, }
+    };
+    glm::mat4 tipLeft = {
+		{ 0.99619, -0.00000, -0.08716, 0.00000, },
+		{ 0.05602, 0.76604, 0.64034, 0.00000, },
+		{ 0.06677, -0.64279, 0.76313, 0.00000, },
+		{ 0.00600, -0.01500, 0.02000, 1.00000, }
+    };
+    glm::mat4 tipRight = {
+		{ 0.99619, -0.00000, 0.08716, 0.00000, },
+		{ -0.05602, 0.76604, 0.64034, 0.00000, },
+		{ -0.06677, -0.64279, 0.76313, 0.00000, },
+		{ -0.00600, -0.01500, 0.02000, 1.00000, }
+    };
+    glm::mat4 baseLeft = {
+		{ 0.99762, -0.00000, 0.06889, 0.00000, },
+		{ -0.02197, -0.94777, 0.31820, 0.00000, },
+		{ 0.06529, -0.31896, -0.94552, 0.00000, },
+		{ 0.00500, -0.02300, 0.19600, 1.00000, }
+    };
+    glm::mat4 baseRight = {
+		{ 0.99762, -0.00000, -0.06889, 0.00000, },
+		{ 0.02197, -0.94777, 0.31820, 0.00000, },
+		{ -0.06529, -0.31896, -0.94552, 0.00000, },
+		{ -0.00500, -0.02300, 0.19600, 1.00000, }
+    };
+    glm::mat4 gdcLeft = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000, },
+		{ 0.00000, 1.00000, -0.00000, 0.00000, },
+		{ 0.00000, 0.00000, 1.00000, 0.00000, },
+		{ 0.00000, 0.00000, 0.00000, 1.00000, }
+    };
+    glm::mat4 gdcRight = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000, },
+		{ 0.00000, 1.00000, -0.00000, 0.00000, },
+		{ 0.00000, 0.00000, 1.00000, 0.00000, },
+		{ 0.00000, 0.00000, 0.00000, 1.00000, }
+    };
+
+	leftComponentTransforms["body"] = glm::affineInverse(bodyLeft);
+	rightComponentTransforms["body"] = glm::affineInverse(bodyRight);
+	leftComponentTransforms["tip"] = glm::affineInverse(tipLeft);
+	rightComponentTransforms["tip"] = glm::affineInverse(tipRight);
+	leftComponentTransforms["base"] = glm::affineInverse(baseLeft);
+	rightComponentTransforms["base"] = glm::affineInverse(baseRight);
+	leftComponentTransforms["gdc2015"] = glm::affineInverse(gdcLeft);
+	rightComponentTransforms["gdc2015"] = glm::affineInverse(gdcRight);
 }
 
 const std::string& IndexControllerInteractionProfile::GetPath() const

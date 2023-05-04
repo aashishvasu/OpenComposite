@@ -848,6 +848,10 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 				info.point = PoseBindingPoint::BASE;
 			} else if (withoutPrefix == "pose/tip") {
 				info.point = PoseBindingPoint::TIP;
+			} else if (withoutPrefix == "pose/body") {
+				info.point = PoseBindingPoint::BODY;
+			} else if (withoutPrefix == "pose/gdc2015") {
+				info.point = PoseBindingPoint::GDC2015;
 			} else {
 				OOVR_LOGF("WARNING: Ignoring unknown pose path '%s' (%s) for action %s", specPath.c_str(), withoutPrefix.c_str(), action->fullName.c_str());
 				continue;
