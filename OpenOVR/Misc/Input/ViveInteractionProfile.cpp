@@ -41,6 +41,27 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 		{ vr::Prop_ModelNumber_String, { "Vive. Controller MV" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
 	};
+
+	/*
+	* Both transforms use values from the same file:
+	* SteamVR\resources\rendermodels\vr_controller_vive_1_5\vr_controller_vive_1_5.json
+	*/
+	glm::mat4 inverseHandTransformLeft = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, -0.01500, 0.09700, 1.00000 }
+	};
+
+	glm::mat4 inverseHandTransformRight = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, -0.01500, 0.09700, 1.00000 }
+	};
+
+	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
+	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
 }
 
 const std::string& ViveWandInteractionProfile::GetPath() const
@@ -60,7 +81,9 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 		bindings.stickY = "input/trackpad/y";
 		bindings.stickBtn = "input/trackpad/click";
 		bindings.stickBtnTouch = "input/trackpad/touch";
-		bindings.trigger = "input/trigger/click";
+		bindings.trigger = "input/trigger/value";
+		bindings.triggerClick = "input/trigger/click";
+		bindings.triggerTouch = "input/trigger/value";
 		bindings.grip = "input/squeeze/click";
 		bindings.haptic = "output/haptic";
 		bindings.gripPoseAction = "input/grip/pose";

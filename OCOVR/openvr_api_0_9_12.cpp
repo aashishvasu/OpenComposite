@@ -16,6 +16,8 @@
 
 #ifdef _WIN32
 
+using namespace vr;
+
 namespace OpenVR_v0_9_12 {
 
 static const char* const IVRSystem_Version = "IVRSystem_009";

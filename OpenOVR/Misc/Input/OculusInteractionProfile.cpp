@@ -6,6 +6,8 @@
 
 #include "OculusInteractionProfile.h"
 
+#include <glm/gtc/matrix_inverse.hpp>
+
 OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 {
 
@@ -69,6 +71,67 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		{ vr::Prop_ModelNumber_String, { "Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
+
+	// Setup the grip-to-steamvr space matrices
+
+	// New Data directly from the openxr-grip space for quest 2 controllers in steamvr
+	// SteamVR\resources\rendermodels\oculus_quest2_controller_left
+	/*
+	    "openxr_grip" : {
+	        "component_local":
+	        {
+	        "origin" : [ -0.007, -0.00182941, 0.1019482 ],
+	                   "rotate_xyz" : [ 20.6, 0.0, 0.0 ]
+	        }
+	    }
+	*/
+
+	// Setup the grip-to-steamvr space matrices
+
+	// Made from values in: SteamVR\resources\rendermodels\oculus_quest2_controller_left\oculus_quest2_controller_left.json
+	glm::mat4 inverseHandTransformLeft = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, 0.00300, 0.09700, 1.00000 }
+	};
+
+	// Made from values in: SteamVR\resources\rendermodels\oculus_quest2_controller_right\oculus_quest2_controller_right.json
+	glm::mat4 inverseHandTransformRight = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.99614, -0.08780, 0.00000 },
+		{ 0.00000, 0.08780, 0.99614, 0.00000 },
+		{ 0.00000, 0.00300, 0.09700, 1.00000 }
+	};
+
+	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
+	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
+
+	// Set up the component transforms
+	leftComponentTransforms["base"] = {
+		{ -1.00000, 0.00000, -0.00000, 0.00000 },
+		{ 0.00000, 0.99998, -0.00698, 0.00000 },
+		{ 0.00000, -0.00698, -0.99998, 0.00000 },
+		{ -0.00340, -0.00340, 0.14910, 1.00000 }
+	};
+	rightComponentTransforms["base"] = {
+		{ -1.00000, 0.00000, -0.00000, 0.00000 },
+		{ 0.00000, 0.99998, -0.00698, 0.00000 },
+		{ 0.00000, -0.00698, -0.99998, 0.00000 },
+		{ 0.00340, -0.00340, 0.14910, 1.00000 }
+	};
+	leftComponentTransforms["tip"] = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.79441, 0.60738, 0.00000 },
+		{ -0.00000, -0.60738, 0.79441, 0.00000 },
+		{ 0.01669, -0.02522, 0.02469, 1.00000 }
+	};
+	rightComponentTransforms["tip"] = {
+		{ 1.00000, -0.00000, 0.00000, 0.00000 },
+		{ 0.00000, 0.79441, 0.60738, 0.00000 },
+		{ -0.00000, -0.60738, 0.79441, 0.00000 },
+		{ -0.01669, -0.02522, 0.02469, 1.00000 }
+	};
 }
 
 const std::string& OculusTouchInteractionProfile::GetPath() const
@@ -92,6 +155,7 @@ const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLega
 		bindings.stickBtnTouch = "input/thumbstick/touch";
 
 		bindings.trigger = "input/trigger/value";
+		bindings.triggerClick = "input/trigger/value";
 		bindings.triggerTouch = "input/trigger/touch";
 
 		bindings.grip = "input/squeeze/value";

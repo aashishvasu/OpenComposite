@@ -83,7 +83,7 @@ void InteractionProfile::AddLegacyBindings(const LegacyControllerActions& ctrl, 
 	create(ctrl.stickBtnTouch, paths->stickBtnTouch);
 	create(ctrl.trigger, paths->trigger);
 	create(ctrl.triggerTouch, paths->triggerTouch);
-	create(ctrl.triggerClick, paths->trigger);
+	create(ctrl.triggerClick, paths->triggerClick);
 	create(ctrl.grip, paths->grip);
 	create(ctrl.gripClick, paths->grip);
 	create(ctrl.haptic, paths->haptic);
@@ -105,4 +105,38 @@ const InteractionProfile::ProfileList& InteractionProfile::GetProfileList()
 		profiles.emplace_back(std::make_unique<KhrSimpleInteractionProfile>());
 	}
 	return profiles;
+}
+
+InteractionProfile* InteractionProfile::GetProfileByPath(const string& name)
+{
+	static std::map<std::string, InteractionProfile*> byPath;
+	if (byPath.empty()) {
+		for (const std::unique_ptr<InteractionProfile>& profile : GetProfileList()) {
+			byPath[profile->GetPath()] = profile.get();
+		}
+	}
+	if (!byPath.contains(name))
+		OOVR_ABORTF("Could not find interaction profile '%s'", name.c_str());
+	return byPath.at(name);
+}
+
+glm::mat4 InteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const
+{
+	if (hand == ITrackedDevice::HandType::HAND_LEFT) {
+		return leftHandGripTransform;
+	} else if (hand == ITrackedDevice::HandType::HAND_RIGHT) {
+		return rightHandGripTransform;
+	} 
+	return glm::identity<glm::mat4>();
+}
+
+
+std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevice::HandType hand, const std::string& name) const
+{
+	std::unordered_map<std::string, glm::mat4> transforms = hand == ITrackedDevice::HAND_RIGHT ? rightComponentTransforms : leftComponentTransforms;
+	const auto iter = transforms.find(name);
+	if (iter == transforms.end())
+		return {};
+	else
+		return iter->second;
 }

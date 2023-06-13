@@ -28,6 +28,8 @@
 
 #include "Misc/xr_ext.h"
 
+using namespace vr;
+
 namespace {
 
 class PropertyPrinter {

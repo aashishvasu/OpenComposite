@@ -44,6 +44,8 @@
 #include <ranges>
 #include <type_traits>
 
+using namespace vr;
+
 std::unique_ptr<TemporaryGraphics> XrBackend::temporaryGraphics = nullptr;
 XrBackend::XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx)
 {
@@ -79,6 +81,8 @@ XrBackend::~XrBackend()
 	// First clear out the compositors, since they might try and access the OpenXR instance
 	// in their destructor.
 	PrepareForSessionShutdown();
+
+	temporaryGraphics.reset();
 
 	DrvOpenXR::FullShutdown();
 }

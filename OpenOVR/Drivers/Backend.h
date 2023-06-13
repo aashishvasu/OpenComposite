@@ -6,6 +6,9 @@
 // for OOVR_Compositor_FrameTiming
 #include "../OpenOVR/Reimpl/BaseCompositor.h"
 
+// Avoid including InteractionProfile for a single use
+class InteractionProfile;
+
 enum ETrackingStateType {
 	/**
 	 * Use the latest available tracking data
@@ -49,6 +52,10 @@ public:
 	    double absTime)
 	    = 0;
 
+	virtual vr::ETrackedDeviceClass GetTrackedDeviceClass() = 0;
+
+	virtual vr::ETrackedControllerRole GetControllerRole();
+
 	/** Returns a bool property. If the device index is not valid or the property is not a bool type this function will return false. */
 	virtual bool GetBoolTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError* pErrorL);
 
@@ -88,6 +95,13 @@ public:
 	 */
 	virtual HandType GetHand();
 
+	/**
+	 * Get the interaction profile that best represents this controller, or null if this isn't a controller or there isn't a suitable profile.
+	 *
+	 * This should be used as little as possible, since the interaction-related stuff should generally be kept inside the controller.
+	 */
+	virtual const InteractionProfile* GetInteractionProfile();
+
 	///////
 	vr::TrackedDeviceIndex_t DeviceIndex();
 	virtual void InitialiseDevice(vr::TrackedDeviceIndex_t deviceIndex);
@@ -103,7 +117,9 @@ class IHMD : public virtual ITrackedDevice {
 public:
 	virtual void GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height) = 0;
 
-	// from BaseSystem
+	vr::ETrackedDeviceClass GetTrackedDeviceClass() override;
+
+	// from BaseSystem	
 
 	/** The projection matrix for the specified eye */
 	virtual vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention = API_DirectX) = 0;
