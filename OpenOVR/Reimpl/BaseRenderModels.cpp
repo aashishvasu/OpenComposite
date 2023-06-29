@@ -485,15 +485,18 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 	ZeroMemory(pComponentState, sizeof(*pComponentState));
 
 	std::string componentName = pchComponentName;
-	std::string renderModelName = pchRenderModelName;
 
 	ITrackedDevice::HandType hand;
-	if (renderModelName == "renderLeftHand") {
-		hand = ITrackedDevice::HAND_LEFT;
-	} else if (renderModelName == "renderRightHand") {
-		hand = ITrackedDevice::HAND_RIGHT;
-	} else {
-		hand = ITrackedDevice::HAND_NONE;
+	if (pchRenderModelName)
+	{
+		std::string renderModelName = pchRenderModelName;
+		if (renderModelName == "renderLeftHand") {
+			hand = ITrackedDevice::HAND_LEFT;
+		} else if (renderModelName == "renderRightHand") {
+			hand = ITrackedDevice::HAND_RIGHT;
+		} else {
+			hand = ITrackedDevice::HAND_NONE;
+		}
 	}
 
 	// See if we can get it properly
