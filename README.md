@@ -79,21 +79,29 @@ If you have any questions, feel free to jump on our Discord server:
 
 ## Linux-specific info
 
-There are no builds available for Linux at this time: you'll have to build it manually for now (see [the section below on compiling](#compiling-for-developers)).
-After compiling, there are a few steps you'll have to follow:
+Linux builds are available from [GitLab CI](https://gitlab.com/znixian/OpenOVR/pipelines).
+[32-bit](https://gitlab.com/api/v4/projects/znixian%2Fopenovr/jobs/artifacts/openxr/download?job=ubuntu-32build)
+[64-bit](https://gitlab.com/api/v4/projects/znixian%2Fopenovr/jobs/artifacts/openxr/download?job=ubuntu-build)
+
+There is no switcher for Linux yet.
+As the vast majority of VR games are Windows-only and hence running through Proton, you'll have to essentially do a system wide install,
+but there is an environment variable available that allows you to set it up per game.
+(Using the Windows DLLs for a per-game install instead may work, but is untested.)
+
+After downloading and extracting the zip, you should get an OpenComposite folder. Here are some steps you'll have to follow to set it up:
 1. Get the runtime in place. This can be accomplished through one of the following methods:
-	- Set the VR_OVERRIDE variable to the build directory (in Steam launch options: `VR_OVERRIDE=<path to build directory> %command%`)
-	- Edit the OpenVR config file - typically located at `~/.config/openvr/openvrpaths.vrpath` - and in the "runtime" section, put the path to the build directory. Note that Steam likes to overwrite this file so you may need to set it to read only.
+	- Set the VR_OVERRIDE variable to the OpenComposite directory (in Steam launch options: `VR_OVERRIDE=/path/to/OpenComposite %command%`)
+	- Edit the OpenVR config file - typically located at `~/.config/openvr/openvrpaths.vrpath` - and in the "runtime" section, put the path to the OpenComposite directory. Note that Steam likes to overwrite this file so you may need to set it to read only.
 	- For the elusive native Linux title, you can copy the `vrclient.so` over the game's `libopenvr_api.so`
 2. For games utilizing the Steam Runtime (most of them): you will need to work around the Steam Runtime. Here are some general tips for working around, as setups can differ:
 	- Any files located in your home directory will exist with no problems in the runtime. There is nothing to take into consideration with these paths, they will work fine.
 	- Any path located under `/usr` can be found under `/run/host/usr` in the runtime. For example, if you installed Monado system wide, the runtime json would be located at `/run/host/usr/share/openxr/1/openxr_monado.json`.
 	- Any other paths can be added using the `PRESSURE_VESSEL_FILESYSTEMS_RW` environment variable.
 
-As an example, here is what your Steam launch options might look like if you cloned OpenComposite to your home directory, used the VR_OVERRIDE environment variable, and installed Monado system wide:
+As an example, here is what your Steam launch options might look like if you downloaded OpenComposite to your home directory, used the VR_OVERRIDE environment variable, and installed Monado system wide:
 
 ```
-VR_OVERRIDE=~/OpenOVR/build XR_RUNTIME_JSON=/run/host/usr/share/openxr/1/openxr_monado.json PRESSURE_VESSEL_FILESYSTEMS_RW=$XDG_RUNTIME_DIR/monado_comp_ipc %command%
+VR_OVERRIDE=~/OpenComposite XR_RUNTIME_JSON=/run/host/usr/share/openxr/1/openxr_monado.json PRESSURE_VESSEL_FILESYSTEMS_RW=$XDG_RUNTIME_DIR/monado_comp_ipc %command%
 ```
 
 Note that `$XDG_RUNTIME_DIR/monado_comp_ipc` is a socket used by Monado and required to be present for it to properly detect that Monado is running.
@@ -178,7 +186,7 @@ load on the main menu, for example?
 
 # Compiling (**for developers**)
 
-Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR/-/tree/openxr-input-refactor) - it's under the GPLv3 licence.
+Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR/-/tree/openxr) - it's under the GPLv3 licence.
 This project is built with CMake and follows a standard build process, so tools like CLion can be used to build it.
 The resulting library will be placed at `build/bin/linux64/vrclient.so` on Linux, `build/bin/vrclient_x64.dll` on Windows.
 
@@ -215,6 +223,7 @@ cd build
 cmake ..
 cmake --build .
 ```
+The build directory will be set up in a way that you can simply set `VR_OVERRIDE` to its path.
 
 ## Miscellaneous
 
