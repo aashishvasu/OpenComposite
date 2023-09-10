@@ -1229,7 +1229,7 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 			break;
 		}
 		case DpadBindingInfo::Direction::EAST: {
-			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle45deg || angle <= DpadBindingInfo::angle45deg);
+			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle45deg && angle <= DpadBindingInfo::angle45deg);
 			break;
 		}
 		}
