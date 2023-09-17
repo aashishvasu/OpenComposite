@@ -82,9 +82,11 @@ XrBackend::~XrBackend()
 	// in their destructor.
 	PrepareForSessionShutdown();
 
-	temporaryGraphics.reset();
-
 	DrvOpenXR::FullShutdown();
+
+	// This must happen after session destruction (which occurs in FullShutdown), as runtimes (namely Monado)
+	// may try to access these resources while destroying the session.
+	temporaryGraphics.reset();
 }
 
 IHMD* XrBackend::GetPrimaryHMD()
