@@ -371,6 +371,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		actions.Reset();
 		actionSets.Reset();
 		DpadBindingInfo::parents.clear();
+		usingLegacyInput = false;
 	}
 
 	restartingSession = true;
