@@ -2273,8 +2273,11 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 
 	// SteamVR seemingly writes to these two axis to represent finger curl on legacy input.
 	VRSkeletalSummaryData_t skeletonData = {0};
-	if (getRealSkeletalSummary((ITrackedDevice::HandType)hand, &skeletonData) != VRInputError_None)
-		return true; // not a critical fail
+	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
+		getRealSkeletalSummary((ITrackedDevice::HandType)hand, &skeletonData);
+	} else {
+		return true;
+	}
 
 	VRControllerAxis_t& fingers = state->rAxis[3];
 	fingers.x = skeletonData.flFingerCurl[1] * 1.66 * 1.33;
