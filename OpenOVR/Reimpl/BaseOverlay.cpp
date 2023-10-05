@@ -957,3 +957,20 @@ void BaseOverlay::CloseMessageOverlay()
 {
 	STUBBED();
 }
+
+
+EVROverlayError BaseOverlay::SetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float fRadians)
+{
+    STUBBED();
+}
+
+
+EVROverlayError BaseOverlay::GetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float* pfRadians)
+{
+    STUBBED();
+}
+
+EVROverlayError BaseOverlay::WaitFrameSync(uint32_t nTimeoutMs)
+{
+    STUBBED();
+}
