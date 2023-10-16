@@ -84,6 +84,8 @@ XrBackend::~XrBackend()
 
 	DrvOpenXR::FullShutdown();
 
+	graphicsBinding = nullptr;
+
 	// This must happen after session destruction (which occurs in FullShutdown), as runtimes (namely Monado)
 	// may try to access these resources while destroying the session.
 	temporaryGraphics.reset();
