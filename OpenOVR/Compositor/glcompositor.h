@@ -20,14 +20,14 @@ protected:
 	 */
 	virtual void ReadSwapchainImages() = 0;
 
-	void CheckCreateSwapChain(int width, int height, GLuint rawFormat);
+	void CheckCreateSwapChain(int width, int height, vr::EColorSpace c_space, GLsizei format);
 
 	/**
 	 * 'Normalise' an OpenGL internalFormat. glCopyImageSubData doesn't need exactly the same
 	 * types, so if the game uses a format the runtime doesn't perfectly support we can cover
-	 * up using this. For now we just convert base formats (eg GL_RGBA) to sized formats (eg GL_RGBA8).
+	 * up using this.
 	 */
-	static GLuint NormaliseFormat(GLuint format);
+	static GLuint NormaliseFormat(vr::EColorSpace c_space, GLsizei rawFormat);
 
 	GLuint fboId = 0;
 
