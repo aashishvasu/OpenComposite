@@ -420,6 +420,8 @@ uint32_t XrHMD::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop,
 	PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F");
 	PROP(vr::Prop_RenderModelName_String, "oculusHmdRenderModel");
 
+	PROP(vr::Prop_ControllerType_String, "oculus"); // If this is null on the HMD VRChat ignores the HMD entirely
+
 	return XrTrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
 
