@@ -11,6 +11,8 @@
 #include "XrBackend.h"
 #include "generated/static_bases.gen.h"
 
+#include <thread>
+#include <chrono>
 #include <memory>
 #include <set>
 #include <string>
@@ -71,6 +73,15 @@ static XrBool32 XRAPI_CALL debugCallback(
 	return XR_FALSE;
 }
 #endif
+
+static void CreateSystemID()
+{
+	// Create a system - this is when we choose what form factor we want, in this case an HMD
+	XrSystemGetInfo systemInfo{};
+	systemInfo.type = XR_TYPE_SYSTEM_GET_INFO;
+	systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+	OOVR_FAILED_XR_ABORT(xrGetSystem(xr_instance, &systemInfo, &xr_system));
+}
 
 IBackend* DrvOpenXR::CreateOpenXRBackend()
 {
@@ -217,11 +228,8 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	// Load the function pointers for the extension functions
 	xr_ext = new XrExt(apiFlags, extensions);
-	// Create a system - this is when we choose what form factor we want, in this case an HMD
-	XrSystemGetInfo systemInfo{};
-	systemInfo.type = XR_TYPE_SYSTEM_GET_INFO;
-	systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
-	OOVR_FAILED_XR_ABORT(xrGetSystem(xr_instance, &systemInfo, &xr_system));
+	
+	CreateSystemID();
 
 	// List off the views and store them locally for easy access
 	uint32_t viewCount = 0;
@@ -299,11 +307,27 @@ void DrvOpenXR::ShutdownSession()
 	delete xr_gbl;
 	xr_gbl = nullptr;
 
-	// Hey it turns out that xrDestroySession can be called whenever - how convenient
-	// OOVR_FAILED_XR_ABORT(xrRequestExitSession(xr_session));
+	if (currentBackend->sessionActive) {
+		// Hey it turns out that xrDestroySession can be called whenever - how convenient
+		OOVR_FAILED_XR_ABORT(xrRequestExitSession(xr_session.get()));
+		int count = 0;
+		while (currentBackend->GetSessionState() != XR_SESSION_STATE_EXITING && count++ < 10) {
+			const int durationMs = 250;
+			OOVR_LOGF("Session Exit state has not been reached yet, waiting %dms ...", durationMs);
+#ifdef _WIN32
+			Sleep(durationMs);
+#else
+			struct timespec ts = { 0, durationMs * 1000000 };
+			nanosleep(&ts, &ts);
+#endif
+			currentBackend->PumpEvents();
+		}
+	}
 
 	OOVR_FAILED_XR_ABORT(xrDestroySession(xr_session.get()));
 	xr_session.reset();
+
+	CreateSystemID();
 }
 
 void DrvOpenXR::FullShutdown()
