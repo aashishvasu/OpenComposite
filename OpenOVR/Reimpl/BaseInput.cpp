@@ -1190,11 +1190,9 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 			return ret;
 	}
 
+	bool compoundLastState = false;
 	// dpad bindings: need to read parent state(s) and fill in state ourselves
 	for (auto& [parent_name, dpad_info] : action.dpadBindings) {
-		// if we've already determined one of the bindings is active no need to continue
-		if (state->currentState == XR_TRUE)
-			break;
 		// read state of parent
 		XrActionStateVector2f parent_state = { XR_TYPE_ACTION_STATE_VECTOR2F };
 		auto iter = DpadBindingInfo::parents.find(parent_name);
@@ -1202,6 +1200,11 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 		XrActionStateGetInfo info2 = *getInfo;
 		info2.action = iter->second.vectorAction;
 		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session.get(), &info2, &parent_state));
+
+		compoundLastState |= dpad_info.lastState;
+		if (!parent_state.isActive)
+			continue;
+		state->isActive = XR_TRUE;
 
 		// convert to polar coordinates
 		// angle is in radians
@@ -1248,22 +1251,16 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 			// touch dpad, but our dpad parent doesn't have a touch input
 			active = true;
 		}
-
-		if (active && within_bounds) {
+		bool currentState = active && within_bounds;
+		if (currentState)
 			state->currentState = XR_TRUE;
-		} else {
-			state->currentState = XR_FALSE;
-		}
 
-		if (state->currentState != dpad_info.lastState) {
-			state->changedSinceLastSync = XR_TRUE;
+		if (currentState != dpad_info.lastState) {
 			state->lastChangeTime = parent_state.lastChangeTime;
-			dpad_info.lastState = state->currentState;
-		} else {
-			state->changedSinceLastSync = XR_FALSE;
+			dpad_info.lastState = currentState;
 		}
-		state->isActive = parent_state.isActive;
 	}
+	state->changedSinceLastSync = compoundLastState != (bool)state->currentState;
 	return XR_SUCCESS;
 }
 
