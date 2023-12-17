@@ -113,6 +113,16 @@ const std::string& ReverbG2InteractionProfile::GetPath() const
 	return path;
 }
 
+std::optional<const char*> ReverbG2InteractionProfile::GetLeftHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
+std::optional<const char*> ReverbG2InteractionProfile::GetRightHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
 std::optional<const char*> ReverbG2InteractionProfile::GetOpenVRName() const
 {
 	return "hpmotioncontroller";

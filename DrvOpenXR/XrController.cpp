@@ -117,15 +117,28 @@ uint32_t XrController::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty
 		return (uint32_t)strlen(out) + 1;                                                              \
 	}
 
+	// Resonite determines controller type by using render model name, if it can't recognize - it will load generic controller
 	switch (type) {
-	case XCT_LEFT:
-		PROP(vr::Prop_RenderModelName_String, "renderLeftHand");
+	case XCT_LEFT: {
+		std::optional<const char*> leftHandPath = GetInteractionProfile()->GetLeftHandRenderModelName();
+		if (leftHandPath.has_value()) {
+			PROP(vr::Prop_RenderModelName_String, leftHandPath.value());
+		} else {
+			PROP(vr::Prop_RenderModelName_String, "renderLeftHand");
+		}
 		PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Left");
 		break;
-	case XCT_RIGHT:
-		PROP(vr::Prop_RenderModelName_String, "renderRightHand");
+	}
+	case XCT_RIGHT: {
+		std::optional<const char*> rightHandPath = GetInteractionProfile()->GetRightHandRenderModelName();
+		if (rightHandPath.has_value()) {
+			PROP(vr::Prop_RenderModelName_String, rightHandPath.value());
+		} else {
+			PROP(vr::Prop_RenderModelName_String, "renderRightHand");
+		}
 		PROP(vr::Prop_RegisteredDeviceType_String, "oculus/F00BAAF00F_Controller_Right");
 		break;
+	}
 	case XCT_TRACKED_OBJECT:
 		PROP(vr::Prop_RenderModelName_String, "renderObject0");
 		break;

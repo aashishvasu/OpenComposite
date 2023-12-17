@@ -70,6 +70,21 @@ const std::string& ViveWandInteractionProfile::GetPath() const
 	return path;
 }
 
+std::optional<const char*> ViveWandInteractionProfile::GetLeftHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
+std::optional<const char*> ViveWandInteractionProfile::GetRightHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
+std::optional<const char*> ViveWandInteractionProfile::GetOpenVRName() const
+{
+	return "vive_controller";
+}
+
 const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyBindings(const std::string& handPath) const
 {
 	static LegacyBindings bindings = {};
@@ -91,9 +106,4 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 	}
 
 	return &bindings;
-}
-
-std::optional<const char*> ViveWandInteractionProfile::GetOpenVRName() const
-{
-	return "vive_controller";
 }

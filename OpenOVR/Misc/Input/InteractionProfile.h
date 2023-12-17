@@ -75,6 +75,16 @@ public:
 	virtual const std::string& GetPath() const = 0;
 
 	/**
+	 * Get the right hand render model name of current interaction profile which would recognized by OpenVR app
+	 */
+	virtual std::optional<const char*> GetLeftHandRenderModelName() const = 0;
+
+	/**
+	 * Get the left hand render model name of current interaction profile which would recognized by OpenVR app
+	 */
+	virtual std::optional<const char*> GetRightHandRenderModelName() const = 0;
+
+	/**
 	 * Gets a list of valid input paths for this profile. For example, on the simple controller:
 	 *
 	 * /user/hand/left/input/select/click

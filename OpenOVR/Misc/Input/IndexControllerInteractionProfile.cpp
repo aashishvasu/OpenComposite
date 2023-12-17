@@ -110,7 +110,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 
 	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
 	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
-	
+
 	// Set up the component transforms
 
     glm::mat4 bodyLeft = {
@@ -178,13 +178,23 @@ const std::string& IndexControllerInteractionProfile::GetPath() const
 	return path;
 }
 
-const InteractionProfile::LegacyBindings* IndexControllerInteractionProfile::GetLegacyBindings(const std::string& handPath) const
+std::optional<const char*> IndexControllerInteractionProfile::GetLeftHandRenderModelName() const
 {
-	// Index controllers are exactly symmetrical, so we can just drop handPath on the floor.
-	return &this->bindingsLegacy;
+	return "{indexcontroller}valve_controller_knu_1_0_left";
+}
+
+std::optional<const char*> IndexControllerInteractionProfile::GetRightHandRenderModelName() const
+{
+	return "{indexcontroller}valve_controller_knu_1_0_right";
 }
 
 std::optional<const char*> IndexControllerInteractionProfile::GetOpenVRName() const
 {
 	return "knuckles";
+}
+
+const InteractionProfile::LegacyBindings* IndexControllerInteractionProfile::GetLegacyBindings(const std::string& handPath) const
+{
+	// Index controllers are exactly symmetrical, so we can just drop handPath on the floor.
+	return &this->bindingsLegacy;
 }

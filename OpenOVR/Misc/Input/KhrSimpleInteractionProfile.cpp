@@ -40,6 +40,21 @@ const std::string& KhrSimpleInteractionProfile::GetPath() const
 	return interactionPath;
 }
 
+std::optional<const char*> KhrSimpleInteractionProfile::GetLeftHandRenderModelName() const
+{
+	return std::nullopt;
+}
+
+std::optional<const char*> KhrSimpleInteractionProfile::GetRightHandRenderModelName() const
+{
+	return std::nullopt;
+}
+
+std::optional<const char*> KhrSimpleInteractionProfile::GetOpenVRName() const
+{
+	return std::nullopt;
+}
+
 const InteractionProfile::LegacyBindings* KhrSimpleInteractionProfile::GetLegacyBindings(const std::string& handPath) const
 {
 	static LegacyBindings bindings = {};
@@ -56,9 +71,4 @@ const InteractionProfile::LegacyBindings* KhrSimpleInteractionProfile::GetLegacy
 		bindings.aimPoseAction = "input/aim/pose";
 	}
 	return &bindings;
-}
-
-std::optional<const char*> KhrSimpleInteractionProfile::GetOpenVRName() const
-{
-	return std::nullopt;
 }

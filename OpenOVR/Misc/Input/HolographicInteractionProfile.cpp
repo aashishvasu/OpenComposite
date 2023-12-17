@@ -50,6 +50,16 @@ const std::string& HolographicInteractionProfile::GetPath() const
 	return path;
 }
 
+std::optional<const char*> HolographicInteractionProfile::GetLeftHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
+std::optional<const char*> HolographicInteractionProfile::GetRightHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
 std::optional<const char*> HolographicInteractionProfile::GetOpenVRName() const
 {
 	return "holographic_controller";
