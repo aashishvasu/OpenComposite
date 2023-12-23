@@ -147,7 +147,7 @@ std::optional<const char*> OculusTouchInteractionProfile::GetLeftHandRenderModel
 
 std::optional<const char*> OculusTouchInteractionProfile::GetRightHandRenderModelName() const
 {
-	return "oculus_quest2_controller_left";
+	return "oculus_quest2_controller_right";
 }
 
 std::optional<const char*> OculusTouchInteractionProfile::GetOpenVRName() const
