@@ -4,7 +4,7 @@
 IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 {
 	// Figured these out from OpenXR spec section 6.4
-	std::string paths[] = {
+	const char* paths[] = {
 		// Runtimes are not required to support the system button paths, and no OpenVR game can use them anyway.
 		//"/input/system/click",
 		//"/input/system/touch",
@@ -33,8 +33,8 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	};
 
 	for (const auto& path : paths) {
-		this->validInputPaths.insert("/user/hand/left" + path);
-		this->validInputPaths.insert("/user/hand/right" + path);
+		this->validInputPaths.insert("/user/hand/left" + std::string(path));
+		this->validInputPaths.insert("/user/hand/right" + std::string(path));
 	}
 
 	// These are substring replacements which translate from OpenVR paths to OpenXR paths.
@@ -57,31 +57,13 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "grip/value", "squeeze/value" },
 	};
 
-	//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime
-	this->bindingsLegacy.menu = "input/b/click";
-	this->bindingsLegacy.menuTouch = "input/b/touch";
-	this->bindingsLegacy.btnA = "input/a/click";
-	this->bindingsLegacy.btnATouch = "input/a/touch";
-
-	this->bindingsLegacy.stickX = "input/thumbstick/x";
-	this->bindingsLegacy.stickY = "input/thumbstick/y";
-	this->bindingsLegacy.stickBtn = "input/thumbstick/click";
-	this->bindingsLegacy.stickBtnTouch = "input/thumbstick/touch";
-	this->bindingsLegacy.trigger = "input/trigger/value";
-	this->bindingsLegacy.triggerClick = "input/trigger/click";
-	this->bindingsLegacy.triggerTouch = "input/trigger/touch";
-
-	this->bindingsLegacy.grip = "input/squeeze/value";
-	this->bindingsLegacy.haptic = "output/haptic";
-
-	this->bindingsLegacy.gripPoseAction = "input/grip/pose";
-	this->bindingsLegacy.aimPoseAction = "input/aim/pose";
-
-	hmdPropertiesMap = {
+	this->hmdPropertiesMap = {
+		// { vr::Prop_TrackingSystemName_String, "lighthouse" },
 		{ vr::Prop_ManufacturerName_String, "Valve" },
 	};
 
-	propertiesMap = {
+	this->propertiesMap = {
+		// { vr::Prop_TrackingSystemName_String, { "lighthouse" } },
 		{ vr::Prop_ModelNumber_String, { "Knuckles Left", "Knuckles Right" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
@@ -90,86 +72,76 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	* Values used to create this found here:
 	* SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_left\valve_controller_knu_1_0_left.json
 	*/
-	glm::mat4 inverseHandTransformLeft = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000, },
-		{ 0.00000, 0.98570, -0.16849, 0.00000, },
-		{ 0.00000, 0.16849, 0.98570, 0.00000, },
-		{ 0.00000, -0.02700, 0.14000, 1.00000, }
-	};
+	glm::mat4 inverseGripTransformLeft = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Left,
+		{ 0.0, -0.015, 0.13 },
+		{ 15.392, -2.071, 0.303 }
+	);
 
 	/*
 	 * Values used to create this found here:
 	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_right\valve_controller_knu_1_0_right.json
 	 */
-	glm::mat4 inverseHandTransformRight = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000, },
-		{ 0.00000, 0.98570, -0.16849, 0.00000, },
-		{ 0.00000, 0.16849, 0.98570, 0.00000, },
-		{ 0.00000, -0.02700, 0.14000, 1.00000, }
-	};
+	glm::mat4 inverseGripTransformRight = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Right,
+		{ 0.0, -0.015, 0.13 },
+		{ 15.392, 2.071, -0.303 }
+	);
 
-	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
-	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
+	this->leftHandGripTransform = glm::affineInverse(inverseGripTransformLeft);
+	this->rightHandGripTransform = glm::affineInverse(inverseGripTransformRight);
 
 	// Set up the component transforms
 
-    glm::mat4 bodyLeft = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000, },
-		{ 0.00000, 1.00000, -0.00000, 0.00000, },
-		{ 0.00000, 0.00000, 1.00000, 0.00000, },
-		{ 0.00000, 0.00000, 0.00000, 1.00000, }
-    };
-    glm::mat4 bodyRight = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000, },
-		{ 0.00000, 1.00000, -0.00000, 0.00000, },
-		{ 0.00000, 0.00000, 1.00000, 0.00000, },
-		{ 0.00000, 0.00000, 0.00000, 1.00000, }
-    };
-    glm::mat4 tipLeft = {
-		{ 0.99619, -0.00000, -0.08716, 0.00000, },
-		{ 0.05602, 0.76604, 0.64034, 0.00000, },
-		{ 0.06677, -0.64279, 0.76313, 0.00000, },
-		{ 0.00600, -0.01500, 0.02000, 1.00000, }
-    };
-    glm::mat4 tipRight = {
-		{ 0.99619, -0.00000, 0.08716, 0.00000, },
-		{ -0.05602, 0.76604, 0.64034, 0.00000, },
-		{ -0.06677, -0.64279, 0.76313, 0.00000, },
-		{ -0.00600, -0.01500, 0.02000, 1.00000, }
-    };
-    glm::mat4 baseLeft = {
-		{ 0.99762, -0.00000, 0.06889, 0.00000, },
-		{ -0.02197, -0.94777, 0.31820, 0.00000, },
-		{ 0.06529, -0.31896, -0.94552, 0.00000, },
-		{ 0.00500, -0.02300, 0.19600, 1.00000, }
-    };
-    glm::mat4 baseRight = {
-		{ 0.99762, -0.00000, -0.06889, 0.00000, },
-		{ 0.02197, -0.94777, 0.31820, 0.00000, },
-		{ -0.06529, -0.31896, -0.94552, 0.00000, },
-		{ -0.00500, -0.02300, 0.19600, 1.00000, }
-    };
-    glm::mat4 gdcLeft = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000, },
-		{ 0.00000, 1.00000, -0.00000, 0.00000, },
-		{ 0.00000, 0.00000, 1.00000, 0.00000, },
-		{ 0.00000, 0.00000, 0.00000, 1.00000, }
-    };
-    glm::mat4 gdcRight = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000, },
-		{ 0.00000, 1.00000, -0.00000, 0.00000, },
-		{ 0.00000, 0.00000, 1.00000, 0.00000, },
-		{ 0.00000, 0.00000, 0.00000, 1.00000, }
-    };
+    glm::mat4 bodyLeft = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Left,
+		{ -0.005154, 0.013042, 0.107171 },
+		{ 93.782, 0.0, 0.0 }
+	);
+    glm::mat4 bodyRight = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Right,
+		{ 0.005154, 0.013042, 0.107171 },
+		{ 93.782, 0.0, 0.0 }
+	);
+    glm::mat4 tipLeft = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Left,
+		{ 0.006, -0.015, 0.02 },
+		{ -40.0, -5.0, 0.0 }
+	);
+    glm::mat4 tipRight = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Right,
+		{ -0.006, -0.015, 0.02 },
+		{ -40.0, 5.0, 0.0 }
+	);
+    glm::mat4 baseLeft = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Left,
+		{ 0.004758, -0.037977, 0.200466 },
+		{ -155.4, -0.427, 7.081 }
+	);
+    glm::mat4 baseRight = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Right,
+		{ -0.004758, -0.037977, 0.200466 },
+		{ -155.4, -0.427, -7.081 }
+	);
+    glm::mat4 gdcLeft = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Left,
+		{ 0.0, 0.0, 0.0 },
+		{ 0.0, 0.0, 0.0 }
+	);
+    glm::mat4 gdcRight = GetMat4x4FromOriginAndEulerRotations(
+		vr::Eye_Right,
+		{ 0.0, 0.0, 0.0 },
+		{ 0.0, 0.0, 0.0 }
+	);
 
-	leftComponentTransforms["body"] = glm::affineInverse(bodyLeft);
-	rightComponentTransforms["body"] = glm::affineInverse(bodyRight);
-	leftComponentTransforms["tip"] = glm::affineInverse(tipLeft);
-	rightComponentTransforms["tip"] = glm::affineInverse(tipRight);
-	leftComponentTransforms["base"] = glm::affineInverse(baseLeft);
-	rightComponentTransforms["base"] = glm::affineInverse(baseRight);
-	leftComponentTransforms["gdc2015"] = glm::affineInverse(gdcLeft);
-	rightComponentTransforms["gdc2015"] = glm::affineInverse(gdcRight);
+	this->leftComponentTransforms["body"] = glm::affineInverse(bodyLeft);
+	this->rightComponentTransforms["body"] = glm::affineInverse(bodyRight);
+	this->leftComponentTransforms["tip"] = glm::affineInverse(tipLeft);
+	this->rightComponentTransforms["tip"] = glm::affineInverse(tipRight);
+	this->leftComponentTransforms["base"] = glm::affineInverse(baseLeft);
+	this->rightComponentTransforms["base"] = glm::affineInverse(baseRight);
+	this->leftComponentTransforms["gdc2015"] = glm::affineInverse(gdcLeft);
+	this->rightComponentTransforms["gdc2015"] = glm::affineInverse(gdcRight);
 }
 
 const std::string& IndexControllerInteractionProfile::GetPath() const
@@ -196,5 +168,25 @@ std::optional<const char*> IndexControllerInteractionProfile::GetOpenVRName() co
 const InteractionProfile::LegacyBindings* IndexControllerInteractionProfile::GetLegacyBindings(const std::string& handPath) const
 {
 	// Index controllers are exactly symmetrical, so we can just drop handPath on the floor.
-	return &this->bindingsLegacy;
+	static LegacyBindings bindings = {};
+	//	this->bindingsLegacy.system = "input/system/click"; - causes issues on Oculus runtime
+	bindings.menu = "input/b/click";
+	bindings.menuTouch = "input/b/touch";
+	bindings.btnA = "input/a/click";
+	bindings.btnATouch = "input/a/touch";
+
+	bindings.stickX = "input/thumbstick/x";
+	bindings.stickY = "input/thumbstick/y";
+	bindings.stickBtn = "input/thumbstick/click";
+	bindings.stickBtnTouch = "input/thumbstick/touch";
+	bindings.trigger = "input/trigger/value";
+	bindings.triggerClick = "input/trigger/click";
+	bindings.triggerTouch = "input/trigger/touch";
+
+	bindings.grip = "input/squeeze/value";
+	bindings.haptic = "output/haptic";
+
+	bindings.gripPoseAction = "input/grip/pose";
+	bindings.aimPoseAction = "input/aim/pose";
+	return &bindings;
 }

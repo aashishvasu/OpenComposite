@@ -842,8 +842,9 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 			// Parse the paths, matching them up with the components they correspond to
 			if (withoutPrefix == "pose/raw" || withoutPrefix == "pose/aim") {
 				info.point = PoseBindingPoint::RAW;
-			} else if (withoutPrefix == "pose/grip" || withoutPrefix == "pose/handgrip") {
-				// Not sure if /grip is valid or not, but it was there previously so we'll continue with it...
+			} else if (withoutPrefix == "pose/grip") {
+				info.point = PoseBindingPoint::GRIP;
+			}else if (withoutPrefix == "pose/handgrip") {
 				info.point = PoseBindingPoint::HANDGRIP;
 			} else if (withoutPrefix == "pose/base") {
 				info.point = PoseBindingPoint::BASE;
@@ -1448,6 +1449,9 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 			switch (binding.point) {
 			case PoseBindingPoint::RAW:
 				// No component name
+				break;
+			case PoseBindingPoint::GRIP:
+				componentName = "grip";
 				break;
 			case PoseBindingPoint::BASE:
 				componentName = "base";

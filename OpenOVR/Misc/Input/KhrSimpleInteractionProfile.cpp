@@ -14,17 +14,17 @@ KhrSimpleInteractionProfile::KhrSimpleInteractionProfile()
 		nullptr
 	};
 	const char* inputs[] = {
-		"input/select/click",
-		"input/menu/click",
-		"input/grip/pose",
-		"input/aim/pose",
-		"output/haptic",
+		"/input/select/click",
+		"/input/menu/click",
+		"/input/grip/pose",
+		"/input/aim/pose",
+		"/output/haptic",
 		nullptr
 	};
 
 	for (const char** side = sides; *side; side++) {
 		for (const char** input = inputs; *input; input++) {
-			validInputPaths.insert(std::string(*side) + "/" + std::string(*input));
+			validInputPaths.insert(std::string(*side) + std::string(*input));
 		}
 	}
 

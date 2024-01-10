@@ -13,6 +13,7 @@
 #include <variant>
 #include <vector>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 #include "Drivers/Backend.h"
 #include "InputData.h"
@@ -191,6 +192,13 @@ protected:
 	 * Returns a legacy bindings struct for the given interaction profile.
 	 */
 	virtual const LegacyBindings* GetLegacyBindings(const std::string& handPath) const = 0;
+
+	/*
+	 * Returns mat4x4 produced from translating, rotating and scaling to 1.0
+	 *  identity matrix. Origin and rotate_xyz are 1:1 from SteamVR rendermodel bindings from
+	 *  SteamVR/drivers/xyzdriver/resources/rendermodels/xyzmodel/xyzmodel.json
+	 */
+	glm::mat4x4 GetMat4x4FromOriginAndEulerRotations(vr::EVREye eyeSide, glm::vec3 origin, glm::vec3 rotate_xyz) const;
 
 	// The set of valid input paths for an interaction profile. An interaction profile should fill this in its constructor.
 	std::unordered_set<std::string> validInputPaths;

@@ -509,6 +509,7 @@ private:
 	enum class PoseBindingPoint {
 		RAW, // From /raw or /aim - this is the pose returned by WaitGetPoses
 		BASE, // This is the pose from the 'base' component
+		GRIP, // This is the pose from the 'grip' component, matching the OpenXR grip action
 		HANDGRIP, // This is the pose from the 'handgrip' component, matching the OpenXR grip action
 		TIP, // This is the pose from the 'tip' component
 		BODY, // This is the pose from the 'body' component

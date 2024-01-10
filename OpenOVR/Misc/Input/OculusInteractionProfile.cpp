@@ -26,30 +26,29 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	};
 
 	const char* perHandPaths[] = {
-		"input/squeeze/value",
-		"input/trigger/value",
-		"input/trigger/touch",
-		"input/thumbstick/x",
-		"input/thumbstick/y",
-		"input/thumbstick/click",
-		"input/thumbstick/touch",
-		"input/thumbstick",
-		"input/thumbrest/touch",
-		"input/grip/pose",
-		"input/aim/pose",
-		"output/haptic",
+		"/input/squeeze/value",
+		"/input/trigger/value",
+		"/input/trigger/touch",
+		"/input/thumbstick/x",
+		"/input/thumbstick/y",
+		"/input/thumbstick/click",
+		"/input/thumbstick/touch",
+		"/input/thumbrest/touch",
+		"/input/grip/pose",
+		"/input/aim/pose",
+		"/output/haptic",
 	};
 
 	for (const char* str : paths) {
-		validInputPaths.insert(str);
+		this->validInputPaths.insert(str);
 	}
 
 	for (const char* str : perHandPaths) {
-		validInputPaths.insert("/user/hand/left/" + std::string(str));
-		validInputPaths.insert("/user/hand/right/" + std::string(str));
+		this->validInputPaths.insert("/user/hand/left" + std::string(str));
+		this->validInputPaths.insert("/user/hand/right" + std::string(str));
 	}
 
-	pathTranslationMap = {
+	this->pathTranslationMap = {
 		{ "grip", "squeeze" },
 		{ "joystick", "thumbstick" },
 		{ "pull", "value" },
@@ -63,12 +62,14 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	// pose/handgrip
 	// pose/tip
 
-	hmdPropertiesMap = {
+	this->hmdPropertiesMap = {
+		{ vr::Prop_TrackingSystemName_String, "oculus" },
 		{ vr::Prop_ManufacturerName_String, "Oculus" },
 	};
 
-	propertiesMap = {
-		{ vr::Prop_ModelNumber_String, { "Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)" } },
+	this->propertiesMap = {
+		{ vr::Prop_TrackingSystemName_String, { "oculus" } },
+		{ vr::Prop_ModelNumber_String, { "Miramar (Left Controller)", "Miramar (Right Controller)" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
 
@@ -104,29 +105,29 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		{ 0.00000, 0.00300, 0.09700, 1.00000 }
 	};
 
-	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
-	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
+	this->leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
+	this->rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
 
 	// Set up the component transforms
-	leftComponentTransforms["base"] = {
+	this->leftComponentTransforms["base"] = {
 		{ -1.00000, 0.00000, -0.00000, 0.00000 },
 		{ 0.00000, 0.99998, -0.00698, 0.00000 },
 		{ 0.00000, -0.00698, -0.99998, 0.00000 },
 		{ -0.00340, -0.00340, 0.14910, 1.00000 }
 	};
-	rightComponentTransforms["base"] = {
+	this->rightComponentTransforms["base"] = {
 		{ -1.00000, 0.00000, -0.00000, 0.00000 },
 		{ 0.00000, 0.99998, -0.00698, 0.00000 },
 		{ 0.00000, -0.00698, -0.99998, 0.00000 },
 		{ 0.00340, -0.00340, 0.14910, 1.00000 }
 	};
-	leftComponentTransforms["tip"] = {
+	this->leftComponentTransforms["tip"] = {
 		{ 1.00000, -0.00000, 0.00000, 0.00000 },
 		{ 0.00000, 0.79441, 0.60738, 0.00000 },
 		{ -0.00000, -0.60738, 0.79441, 0.00000 },
 		{ 0.01669, -0.02522, 0.02469, 1.00000 }
 	};
-	rightComponentTransforms["tip"] = {
+	this->rightComponentTransforms["tip"] = {
 		{ 1.00000, -0.00000, 0.00000, 0.00000 },
 		{ 0.00000, 0.79441, 0.60738, 0.00000 },
 		{ -0.00000, -0.60738, 0.79441, 0.00000 },
