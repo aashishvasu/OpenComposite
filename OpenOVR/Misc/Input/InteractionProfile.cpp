@@ -140,7 +140,7 @@ std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevic
 		return iter->second;
 }
 
-glm::mat4x4 InteractionProfile::GetMat4x4FromOriginAndEulerRotations(vr::EVREye eyeSide, glm::vec3 origin, glm::vec3 rotate_xyz) const {
+glm::mat4x4 InteractionProfile::GetMat4x4FromOriginAndEulerRotations(glm::vec3 origin, glm::vec3 rotate_xyz) const {
 	glm::mat4 mat(1.0);
 	glm::vec3 scale_identity(1.0);
 	mat = glm::translate(mat, origin);

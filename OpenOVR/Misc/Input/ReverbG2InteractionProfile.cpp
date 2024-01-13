@@ -56,6 +56,7 @@ ReverbG2InteractionProfile::ReverbG2InteractionProfile()
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
 	};
 
+	// TODO: Convert to GetMat4x4FromOriginAndEulerRotations if possible
 	// Setup the grip-to-steamvr space matrices
 	glm::mat4 inverseHandTransformLeft = {
 		{ 1.00000, -0.00000, 0.00000, 0.00000 },

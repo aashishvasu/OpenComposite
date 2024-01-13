@@ -198,7 +198,7 @@ protected:
 	 *  identity matrix. Origin and rotate_xyz are 1:1 from SteamVR rendermodel bindings from
 	 *  SteamVR/drivers/xyzdriver/resources/rendermodels/xyzmodel/xyzmodel.json
 	 */
-	glm::mat4x4 GetMat4x4FromOriginAndEulerRotations(vr::EVREye eyeSide, glm::vec3 origin, glm::vec3 rotate_xyz) const;
+	glm::mat4x4 GetMat4x4FromOriginAndEulerRotations(glm::vec3 origin, glm::vec3 rotate_xyz) const;
 
 	// The set of valid input paths for an interaction profile. An interaction profile should fill this in its constructor.
 	std::unordered_set<std::string> validInputPaths;

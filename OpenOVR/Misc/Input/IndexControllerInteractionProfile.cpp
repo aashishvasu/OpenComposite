@@ -73,7 +73,6 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	* SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_left\valve_controller_knu_1_0_left.json
 	*/
 	glm::mat4 inverseGripTransformLeft = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Left,
 		{ 0.0, -0.015, 0.13 },
 		{ 15.392, -2.071, 0.303 }
 	);
@@ -83,7 +82,6 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_right\valve_controller_knu_1_0_right.json
 	 */
 	glm::mat4 inverseGripTransformRight = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Right,
 		{ 0.0, -0.015, 0.13 },
 		{ 15.392, 2.071, -0.303 }
 	);
@@ -94,42 +92,30 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	// Set up the component transforms
 
     glm::mat4 bodyLeft = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Left,
 		{ -0.005154, 0.013042, 0.107171 },
 		{ 93.782, 0.0, 0.0 }
 	);
     glm::mat4 bodyRight = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Right,
 		{ 0.005154, 0.013042, 0.107171 },
 		{ 93.782, 0.0, 0.0 }
 	);
     glm::mat4 tipLeft = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Left,
 		{ 0.006, -0.015, 0.02 },
 		{ -40.0, -5.0, 0.0 }
 	);
     glm::mat4 tipRight = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Right,
 		{ -0.006, -0.015, 0.02 },
 		{ -40.0, 5.0, 0.0 }
 	);
     glm::mat4 baseLeft = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Left,
 		{ 0.004758, -0.037977, 0.200466 },
 		{ -155.4, -0.427, 7.081 }
 	);
     glm::mat4 baseRight = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Right,
 		{ -0.004758, -0.037977, 0.200466 },
 		{ -155.4, -0.427, -7.081 }
 	);
-    glm::mat4 gdcLeft = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Left,
-		{ 0.0, 0.0, 0.0 },
-		{ 0.0, 0.0, 0.0 }
-	);
-    glm::mat4 gdcRight = GetMat4x4FromOriginAndEulerRotations(
-		vr::Eye_Right,
+    glm::mat4 gdc = GetMat4x4FromOriginAndEulerRotations(
 		{ 0.0, 0.0, 0.0 },
 		{ 0.0, 0.0, 0.0 }
 	);
@@ -140,8 +126,8 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	this->rightComponentTransforms["tip"] = glm::affineInverse(tipRight);
 	this->leftComponentTransforms["base"] = glm::affineInverse(baseLeft);
 	this->rightComponentTransforms["base"] = glm::affineInverse(baseRight);
-	this->leftComponentTransforms["gdc2015"] = glm::affineInverse(gdcLeft);
-	this->rightComponentTransforms["gdc2015"] = glm::affineInverse(gdcRight);
+	this->leftComponentTransforms["gdc2015"] = glm::affineInverse(gdc);
+	this->rightComponentTransforms["gdc2015"] = glm::affineInverse(gdc);
 }
 
 const std::string& IndexControllerInteractionProfile::GetPath() const
