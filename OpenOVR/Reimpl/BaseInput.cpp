@@ -1140,7 +1140,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	for (int i = 0; i < unSetCount; i++) {
 		VRActiveActionSet_t& set = pSets[i];
 
-		ActionSet* as = cast_ASH(set.ulActionSet);
+		GET_ACTION_SET_FROM_HANDLE(as, set.ulActionSet);
 		aas[i].actionSet = as->xr;
 
 		if (set.ulRestrictedToDevice != vr::k_ulInvalidInputValueHandle) {
