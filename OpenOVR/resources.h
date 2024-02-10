@@ -22,5 +22,4 @@
 	f(RES_O_HAND_LEFT) \
 	f(RES_O_HAND_RIGHT) \
 	f(RES_O_FNT_UBUNTU) \
-	f(RES_O_KB_EN_GB) \
-// clang-format on
+	f(RES_O_KB_EN_GB) // clang-format on

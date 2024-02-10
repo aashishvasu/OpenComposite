@@ -739,7 +739,7 @@ void XrBackend::PumpEvents()
 
 		if (res == XR_EVENT_UNAVAILABLE) {
 			break;
-		}			
+		}
 
 		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
 			auto* changed = (XrEventDataSessionStateChanged*)&ev;

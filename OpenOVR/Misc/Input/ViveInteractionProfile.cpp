@@ -43,14 +43,13 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 	};
 
 	/*
-	* Both transforms use values from the same file:
-	* SteamVR\resources\rendermodels\vr_controller_vive_1_5\vr_controller_vive_1_5.json
-	* Controllers are symmetrical, so they can reuse same matrix
-	*/
+	 * Both transforms use values from the same file:
+	 * SteamVR\resources\rendermodels\vr_controller_vive_1_5\vr_controller_vive_1_5.json
+	 * Controllers are symmetrical, so they can reuse same matrix
+	 */
 	glm::mat4 inverseGripTransform = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.0, -0.015, 0.097 },
-		{ 5.037, 0.0, 0.0 }
-	);
+	    { 0.0, -0.015, 0.097 },
+	    { 5.037, 0.0, 0.0 });
 
 	leftHandGripTransform = glm::affineInverse(inverseGripTransform);
 	rightHandGripTransform = glm::affineInverse(inverseGripTransform);

@@ -119,7 +119,7 @@ public:
 
 	vr::ETrackedDeviceClass GetTrackedDeviceClass() override;
 
-	// from BaseSystem	
+	// from BaseSystem
 
 	/** The projection matrix for the specified eye */
 	virtual vr::HmdMatrix44_t GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention = API_DirectX) = 0;

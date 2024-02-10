@@ -92,37 +92,31 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	// Made from values in: SteamVR\resources\rendermodels\oculus_quest2_controller_left\oculus_quest2_controller_left.json
 	// openxr_grip
 	glm::mat4 inverseGripTransformLeft = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.007, -0.00182941, 0.1019482 },
-		{ 20.6, 0.0, 0.0 }
-	);
+	    { 0.007, -0.00182941, 0.1019482 },
+	    { 20.6, 0.0, 0.0 });
 
 	// Made from values in: SteamVR\resources\rendermodels\oculus_quest2_controller_right\oculus_quest2_controller_right.json
 	// openxr_grip
 	glm::mat4 inverseGripTransformRight = GetMat4x4FromOriginAndEulerRotations(
-		{ -0.007, -0.00182941, 0.1019482 },
-		{ 20.6, 0.0, 0.0 }
-	);
+	    { -0.007, -0.00182941, 0.1019482 },
+	    { 20.6, 0.0, 0.0 });
 
 	this->leftHandGripTransform = glm::affineInverse(inverseGripTransformLeft);
 	this->rightHandGripTransform = glm::affineInverse(inverseGripTransformRight);
 
 	// Set up the component transforms
 	this->leftComponentTransforms["base"] = GetMat4x4FromOriginAndEulerRotations(
-		{ -0.0034, -0.0034, 0.1491 },
-		{ -0.4, 180.0, 0.0 }
-	);
+	    { -0.0034, -0.0034, 0.1491 },
+	    { -0.4, 180.0, 0.0 });
 	this->rightComponentTransforms["base"] = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.0034, -0.0034, 0.1491 },
-		{ -0.4, 180.0, 0.0 }
-	);
+	    { 0.0034, -0.0034, 0.1491 },
+	    { -0.4, 180.0, 0.0 });
 	this->leftComponentTransforms["tip"] = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.016694, -0.02522, 0.024687 },
-		{ -37.4, 0.0, 0.0 }
-	);
+	    { 0.016694, -0.02522, 0.024687 },
+	    { -37.4, 0.0, 0.0 });
 	this->rightComponentTransforms["tip"] = GetMat4x4FromOriginAndEulerRotations(
-		{ -0.016694, -0.02522 ,0.024687 },
-		{ -37.4, 0.0, 0.0 }
-	);
+	    { -0.016694, -0.02522, 0.024687 },
+	    { -37.4, 0.0, 0.0 });
 }
 
 const std::string& OculusTouchInteractionProfile::GetPath() const

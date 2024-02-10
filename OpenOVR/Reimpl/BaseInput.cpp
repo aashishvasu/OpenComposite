@@ -844,7 +844,7 @@ void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const 
 				info.point = PoseBindingPoint::RAW;
 			} else if (withoutPrefix == "pose/grip") {
 				info.point = PoseBindingPoint::GRIP;
-			}else if (withoutPrefix == "pose/handgrip") {
+			} else if (withoutPrefix == "pose/handgrip") {
 				info.point = PoseBindingPoint::HANDGRIP;
 			} else if (withoutPrefix == "pose/base") {
 				info.point = PoseBindingPoint::BASE;
@@ -1673,8 +1673,6 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 	return getEstimatedSkeletalSummary(action->skeletalHand, pSkeletalSummaryData);
 }
 
-
-
 EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
@@ -2273,7 +2271,7 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	grip.y = 0;
 
 	// SteamVR seemingly writes to these two axis to represent finger curl on legacy input.
-	VRSkeletalSummaryData_t skeletonData = {0};
+	VRSkeletalSummaryData_t skeletonData = { 0 };
 	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
 		getRealSkeletalSummary((ITrackedDevice::HandType)hand, &skeletonData);
 	} else {

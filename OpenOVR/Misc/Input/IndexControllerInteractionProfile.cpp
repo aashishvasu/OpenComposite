@@ -69,56 +69,47 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 	};
 
 	/*
-	* Values used to create this found here:
-	* SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_left\valve_controller_knu_1_0_left.json
-	*/
+	 * Values used to create this found here:
+	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_left\valve_controller_knu_1_0_left.json
+	 */
 	glm::mat4 inverseGripTransformLeft = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.0, -0.015, 0.13 },
-		{ 15.392, -2.071, 0.303 }
-	);
+	    { 0.0, -0.015, 0.13 },
+	    { 15.392, -2.071, 0.303 });
 
 	/*
 	 * Values used to create this found here:
 	 * SteamVR\drivers\indexcontroller\resources\rendermodels\valve_controller_knu_1_0_right\valve_controller_knu_1_0_right.json
 	 */
 	glm::mat4 inverseGripTransformRight = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.0, -0.015, 0.13 },
-		{ 15.392, 2.071, -0.303 }
-	);
+	    { 0.0, -0.015, 0.13 },
+	    { 15.392, 2.071, -0.303 });
 
 	this->leftHandGripTransform = glm::affineInverse(inverseGripTransformLeft);
 	this->rightHandGripTransform = glm::affineInverse(inverseGripTransformRight);
 
 	// Set up the component transforms
 
-    glm::mat4 bodyLeft = GetMat4x4FromOriginAndEulerRotations(
-		{ -0.005154, 0.013042, 0.107171 },
-		{ 93.782, 0.0, 0.0 }
-	);
-    glm::mat4 bodyRight = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.005154, 0.013042, 0.107171 },
-		{ 93.782, 0.0, 0.0 }
-	);
-    glm::mat4 tipLeft = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.006, -0.015, 0.02 },
-		{ -40.0, -5.0, 0.0 }
-	);
-    glm::mat4 tipRight = GetMat4x4FromOriginAndEulerRotations(
-		{ -0.006, -0.015, 0.02 },
-		{ -40.0, 5.0, 0.0 }
-	);
-    glm::mat4 baseLeft = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.004758, -0.037977, 0.200466 },
-		{ -155.4, -0.427, 7.081 }
-	);
-    glm::mat4 baseRight = GetMat4x4FromOriginAndEulerRotations(
-		{ -0.004758, -0.037977, 0.200466 },
-		{ -155.4, -0.427, -7.081 }
-	);
-    glm::mat4 gdc = GetMat4x4FromOriginAndEulerRotations(
-		{ 0.0, 0.0, 0.0 },
-		{ 0.0, 0.0, 0.0 }
-	);
+	glm::mat4 bodyLeft = GetMat4x4FromOriginAndEulerRotations(
+	    { -0.005154, 0.013042, 0.107171 },
+	    { 93.782, 0.0, 0.0 });
+	glm::mat4 bodyRight = GetMat4x4FromOriginAndEulerRotations(
+	    { 0.005154, 0.013042, 0.107171 },
+	    { 93.782, 0.0, 0.0 });
+	glm::mat4 tipLeft = GetMat4x4FromOriginAndEulerRotations(
+	    { 0.006, -0.015, 0.02 },
+	    { -40.0, -5.0, 0.0 });
+	glm::mat4 tipRight = GetMat4x4FromOriginAndEulerRotations(
+	    { -0.006, -0.015, 0.02 },
+	    { -40.0, 5.0, 0.0 });
+	glm::mat4 baseLeft = GetMat4x4FromOriginAndEulerRotations(
+	    { 0.004758, -0.037977, 0.200466 },
+	    { -155.4, -0.427, 7.081 });
+	glm::mat4 baseRight = GetMat4x4FromOriginAndEulerRotations(
+	    { -0.004758, -0.037977, 0.200466 },
+	    { -155.4, -0.427, -7.081 });
+	glm::mat4 gdc = GetMat4x4FromOriginAndEulerRotations(
+	    { 0.0, 0.0, 0.0 },
+	    { 0.0, 0.0, 0.0 });
 
 	this->leftComponentTransforms["body"] = glm::affineInverse(bodyLeft);
 	this->rightComponentTransforms["body"] = glm::affineInverse(bodyRight);

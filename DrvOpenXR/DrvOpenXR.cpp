@@ -11,11 +11,11 @@
 #include "XrBackend.h"
 #include "generated/static_bases.gen.h"
 
-#include <thread>
 #include <chrono>
 #include <memory>
 #include <set>
 #include <string>
+#include <thread>
 
 static XrBackend* currentBackend;
 static bool initialised = false;
@@ -228,7 +228,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	// Load the function pointers for the extension functions
 	xr_ext = new XrExt(apiFlags, extensions);
-	
+
 	CreateSystemID();
 
 	// List off the views and store them locally for easy access
