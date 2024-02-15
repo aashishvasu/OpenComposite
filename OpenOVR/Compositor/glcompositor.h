@@ -29,7 +29,7 @@ protected:
 	 */
 	static GLuint NormaliseFormat(vr::EColorSpace c_space, GLsizei rawFormat);
 
-	GLuint fboId = 0;
+	GLuint fboId[2] = {0};
 
 	std::vector<GLuint> images;
 };
