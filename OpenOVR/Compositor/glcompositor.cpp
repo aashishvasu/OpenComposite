@@ -97,30 +97,9 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	XrRect2Di viewport;
-	bool useBlit = false;
-	if (bounds) {
-		vr::VRTextureBounds_t newBounds = *bounds;
-		if (newBounds.vMin > newBounds.vMax) {
-			float newMax = newBounds.vMin;
-			newBounds.vMin = newBounds.vMax;
-			newBounds.vMax = newMax;
-			submitVerticallyFlipped = true;
-			useBlit = true;
-		} else {
-			submitVerticallyFlipped = false;
-		}
-
-		viewport.offset.x = (int)(newBounds.uMin * (float)inputWidth);
-		viewport.offset.y = (int)(newBounds.vMin * (float)inputHeight);
-		viewport.extent.width = (int)((newBounds.uMax - newBounds.uMin) * (float)inputWidth);
-		viewport.extent.height = (int)((newBounds.vMax - newBounds.vMin) * (float)inputHeight);
-	} else {
-		viewport.offset.x = viewport.offset.y = 0;
-		viewport.extent.width = inputWidth;
-		viewport.extent.height = inputHeight;
-
-		submitVerticallyFlipped = false;
-	}
+	
+	submitVerticallyFlipped = CalculateViewport(bounds, inputWidth, inputHeight, false,  viewport);
+	bool useBlit = submitVerticallyFlipped;
 
 	CheckCreateSwapChain(viewport.extent.width, viewport.extent.height, texture->eColorSpace, rawFormat);
 	useBlit = useBlit || createInfo.format != createInfoFormat;
@@ -181,27 +160,6 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo));
 }
 
-void GLBaseCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds,
-    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
-{
-	// Copy the texture over
-	Invoke(texture, ptrBounds);
-
-	// TODO the image is vertically flipped; fix it
-
-	// Set the viewport up
-	// TODO deduplicate with dx11compositor, and use for all compositors
-	XrSwapchainSubImage& subImage = layer.subImage;
-	subImage.swapchain = chain;
-	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
-
-	// Setup the viewport to cover the whole image
-	// The bounds are accounted for when copying the image into the temporary buffer
-	XrRect2Di& viewport = subImage.imageRect;
-	viewport.offset.x = viewport.offset.y = 0;
-	viewport.extent.width = createInfo.width;
-	viewport.extent.height = createInfo.height;
-}
 
 void GLBaseCompositor::InvokeCubemap(const vr::Texture_t* textures)
 {
