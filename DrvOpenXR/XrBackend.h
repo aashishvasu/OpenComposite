@@ -23,6 +23,8 @@ public:
 	 */
 	XrSessionState sessionState = XR_SESSION_STATE_UNKNOWN;
 
+	XrSessionState GetSessionState();
+
 	/**
 	 * Whether the session is active or not. This cannot be determined from just the session state, since
 	 * we're allowed to send frames after calling xrBeginSession but before the event comes through. Same

@@ -8,6 +8,8 @@ public:
 	HolographicInteractionProfile();
 
 	const std::string& GetPath() const override;
+	std::optional<const char*> GetLeftHandRenderModelName() const override;
+	std::optional<const char*> GetRightHandRenderModelName() const override;
 	std::optional<const char*> GetOpenVRName() const override;
 
 protected:

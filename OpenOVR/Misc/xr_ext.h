@@ -23,7 +23,7 @@
 // Currently just support XLIB
 #define XR_USE_PLATFORM_XLIB
 #include <GL/glx.h>
-//#define XR_USE_PLATFORM_XCB
+// #define XR_USE_PLATFORM_XCB
 #endif
 
 #endif

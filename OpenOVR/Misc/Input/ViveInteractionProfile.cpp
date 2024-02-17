@@ -43,31 +43,37 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 	};
 
 	/*
-	* Both transforms use values from the same file:
-	* SteamVR\resources\rendermodels\vr_controller_vive_1_5\vr_controller_vive_1_5.json
-	*/
-	glm::mat4 inverseHandTransformLeft = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000 },
-		{ 0.00000, 0.99614, -0.08780, 0.00000 },
-		{ 0.00000, 0.08780, 0.99614, 0.00000 },
-		{ 0.00000, -0.01500, 0.09700, 1.00000 }
-	};
+	 * Both transforms use values from the same file:
+	 * SteamVR\resources\rendermodels\vr_controller_vive_1_5\vr_controller_vive_1_5.json
+	 * Controllers are symmetrical, so they can reuse same matrix
+	 */
+	glm::mat4 inverseGripTransform = GetMat4x4FromOriginAndEulerRotations(
+	    { 0.0, -0.015, 0.097 },
+	    { 5.037, 0.0, 0.0 });
 
-	glm::mat4 inverseHandTransformRight = {
-		{ 1.00000, -0.00000, 0.00000, 0.00000 },
-		{ 0.00000, 0.99614, -0.08780, 0.00000 },
-		{ 0.00000, 0.08780, 0.99614, 0.00000 },
-		{ 0.00000, -0.01500, 0.09700, 1.00000 }
-	};
-
-	leftHandGripTransform = glm::affineInverse(inverseHandTransformLeft);
-	rightHandGripTransform = glm::affineInverse(inverseHandTransformRight);
+	leftHandGripTransform = glm::affineInverse(inverseGripTransform);
+	rightHandGripTransform = glm::affineInverse(inverseGripTransform);
 }
 
 const std::string& ViveWandInteractionProfile::GetPath() const
 {
 	static std::string path = "/interaction_profiles/htc/vive_controller";
 	return path;
+}
+
+std::optional<const char*> ViveWandInteractionProfile::GetLeftHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
+std::optional<const char*> ViveWandInteractionProfile::GetRightHandRenderModelName() const
+{
+	return std::nullopt; // fixme: fill proper model
+}
+
+std::optional<const char*> ViveWandInteractionProfile::GetOpenVRName() const
+{
+	return "vive_controller";
 }
 
 const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyBindings(const std::string& handPath) const
@@ -91,9 +97,4 @@ const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyB
 	}
 
 	return &bindings;
-}
-
-std::optional<const char*> ViveWandInteractionProfile::GetOpenVRName() const
-{
-	return "vive_controller";
 }

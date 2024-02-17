@@ -82,9 +82,18 @@ XrBackend::~XrBackend()
 	// in their destructor.
 	PrepareForSessionShutdown();
 
-	temporaryGraphics.reset();
-
 	DrvOpenXR::FullShutdown();
+
+	graphicsBinding = nullptr;
+
+	// This must happen after session destruction (which occurs in FullShutdown), as runtimes (namely Monado)
+	// may try to access these resources while destroying the session.
+	temporaryGraphics.reset();
+}
+
+XrSessionState XrBackend::GetSessionState()
+{
+	return sessionState;
 }
 
 IHMD* XrBackend::GetPrimaryHMD()
@@ -728,8 +737,9 @@ void XrBackend::PumpEvents()
 		XrResult res;
 		OOVR_FAILED_XR_ABORT(res = xrPollEvent(xr_instance, &ev));
 
-		if (res == XR_EVENT_UNAVAILABLE)
+		if (res == XR_EVENT_UNAVAILABLE) {
 			break;
+		}
 
 		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
 			auto* changed = (XrEventDataSessionStateChanged*)&ev;
@@ -738,7 +748,7 @@ void XrBackend::PumpEvents()
 
 			// Monado bug: it returns 0 for this value (at least for the first two states)
 			// Make sure this is actually greater than 0, otherwise this will mess up xr_gbl->GetBestTime()
-			if (changed->time > 0)
+			if (changed->time > 0 && xr_gbl)
 				xr_gbl->latestTime = changed->time;
 
 			OOVR_LOGF("Switch to OpenXR state %d", sessionState);
@@ -762,7 +772,10 @@ void XrBackend::PumpEvents()
 				renderingFrame = false;
 				break;
 			}
-			case XR_SESSION_STATE_EXITING:
+			case XR_SESSION_STATE_EXITING: {
+				OOVR_LOGF("Exiting");
+				break;
+			}
 			case XR_SESSION_STATE_LOSS_PENDING: {
 				// If the headset is unplugged or the user decides to exit the app
 				// TODO just kill the app after awhile, unless it sends a message to stop that - read the OpenVR wiki docs for more info

@@ -509,6 +509,7 @@ private:
 	enum class PoseBindingPoint {
 		RAW, // From /raw or /aim - this is the pose returned by WaitGetPoses
 		BASE, // This is the pose from the 'base' component
+		GRIP, // This is the pose from the 'grip' component, matching the OpenXR grip action
 		HANDGRIP, // This is the pose from the 'handgrip' component, matching the OpenXR grip action
 		TIP, // This is the pose from the 'tip' component
 		BODY, // This is the pose from the 'body' component
@@ -783,4 +784,14 @@ private:
 	 * Get the state for a digital action, which could be bound to a DPad action.
 	 */
 	XrResult getBooleanOrDpadData(Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
+
+	/**
+	 * Uses the finger tracking extensions to generate a skeletal summary.
+	 */
+	EVRInputError getRealSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
+
+	/**
+	 * Uses input state (trigger and grip) to generate a skeletal summary.
+	 */
+	EVRInputError getEstimatedSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
 };

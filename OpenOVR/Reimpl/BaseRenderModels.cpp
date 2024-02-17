@@ -157,10 +157,23 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 	int rid;
 	float sided;
 
+	// todo: start loading correct models, !359 related
 	if (name == "renderLeftHand") {
 		rid = RES_O_HAND_LEFT;
 		sided = 1;
 	} else if (name == "renderRightHand") {
+		rid = RES_O_HAND_RIGHT;
+		sided = -1;
+	} else if (name == "oculus_quest2_controller_left") {
+		rid = RES_O_HAND_LEFT;
+		sided = 1;
+	} else if (name == "oculus_quest2_controller_right") {
+		rid = RES_O_HAND_RIGHT;
+		sided = -1;
+	} else if (name == "{indexcontroller}valve_controller_knu_1_0_left") {
+		rid = RES_O_HAND_LEFT;
+		sided = 1;
+	} else if (name == "{indexcontroller}valve_controller_knu_1_0_right") {
 		rid = RES_O_HAND_RIGHT;
 		sided = -1;
 	} else if (name == "oculusHmdRenderModel") {
@@ -401,7 +414,13 @@ uint32_t BaseRenderModels::GetComponentName(const char* pchRenderModelName, uint
 
 	string name = pchRenderModelName;
 
-	if (name != "renderLeftHand" && name != "renderRightHand" && name != "oculusHmdRenderModel") {
+	if (name != "renderLeftHand"
+	    && name != "renderRightHand"
+	    && name != "oculusHmdRenderModel"
+	    && name != "oculus_quest2_controller_left"
+	    && name != "oculus_quest2_controller_right"
+	    && name != "{indexcontroller}valve_controller_knu_1_0_left"
+	    && name != "{indexcontroller}valve_controller_knu_1_0_right") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
@@ -437,7 +456,13 @@ uint32_t BaseRenderModels::GetComponentRenderModelName(const char* pchRenderMode
 {
 
 	string name = pchRenderModelName;
-	if (name != "renderLeftHand" && name != "renderRightHand" && name != "oculusHmdRenderModel") {
+	if (name != "renderLeftHand"
+	    && name != "renderRightHand"
+	    && name != "oculusHmdRenderModel"
+	    && name != "oculus_quest2_controller_left"
+	    && name != "oculus_quest2_controller_right"
+	    && name != "{indexcontroller}valve_controller_knu_1_0_left"
+	    && name != "{indexcontroller}valve_controller_knu_1_0_right") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
@@ -485,15 +510,17 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 	ZeroMemory(pComponentState, sizeof(*pComponentState));
 
 	std::string componentName = pchComponentName;
-	std::string renderModelName = pchRenderModelName;
 
-	ITrackedDevice::HandType hand;
-	if (renderModelName == "renderLeftHand") {
-		hand = ITrackedDevice::HAND_LEFT;
-	} else if (renderModelName == "renderRightHand") {
-		hand = ITrackedDevice::HAND_RIGHT;
-	} else {
-		hand = ITrackedDevice::HAND_NONE;
+	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
+	if (pchRenderModelName) {
+		std::string renderModelName = pchRenderModelName;
+		if (renderModelName == "renderLeftHand") {
+			hand = ITrackedDevice::HAND_LEFT;
+		} else if (renderModelName == "renderRightHand") {
+			hand = ITrackedDevice::HAND_RIGHT;
+		} else {
+			hand = ITrackedDevice::HAND_NONE;
+		}
 	}
 
 	// See if we can get it properly

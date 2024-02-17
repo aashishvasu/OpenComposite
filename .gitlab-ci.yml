@@ -1,0 +1,61 @@
+stages:
+  - build-container
+  - build
+
+variables:
+  GIT_SUBMODULE_STRATEGY: "normal"
+  UBUNTU_IMAGE: "${CI_REGISTRY_IMAGE}/ubuntu:latest"
+  UBUNTU_DOCKERFILE: "scripts/ci/ubuntu.dockerfile"
+
+workflow:
+  rules:
+    - when: always
+
+# https://docs.gitlab.com/ee/ci/docker/using_kaniko.html
+ubuntu-container:
+  stage: build-container
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  rules:
+  - changes:
+    - ${UBUNTU_DOCKERFILE}
+  - if: $FORCE_CONTAINER_BUILD
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/${UBUNTU_DOCKERFILE}"
+      --destination "${UBUNTU_IMAGE}"
+
+
+ubuntu-build:
+  stage: build
+  image: ${UBUNTU_IMAGE}
+  script:
+    - mkdir build && cd build
+    - cmake .. -G Ninja
+    - ninja
+    - cd ..
+    - mkdir OpenComposite
+    - mv build/bin OpenComposite
+  artifacts:
+    name: OpenComposite
+    paths:
+      - OpenComposite
+    expire_in: never
+
+ubuntu-32build:
+  stage: build
+  image: ${UBUNTU_IMAGE}
+  script:
+    - mkdir build && cd build
+    - cmake .. -G Ninja -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_ASM_FLAGS=-m32
+    - ninja
+    - cd ..
+    - mkdir OpenComposite
+    - mv build/bin OpenComposite
+  artifacts:
+    name: OpenComposite (32bit)
+    paths:
+      - OpenComposite
+    expire_in: never

@@ -126,10 +126,9 @@ glm::mat4 InteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType
 		return leftHandGripTransform;
 	} else if (hand == ITrackedDevice::HandType::HAND_RIGHT) {
 		return rightHandGripTransform;
-	} 
+	}
 	return glm::identity<glm::mat4>();
 }
-
 
 std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevice::HandType hand, const std::string& name) const
 {
@@ -139,4 +138,16 @@ std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevic
 		return {};
 	else
 		return iter->second;
+}
+
+glm::mat4x4 InteractionProfile::GetMat4x4FromOriginAndEulerRotations(glm::vec3 origin, glm::vec3 rotate_xyz) const
+{
+	glm::mat4 mat(1.0);
+	glm::vec3 scale_identity(1.0);
+	mat = glm::translate(mat, origin);
+	mat = glm::rotate(mat, glm::radians(rotate_xyz.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	mat = glm::rotate(mat, glm::radians(rotate_xyz.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	mat = glm::rotate(mat, glm::radians(rotate_xyz.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	mat = glm::scale(mat, scale_identity);
+	return mat;
 }

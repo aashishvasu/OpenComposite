@@ -5,6 +5,8 @@
 #pragma once
 
 #include <functional>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <map>
 #include <memory>
 #include <optional>
@@ -12,7 +14,6 @@
 #include <unordered_set>
 #include <variant>
 #include <vector>
-#include <glm/gtc/matrix_inverse.hpp>
 
 #include "Drivers/Backend.h"
 #include "InputData.h"
@@ -73,6 +74,16 @@ public:
 	 * example /interaction_profiles/khr/simple_controller.
 	 */
 	virtual const std::string& GetPath() const = 0;
+
+	/**
+	 * Get the right hand render model name of current interaction profile which would recognized by OpenVR app
+	 */
+	virtual std::optional<const char*> GetLeftHandRenderModelName() const = 0;
+
+	/**
+	 * Get the left hand render model name of current interaction profile which would recognized by OpenVR app
+	 */
+	virtual std::optional<const char*> GetRightHandRenderModelName() const = 0;
 
 	/**
 	 * Gets a list of valid input paths for this profile. For example, on the simple controller:
@@ -145,9 +156,9 @@ public:
 	 * If hand == HAND_NONE, this will retrieve the HMD version of the property.
 	 */
 	template <typename T>
-	requires(in_variant<T, property_types>::value)
-	    std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::HandType hand)
-	const
+	    requires(in_variant<T, property_types>::value)
+	std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::HandType hand)
+	    const
 	{
 		using enum ITrackedDevice::HandType;
 		if (hand != HAND_NONE && propertiesMap.contains(property)) {
@@ -181,6 +192,13 @@ protected:
 	 * Returns a legacy bindings struct for the given interaction profile.
 	 */
 	virtual const LegacyBindings* GetLegacyBindings(const std::string& handPath) const = 0;
+
+	/*
+	 * Returns mat4x4 produced from translating, rotating and scaling to 1.0
+	 *  identity matrix. Origin and rotate_xyz are 1:1 from SteamVR rendermodel bindings from
+	 *  SteamVR/drivers/xyzdriver/resources/rendermodels/xyzmodel/xyzmodel.json
+	 */
+	glm::mat4x4 GetMat4x4FromOriginAndEulerRotations(glm::vec3 origin, glm::vec3 rotate_xyz) const;
 
 	// The set of valid input paths for an interaction profile. An interaction profile should fill this in its constructor.
 	std::unordered_set<std::string> validInputPaths;

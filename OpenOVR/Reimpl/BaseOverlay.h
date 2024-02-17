@@ -588,4 +588,8 @@ public:
 
 	/** If the calling process owns the overlay and it's open, this will close it. **/
 	virtual void CloseMessageOverlay();
+
+	virtual vr::EVROverlayError SetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float fRadians);
+	virtual vr::EVROverlayError GetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float* pfRadians);
+	virtual vr::EVROverlayError WaitFrameSync(uint32_t nTimeoutMs);
 };

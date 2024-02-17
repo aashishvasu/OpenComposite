@@ -66,6 +66,7 @@ interfaces_list = [
     "OverlayView",
     "Mailbox",
     "ControlPanel",
+    "HeadsetView",
 
     # Driver interfaces
     "ServerDriverHost",

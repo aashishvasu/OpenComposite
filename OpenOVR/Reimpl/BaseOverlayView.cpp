@@ -36,7 +36,7 @@ vr::EVROverlayError BaseOverlayView::AcquireOverlayView(vr::VROverlayHandle_t ul
  */
 vr::EVROverlayError BaseOverlayView::ReleaseOverlayView(OOVR_VROverlayView_t* pOverlayView)
 {
-	STUBBED();
+	return vr::VROverlayError_None; // VRChat fails to exit cleanly when this is stubbed
 }
 
 /** Posts an overlay event */

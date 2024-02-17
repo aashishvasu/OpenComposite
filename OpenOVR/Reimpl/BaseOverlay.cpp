@@ -851,7 +851,6 @@ void BaseOverlay::SubmitPlaceholderKeyboardEvent(vr::EVREventType ev, VRKeyboard
 	eventDispatch(evt);
 }
 
-
 EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
     const char* pchDescription, uint32_t unCharMax, const char* pchExistingText, bool bUseMinimalMode, uint64_t uUserValue)
 {
@@ -954,6 +953,21 @@ BaseOverlay::VRMessageOverlayResponse BaseOverlay::ShowMessageOverlay(const char
 	STUBBED();
 }
 void BaseOverlay::CloseMessageOverlay()
+{
+	STUBBED();
+}
+
+EVROverlayError BaseOverlay::SetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float fRadians)
+{
+	STUBBED();
+}
+
+EVROverlayError BaseOverlay::GetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float* pfRadians)
+{
+	STUBBED();
+}
+
+EVROverlayError BaseOverlay::WaitFrameSync(uint32_t nTimeoutMs)
 {
 	STUBBED();
 }
