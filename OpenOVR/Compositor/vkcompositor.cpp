@@ -212,45 +212,83 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	    0, nullptr,
 	    1, &barrier);
 
-	VkImageCopy region = {};
-	region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.srcSubresource.mipLevel = 0;
-	region.srcSubresource.baseArrayLayer = 0;
-	region.srcSubresource.layerCount = 1;
-	region.srcOffset = { 0, 0, 0 };
-	region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.dstSubresource.mipLevel = 0;
-	region.dstSubresource.baseArrayLayer = 0;
-	region.dstSubresource.layerCount = 1;
-	region.dstOffset = { 0, 0, 0 };
-	region.extent = { tex->m_nWidth, tex->m_nHeight, 1 };
-
-	bool image_is_multisampled = xr_main_view(XruEyeLeft).maxSwapchainSampleCount < tex->m_nSampleCount;
-
-	if (image_is_multisampled) {
-		// HACK: As of July 2022 Monado does not support multisampling, so we can't just copy the image.
-		// Instead, we do vkCmdResolveImage into the swapchain image. (note, this doesn't support depth textures)
-		// Todo - how do we tell which runtimes support multisampling?
-
-		vkCmdResolveImage( //
-		    currentCommandBuffer, // commandbuffer
-		    (VkImage)tex->m_nImage, // srcImage
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
-		    swapchainImages.at(currentIndex).image, // dstImage
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
-		    1, // regionCount
-		    (VkImageResolve*)&region // pRegions
+	if(bounds)
+	{
+		VkImageBlit region = {};
+		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.srcSubresource.mipLevel = 0;
+		region.srcSubresource.baseArrayLayer = 0;
+		region.srcSubresource.layerCount = 1;
+		region.srcOffsets[0] = { (int)(bounds->uMin * tex->m_nWidth), (int)(bounds->vMin * tex->m_nHeight), 0 };
+		region.srcOffsets[1] = { (int)(bounds->uMax * tex->m_nWidth), (int)(bounds->vMax * tex->m_nHeight), 1 };
+		region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.dstSubresource.mipLevel = 0;
+		region.dstSubresource.baseArrayLayer = 0;
+		region.dstSubresource.layerCount = 1;
+		region.dstOffsets[0] = { 0, 0, 0 };
+		region.dstOffsets[1] = { (int)tex->m_nWidth, (int)tex->m_nHeight, 1 };
+		vkCmdBlitImage( //
+			currentCommandBuffer, // commandbuffer
+			(VkImage)tex->m_nImage, // srcImage
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
+			swapchainImages.at(currentIndex).image, // dstImage
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
+			1, // regionCount
+			&region, // pRegions
+			VK_FILTER_LINEAR
 		);
-	} else {
-		vkCmdCopyImage( //
-		    currentCommandBuffer, // commandbuffer
-		    (VkImage)tex->m_nImage, // srcImage
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
-		    swapchainImages.at(currentIndex).image, // dstImage
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
-		    1, // regionCount
-		    &region // pRegions
-		);
+	}
+	else
+	{
+		VkImageCopy region = {};
+		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.srcSubresource.mipLevel = 0;
+		region.srcSubresource.baseArrayLayer = 0;
+		region.srcSubresource.layerCount = 1;
+		region.srcOffset = { 0, 0, 0 };
+		region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.dstSubresource.mipLevel = 0;
+		region.dstSubresource.baseArrayLayer = 0;
+		region.dstSubresource.layerCount = 1;
+		region.dstOffset = { 0, 0, 0 };
+		region.extent = { tex->m_nWidth, tex->m_nHeight, 1 };
+	
+	
+		bool image_is_multisampled = xr_main_view(XruEyeLeft).maxSwapchainSampleCount < tex->m_nSampleCount;
+	/*
+		if(bounds)
+		{
+			image_is_multisampled = true;
+			region.srcOffset = { bounds->uMin * tex->m_nWidth, bounds->vMin * tex->m_nHeight, 0 };
+			region.dstOffset = { bounds->uMin * tex->m_nWidth, bounds->vMin * tex->m_nHeight, 0 };
+			region.extent = { (bounds->uMax - bounds->uMin)  * tex->m_nWidth, (bounds->vMax - bounds->vMin) * tex->m_nHeight, 1 };
+		}*/
+	
+		if (image_is_multisampled) {
+			// HACK: As of July 2022 Monado does not support multisampling, so we can't just copy the image.
+			// Instead, we do vkCmdResolveImage into the swapchain image. (note, this doesn't support depth textures)
+			// Todo - how do we tell which runtimes support multisampling?
+	
+			vkCmdResolveImage( //
+				currentCommandBuffer, // commandbuffer
+				(VkImage)tex->m_nImage, // srcImage
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
+				swapchainImages.at(currentIndex).image, // dstImage
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
+				1, // regionCount
+				(VkImageResolve*)&region // pRegions
+			);
+		} else {
+			vkCmdCopyImage( //
+				currentCommandBuffer, // commandbuffer
+				(VkImage)tex->m_nImage, // srcImage
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
+				swapchainImages.at(currentIndex).image, // dstImage
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
+				1, // regionCount
+				&region // pRegions
+			);
+		}
 	}
 
 	// transition swapchain image back to COLOR_ATTACHMENT_OPTIMAL for runtime
@@ -276,43 +314,6 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
 	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo));
-}
-
-void VkCompositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds, vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
-{
-
-	// Copy the texture across
-	Invoke(texture, ptrBounds);
-
-	vr::VRVulkanTextureData_t& tex = *(vr::VRVulkanTextureData_t*)texture->handle;
-
-	// Set the viewport up
-	XrSwapchainSubImage& subImage = layer.subImage;
-	subImage.swapchain = chain;
-	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
-	XrRect2Di& viewport = subImage.imageRect;
-
-	// TODO deduplicate with dx11compositor, and use for all compositors
-	if (ptrBounds) {
-		vr::VRTextureBounds_t bounds = *ptrBounds;
-
-		// We may have bounds.vMin > bounds.vMax representing a vertically flipped
-		// image. Virtually all Vulkan implementations handle this (those supporting
-		// VK_KHR_Maintenance1 and those supporting Vulkan 1.1) so this will
-		// normally just work by default. TODO: detect version and either manually
-		// flip or error out if not supported.
-
-		viewport.offset.x = (int)(bounds.uMin * tex.m_nWidth);
-		viewport.offset.y = (int)(bounds.vMin * tex.m_nHeight);
-		viewport.extent.width = (int)((bounds.uMax - bounds.uMin) * tex.m_nWidth);
-		viewport.extent.height = (int)((bounds.vMax - bounds.vMin) * tex.m_nHeight);
-	} else {
-		viewport.offset.x = viewport.offset.y = 0;
-		viewport.extent.width = tex.m_nWidth;
-		viewport.extent.height = tex.m_nHeight;
-
-		// submitVerticallyFlipped = false;
-	}
 }
 
 void VkCompositor::InvokeCubemap(const vr::Texture_t* textures)

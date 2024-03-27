@@ -27,8 +27,9 @@ public:
 	virtual void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds) = 0;
 
 	virtual void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
-	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport)
-	    = 0;
+	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer);
+	void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, XrSwapchainSubImage& subImage);
+	bool CalculateViewport(const vr::VRTextureBounds_t* bounds, int32_t width, int32_t height, bool supportsInvert, XrRect2Di& viewport);
 
 	virtual void InvokeCubemap(const vr::Texture_t* textures) = 0;
 	virtual bool SupportsCubemap() { return false; }

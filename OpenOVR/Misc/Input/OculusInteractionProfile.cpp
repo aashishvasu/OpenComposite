@@ -31,6 +31,7 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		"/input/trigger/touch",
 		"/input/thumbstick/x",
 		"/input/thumbstick/y",
+		"/input/thumbstick",
 		"/input/thumbstick/click",
 		"/input/thumbstick/touch",
 		"/input/thumbrest/touch",

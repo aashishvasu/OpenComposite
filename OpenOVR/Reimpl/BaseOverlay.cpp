@@ -737,16 +737,9 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 		overlay->compositor->ResetSubmitContext();
 	});
 
-	overlay->compositor->Invoke(&overlay->texture, nullptr);
+	overlay->compositor->Invoke(&overlay->texture, &overlay->textureBounds, overlay->layerQuad.subImage );
 
 	overlay->layerQuad.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
-	overlay->layerQuad.subImage = {
-		overlay->compositor->GetSwapChain(),
-		{ { 0, 0 },
-		    { (int32_t)overlay->compositor->GetSrcSize().width,
-		        (int32_t)overlay->compositor->GetSrcSize().height } },
-		0
-	};
 
 	return VROverlayError_None;
 }
