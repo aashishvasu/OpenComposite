@@ -16,7 +16,7 @@ struct LegacyControllerActions {
 	XrAction menu, menuTouch; // Upper button on touch controller (B/Y), application button on Vive
 	XrAction btnA, btnATouch; // Lower button on touch controller - A/X, not present on Vive
 
-	XrAction stickX, stickY, stickBtn, stickBtnTouch; // Axis0
+	XrAction trackpadX, trackpadY, trackpadTouch, trackpadForce, stickX, stickY, stickBtn, stickBtnTouch; // Axis0
 
 	// For the trigger and grip, we use separate actions for digital and analogue input. If the physical input is analogue it
 	// saves us from having to implement hysteresis (and the runtime probably knows what the appropriate thresholds are better

@@ -152,6 +152,10 @@ const InteractionProfile::LegacyBindings* IndexControllerInteractionProfile::Get
 	bindings.btnA = "input/a/click";
 	bindings.btnATouch = "input/a/touch";
 
+	bindings.trackpadX = "input/trackpad/x";
+	bindings.trackpadY = "input/trackpad/y";
+	bindings.trackpadTouch = "input/trackpad/touch";
+	bindings.trackpadForce = "input/trackpad/force";
 	bindings.stickX = "input/thumbstick/x";
 	bindings.stickY = "input/thumbstick/y";
 	bindings.stickBtn = "input/thumbstick/click";

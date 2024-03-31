@@ -1048,6 +1048,10 @@ void BaseInput::CreateLegacyActions()
 		create(&ctrl.stickBtnTouch, "thumbstick-btn-touch", "Thumbstick Button (Touch)", XR_ACTION_TYPE_BOOLEAN_INPUT);
 		create(&ctrl.stickX, "thumbstick-x", "Thumbstick X axis", XR_ACTION_TYPE_FLOAT_INPUT);
 		create(&ctrl.stickY, "thumbstick-y", "Thumbstick Y axis", XR_ACTION_TYPE_FLOAT_INPUT);
+		create(&ctrl.trackpadX, "trackpad-x", "Trackpad X axis", XR_ACTION_TYPE_FLOAT_INPUT);
+		create(&ctrl.trackpadY, "trackpad-y", "Trackpad Y axis", XR_ACTION_TYPE_FLOAT_INPUT);
+		create(&ctrl.trackpadTouch, "trackpad-touch", "Trackpad Touch", XR_ACTION_TYPE_BOOLEAN_INPUT);
+		create(&ctrl.trackpadForce, "trackpad-force", "Trackpad Force", XR_ACTION_TYPE_FLOAT_INPUT);
 
 		// Note that while we define the grip as a float, we can still bind it to boolean actions and the OpenXR runtime will
 		// return 0.0 or 1.0 depending on the button status. OpenXR 1.0 § 11.4.
@@ -2237,6 +2241,7 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	bindButton(ctrl.btnA, ctrl.btnATouch, vr::k_EButton_A);
 	bindButton(ctrl.menu, ctrl.menuTouch, vr::k_EButton_ApplicationMenu);
 	bindButton(ctrl.stickBtn, ctrl.stickBtnTouch, vr::k_EButton_SteamVR_Touchpad);
+	bindButton(XR_NULL_HANDLE, ctrl.trackpadTouch, vr::k_EButton_SteamVR_Touchpad);
 	bindButton(ctrl.gripClick, XR_NULL_HANDLE, vr::k_EButton_Grip);
 	bindButton(ctrl.triggerClick, ctrl.triggerTouch, vr::k_EButton_SteamVR_Trigger);
 	bindButton(XR_NULL_HANDLE, XR_NULL_HANDLE, vr::k_EButton_Axis2); // FIXME clean up? Is this the grip?
