@@ -44,9 +44,11 @@
 #include <algorithm>
 #include <chrono>
 #include <cinttypes>
+#include <mutex>
 
 using namespace vr;
 
+std::mutex inputRestartMutex;
 std::unique_ptr<TemporaryGraphics> XrBackend::temporaryGraphics = nullptr;
 XrBackend::XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx)
 {
@@ -1068,6 +1070,7 @@ void XrBackend::CreateGenericTrackers()
 void XrBackend::MaybeRestartForInputs()
 {
 	// if we haven't attached any actions to the session (infoSet or game actions), no need to restart
+	const std::lock_guard<std::mutex> lock(inputRestartMutex);
 	BaseInput* input = GetUnsafeBaseInput();
 	if (infoSet == XR_NULL_HANDLE && (!input || !input->AreActionsLoaded()))
 		return;
@@ -1081,6 +1084,7 @@ void XrBackend::QueryForInteractionProfile()
 {
 	// Note that we want to avoid using BaseInput here because it would allow for games to call GetControllerState before rendering
 	// and then we'd have to recreate the session twice, once for the input state and once for when the game submits a frame
+	const std::lock_guard<std::mutex> lock(inputRestartMutex);
 	if (subactionPaths[0] == XR_NULL_PATH) {
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, "/user/hand/left", &subactionPaths[0]));
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, "/user/hand/right", &subactionPaths[1]));
