@@ -656,7 +656,11 @@ void BaseInput::LoadEmptyManifestIfRequired()
 	OOVR_LOG("Loading virtual empty manifest");
 
 	hasLoadedActions = true;
-	usingLegacyInput = true;
+
+	// We have to set this after calling BindInputsForSession, as otherwise BaseCompositor::Submit might
+	// be called concurrently, and use the inputs we haven't set properly.
+	// See issue #408.
+	usingLegacyInput = false;
 
 	// TODO deduplicate with the regular manifest loader
 	CreateLegacyActions();
@@ -681,6 +685,9 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 	// Attach everything to the current session
 	BindInputsForSession();
+
+	// Finally mark the inputs as being set up
+	usingLegacyInput = true;
 }
 
 void BaseInput::BindInputsForSession()
