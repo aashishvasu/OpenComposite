@@ -268,7 +268,12 @@ success:
 	running = true;
 
 	// TODO seperate this from the rest of dllmain
-	BackendManager::Create(DrvOpenXR::CreateOpenXRBackend());
+	IBackend* backend = DrvOpenXR::CreateOpenXRBackend();
+	if (!backend) {
+		*peError = VRInitError_Init_Internal;
+	} else {
+		BackendManager::Create(backend);
+	}
 
 	return current_init_token;
 }
@@ -290,7 +295,9 @@ VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent()
 	XrInstanceCreateInfo createInfo{ XR_TYPE_INSTANCE_CREATE_INFO };
 	createInfo.applicationInfo = appInfo;
 	XrInstance tmp_instance;
-	OOVR_FAILED_XR_ABORT(xrCreateInstance(&createInfo, &tmp_instance));
+	if (xrCreateInstance(&createInfo, &tmp_instance) != XR_SUCCESS) {
+		return false;
+	}
 
 	XrSystemGetInfo systemInfo{};
 	systemInfo.type = XR_TYPE_SYSTEM_GET_INFO;

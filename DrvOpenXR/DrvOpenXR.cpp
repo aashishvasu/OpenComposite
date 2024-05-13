@@ -209,7 +209,13 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	createInfo.next = &androidInfo;
 #endif
 
-	OOVR_FAILED_XR_ABORT(xrCreateInstance(&createInfo, &xr_instance));
+	if (XrResult res = xrCreateInstance(&createInfo, &xr_instance); res != XR_SUCCESS) {
+		OOVR_LOGF("WARNING: Instance creation failed: XrResult %d", res);
+		if (res == XR_ERROR_RUNTIME_FAILURE) {
+			OOVR_LOGF("Is your OpenXR runtime running?");
+		}
+		return nullptr;
+	}
 
 #ifdef _DEBUG
 	XrDebugUtilsMessengerCreateInfoEXT dbgCreateInfo{};
