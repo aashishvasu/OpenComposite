@@ -291,14 +291,20 @@ void BaseSystem::ApplyTransform(TrackedDevicePose_t* pOutputPose, const TrackedD
 
 vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType)
 {
+	vr::TrackedDeviceIndex_t unDeviceIndex = -1;
+
 	if (unDeviceType == TrackedControllerRole_LeftHand) {
-		return leftHandIndex;
+		unDeviceIndex = leftHandIndex;
 	} else if (unDeviceType == TrackedControllerRole_RightHand) {
-		return rightHandIndex;
+		unDeviceIndex = rightHandIndex;
 	}
 
-	// This is what SteamVR does for unknown devices
-	return -1;
+	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	if (!dev) {
+		return -1; // This is what SteamVR does for unknown devices
+	} else {
+		return unDeviceIndex;
+	}
 }
 
 vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex)
