@@ -133,7 +133,14 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	XrApplicationInfo appInfo{};
 	GetXRAppName(appInfo.applicationName);
 	appInfo.applicationVersion = 1;
-	appInfo.apiVersion = XR_CURRENT_API_VERSION;
+
+	// Hard-code in the API version, because on Linux you might want to compile OC against
+	// the system-installed copy of the OXR loader. Distros are likely to update the loader
+	// as soon as a new version is released, before any OpenXR runtimes add support for the
+	// new OpenXR version. Though OC doesn't use any of those new features, we'd still require
+	// it if we used the XR_CURRENT_API_VERSION macro.
+	// When building against the vendored OpenXR loader, this is never a problem.
+	appInfo.apiVersion = XR_MAKE_VERSION(1, 0, 0);
 
 	std::vector<const char*> extensions;
 	XrGraphicsApiSupportedFlags apiFlags = 0;
