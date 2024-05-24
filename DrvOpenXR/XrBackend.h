@@ -129,6 +129,11 @@ private:
 	public:
 		BindingWrapper(T data)
 		    : data(data) {}
+		~BindingWrapper() override
+		{
+			if constexpr (std::is_same_v<T, XrGraphicsBindingOpenGLXlibKHR>)
+				glXDestroyContext(data.xDisplay, data.glxContext);
+		}
 		const void* asVoid() override { return &data; }
 	};
 

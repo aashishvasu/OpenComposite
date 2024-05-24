@@ -15,6 +15,7 @@
 // OpenGL compositor
 #ifdef SUPPORT_GL
 
+#include "../DrvOpenXR/XrBackend.h"
 #include <algorithm>
 #include <string>
 
@@ -157,6 +158,12 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 		// OOVR_ABORTF("OpenGL texture copy failed with err %d", err);
 		OOVR_LOG_ONCE("WARNING: OpenGL texture copy failed!");
 	}
+
+#if defined(SUPPORT_GL) && !defined(_WIN32)
+	const auto binding = (XrGraphicsBindingOpenGLXlibKHR*)((XrBackend*)BackendManager::Instance().GetBackendInstance())->GetCurrentGraphicsBinding();
+	if (binding->type == XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR && binding->glxContext != glXGetCurrentContext())
+		glFinish();
+#endif
 
 	// Release the swapchain - OpenXR will use the last-released image in a swapchain
 	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };

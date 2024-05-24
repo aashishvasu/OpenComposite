@@ -295,29 +295,35 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			// TODO wayland
 			// TODO xcb
 
-			// Unfortunately we're in a bit of a sticky situation here. We can't (as far as I can tell) get
-			// the GLXFBConfig from the context or drawable, and the display might give us multiple, so
-			// we can't pass it onto the runtime. If we have it we can use it to find the visual info, but
-			// otherwise we can't find that either.
-			//    GLXFBConfig config = some_magic_function();
-			//    XVisualInfo* vi = glXGetVisualFromFBConfig(glXGetCurrentDisplay(), config);
-			//    uint32_t visualid = vi->visualid;
-			// So... FIXME FIXME FIXME HAAAAACK! Just pass in invalid values and hope the runtime doesn't notice!
-			// Monado doesn't (and hopefully in the future, won't) use these values, so it ought to work for now.
-			//
-			// Note: on re-reading the spec it does appear there's no requirement that the config is the one used
-			//  to create the context. That seems a bit odd so we could be technically compliant by just grabbing
-			//  the first one, but it's probably better (IMO) to pass null and make the potential future issue
-			//  obvious rather than wasting lots of time of the poor person who has to track it down.
-			GLXFBConfig config = nullptr;
-			uint32_t visualid = 0xffffffff;
+			// HACK: Create a separate GLX context since `MaybeRestartForInputs()` may attempt to bind it on a different thread while the app's context is still in use
+			const PFNGLXCREATECONTEXTATTRIBSARBPROC pfn_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
+			if (pfn_glXCreateContextAttribsARB == nullptr)
+				OOVR_ABORT("glXCreateContextAttribsARB not available");
 
 			XrGraphicsBindingOpenGLXlibKHR binding = { XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR };
 			binding.xDisplay = glXGetCurrentDisplay();
-			binding.visualid = visualid;
-			binding.glxFBConfig = config;
+			int configCount = 0;
+			// clang-format off
+			const int configAttribs[] = {
+				GLX_CONFIG_CAVEAT, GLX_NONE,
+				None,
+			};
+			// clang-format on
+			GLXFBConfig* const configs = glXChooseFBConfig(binding.xDisplay, DefaultScreen(binding.xDisplay), configAttribs, &configCount);
+			if (configs == nullptr || configCount < 1)
+				OOVR_ABORT("No usable GLXFBConfig found");
+			binding.glxFBConfig = configs[0];
+			XFree(configs);
+			binding.visualid = glXGetVisualFromFBConfig(binding.xDisplay, binding.glxFBConfig)->visualid;
 			binding.glxDrawable = glXGetCurrentDrawable();
-			binding.glxContext = glXGetCurrentContext();
+			// clang-format off
+			const int contextAttribs[] = {
+				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+				GLX_CONTEXT_MINOR_VERSION_ARB, 2,
+				None,
+			};
+			// clang-format on
+			binding.glxContext = pfn_glXCreateContextAttribsARB(binding.xDisplay, binding.glxFBConfig, glXGetCurrentContext(), true, contextAttribs);
 
 			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingOpenGLXlibKHR>>(binding);
 			DrvOpenXR::SetupSession();

@@ -209,6 +209,9 @@ add_library(DrvOpenXR STATIC
 target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub ${CMAKE_BINARY_DIR})
 target_include_directories(DrvOpenXR PRIVATE DrvOpenXR OpenOVR)
 target_link_libraries(DrvOpenXR PUBLIC OpenVR ${XrLib} ${glmLib})
+if (NOT WIN32 AND NOT ANDROID)
+	target_link_libraries(DrvOpenXR PRIVATE X11) # for XFree()
+endif ()
 target_compile_definitions(DrvOpenXR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS} -D_CRT_SECURE_NO_WARNINGS)
 source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)
 
