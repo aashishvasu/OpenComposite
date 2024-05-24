@@ -1,9 +1,11 @@
 #pragma once
 
 #include "generated/interfaces/vrtypes.h"
+#include <array>
 #include <mutex>
 #include <openxr/openxr.h>
 #include <shared_mutex>
+#include <unordered_map>
 // Note: Xru stands for openXR Utilities
 
 /**
@@ -18,6 +20,12 @@ enum XruEye : int {
 	XruEyeLeft = 0,
 	XruEyeRight = 1,
 	XruEyeCount = 2,
+};
+
+struct XruCachedViews {
+	XrViewState viewState{};
+	uint32_t viewCount{};
+	std::array<XrView, XruEyeCount> views{};
 };
 
 // A macro to ifndef against for a section being ported, so we can remove it to make sure we
@@ -68,6 +76,21 @@ public:
 	 * Returns nextPredictedFrameTime if available, otherwise returns latestTime.
 	 */
 	XrTime GetBestTime();
+
+	/**
+	 * Returns a XruCachedViews containing the cached result of a xrLocateViews call with the specified space.
+	 * The returned reference is valid until a subsequent ClearCachedViews call, which is called once at the
+	 * start of each frame.
+	 */
+	const XruCachedViews& GetCachedViews(XrSpace space);
+
+	/**
+	 * Discard all cached xrLocateViews results. This invalidates the references returned by GetCachedViews.
+	 */
+	void ClearCachedViews();
+
+private:
+	std::unordered_map<XrSpace, XruCachedViews> cachedViews{};
 };
 
 class SessionLock;

@@ -116,6 +116,34 @@ XrTime XrSessionGlobals::GetBestTime()
 	return nextPredictedFrameTime > 1 ? nextPredictedFrameTime : latestTime;
 }
 
+const XruCachedViews& XrSessionGlobals::GetCachedViews(XrSpace space)
+{
+	auto it = cachedViews.find(space);
+	if (it != cachedViews.end()) {
+		return it->second;
+	}
+
+	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
+	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	locateInfo.displayTime = GetBestTime();
+	locateInfo.space = space;
+	XrViewState viewState = { XR_TYPE_VIEW_STATE };
+	uint32_t viewCount = 0;
+	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
+	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &viewState, XruEyeCount, &viewCount, views));
+
+	XruCachedViews& cws = cachedViews[space];
+	cws.viewState = viewState;
+	cws.viewCount = viewCount;
+	std::copy(views, views + XruEyeCount, cws.views.begin());
+	return cws;
+}
+
+void XrSessionGlobals::ClearCachedViews()
+{
+	cachedViews.clear();
+}
+
 XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin)
 {
 	switch (origin) {

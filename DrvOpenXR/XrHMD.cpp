@@ -26,28 +26,15 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 
 	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
 
-	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
-	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->GetBestTime();
-
-	// Seated space is available first when starting up, depending on the runtime implementation. We quickly get accurate
-	// values from xrLocateViews, but that doesn't help if the app only calls GetProjectionMatrix once and stores the
-	// bad values.
-	// TODO A better way to solve this would be to submit a few blank frames when we're using the temporary device to
-	// let this value settle, along with any other similar data.
-	locateInfo.space = xr_gbl->seatedSpace; // Should make no difference to the FOV
-
-	XrViewState state = { XR_TYPE_VIEW_STATE };
-	uint32_t viewCount = 0;
-	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &state, XruEyeCount, &viewCount, views));
-	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
+	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->seatedSpace);
+	const std::array<XrView, XruEyeCount>& views = cachedViews.views;
+	OOVR_FALSE_ABORT(cachedViews.viewCount == XruEyeCount);
 
 	// Build the projection matrix
 	// It looks like there aren't any functions in glm that can take different l/r/t/b FOV values, so do it ourselves
 	// Also calculate the projection matrix as row major (so one column determines one value when multiplied with a
 	// vector) and then transpose it back to being a column-major vector.
-	XrFovf& fov = views[eEye].fov;
+	const XrFovf& fov = views[eEye].fov;
 
 	float twoNear = fNearZ * 2;
 	float tanL = tanf(fov.angleLeft);
@@ -96,20 +83,11 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 	// TODO deduplicate with GetProjectionMatrix
 	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
 
-	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
-	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->GetBestTime();
+	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->seatedSpace);
+	const std::array<XrView, XruEyeCount>& views = cachedViews.views;
+	OOVR_FALSE_ABORT(cachedViews.viewCount == XruEyeCount);
 
-	// Seated space is available first when starting up
-	locateInfo.space = xr_gbl->seatedSpace; // Should make no difference to the FOV
-
-	XrViewState state = { XR_TYPE_VIEW_STATE };
-	uint32_t viewCount = 0;
-	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &state, XruEyeCount, &viewCount, views));
-	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
-
-	XrFovf& fov = views[eEye].fov;
+	const XrFovf& fov = views[eEye].fov;
 
 	/**
 	 * With a straight passthrough:
@@ -163,20 +141,12 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 		eEye = vr::Eye_Left;
 
 	if (time != xr_gbl->GetBestTime()) {
-		XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
-		locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-		locateInfo.displayTime = xr_gbl->GetBestTime();
-		locateInfo.space = xr_gbl->viewSpace;
-
-		uint32_t viewCount = 0;
-		XrViewState viewState = { XR_TYPE_VIEW_STATE };
-		XrView _views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-		OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &viewState, XruEyeCount, &viewCount, _views));
-
+		const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->viewSpace);
+		const XrViewState& viewState = cachedViews.viewState;
 		if (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT && viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) {
-			OOVR_FALSE_ABORT(viewCount == XruEyeCount);
-			views[0] = _views[0];
-			views[1] = _views[1];
+			OOVR_FALSE_ABORT(cachedViews.viewCount == XruEyeCount);
+			views[0] = cachedViews.views[0];
+			views[1] = cachedViews.views[1];
 			time = xr_gbl->GetBestTime();
 		}
 	}
@@ -303,17 +273,10 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 
 float XrHMD::GetIPD()
 {
-	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
-	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->GetBestTime();
-	locateInfo.space = xr_gbl->viewSpace;
-
-	XrViewState state = { XR_TYPE_VIEW_STATE };
-	uint32_t viewCount = 0;
-	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-
-	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &state, XruEyeCount, &viewCount, views));
-	OOVR_FALSE_ABORT(viewCount == XruEyeCount);
+	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->viewSpace);
+	const XrViewState& state = cachedViews.viewState;
+	const std::array<XrView, XruEyeCount>& views = cachedViews.views;
+	OOVR_FALSE_ABORT(cachedViews.viewCount == XruEyeCount);
 
 	static float ipd = 0.0064;
 
