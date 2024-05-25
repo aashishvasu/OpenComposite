@@ -274,6 +274,11 @@ ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VR
 	return VRCompositorError_None;
 }
 
+ovr_enum_t BaseCompositor::SubmitWithArrayIndex(vr::EVREye eye, const vr::Texture_t* texture, uint32_t idx, const vr::VRTextureBounds_t* bounds, vr::EVRSubmitFlags submitFlags)
+{
+	return Submit(eye, &texture[idx], bounds, submitFlags);
+}
+
 void BaseCompositor::ClearLastSubmittedFrame()
 {
 	// At this point we should show the loading screen and show Guardian, and undo this when the

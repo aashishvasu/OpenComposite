@@ -181,6 +181,7 @@ public:
 	 *	- AlreadySubmitted (app has submitted two left textures or two right textures in a single frame - i.e. before calling WaitGetPoses again)
 	 */
 	virtual ovr_enum_t Submit(vr::EVREye eEye, const vr::Texture_t* pTexture, const vr::VRTextureBounds_t* pBounds, vr::EVRSubmitFlags nSubmitFlags = vr::Submit_Default);
+	virtual ovr_enum_t SubmitWithArrayIndex(vr::EVREye eEye, const vr::Texture_t* pTexture, uint32_t unTextureArrayIndex, const vr::VRTextureBounds_t* pBounds, vr::EVRSubmitFlags nSubmitFlags = vr::Submit_Default);
 
 	/** Clears the frame that was sent with the last call to Submit. This will cause the
 	 * compositor to show the grid until Submit is called again. */

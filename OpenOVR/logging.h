@@ -3,17 +3,19 @@
 // Not strictly a logging thing, but makes clion happy about calling OOVR_ABORT and not returning
 #ifdef _WIN32
 #define OC_NORETURN __declspec(noreturn)
+#define OC_PRINTF(format_pos, args_pos)
 #else
 #define OC_NORETURN __attribute__((noreturn))
+#define OC_PRINTF(format_pos, args_pos) __attribute__((format (printf, format_pos, args_pos)))
 #endif
 
 void oovr_log_raw(const char* file, long line, const char* func, const char* msg);
-void oovr_log_raw_format(const char* file, long line, const char* func, const char* msg, ...);
+void oovr_log_raw_format(const char* file, long line, const char* func, const char* msg, ...) OC_PRINTF(4, 5);
 #define OOVR_LOG(msg) oovr_log_raw(__FILE__, __LINE__, __FUNCTION__, msg)
 #define OOVR_LOGF(...) oovr_log_raw_format(__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
-OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, const char* msg, const char* title = nullptr, ...);
-void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit_count, const char* msg, ...);
+OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, const char* msg, const char* title = nullptr, ...) OC_PRINTF(4, 6);
+void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit_count, const char* msg, ...) OC_PRINTF(5, 6);
 
 #define OOVR_ABORT(msg)                                        \
 	do {                                                       \

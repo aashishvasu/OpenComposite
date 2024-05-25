@@ -133,7 +133,14 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	XrApplicationInfo appInfo{};
 	GetXRAppName(appInfo.applicationName);
 	appInfo.applicationVersion = 1;
-	appInfo.apiVersion = XR_CURRENT_API_VERSION;
+
+	// Hard-code in the API version, because on Linux you might want to compile OC against
+	// the system-installed copy of the OXR loader. Distros are likely to update the loader
+	// as soon as a new version is released, before any OpenXR runtimes add support for the
+	// new OpenXR version. Though OC doesn't use any of those new features, we'd still require
+	// it if we used the XR_CURRENT_API_VERSION macro.
+	// When building against the vendored OpenXR loader, this is never a problem.
+	appInfo.apiVersion = XR_MAKE_VERSION(1, 0, 0);
 
 	std::vector<const char*> extensions;
 	XrGraphicsApiSupportedFlags apiFlags = 0;
@@ -209,7 +216,13 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	createInfo.next = &androidInfo;
 #endif
 
-	OOVR_FAILED_XR_ABORT(xrCreateInstance(&createInfo, &xr_instance));
+	if (XrResult res = xrCreateInstance(&createInfo, &xr_instance); res != XR_SUCCESS) {
+		OOVR_LOGF("WARNING: Instance creation failed: XrResult %d", res);
+		if (res == XR_ERROR_RUNTIME_FAILURE) {
+			OOVR_LOGF("Is your OpenXR runtime running?");
+		}
+		return nullptr;
+	}
 
 #ifdef _DEBUG
 	XrDebugUtilsMessengerCreateInfoEXT dbgCreateInfo{};
