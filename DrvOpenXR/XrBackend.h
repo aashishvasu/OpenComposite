@@ -131,8 +131,10 @@ private:
 		    : data(data) {}
 		~BindingWrapper() override
 		{
+#if defined(SUPPORT_GL) && !defined(_WIN32)
 			if constexpr (std::is_same_v<T, XrGraphicsBindingOpenGLXlibKHR>)
 				glXDestroyContext(data.xDisplay, data.glxContext);
+#endif
 		}
 		const void* asVoid() override { return &data; }
 	};
