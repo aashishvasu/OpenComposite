@@ -6,7 +6,7 @@
 #define OC_PRINTF(format_pos, args_pos)
 #else
 #define OC_NORETURN __attribute__((noreturn))
-#define OC_PRINTF(format_pos, args_pos) __attribute__((format (printf, format_pos, args_pos)))
+#define OC_PRINTF(format_pos, args_pos) __attribute__((format(printf, format_pos, args_pos)))
 #endif
 
 void oovr_log_raw(const char* file, long line, const char* func, const char* msg);

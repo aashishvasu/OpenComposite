@@ -183,7 +183,7 @@ static int wini_parse(const wchar_t* filename, ini_handler handler, void* user)
 // The ctor is run before DLLMain, so use this hack for now
 #ifdef _WIN32
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
-#define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
+#define HINST_THISCOMPONENT ((HINSTANCE) & __ImageBase)
 #endif
 
 Config::Config()

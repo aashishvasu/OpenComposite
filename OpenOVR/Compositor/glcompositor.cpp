@@ -24,13 +24,13 @@
 typedef void(APIENTRY* PFNGLGETTEXTURELEVELPARAMETERIVPROC)(GLuint texture, GLint level, GLenum pname, GLint* params);
 typedef void(APIENTRY* PFNGLCOPYIMAGESUBDATAPROC)(GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ,
     GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth);
-typedef void(APIENTRY * PFNGLGENFRAMEBUFFERSPROC) (GLsizei n, GLuint* framebuffers);
-typedef void(APIENTRY * PFNGLBINDFRAMEBUFFERPROC) (GLenum target, GLuint framebuffer);
-typedef void(APIENTRY * PFNGLBLITFRAMEBUFFERPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-typedef void(APIENTRY * PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-#define GL_FRAMEBUFFER                    0x8D40
-#define GL_READ_FRAMEBUFFER               0x8CA8
-#define GL_COLOR_ATTACHMENT0              0x8CE0
+typedef void(APIENTRY* PFNGLGENFRAMEBUFFERSPROC)(GLsizei n, GLuint* framebuffers);
+typedef void(APIENTRY* PFNGLBINDFRAMEBUFFERPROC)(GLenum target, GLuint framebuffer);
+typedef void(APIENTRY* PFNGLBLITFRAMEBUFFERPROC)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+typedef void(APIENTRY* PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+#define GL_FRAMEBUFFER 0x8D40
+#define GL_READ_FRAMEBUFFER 0x8CA8
+#define GL_COLOR_ATTACHMENT0 0x8CE0
 #endif
 
 static PFNGLGETTEXTURELEVELPARAMETERIVPROC glGetTextureLevelParameteriv = nullptr;
@@ -51,7 +51,9 @@ static void* getGlProcAddr(const char* name)
 GLCompositor::GLCompositor(GLuint initialTexture)
 {
 	if (!glGetTextureLevelParameteriv) {
-#define LOAD_FUNC(x) if(!(*(void**)&x = (void*)getGlProcAddr(#x))) OOVR_ABORT("Could not get function " #x)
+#define LOAD_FUNC(x)                                \
+	if (!(*(void**)& x = (void*)getGlProcAddr(#x))) \
+	OOVR_ABORT("Could not get function " #x)
 		LOAD_FUNC(glGetTextureLevelParameteriv);
 		LOAD_FUNC(glCopyImageSubData);
 		LOAD_FUNC(glBindFramebuffer);
@@ -101,8 +103,8 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	XrRect2Di viewport;
-	
-	submitVerticallyFlipped = CalculateViewport(bounds, inputWidth, inputHeight, false,  viewport);
+
+	submitVerticallyFlipped = CalculateViewport(bounds, inputWidth, inputHeight, false, viewport);
 	bool useBlit = submitVerticallyFlipped;
 
 	CheckCreateSwapChain(viewport.extent.width, viewport.extent.height, texture->eColorSpace, rawFormat);
@@ -128,26 +130,22 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 
 	// Actually copy the image across
 	GLuint dst = images.at(currentIndex);
-	if(useBlit)
-	{
+	if (useBlit) {
 		glBindFramebuffer(GL_FRAMEBUFFER, fboId[1]);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dst, 0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, fboId[0]);
 		glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, src, 0);
 		glBlitFramebuffer(
-			viewport.offset.x, viewport.offset.y, viewport.offset.x + (int)createInfo.width, viewport.offset.y + (int)createInfo.height,
-			0, submitVerticallyFlipped ? (int)createInfo.height : 0, (int)createInfo.width, submitVerticallyFlipped ? 0:(int)createInfo.height,
-			GL_COLOR_BUFFER_BIT, GL_NEAREST
-		);
+		    viewport.offset.x, viewport.offset.y, viewport.offset.x + (int)createInfo.width, viewport.offset.y + (int)createInfo.height,
+		    0, submitVerticallyFlipped ? (int)createInfo.height : 0, (int)createInfo.width, submitVerticallyFlipped ? 0 : (int)createInfo.height,
+		    GL_COLOR_BUFFER_BIT, GL_NEAREST);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	}
-	else
-	{
+	} else {
 		glCopyImageSubData(
-			src, GL_TEXTURE_2D, 0, viewport.offset.x, viewport.offset.y, 0, // 0 == no mipmapping, next three are xyz
-			dst, GL_TEXTURE_2D, 0, 0, 0, 0, // Same as above but for the destination
-			(int)createInfo.width, (int)createInfo.height, 1 // Region of the output texture to copy into (in this case, everything)
+		    src, GL_TEXTURE_2D, 0, viewport.offset.x, viewport.offset.y, 0, // 0 == no mipmapping, next three are xyz
+		    dst, GL_TEXTURE_2D, 0, 0, 0, 0, // Same as above but for the destination
+		    (int)createInfo.width, (int)createInfo.height, 1 // Region of the output texture to copy into (in this case, everything)
 		);
 	}
 
@@ -169,7 +167,6 @@ void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureB
 	XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 	OOVR_FAILED_XR_ABORT(xrReleaseSwapchainImage(chain, &releaseInfo));
 }
-
 
 void GLBaseCompositor::InvokeCubemap(const vr::Texture_t* textures)
 {
@@ -193,7 +190,7 @@ void GLBaseCompositor::CheckCreateSwapChain(int width, int height, vr::EColorSpa
 	desc.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 
 	// if used fallback, make format match it to skip recreating chains every frame
-	if(createInfo.format != createInfoFormat)
+	if (createInfo.format != createInfoFormat)
 		desc.format = createInfo.format;
 
 	// If the format has changed (or this is the first call), continue on to create the swapchain
@@ -218,7 +215,7 @@ void GLBaseCompositor::CheckCreateSwapChain(int width, int height, vr::EColorSpa
 			OOVR_LOGF("Valid format: %d", f);
 		}
 		desc.format = NormaliseFormat(c_space, GL_RGBA8);
-		if(!std::count(formats.begin(), formats.end(), desc.format))
+		if (!std::count(formats.begin(), formats.end(), desc.format))
 			desc.format = GL_RGBA8;
 		createInfoFormat = format;
 	}

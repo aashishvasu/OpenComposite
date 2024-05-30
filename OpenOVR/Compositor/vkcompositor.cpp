@@ -212,8 +212,7 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	    0, nullptr,
 	    1, &barrier);
 
-	if(bounds)
-	{
+	if (bounds) {
 		VkImageBlit region = {};
 		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.mipLevel = 0;
@@ -228,18 +227,15 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		region.dstOffsets[0] = { 0, 0, 0 };
 		region.dstOffsets[1] = { (int)tex->m_nWidth, (int)tex->m_nHeight, 1 };
 		vkCmdBlitImage( //
-			currentCommandBuffer, // commandbuffer
-			(VkImage)tex->m_nImage, // srcImage
-			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
-			swapchainImages.at(currentIndex).image, // dstImage
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
-			1, // regionCount
-			&region, // pRegions
-			VK_FILTER_LINEAR
-		);
-	}
-	else
-	{
+		    currentCommandBuffer, // commandbuffer
+		    (VkImage)tex->m_nImage, // srcImage
+		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
+		    swapchainImages.at(currentIndex).image, // dstImage
+		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
+		    1, // regionCount
+		    &region, // pRegions
+		    VK_FILTER_LINEAR);
+	} else {
 		VkImageCopy region = {};
 		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.mipLevel = 0;
@@ -252,41 +248,40 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		region.dstSubresource.layerCount = 1;
 		region.dstOffset = { 0, 0, 0 };
 		region.extent = { tex->m_nWidth, tex->m_nHeight, 1 };
-	
-	
+
 		bool image_is_multisampled = xr_main_view(XruEyeLeft).maxSwapchainSampleCount < tex->m_nSampleCount;
-	/*
-		if(bounds)
-		{
-			image_is_multisampled = true;
-			region.srcOffset = { bounds->uMin * tex->m_nWidth, bounds->vMin * tex->m_nHeight, 0 };
-			region.dstOffset = { bounds->uMin * tex->m_nWidth, bounds->vMin * tex->m_nHeight, 0 };
-			region.extent = { (bounds->uMax - bounds->uMin)  * tex->m_nWidth, (bounds->vMax - bounds->vMin) * tex->m_nHeight, 1 };
-		}*/
-	
+		/*
+		    if(bounds)
+		    {
+		        image_is_multisampled = true;
+		        region.srcOffset = { bounds->uMin * tex->m_nWidth, bounds->vMin * tex->m_nHeight, 0 };
+		        region.dstOffset = { bounds->uMin * tex->m_nWidth, bounds->vMin * tex->m_nHeight, 0 };
+		        region.extent = { (bounds->uMax - bounds->uMin)  * tex->m_nWidth, (bounds->vMax - bounds->vMin) * tex->m_nHeight, 1 };
+		    }*/
+
 		if (image_is_multisampled) {
 			// HACK: As of July 2022 Monado does not support multisampling, so we can't just copy the image.
 			// Instead, we do vkCmdResolveImage into the swapchain image. (note, this doesn't support depth textures)
 			// Todo - how do we tell which runtimes support multisampling?
-	
+
 			vkCmdResolveImage( //
-				currentCommandBuffer, // commandbuffer
-				(VkImage)tex->m_nImage, // srcImage
-				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
-				swapchainImages.at(currentIndex).image, // dstImage
-				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
-				1, // regionCount
-				(VkImageResolve*)&region // pRegions
+			    currentCommandBuffer, // commandbuffer
+			    (VkImage)tex->m_nImage, // srcImage
+			    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
+			    swapchainImages.at(currentIndex).image, // dstImage
+			    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
+			    1, // regionCount
+			    (VkImageResolve*)&region // pRegions
 			);
 		} else {
 			vkCmdCopyImage( //
-				currentCommandBuffer, // commandbuffer
-				(VkImage)tex->m_nImage, // srcImage
-				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
-				swapchainImages.at(currentIndex).image, // dstImage
-				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
-				1, // regionCount
-				&region // pRegions
+			    currentCommandBuffer, // commandbuffer
+			    (VkImage)tex->m_nImage, // srcImage
+			    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
+			    swapchainImages.at(currentIndex).image, // dstImage
+			    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
+			    1, // regionCount
+			    &region // pRegions
 			);
 		}
 	}

@@ -737,7 +737,7 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 		overlay->compositor->ResetSubmitContext();
 	});
 
-	overlay->compositor->Invoke(&overlay->texture, &overlay->textureBounds, overlay->layerQuad.subImage );
+	overlay->compositor->Invoke(&overlay->texture, &overlay->textureBounds, overlay->layerQuad.subImage);
 
 	overlay->layerQuad.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
 

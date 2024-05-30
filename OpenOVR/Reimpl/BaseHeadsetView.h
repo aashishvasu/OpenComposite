@@ -1,7 +1,6 @@
 #pragma once
 
-enum OOVR_HeadsetViewMode_t
-{
+enum OOVR_HeadsetViewMode_t {
 	HeadsetViewMode_Left = 0,
 	HeadsetViewMode_Right,
 	HeadsetViewMode_Both
