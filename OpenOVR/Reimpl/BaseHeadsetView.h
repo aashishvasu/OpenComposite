@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 enum OOVR_HeadsetViewMode_t {
 	HeadsetViewMode_Left = 0,
 	HeadsetViewMode_Right,
