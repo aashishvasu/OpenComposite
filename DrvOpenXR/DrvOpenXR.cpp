@@ -104,7 +104,11 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	// Enumerate the available extensions
 	uint32_t availableExtensionsCount;
-	OOVR_FAILED_XR_ABORT(xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr));
+	if (XR_FAILED(xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr)))
+	{
+		OOVR_LOGF("Failed to enumerate XR extensions");
+		return nullptr;
+	}
 	std::vector<XrExtensionProperties> extensionProperties;
 	extensionProperties.resize(availableExtensionsCount, { XR_TYPE_EXTENSION_PROPERTIES });
 	OOVR_FAILED_XR_ABORT(xrEnumerateInstanceExtensionProperties(nullptr,
