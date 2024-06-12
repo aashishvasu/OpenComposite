@@ -165,32 +165,32 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
 DX11Compositor* BaseCompositor::dxcomp;
 #endif
 
-Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
+std::unique_ptr<Compositor> BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 {
-	Compositor* comp = nullptr;
+	std::unique_ptr<Compositor> comp;
 
 	switch (texture->eType) {
 #if defined(SUPPORT_GL)
 	case TextureType_OpenGL: {
 		// Double-cast to avoid a CLion warning
-		comp = new GLCompositor((GLuint)(intptr_t)texture->handle);
+		comp = std::make_unique<GLCompositor>((GLuint)(intptr_t)texture->handle);
 		break;
 	}
 #elif defined(SUPPORT_GLES)
 	case TextureType_OpenGL: {
 		// Double-cast to avoid a CLion warning
-		comp = new GLESCompositor();
+		comp = std::make_unique<GLESCompositor>();
 		break;
 	}
 #endif
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	case TextureType_DirectX: {
 		if (!oovr_global_configuration.DX10Mode())
-			comp = new DX11Compositor((ID3D11Texture2D*)texture->handle);
+			comp = std::make_unique<DX11Compositor>((ID3D11Texture2D*)texture->handle);
 
 #if defined(SUPPORT_DX10) && !defined(OC_XR_PORT)
 		else
-			comp = new DX10Compositor((ID3D10Texture2D*)texture->handle);
+			comp = std::make_unique<DX10Compositor>((ID3D10Texture2D*)texture->handle);
 
 		dxcomp = (DX11Compositor*)comp;
 #else
@@ -203,13 +203,13 @@ Compositor* BaseCompositor::CreateCompositorAPI(const vr::Texture_t* texture)
 #endif
 #ifdef SUPPORT_VK
 	case TextureType_Vulkan: {
-		comp = new VkCompositor(texture);
+		comp = std::make_unique<VkCompositor>(texture);
 		break;
 	}
 #endif
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 	case TextureType_DirectX12: {
-		comp = new DX12Compositor((D3D12TextureData_t*)texture->handle);
+		comp = std::make_unique<DX12Compositor>((D3D12TextureData_t*)texture->handle);
 		break;
 	}
 #endif

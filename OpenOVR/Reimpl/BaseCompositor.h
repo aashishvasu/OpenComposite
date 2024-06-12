@@ -129,7 +129,7 @@ public:
 	static MfMatrix4f GetHandTransform();
 
 	/** Creates API specific Compositor */
-	static Compositor* CreateCompositorAPI(const vr::Texture_t* texture);
+	static std::unique_ptr<Compositor> CreateCompositorAPI(const vr::Texture_t* texture);
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11) && !defined(OC_XR_PORT)
 	// TODO clean this up, and make the keyboard work with OpenGL and Vulkan too

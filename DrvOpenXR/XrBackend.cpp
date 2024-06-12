@@ -365,7 +365,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 		if (compositor)
 			continue;
 
-		compositor.reset(BaseCompositor::CreateCompositorAPI(tex));
+		compositor = BaseCompositor::CreateCompositorAPI(tex);
 	}
 }
 
@@ -567,10 +567,8 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
 		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session.get(), &beginInfo));
 
-		static std::unique_ptr<Compositor> compositor = nullptr;
-
-		if (compositor == nullptr)
-			compositor.reset(BaseCompositor::CreateCompositorAPI(pTextures));
+		if (skybox_compositor == nullptr)
+			skybox_compositor = BaseCompositor::CreateCompositorAPI(pTextures);
 
 		vr::VRTextureBounds_t bounds;
 		bounds.uMin = 0.0;
@@ -579,7 +577,7 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		bounds.vMax = 0.0;
 
 		XrCompositionLayerQuad layerQuad = { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		compositor->Invoke(pTextures, &bounds, layerQuad.subImage);
+		skybox_compositor->Invoke(pTextures, &bounds, layerQuad.subImage);
 		layerQuad.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
 		layerQuad.next = NULL;
 		layerQuad.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
@@ -847,6 +845,8 @@ void XrBackend::PrepareForSessionShutdown()
 	for (std::unique_ptr<Compositor>& c : compositors) {
 		c.reset();
 	}
+	skybox_compositor.reset();
+	overlay_compositors.clear();
 	if (infoSet != XR_NULL_HANDLE) {
 		OOVR_FAILED_XR_ABORT(xrDestroyActionSet(infoSet));
 		infoSet = XR_NULL_HANDLE;
@@ -871,6 +871,18 @@ void XrBackend::OnOverlayTexture(const vr::Texture_t* texture)
 {
 	if (!usingApplicationGraphicsAPI)
 		CheckOrInitCompositors(texture);
+}
+
+void XrBackend::RegisterOverlayCompositor(std::shared_ptr<Compositor> compositor)
+{
+	overlay_compositors.push_back(compositor);
+}
+
+void XrBackend::UnregisterOverlayCompositor(std::shared_ptr<Compositor> compositor)
+{
+	std::erase_if(overlay_compositors, [c = std::move(compositor)](std::shared_ptr<Compositor>& comp) {
+		return c == comp;
+	});
 }
 
 void XrBackend::UpdateInteractionProfile()
