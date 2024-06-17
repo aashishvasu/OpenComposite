@@ -2,16 +2,10 @@
 
 // Make this usable from DrvOpenXR to refresh the inputs after swapping sessions
 // FIXME don't do that, it's ugly and slows down the build when modifying headers
-#include "../BaseCommon.h"
 
 #include "Drivers/Backend.h"
-#include "Misc/json/json.h"
-#include <array>
-#include <map>
-#include <optional>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "Misc/Input/InputData.h"
@@ -794,4 +788,12 @@ private:
 	 * Uses input state (trigger and grip) to generate a skeletal summary.
 	 */
 	EVRInputError getEstimatedSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
+
+	/**
+	 * Some games (i.e. newer Unity games) won't explicitly call SetActionManifestPath, but instead will set the path through
+	 * the Steamworks web interface. If this is the case, we'll never be able to set the actions! So instead, we must discover if this is the case.
+	 * This method should only be called when a game is trying to retrieve action data (the GetXActionData family of functions).
+	 */
+	void checkIfActionsMustBeDiscoveredFromSteam();
+	bool triedDiscoveringManifest = false;
 };

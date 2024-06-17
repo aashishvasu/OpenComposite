@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include "compositor.h"
 #include "../Misc/Config.h"
+#include "compositor.h"
 
 Compositor::~Compositor()
 {
@@ -24,7 +24,7 @@ void Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_
 }
 
 void Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
-			vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
+    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
 {
 	Invoke(texture, bounds, layer.subImage);
 }
@@ -32,7 +32,7 @@ void Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTe
 bool Compositor::CalculateViewport(const vr::VRTextureBounds_t* ptrBounds, int32_t width, int32_t height, bool supportsInvert, XrRect2Di& viewport)
 {
 	bool submitVerticallyFlipped = false;
-	
+
 	if (ptrBounds) {
 		vr::VRTextureBounds_t newBounds = *ptrBounds;
 		if (!supportsInvert && newBounds.vMin > newBounds.vMax) {

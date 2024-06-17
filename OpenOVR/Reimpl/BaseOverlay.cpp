@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #define BASE_IMPL
+#include "../../DrvOpenXR/XrBackend.h"
 #include "BaseCompositor.h"
 #include "BaseOverlay.h"
 #include "BaseSystem.h"
@@ -39,7 +40,7 @@ public:
 	// Rendering
 	Texture_t texture = {};
 	XrCompositionLayerQuad layerQuad = { XR_TYPE_COMPOSITION_LAYER_QUAD };
-	std::unique_ptr<Compositor> compositor;
+	std::weak_ptr<Compositor> compositor;
 
 	// Transform
 	VROverlayTransformType transformType = VROverlayTransform_Absolute;
@@ -213,6 +214,10 @@ EVROverlayError BaseOverlay::DestroyOverlay(VROverlayHandle_t ulOverlayHandle)
 	if (highQualityOverlay == ulOverlayHandle)
 		highQualityOverlay = vr::k_ulOverlayHandleInvalid;
 
+	if (std::shared_ptr<Compositor> comp = overlay->compositor.lock()) {
+		auto* backend = (XrBackend*)BackendManager::Instance().GetBackendInstance();
+		backend->UnregisterOverlayCompositor(comp);
+	}
 	overlays.erase(overlay->key);
 	validOverlays.erase(overlay);
 	delete overlay;
@@ -723,21 +728,20 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 	USEH();
 	overlay->texture = *pTexture;
 
-	BackendManager::Instance().OnOverlayTexture(pTexture);
-
 	if (!oovr_global_configuration.EnableLayers() || !BackendManager::Instance().IsGraphicsConfigured())
 		return VROverlayError_None;
 
-	if (!overlay->compositor) {
-		overlay->compositor.reset(GetUnsafeBaseCompositor()->CreateCompositorAPI(pTexture));
+	std::shared_ptr<Compositor> compositor = overlay->compositor.lock();
+	if (!compositor) {
+		compositor = GetUnsafeBaseCompositor()->CreateCompositorAPI(pTexture);
+		overlay->compositor = std::weak_ptr(compositor);
+		auto* backend = (XrBackend*)BackendManager::Instance().GetBackendInstance();
+		backend->RegisterOverlayCompositor(compositor);
 	}
 
-	overlay->compositor->LoadSubmitContext();
-	auto revertToCallerContext = MakeScopeGuard([&]() {
-		overlay->compositor->ResetSubmitContext();
-	});
-
-	overlay->compositor->Invoke(&overlay->texture, &overlay->textureBounds, overlay->layerQuad.subImage );
+	compositor->LoadSubmitContext();
+	compositor->Invoke(&overlay->texture, &overlay->textureBounds, overlay->layerQuad.subImage);
+	compositor->ResetSubmitContext();
 
 	overlay->layerQuad.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
 
@@ -748,6 +752,10 @@ EVROverlayError BaseOverlay::ClearOverlayTexture(VROverlayHandle_t ulOverlayHand
 	USEH();
 	overlay->texture = {};
 
+	if (std::shared_ptr<Compositor> comp = overlay->compositor.lock()) {
+		auto* backend = (XrBackend*)BackendManager::Instance().GetBackendInstance();
+		backend->UnregisterOverlayCompositor(comp);
+	}
 	overlay->compositor.reset();
 	return VROverlayError_None;
 }

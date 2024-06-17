@@ -295,29 +295,35 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			// TODO wayland
 			// TODO xcb
 
-			// Unfortunately we're in a bit of a sticky situation here. We can't (as far as I can tell) get
-			// the GLXFBConfig from the context or drawable, and the display might give us multiple, so
-			// we can't pass it onto the runtime. If we have it we can use it to find the visual info, but
-			// otherwise we can't find that either.
-			//    GLXFBConfig config = some_magic_function();
-			//    XVisualInfo* vi = glXGetVisualFromFBConfig(glXGetCurrentDisplay(), config);
-			//    uint32_t visualid = vi->visualid;
-			// So... FIXME FIXME FIXME HAAAAACK! Just pass in invalid values and hope the runtime doesn't notice!
-			// Monado doesn't (and hopefully in the future, won't) use these values, so it ought to work for now.
-			//
-			// Note: on re-reading the spec it does appear there's no requirement that the config is the one used
-			//  to create the context. That seems a bit odd so we could be technically compliant by just grabbing
-			//  the first one, but it's probably better (IMO) to pass null and make the potential future issue
-			//  obvious rather than wasting lots of time of the poor person who has to track it down.
-			GLXFBConfig config = nullptr;
-			uint32_t visualid = 0xffffffff;
+			// HACK: Create a separate GLX context since `MaybeRestartForInputs()` may attempt to bind it on a different thread while the app's context is still in use
+			const PFNGLXCREATECONTEXTATTRIBSARBPROC pfn_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
+			if (pfn_glXCreateContextAttribsARB == nullptr)
+				OOVR_ABORT("glXCreateContextAttribsARB not available");
 
 			XrGraphicsBindingOpenGLXlibKHR binding = { XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR };
 			binding.xDisplay = glXGetCurrentDisplay();
-			binding.visualid = visualid;
-			binding.glxFBConfig = config;
+			int configCount = 0;
+			// clang-format off
+			const int configAttribs[] = {
+				GLX_CONFIG_CAVEAT, GLX_NONE,
+				None,
+			};
+			// clang-format on
+			GLXFBConfig* const configs = glXChooseFBConfig(binding.xDisplay, DefaultScreen(binding.xDisplay), configAttribs, &configCount);
+			if (configs == nullptr || configCount < 1)
+				OOVR_ABORT("No usable GLXFBConfig found");
+			binding.glxFBConfig = configs[0];
+			XFree(configs);
+			binding.visualid = glXGetVisualFromFBConfig(binding.xDisplay, binding.glxFBConfig)->visualid;
 			binding.glxDrawable = glXGetCurrentDrawable();
-			binding.glxContext = glXGetCurrentContext();
+			// clang-format off
+			const int contextAttribs[] = {
+				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+				GLX_CONTEXT_MINOR_VERSION_ARB, 2,
+				None,
+			};
+			// clang-format on
+			binding.glxContext = pfn_glXCreateContextAttribsARB(binding.xDisplay, binding.glxFBConfig, glXGetCurrentContext(), true, contextAttribs);
 
 			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingOpenGLXlibKHR>>(binding);
 			DrvOpenXR::SetupSession();
@@ -359,7 +365,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 		if (compositor)
 			continue;
 
-		compositor.reset(BaseCompositor::CreateCompositorAPI(tex));
+		compositor = BaseCompositor::CreateCompositorAPI(tex);
 	}
 }
 
@@ -386,14 +392,12 @@ void XrBackend::WaitForTrackingData()
 		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session.get(), &beginInfo));
 	}
 
-	XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
-	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	locateInfo.displayTime = xr_gbl->nextPredictedFrameTime;
-	locateInfo.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
-	XrViewState viewState = { XR_TYPE_VIEW_STATE };
-	uint32_t viewCount = 0;
-	XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
-	OOVR_FAILED_XR_SOFT_ABORT(xrLocateViews(xr_session.get(), &locateInfo, &viewState, XruEyeCount, &viewCount, views));
+	xr_gbl->ClearCachedViews();
+
+	XrSpace projectionSpace = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);
+	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(projectionSpace);
+	const XrViewState& viewState = cachedViews.viewState;
+	const std::array<XrView, XruEyeCount>& views = cachedViews.views;
 
 	for (int eye = 0; eye < XruEyeCount; eye++) {
 		projectionViews[eye].fov = views[eye].fov;
@@ -563,10 +567,8 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		XrFrameBeginInfo beginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
 		OOVR_FAILED_XR_ABORT(xrBeginFrame(xr_session.get(), &beginInfo));
 
-		static std::unique_ptr<Compositor> compositor = nullptr;
-
-		if (compositor == nullptr)
-			compositor.reset(BaseCompositor::CreateCompositorAPI(pTextures));
+		if (skybox_compositor == nullptr)
+			skybox_compositor = BaseCompositor::CreateCompositorAPI(pTextures);
 
 		vr::VRTextureBounds_t bounds;
 		bounds.uMin = 0.0;
@@ -575,7 +577,7 @@ IBackend::openvr_enum_t XrBackend::SetSkyboxOverride(const vr::Texture_t* pTextu
 		bounds.vMax = 0.0;
 
 		XrCompositionLayerQuad layerQuad = { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		compositor->Invoke(pTextures, &bounds, layerQuad.subImage);
+		skybox_compositor->Invoke(pTextures, &bounds, layerQuad.subImage);
 		layerQuad.type = XR_TYPE_COMPOSITION_LAYER_QUAD;
 		layerQuad.next = NULL;
 		layerQuad.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
@@ -843,6 +845,8 @@ void XrBackend::PrepareForSessionShutdown()
 	for (std::unique_ptr<Compositor>& c : compositors) {
 		c.reset();
 	}
+	skybox_compositor.reset();
+	overlay_compositors.clear();
 	if (infoSet != XR_NULL_HANDLE) {
 		OOVR_FAILED_XR_ABORT(xrDestroyActionSet(infoSet));
 		infoSet = XR_NULL_HANDLE;
@@ -867,6 +871,18 @@ void XrBackend::OnOverlayTexture(const vr::Texture_t* texture)
 {
 	if (!usingApplicationGraphicsAPI)
 		CheckOrInitCompositors(texture);
+}
+
+void XrBackend::RegisterOverlayCompositor(std::shared_ptr<Compositor> compositor)
+{
+	overlay_compositors.push_back(compositor);
+}
+
+void XrBackend::UnregisterOverlayCompositor(std::shared_ptr<Compositor> compositor)
+{
+	std::erase_if(overlay_compositors, [c = std::move(compositor)](std::shared_ptr<Compositor>& comp) {
+		return c == comp;
+	});
 }
 
 void XrBackend::UpdateInteractionProfile()
