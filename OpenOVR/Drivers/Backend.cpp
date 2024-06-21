@@ -33,7 +33,7 @@ void BackendManager::Reset()
 
 vr::TrackedDevicePose_t BackendManager::InvalidPose()
 {
-	vr::TrackedDevicePose_t pose = { 0 };
+	vr::TrackedDevicePose_t pose{};
 	pose.bPoseIsValid = false;
 	pose.bDeviceIsConnected = false;
 
@@ -299,7 +299,7 @@ vr::HmdMatrix34_t ITrackedDevice::GetMatrix34TrackedDeviceProperty(vr::ETrackedD
 	if (pErrorL)
 		*pErrorL = vr::TrackedProp_UnknownProperty;
 
-	vr::HmdMatrix34_t m = { 0 };
+	vr::HmdMatrix34_t m{};
 	m.m[0][0] = 1;
 	m.m[1][1] = 1;
 	m.m[2][2] = 1;

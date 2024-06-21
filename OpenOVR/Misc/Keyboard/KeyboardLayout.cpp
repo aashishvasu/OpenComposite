@@ -1,3 +1,4 @@
+#include "logging.h"
 #include "stdafx.h"
 
 #include "KeyboardLayout.h"
@@ -5,6 +6,7 @@
 
 #include <algorithm>
 #include <cwctype>
+#include <numbers>
 
 static void wstrim(wstring& s)
 {
@@ -132,7 +134,7 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data)
 			if (chars.length() != shift.length())
 				OOVR_ABORTF("Keyboard layout: bank lower/upper length mismatch: '%ls' vs '%ls'", chars.c_str(), shift.c_str());
 
-			for (int i = 0; i < chars.length(); i++) {
+			for (size_t i = 0; i < chars.length(); i++) {
 				addNextKey(chars[i], shift[i]);
 			}
 			continue;
@@ -190,8 +192,7 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data)
 
 			if (!ww.empty()) {
 				if (wh.empty()) {
-					string msg = string("word width/height mismatch for keyboard char '") + ((char)ch) + "'";
-					OOVR_ABORT(msg.c_str());
+					OOVR_ABORTF("word width/height mismatch for keyboard char '%c'", ch);
 				}
 
 				key.w = std::stof(ww);
@@ -217,7 +218,7 @@ KeyboardLayout::KeyboardLayout(std::vector<char> data)
 
 			float lenSq = dx * dx + dy * dy;
 
-			int angle = (int)(atan2(-dy, dx) * 180 / math_pi);
+			int angle = (int)(atan2(-dy, dx) * 180 / std::numbers::pi);
 
 			// Spin everything back 45deg, so the borders between regions are diagonal
 			angle -= 45;

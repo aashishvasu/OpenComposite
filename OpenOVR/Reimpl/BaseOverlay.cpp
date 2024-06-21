@@ -328,6 +328,10 @@ const char* BaseOverlay::GetOverlayErrorNameFromEnum(EVROverlayError error)
 		ERR_CASE(NoNeighbor);
 		ERR_CASE(TooManyMaskPrimitives);
 		ERR_CASE(BadMaskPrimitive);
+		ERR_CASE(TextureAlreadyLocked);
+		ERR_CASE(TextureLockCapacityReached);
+		ERR_CASE(TextureNotLocked);
+		ERR_CASE(TimedOut);
 	}
 #undef ERR_CASE
 
@@ -841,7 +845,7 @@ EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInp
 /** Placeholder method for submitting a KeyboardDone event when asked to show the keyboard since it is not implemented yet. **/
 void BaseOverlay::SubmitPlaceholderKeyboardEvent(vr::EVREventType ev, VRKeyboard::eventDispatch_t eventDispatch, uint64_t userValue)
 {
-	VREvent_Keyboard_t data = { 0 };
+	VREvent_Keyboard_t data{};
 	data.uUserValue = userValue;
 
 	VREvent_t evt = { 0 };

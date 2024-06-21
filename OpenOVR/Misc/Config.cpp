@@ -77,7 +77,7 @@ static HmdColor_t parse_HmdColor_t(string orig, string name, int line)
 		goto invalid;
 	}
 
-	for (int i = 1; i < val.length(); i++) {
+	for (size_t i = 1; i < val.length(); i++) {
 		char c = val[i];
 		if ((c < '0' || c > '9') && (c < 'a' || c > 'f'))
 			goto invalid;

@@ -24,8 +24,6 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 	if (eEye < 0 || (int)eEye >= 2)
 		eEye = vr::Eye_Left;
 
-	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
-
 	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->seatedSpace);
 	const std::array<XrView, XruEyeCount>& views = cachedViews.views;
 	OOVR_FALSE_ABORT(cachedViews.viewCount == XruEyeCount);
@@ -81,8 +79,6 @@ void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, flo
 		eEye = vr::Eye_Left;
 
 	// TODO deduplicate with GetProjectionMatrix
-	XrViewConfigurationView& eye = xr_main_view((XruEye)eEye);
-
 	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->seatedSpace);
 	const std::array<XrView, XruEyeCount>& views = cachedViews.views;
 	OOVR_FALSE_ABORT(cachedViews.viewCount == XruEyeCount);

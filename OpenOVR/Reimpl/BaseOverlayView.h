@@ -46,7 +46,7 @@ public:
 	 * will be nullptr. Once the producer generates the first overlay frame, Texture_t->handle
 	 * will become a valid handle.
 	 */
-	virtual vr::EVROverlayError AcquireOverlayView(vr::VROverlayHandle_t ulOverlayHandle,
+	vr::EVROverlayError AcquireOverlayView(vr::VROverlayHandle_t ulOverlayHandle,
 	    OOVR_VRNativeDevice_t* pNativeDevice, OOVR_VROverlayView_t* pOverlayView, uint32_t unOverlayViewSize);
 
 	/** Release an acquired OverlayView_t
@@ -57,11 +57,11 @@ public:
 	 * All OverlayView_t*'s provided to AcquireOverlayView() as pOverlayViews must be
 	 * passed into ReleaseOverlayView() in order for the underlying GPU resources to be freed.
 	 */
-	virtual vr::EVROverlayError ReleaseOverlayView(OOVR_VROverlayView_t* pOverlayView);
+	vr::EVROverlayError ReleaseOverlayView(OOVR_VROverlayView_t* pOverlayView);
 
 	/** Posts an overlay event */
-	virtual void PostOverlayEvent(vr::VROverlayHandle_t ulOverlayHandle, const vr::VREvent_t* pvrEvent);
+	void PostOverlayEvent(vr::VROverlayHandle_t ulOverlayHandle, const vr::VREvent_t* pvrEvent);
 
 	/** Determines whether this process is permitted to view an overlay's content. */
-	virtual bool IsViewingPermitted(vr::VROverlayHandle_t ulOverlayHandle);
+	bool IsViewingPermitted(vr::VROverlayHandle_t ulOverlayHandle);
 };

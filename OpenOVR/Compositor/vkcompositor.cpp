@@ -1,18 +1,15 @@
-#include "generated/interfaces/vrtypes.h"
-#include "stdafx.h"
-#include <vulkan/vulkan_core.h>
 
 #if defined(SUPPORT_VK)
 
+#include "vkcompositor.h"
+#include "generated/interfaces/vrtypes.h"
+#include "stdafx.h"
+
+#include <vulkan/vulkan.h>
 // Required for the close(2) call for the texture shared memory on Linux
 #ifndef _WIN32
 #include <unistd.h>
 #endif
-
-#include "../../DrvOpenXR/tmp_gfx/TemporaryVk.h"
-#include "vkcompositor.h"
-
-#include <vulkan/vulkan.h>
 
 #define ERR(msg)                                                                                                                                         \
 	do {                                                                                                                                                 \

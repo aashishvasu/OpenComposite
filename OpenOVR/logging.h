@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 // Not strictly a logging thing, but makes clion happy about calling OOVR_ABORT and not returning
 #ifdef _WIN32
 #define OC_NORETURN __declspec(noreturn)
@@ -49,11 +51,11 @@ void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit
 	} while (0)
 
 // Work on GCC since it needs some varargs, and the actual value doesn't matter
-#define OOVR_SOFT_ABORT(msg) OOVR_SOFT_ABORTF(msg, nullptr)
+#define OOVR_SOFT_ABORT(msg) OOVR_SOFT_ABORTF("%s", msg)
 
 // Log once function - useful for warning that a function called many times isn't implemented, while using
 // a workaround to make something mostly work.
-#define OOVR_LOG_ONCE(msg) OOVR_LOG_ONCEF(msg, nullptr)
+#define OOVR_LOG_ONCE(msg) OOVR_LOG_ONCEF("%s", msg)
 #define OOVR_LOG_ONCEF(msg, ...)                                                                   \
 	do {                                                                                           \
 		/* We don't need the function suffix, but it makes it easier to recognise in a debugger */ \
@@ -128,10 +130,12 @@ void oovr_message_raw(const char* message, const char* title);
 		}                                                                           \
 	} while (0)
 
-// Yay for there not being a PI constant in the standard
-// (technically it has absolutely nothing to do with logging but this is a convenient place to put it)
-constexpr float math_pi = 3.14159265358979323846f;
-
 // Again unrelated and just putting it here because everything can use it. This makes using
 // strcpy_s more convenient on arrays in a cross-platform way.
 #define strcpy_arr(dest, src) strcpy_s(dest, sizeof(dest), src)
+
+#define STUBBED()                                                                                                            \
+	do {                                                                                                                     \
+		std::string str = "Hit stubbed file at " __FILE__ ":" + std::to_string(__LINE__) + " func " + std::string(__func__); \
+		OOVR_ABORT(str.c_str());                                                                                             \
+	} while (0)

@@ -19,7 +19,7 @@ void Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_
 	Invoke(texture, invertInCompositor ? bounds : nullptr);
 	subImage.swapchain = GetSwapChain();
 	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
-	XrExtent2Df src = GetSrcSize();
+	XrExtent2Di src = GetSrcSize();
 	CalculateViewport(invertInCompositor ? nullptr : bounds, src.width, src.height, true, subImage.imageRect);
 }
 

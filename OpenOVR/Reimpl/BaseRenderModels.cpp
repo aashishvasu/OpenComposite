@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <numbers>
 #define BASE_IMPL
 #include "BaseRenderModels.h"
 #include "Misc/Config.h"
@@ -24,7 +25,9 @@ using glm::quat;
 using glm::vec3;
 using glm::vec4;
 
+#ifdef _MSC_VER
 #pragma region structs
+#endif
 
 enum OOVR_EVRRenderModelError : int {
 	VRRenderModelError_None = 0,
@@ -81,7 +84,9 @@ enum OOVR_EVRComponentProperty {
 	VRComponentProperty_IsScrolled = (1 << 4),
 };
 
+#ifdef _MSC_VER
 #pragma endregion
+#endif
 
 typedef OOVR_RenderModel_t RenderModel_t;
 typedef OOVR_EVRRenderModelError EVRRenderModelError;
@@ -143,7 +148,7 @@ static OOVR_RenderModel_Vertex_t split_face(
 	norm--;
 
 	// Build the result
-	OOVR_RenderModel_Vertex_t out = { 0 };
+	OOVR_RenderModel_Vertex_t out{};
 	out.vPosition = verts[vert];
 	out.vNormal = normals[norm];
 	out.rfTextureCoord[0] = uvs[uv].v[0];
@@ -197,14 +202,13 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 	std::vector<OOVR_RenderModel_Vertex_t> vertexData;
 
 	// Transform to line up the model with the Touch controller
-	mat4 modelTransform = mat4(glm::rotate(sided * math_pi / 2, vec3(0, 0, 1)));
+	mat4 modelTransform = mat4(glm::rotate(sided * std::numbers::pi_v<float> / 2, vec3(0, 0, 1)));
 	modelTransform[3] = vec4(sided * 0.015f, 0.0f, 0.03f, 1.0f);
 
 	// SteamVR rotates it's models 180deg around the Y axis for some reason
-	modelTransform *= mat4(glm::rotate(math_pi, vec3(0, 1, 0)));
+	modelTransform *= mat4(glm::rotate(std::numbers::pi_v<float>, vec3(0, 1, 0)));
 
 	mat4 transform = glm::inverse(rid == RES_O_VIVE_TRACKER ? BaseCompositor::GetTrackerTransform() : BaseCompositor::GetHandTransform()) * modelTransform;
-	quat rotate = quat(transform);
 
 	while (!res.eof()) {
 		string op;
@@ -548,7 +552,7 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 		warnedAboutComponents.insert(componentName);
 	}
 
-	vr::HmdMatrix34_t ident = { 0 };
+	vr::HmdMatrix34_t ident{};
 	ident.m[0][0] = ident.m[1][1] = ident.m[2][2] = 1;
 
 	pComponentState->mTrackingToComponentLocal = ident;

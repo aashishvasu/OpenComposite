@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <numbers>
 #define BASE_IMPL
 
 #include "Misc/Config.h"
@@ -82,7 +83,7 @@ void BaseCompositor::GetSinglePoseRendering(ETrackingUniverseOrigin origin, Trac
 
 mat4 BaseCompositor::GetHandTransform()
 {
-	float deg_to_rad = math_pi / 180;
+	float deg_to_rad = std::numbers::pi / 180;
 
 	// The angle offset between the Touch and Vive controllers.
 	// If this is incorrect, virtual hands will feel off.
@@ -155,7 +156,7 @@ ovr_enum_t BaseCompositor::GetLastPoseForTrackedDeviceIndex(TrackedDeviceIndex_t
     TrackedDevicePose_t* pOutputGamePose)
 {
 
-	if (unDeviceIndex < 0 || unDeviceIndex >= k_unMaxTrackedDeviceCount) {
+	if (unDeviceIndex >= k_unMaxTrackedDeviceCount) {
 		return VRCompositorError_IndexOutOfRange;
 	}
 

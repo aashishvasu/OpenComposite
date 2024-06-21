@@ -189,6 +189,8 @@ load on the main menu, for example?
 Download the Source Code from [GitLab](https://gitlab.com/znixian/OpenOVR/-/tree/openxr) - it's under the GPLv3 licence.
 This project is built with CMake and follows a standard build process, so tools like CLion can be used to build it.
 The resulting library will be placed at `build/bin/linux64/vrclient.so` on Linux, `build/bin/vrclient_x64.dll` on Windows.
+If you are building with the intent of contributing upstream, you should build with the cmake flag `-DERROR_ON_WARNING=ON`,
+as the CI is also using this flag, which turns on treating warnings as errors.
 
 ## Windows specific
 

@@ -7,23 +7,18 @@
 // TODO Turtle1331 it would be nicer to include OpenXR-SDK's xr_dependencies.h if possible
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 #include <d3d11.h>
-#define XR_USE_GRAPHICS_API_D3D11
 #endif
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX12)
 #include <d3d12.h>
-#define XR_USE_GRAPHICS_API_D3D12
 #endif
 
 #ifdef SUPPORT_GL
 #include <GL/gl.h>
-#define XR_USE_GRAPHICS_API_OPENGL
 
 #ifndef _WIN32
 // Currently just support XLIB
-#define XR_USE_PLATFORM_XLIB
 #include <GL/glx.h>
-// #define XR_USE_PLATFORM_XCB
 #endif
 
 #endif
@@ -34,12 +29,6 @@
 
 #ifdef SUPPORT_VK
 #include <vulkan/vulkan.h>
-#define XR_USE_GRAPHICS_API_VULKAN
-#endif
-
-#ifdef _WIN32
-#define XR_OS_WINDOWS
-#define XR_USE_PLATFORM_WIN32
 #endif
 
 #ifdef ANDROID

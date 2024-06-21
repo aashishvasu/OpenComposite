@@ -42,8 +42,8 @@
 #endif
 
 #include <chrono>
-#include <ranges>
-#include <type_traits>
+#include <cinttypes>
+#include <algorithm>
 
 using namespace vr;
 
@@ -160,9 +160,9 @@ static void find_queue_family_and_queue_idx(VkDevice dev, VkPhysicalDevice pdev,
 	vkGetPhysicalDeviceQueueFamilyProperties(pdev, &queue_family_count, hi.data());
 	OOVR_LOGF("number of queue families is %d", queue_family_count);
 
-	for (int i = 0; i < queue_family_count; i++) {
+	for (uint32_t i = 0; i < queue_family_count; i++) {
 		OOVR_LOGF("queue family %d has %d queues", i, hi[i].queueCount);
-		for (int j = 0; j < hi[i].queueCount; j++) {
+		for (uint32_t j = 0; j < hi[i].queueCount; j++) {
 			VkQueue tmp;
 			vkGetDeviceQueue(dev, i, j, &tmp);
 			if (tmp == desired_queue) {
@@ -254,7 +254,7 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			if (xr_desire != vktex->m_pPhysicalDevice) {
 				OOVR_ABORTF("The VkPhysicalDevice that the OpenVR app (%p) used is different from the one that the OpenXR runtime used (%p)!\n"
 				            "This should never happen, except for on multi-gpu, in which case DRI_PRIME=1 should fix things on Linux.",
-				    vktex->m_pPhysicalDevice, xr_desire);
+				    (void*)vktex->m_pPhysicalDevice, (void*)xr_desire);
 			}
 
 			XrGraphicsBindingVulkanKHR binding;
@@ -509,7 +509,7 @@ void XrBackend::SubmitFrames(bool showSkybox, bool postPresent)
 		mainLayer.viewCount = 2;
 
 		app_layer = (XrCompositionLayerBaseHeader*)&mainLayer;
-		for (int i = 0; i < mainLayer.viewCount; ++i) {
+		for (uint32_t i = 0; i < mainLayer.viewCount; ++i) {
 			XrCompositionLayerProjectionView& layer = projectionViews[i];
 			layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
 			if (layer.subImage.swapchain == XR_NULL_HANDLE)
@@ -1013,7 +1013,7 @@ void XrBackend::CreateGenericTrackers()
 		return false;
 	});
 
-	OOVR_LOGF("Found %d generic trackers", generic_tracker_ids.size());
+	OOVR_LOGF("Found %zu generic trackers", generic_tracker_ids.size());
 
 	OOVR_LOG("Creating generic trackers...");
 	for (const XrXDevIdMNDX id : generic_tracker_ids) {
@@ -1031,7 +1031,7 @@ void XrBackend::CreateGenericTrackers()
 		std::string serial = cur_properties.serial;
 		std::string name = cur_properties.name;
 
-		OOVR_LOGF("Generic Tracker: %s, Serial: %s, Index: %d, ID: %d", cur_properties.name, cur_properties.serial, index, id);
+		OOVR_LOGF("Generic Tracker: %s, Serial: %s, Index: %d, ID: %" PRIu64, cur_properties.name, cur_properties.serial, index, id);
 
 		// create space
 		XrSpace space;
@@ -1130,8 +1130,9 @@ void XrBackend::BindInfoSet()
 		XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
 
 		std::vector<XrActionSuggestedBinding> bindings;
+		using namespace std::string_literals;
 		// grabs the first found paths ending in /click for each subaction path
-		for (const std::string& path_name : { "/user/hand/left", "/user/hand/right" }) {
+		for (const std::string& path_name : { "/user/hand/left"s, "/user/hand/right"s }) {
 			auto click_path = std::ranges::find_if(profile->GetValidInputPaths(),
 			    [&path_name](std::string s) -> bool {
 				    return s.find("/click") != s.npos && s.find(path_name) != s.npos;

@@ -16,7 +16,7 @@ class XrGenericTracker;
 
 class XrBackend : public IBackend {
 public:
-	DECLARE_BACKEND_FUNCS(virtual, override);
+	DECLARE_BACKEND_FUNCS(virtual, override)
 
 	XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx);
 	~XrBackend() override;
@@ -148,7 +148,7 @@ private:
 		~BindingWrapper() override
 		{
 #if defined(SUPPORT_GL) && !defined(_WIN32)
-			if constexpr (std::is_same_v<T, XrGraphicsBindingOpenGLXlibKHR>)
+			if constexpr (std::is_same_v<T, struct XrGraphicsBindingOpenGLXlibKHR>)
 				glXDestroyContext(data.xDisplay, data.glxContext);
 #endif
 		}

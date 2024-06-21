@@ -27,9 +27,8 @@ public:
 	uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char* pchValue, uint32_t unBufferSize, vr::ETrackedPropertyError* pErrorL) override;
 
 private:
+	const InteractionProfile& profile;
 	XrXDevPropertiesMNDX xdevProperties;
 	uint32_t genericTrackerIndex;
 	XrSpace genericTrackerSpace;
-
-	const InteractionProfile& profile;
 };

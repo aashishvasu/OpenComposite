@@ -41,6 +41,9 @@ SudoFontMeta::SudoFontMeta(std::vector<char> data, std::vector<char> image)
 	assert(header == headerReq);
 
 	unsigned int origTexW, origTexH;
+	// GCC & Clang believe these aren't used for some reason...
+	static_cast<void>(origTexW);
+	static_cast<void>(origTexH);
 
 	while (true) {
 		auto sectionID = readData<SectionID_t>(data);
@@ -54,8 +57,8 @@ SudoFontMeta::SudoFontMeta(std::vector<char> data, std::vector<char> image)
 
 		if (sectionID == ID_FONT_INFO) {
 			lineHeight = readData<uint16_t>(sec);
-			origTexW = readData<uint16_t>(sec);
 			origTexH = readData<uint16_t>(sec);
+			origTexW = readData<uint16_t>(sec);
 		} else if (sectionID == ID_CHARACTERS) {
 			auto count = readData<uint16_t>(sec);
 
@@ -118,7 +121,6 @@ void SudoFontMeta::Blit(wchar_t ch, int x, int y, int img_width, pix_t targetCol
 			assert(ty > 0);
 
 			size_t idx = tx + ty * img_width;
-			assert(idx >= 0);
 			pix_t& out = pixels[idx];
 			out = targetColour;
 		}

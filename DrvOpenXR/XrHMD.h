@@ -11,8 +11,10 @@
 
 // This warning tells us that a method (GetPose) was overridden by one of our parent classes
 // Totally fine, that's the reason why we include XrTrackedDevice in the first place
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4250)
+#endif
 
 class XrHMD : public XrTrackedDevice, public IHMD {
 	const InteractionProfile* profile = nullptr;
@@ -77,4 +79,6 @@ public:
 	void SetInteractionProfile(const InteractionProfile* profile);
 };
 
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif

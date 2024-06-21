@@ -15,7 +15,7 @@ before_build:
       mkdir build;
       cd build
 
-      cmake .. -A $env:Platform
+      cmake .. -A $env:Platform -DERROR_ON_WARNING=ON
 
       cd ..
 build:
