@@ -62,7 +62,7 @@ ITrackedDevice* BackendManager::GetDevice(vr::TrackedDeviceIndex_t index)
 	return backend->GetDevice(index);
 }
 
-ITrackedDevice* BackendManager::GetDeviceByHand(ITrackedDevice::HandType hand)
+ITrackedDevice* BackendManager::GetDeviceByHand(ITrackedDevice::TrackedDeviceType hand)
 {
 	return backend->GetDeviceByHand(hand);
 }
@@ -222,7 +222,7 @@ int32_t ITrackedDevice::TriggerHapticVibrationAction(float fFrequency, float fAm
 	return 0;
 }
 
-ITrackedDevice::HandType ITrackedDevice::GetHand()
+ITrackedDevice::TrackedDeviceType ITrackedDevice::GetHand()
 {
 	// By default don't attach to the input system.
 	return HAND_NONE;

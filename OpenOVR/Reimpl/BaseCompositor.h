@@ -127,6 +127,7 @@ public:
 	void GetSinglePoseRendering(vr::ETrackingUniverseOrigin origin, vr::TrackedDeviceIndex_t index, vr::TrackedDevicePose_t* pose);
 
 	static MfMatrix4f GetHandTransform();
+	static MfMatrix4f GetTrackerTransform();
 
 	/** Creates API specific Compositor */
 	static std::unique_ptr<Compositor> CreateCompositorAPI(const vr::Texture_t* texture);

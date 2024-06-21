@@ -3,6 +3,7 @@
 //
 
 #include "XrBackend.h"
+#include "XrGenericTracker.h"
 #include "generated/interfaces/vrtypes.h"
 
 #ifdef _WIN32
@@ -112,12 +113,16 @@ ITrackedDevice* XrBackend::GetDevice(
 	case 2:
 		return hand_right.get();
 	default:
-		return nullptr;
+		vr::TrackedDeviceIndex_t corrected_index = index - RESERVED_DEVICE_INDICES;
+		if (corrected_index >= generic_trackers.size())
+			return nullptr;
+
+		return generic_trackers.at(corrected_index).get();
 	}
 }
 
 ITrackedDevice* XrBackend::GetDeviceByHand(
-    ITrackedDevice::HandType hand)
+    ITrackedDevice::TrackedDeviceType hand)
 {
 	switch (hand) {
 	case ITrackedDevice::HAND_LEFT:
@@ -933,7 +938,7 @@ void XrBackend::UpdateInteractionProfile()
 			}
 			if (!hand_left && !hand_right) {
 				// Runtime returned an unknown interaction profile!
-				OOVR_ABORTF("Runtiime unexpectedly returned an unknown interaction profile: %s", path_name);
+				OOVR_ABORTF("Runtime unexpectedly returned an unknown interaction profile: %s", path_name);
 			}
 		} else {
 			// interaction profile lost/not detected
@@ -951,6 +956,110 @@ void XrBackend::UpdateInteractionProfile()
 			}
 		}
 	}
+
+	CreateGenericTrackers();
+}
+
+void XrBackend::CreateGenericTrackers()
+{
+
+	if (!xr_ext->xrMndxXdevSpace_Available())
+		return;
+
+	OOVR_LOGF("Checking for generic trackers...");
+
+	// should get cleared every time this function is run to avoid stale trackers
+	generic_trackers.clear();
+
+	// list containing all generic tracked devices
+	XrXDevListMNDX generic_tracker_list;
+	std::vector<XrXDevIdMNDX> generic_tracker_ids(MAX_GENERIC_TRACKERS);
+	InteractionProfile* profile = InteractionProfile::GetProfileByPath("/interaction_profiles/htc/vive_tracker_htcx");
+
+	uint32_t _generic_tracker_count_unused = 0;
+
+	XrCreateXDevListInfoMNDX create_info = {
+		.type = XR_TYPE_CREATE_XDEV_LIST_INFO_MNDX
+	};
+
+	XrXDevPropertiesMNDX cur_properties = {
+		.type = XR_TYPE_XDEV_PROPERTIES_MNDX,
+	};
+
+	XrGetXDevInfoMNDX cur_info = {
+		.type = XR_TYPE_GET_XDEV_INFO_MNDX,
+	};
+
+	OOVR_FAILED_XR_ABORT(xr_ext->xrCreateXDevListMNDX(xr_session.get(), &create_info, &generic_tracker_list));
+	OOVR_FAILED_XR_ABORT(xr_ext->xrEnumerateXDevsMNDX(generic_tracker_list, MAX_GENERIC_TRACKERS, &_generic_tracker_count_unused, generic_tracker_ids.data()));
+
+	// filter out non-tracker devices
+	std::erase_if(generic_tracker_ids, [&](XrXDevIdMNDX id) {
+		if (_generic_tracker_count_unused == 0) {
+			return true;
+		}
+		cur_info.id = id;
+
+		OOVR_FAILED_XR_ABORT(xr_ext->xrGetXDevPropertiesMNDX(generic_tracker_list, &cur_info, &cur_properties));
+
+		_generic_tracker_count_unused--;
+
+		std::string name = cur_properties.name;
+
+		if (name.find("Tracker") == std::string::npos) {
+			return true;
+		}
+
+		return false;
+	});
+
+	OOVR_LOGF("Found %d generic trackers", generic_tracker_ids.size());
+
+	OOVR_LOG("Creating generic trackers...");
+	for (const XrXDevIdMNDX id : generic_tracker_ids) {
+		int index = generic_trackers.size();
+
+		if (index >= MAX_GENERIC_TRACKERS) {
+			OOVR_LOGF("More trackers present than allowed (%d), skipping..", MAX_GENERIC_TRACKERS);
+			break;
+		}
+
+		cur_info.id = id;
+
+		OOVR_FAILED_XR_ABORT(xr_ext->xrGetXDevPropertiesMNDX(generic_tracker_list, &cur_info, &cur_properties));
+
+		std::string serial = cur_properties.serial;
+		std::string name = cur_properties.name;
+
+		OOVR_LOGF("Generic Tracker: %s, Serial: %s, Index: %d, ID: %d", cur_properties.name, cur_properties.serial, index, id);
+
+		// create space
+		XrSpace space;
+		XrPosef pose = { .orientation = { 0, 0, 0, 1 }, .position = { 0, 0, 0 } };
+		XrCreateXDevSpaceInfoMNDX create_space_info = {
+			.type = XR_TYPE_CREATE_XDEV_SPACE_INFO_MNDX,
+			.next = NULL,
+			.xdevList = generic_tracker_list,
+			.id = id,
+			.offset = pose,
+		};
+
+		OOVR_FAILED_XR_ABORT(xr_ext->xrCreateXDevSpaceMNDX(xr_session.get(), &create_space_info, &space));
+
+		generic_trackers.push_back(std::make_unique<XrGenericTracker>(*profile, cur_properties, index, space));
+
+		BaseSystem* system = GetUnsafeBaseSystem();
+		if (system) {
+			VREvent_t event = {
+				.eventType = VREvent_TrackedDeviceActivated,
+				.trackedDeviceIndex = (TrackedDeviceIndex_t)generic_trackers.at(index)->DeviceIndex()
+			};
+			system->_EnqueueEvent(event);
+		}
+	}
+
+	// cleanup
+	xr_ext->xrDestroyXDevListMNDX(generic_tracker_list);
 }
 
 void XrBackend::MaybeRestartForInputs()
@@ -1014,6 +1123,10 @@ void XrBackend::BindInfoSet()
 	for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
 		XrPath interactionProfilePath;
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile->GetPath().c_str(), &interactionProfilePath));
+
+		if (!profile->CanHaveBindings())
+			continue;
+
 		XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
 
 		std::vector<XrActionSuggestedBinding> bindings;

@@ -196,6 +196,9 @@ add_library(DrvOpenXR STATIC
 	DrvOpenXR/XrController.cpp
 	DrvOpenXR/XrController.h
 
+	DrvOpenXR/XrGenericTracker.cpp
+	DrvOpenXR/XrGenericTracker.h
+
 	DrvOpenXR/tmp_gfx/TemporaryGraphics.cpp
 	DrvOpenXR/tmp_gfx/TemporaryGraphics.h
 	DrvOpenXR/tmp_gfx/TemporaryD3D11.cpp
@@ -271,6 +274,7 @@ add_library(OCCore STATIC
 	OpenOVR/Misc/Input/IndexControllerInteractionProfile.cpp
 	OpenOVR/Misc/Input/HolographicInteractionProfile.cpp
 	OpenOVR/Misc/Input/ReverbG2InteractionProfile.cpp
+	OpenOVR/Misc/Input/ViveTrackerInteractionProfile.cpp
 	OpenOVR/OpenOVR.cpp
 	OpenOVR/Reimpl/BaseApplications.cpp
 	OpenOVR/Reimpl/BaseChaperone.cpp
@@ -375,6 +379,9 @@ add_library(OCCore STATIC
 	OpenVRHeaders/custom_interfaces/IVRMailbox_001.h
 	OpenVRHeaders/custom_interfaces/IVRInputInternal_002.h
 	OpenVRHeaders/custom_interfaces/IVRControlPanel_006.h
+
+	RuntimeExtensions/openxr_extension_helpers.h
+	RuntimeExtensions/XR_MNDX_xdev_space.h
 	# Ensuring vrtypes.h exists should mean the rest of our generated interfaces exists
 	${GENERATED_DIR}/interfaces/vrtypes.h
 )

@@ -5,6 +5,7 @@
 
 #define FILENAME_RES_O_HAND_LEFT "assets/LeftHand.obj"
 #define FILENAME_RES_O_HAND_RIGHT "assets/RightHand.obj"
+#define FILENAME_RES_O_VIVE_TRACKER "assets/ViveTracker3.obj"
 #define FILENAME_RES_O_FNT_UBUNTU "assets/Ubuntu-30.sfn"
 #define FILENAME_RES_O_KB_EN_GB "assets/en_gb.kb"
 // RES_O_FNT_UBUNTU	RES_T_PNG	"assets/Ubuntu-30-texture.png"

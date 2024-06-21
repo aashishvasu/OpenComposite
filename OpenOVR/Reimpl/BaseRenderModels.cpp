@@ -153,6 +153,7 @@ static OOVR_RenderModel_Vertex_t split_face(
 
 EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRenderModelName, RenderModel_t** renderModel)
 {
+	OOVR_LOGF("LoadRenderModel_Async %s", pchRenderModelName);
 	string name = pchRenderModelName;
 	int rid;
 	float sided;
@@ -176,6 +177,9 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 	} else if (name == "{indexcontroller}valve_controller_knu_1_0_right") {
 		rid = RES_O_HAND_RIGHT;
 		sided = -1;
+	} else if (name == "vive_tracker") {
+		rid = RES_O_VIVE_TRACKER;
+		sided = 1;
 	} else if (name == "oculusHmdRenderModel") {
 		// no model for the HMD
 		return VRRenderModelError_NotSupported;
@@ -199,7 +203,7 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 	// SteamVR rotates it's models 180deg around the Y axis for some reason
 	modelTransform *= mat4(glm::rotate(math_pi, vec3(0, 1, 0)));
 
-	mat4 transform = glm::inverse(BaseCompositor::GetHandTransform()) * modelTransform;
+	mat4 transform = glm::inverse(rid == RES_O_VIVE_TRACKER ? BaseCompositor::GetTrackerTransform() : BaseCompositor::GetHandTransform()) * modelTransform;
 	quat rotate = quat(transform);
 
 	while (!res.eof()) {
@@ -373,6 +377,8 @@ uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OU
 	const char* renderModelName = nullptr;
 	uint32_t strLen = 0;
 
+	OOVR_LOGF("GetRenderModelName %d", unRenderModelIndex);
+
 	switch (unRenderModelIndex) {
 	case 0:
 		renderModelName = "renderLeftHand";
@@ -380,6 +386,10 @@ uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OU
 		break;
 	case 1:
 		renderModelName = "renderRightHand";
+		strLen = strlen(renderModelName);
+		break;
+	case 2:
+		renderModelName = "vive_tracker";
 		strLen = strlen(renderModelName);
 		break;
 	default:
@@ -396,7 +406,7 @@ uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OU
 
 uint32_t BaseRenderModels::GetRenderModelCount()
 {
-	return 2;
+	return 3;
 }
 
 uint32_t BaseRenderModels::GetComponentCount(const char* pchRenderModelName)
@@ -420,7 +430,8 @@ uint32_t BaseRenderModels::GetComponentName(const char* pchRenderModelName, uint
 	    && name != "oculus_quest2_controller_left"
 	    && name != "oculus_quest2_controller_right"
 	    && name != "{indexcontroller}valve_controller_knu_1_0_left"
-	    && name != "{indexcontroller}valve_controller_knu_1_0_right") {
+	    && name != "{indexcontroller}valve_controller_knu_1_0_right"
+	    && name != "vive_tracker") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
@@ -462,7 +473,8 @@ uint32_t BaseRenderModels::GetComponentRenderModelName(const char* pchRenderMode
 	    && name != "oculus_quest2_controller_left"
 	    && name != "oculus_quest2_controller_right"
 	    && name != "{indexcontroller}valve_controller_knu_1_0_left"
-	    && name != "{indexcontroller}valve_controller_knu_1_0_right") {
+	    && name != "{indexcontroller}valve_controller_knu_1_0_right"
+	    && name != "vive_tracker") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
@@ -511,13 +523,15 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 
 	std::string componentName = pchComponentName;
 
-	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
+	ITrackedDevice::TrackedDeviceType hand = ITrackedDevice::HAND_NONE;
 	if (pchRenderModelName) {
 		std::string renderModelName = pchRenderModelName;
 		if (renderModelName == "renderLeftHand") {
 			hand = ITrackedDevice::HAND_LEFT;
 		} else if (renderModelName == "renderRightHand") {
 			hand = ITrackedDevice::HAND_RIGHT;
+		} else if (renderModelName == "vive_tracker") {
+			hand = ITrackedDevice::GENERIC_TRACKER;
 		} else {
 			hand = ITrackedDevice::HAND_NONE;
 		}
@@ -545,7 +559,7 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 	return true;
 }
 
-bool BaseRenderModels::TryGetComponentState(ITrackedDevice::HandType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result)
+bool BaseRenderModels::TryGetComponentState(ITrackedDevice::TrackedDeviceType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result)
 {
 	if (hand == ITrackedDevice::HAND_NONE)
 		return false;

@@ -29,6 +29,7 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 	// Check the extensions we have selected, and don't fetch functions if we're not allowed to use them
 	bool hasVisMask = false;
 	bool hasHandTracking = false;
+	bool xdevSpace = false;
 	for (const char* ext : extensions) {
 		if (strcmp(ext, XR_KHR_VISIBILITY_MASK_EXTENSION_NAME) == 0)
 			hasVisMask = true;
@@ -36,6 +37,8 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 			hasHandTracking = true;
 		if (strcmp(ext, XR_EXT_HP_MIXED_REALITY_CONTROLLER_EXTENSION_NAME) == 0)
 			supportsG2Controller = true;
+		if (strcmp(ext, XR_MNDX_XDEV_SPACE_EXTENSION_NAME) == 0)
+			xdevSpace = true;
 	}
 
 #define XR_BIND(name, function) OOVR_FAILED_XR_ABORT(xrGetInstanceProcAddr(xr_instance, #name, (PFN_xrVoidFunction*)&this->function))
@@ -48,6 +51,15 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 		XR_BIND(xrCreateHandTrackerEXT, pfnXrCreateHandTrackerExt);
 		XR_BIND(xrDestroyHandTrackerEXT, pfnXrDestroyHandTrackerExt);
 		XR_BIND(xrLocateHandJointsEXT, pfnXrLocateHandJointsExt);
+	}
+
+	if (xdevSpace) {
+		XR_BIND(xrCreateXDevListMNDX, pfnxrCreateXDevListMNDX);
+		XR_BIND(xrGetXDevListGenerationNumberMNDX, pfnxrGetXDevListGenerationNumberMNDX);
+		XR_BIND(xrEnumerateXDevsMNDX, pfnxrEnumerateXDevsMNDX);
+		XR_BIND(xrGetXDevPropertiesMNDX, pfnxrGetXDevPropertiesMNDX);
+		XR_BIND(xrDestroyXDevListMNDX, pfnxrDestroyXDevListMNDX);
+		XR_BIND(xrCreateXDevSpaceMNDX, pfnxrCreateXDevSpaceMNDX);
 	}
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)

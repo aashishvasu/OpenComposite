@@ -357,7 +357,7 @@ public: // INTERNAL FUNCTIONS
 	// the grip pose is the closest analog to that.
 	void GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, bool aimPose = false);
 
-	void GetHandSpace(ITrackedDevice::HandType hand, XrSpace& space, bool aimPose);
+	void GetHandSpace(ITrackedDevice::TrackedDeviceType hand, XrSpace& space, bool aimPose);
 
 	bool AreActionsLoaded();
 
@@ -512,7 +512,7 @@ private:
 
 	struct PoseBindingInfo {
 		PoseBindingPoint point = PoseBindingPoint::RAW;
-		ITrackedDevice::HandType hand = ITrackedDevice::HAND_LEFT;
+		ITrackedDevice::TrackedDeviceType hand = ITrackedDevice::HAND_LEFT;
 	};
 
 	struct Action {
@@ -539,7 +539,7 @@ private:
 
 		// If this is a skeletal action, what hand it's bound to - this is set in the actions
 		// manifest itself, not a binding file.
-		ITrackedDevice::HandType skeletalHand = ITrackedDevice::HAND_NONE;
+		ITrackedDevice::TrackedDeviceType skeletalHand = ITrackedDevice::HAND_NONE;
 
 		// The action sources (paths like /user/hand/left/input/select/click, specifying an output of a physical
 		// control) this action is bound to. This is cached, and is updated by activeOriginFromSubaction.
@@ -762,7 +762,7 @@ private:
 	static InputValueHandle* cast_IVH(VRInputValueHandle_t);
 	static ITrackedDevice* ivhToDev(VRInputValueHandle_t handle);
 	static bool checkRestrictToDevice(vr::VRInputValueHandle_t restrict, XrPath subactionPath);
-	static ITrackedDevice::HandType ParseAndRemoveHandPrefix(std::string& toModify);
+	static ITrackedDevice::TrackedDeviceType ParseAndRemoveHandPrefix(std::string& toModify);
 
 	/**
 	 * Get the 'activeOrigin' corresponding to a particular sub-action path on a given action.
@@ -782,12 +782,12 @@ private:
 	/**
 	 * Uses the finger tracking extensions to generate a skeletal summary.
 	 */
-	EVRInputError getRealSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
+	EVRInputError getRealSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
 
 	/**
 	 * Uses input state (trigger and grip) to generate a skeletal summary.
 	 */
-	EVRInputError getEstimatedSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
+	EVRInputError getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
 
 	/**
 	 * Some games (i.e. newer Unity games) won't explicitly call SetActionManifestPath, but instead will set the path through

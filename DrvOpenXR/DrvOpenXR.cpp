@@ -8,7 +8,9 @@
 #include "../OpenOVR/Misc/android_api.h"
 #include "../OpenOVR/Misc/xr_ext.h"
 #include "../OpenOVR/Reimpl/BaseInput.h"
+#include "../RuntimeExtensions/XR_MNDX_xdev_space.h"
 #include "XrBackend.h"
+#include "XrGenericTracker.h"
 #include "generated/static_bases.gen.h"
 
 #include <chrono>
@@ -104,8 +106,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	// Enumerate the available extensions
 	uint32_t availableExtensionsCount;
-	if (XR_FAILED(xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr)))
-	{
+	if (XR_FAILED(xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr))) {
 		OOVR_LOGF("Failed to enumerate XR extensions");
 		return nullptr;
 	}
@@ -192,6 +193,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	if (availableExtensions.count(XR_EXT_HAND_TRACKING_EXTENSION_NAME))
 		extensions.push_back(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+
+	if (availableExtensions.count(XR_MNDX_XDEV_SPACE_EXTENSION_NAME))
+		extensions.push_back(XR_MNDX_XDEV_SPACE_EXTENSION_NAME);
 
 	if (availableExtensions.contains(XR_EXT_HP_MIXED_REALITY_CONTROLLER_EXTENSION_NAME))
 		extensions.push_back(XR_EXT_HP_MIXED_REALITY_CONTROLLER_EXTENSION_NAME);

@@ -19,7 +19,7 @@ private:
 
 public: // INTERNAL FUNCTIONS
 	/** Try to find a component, if possible. This is the core of GetComponentState, which itself handles the case where this fails. */
-	bool TryGetComponentState(ITrackedDevice::HandType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result);
+	bool TryGetComponentState(ITrackedDevice::TrackedDeviceType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result);
 
 public:
 	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name

@@ -105,6 +105,18 @@ mat4 BaseCompositor::GetHandTransform()
 	return transform;
 }
 
+mat4 BaseCompositor::GetTrackerTransform()
+{
+	// The amount the tracker should be offset
+	float tracker_offset = 0.025f;
+
+	mat4 transform(1.0f);
+
+	transform[3] = vec4(0.0f, 0.0f, tracker_offset, 1.0f);
+
+	return transform;
+}
+
 ovr_enum_t BaseCompositor::GetLastPoses(TrackedDevicePose_t* renderPoseArray, uint32_t renderPoseArrayCount,
     TrackedDevicePose_t* gamePoseArray, uint32_t gamePoseArrayCount)
 {

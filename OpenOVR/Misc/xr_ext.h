@@ -48,6 +48,7 @@
 
 #include "../logging.h"
 
+#include "../RuntimeExtensions/XR_MNDX_xdev_space.h"
 #include <openxr/openxr_platform.h>
 
 #include <vector>
@@ -77,6 +78,8 @@ public:
 
 	bool G2Controller_Available() { return supportsG2Controller; }
 	bool xrGetVisibilityMaskKHR_Available() { return pfnXrGetVisibilityMaskKHR != nullptr; }
+	bool xrMndxXdevSpace_Available() { return pfnxrCreateXDevSpaceMNDX != nullptr; }
+
 	XrResult xrGetVisibilityMaskKHR(
 	    XrSession session,
 	    XrViewConfigurationType viewConfigurationType,
@@ -103,6 +106,42 @@ public:
 	{
 		OOVR_FALSE_ABORT(pfnXrLocateHandJointsExt);
 		return pfnXrLocateHandJointsExt(handTracker, locateInfo, locations);
+	}
+
+	XrResult xrCreateXDevListMNDX(XrSession session, const XrCreateXDevListInfoMNDX* createInfo, XrXDevListMNDX* xdevList)
+	{
+		OOVR_FALSE_ABORT(pfnxrCreateXDevListMNDX);
+		return pfnxrCreateXDevListMNDX(session, createInfo, xdevList);
+	}
+
+	XrResult xrGetXDevListGenerationNumberMNDX(XrXDevListMNDX xdevList, uint64_t* outGeneration)
+	{
+		OOVR_FALSE_ABORT(pfnxrGetXDevListGenerationNumberMNDX);
+		return pfnxrGetXDevListGenerationNumberMNDX(xdevList, outGeneration);
+	}
+
+	XrResult xrEnumerateXDevsMNDX(XrXDevListMNDX xdevList, uint32_t xdevCapacityInput, uint32_t* xdevCountOutput, XrXDevIdMNDX* xdevs)
+	{
+		OOVR_FALSE_ABORT(pfnxrEnumerateXDevsMNDX);
+		return pfnxrEnumerateXDevsMNDX(xdevList, xdevCapacityInput, xdevCountOutput, xdevs);
+	}
+
+	XrResult xrGetXDevPropertiesMNDX(XrXDevListMNDX xdevList, const XrGetXDevInfoMNDX* info, XrXDevPropertiesMNDX* properties)
+	{
+		OOVR_FALSE_ABORT(pfnxrGetXDevPropertiesMNDX);
+		return pfnxrGetXDevPropertiesMNDX(xdevList, info, properties);
+	}
+
+	XrResult xrDestroyXDevListMNDX(XrXDevListMNDX xdevList)
+	{
+		OOVR_FALSE_ABORT(pfnxrDestroyXDevListMNDX);
+		return pfnxrDestroyXDevListMNDX(xdevList);
+	}
+
+	XrResult xrCreateXDevSpaceMNDX(XrSession session, const XrCreateXDevSpaceInfoMNDX* createInfo, XrSpace* space)
+	{
+		OOVR_FALSE_ABORT(pfnxrCreateXDevSpaceMNDX);
+		return pfnxrCreateXDevSpaceMNDX(session, createInfo, space);
 	}
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
@@ -184,6 +223,14 @@ private:
 	PFN_xrCreateHandTrackerEXT pfnXrCreateHandTrackerExt = nullptr;
 	PFN_xrDestroyHandTrackerEXT pfnXrDestroyHandTrackerExt = nullptr;
 	PFN_xrLocateHandJointsEXT pfnXrLocateHandJointsExt = nullptr;
+
+	PFN_xrCreateXDevListMNDX pfnxrCreateXDevListMNDX;
+	PFN_xrGetXDevListGenerationNumberMNDX pfnxrGetXDevListGenerationNumberMNDX;
+	PFN_xrEnumerateXDevsMNDX pfnxrEnumerateXDevsMNDX;
+	PFN_xrGetXDevPropertiesMNDX pfnxrGetXDevPropertiesMNDX;
+	PFN_xrDestroyXDevListMNDX pfnxrDestroyXDevListMNDX;
+	PFN_xrCreateXDevSpaceMNDX pfnxrCreateXDevSpaceMNDX;
+
 	bool supportsG2Controller = false;
 
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)

@@ -839,6 +839,9 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 	// Load in the suggested bindings for the legacy input actions
 	for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
+		if (!profile->CanHaveBindings())
+			continue;
+
 		std::vector<XrActionSuggestedBinding> bindings;
 		for (const auto& legacyController : legacyControllers) {
 			profile->AddLegacyBindings(legacyController, bindings);
@@ -920,6 +923,10 @@ void BaseInput::BindInputsForSession()
 void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const std::string& bindingsPath)
 {
 	OOVR_LOGF("Loading bindings for %s", profile.GetPath().c_str());
+
+	if (!profile.CanHaveBindings())
+		return;
+
 	Json::Value bindingsRoot;
 	if (!ReadJson(utf8to16(bindingsPath), bindingsRoot)) {
 		OOVR_ABORTF("Failed to read and parse JSON binding descriptor: %s", bindingsPath.c_str());
@@ -1658,7 +1665,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 
 	for (int handNum = 0; handNum < 2; handNum++) {
 		// Check this hand is permitted
-		ITrackedDevice::HandType handType = handNum == 0 ? ITrackedDevice::HAND_LEFT : ITrackedDevice::HAND_RIGHT;
+		ITrackedDevice::TrackedDeviceType handType = handNum == 0 ? ITrackedDevice::HAND_LEFT : ITrackedDevice::HAND_RIGHT;
 		InputSource sourceType = handNum == 0 ? InputSource::HAND_LEFT : InputSource::HAND_RIGHT;
 
 		if (restrictToDevice && restrictToDevice->type != sourceType) {
@@ -1923,7 +1930,7 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 	return getEstimatedSkeletalSummary(action->skeletalHand, pSkeletalSummaryData);
 }
 
-EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
+EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
 	locateInfo.baseSpace = legacyControllers[hand].aimPoseSpace;
@@ -2009,7 +2016,7 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::HandType hand, V
 	return vr::VRInputError_None;
 }
 
-EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
+EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	OOVR_FALSE_ABORT(hand != ITrackedDevice::HAND_NONE);
 
@@ -2376,7 +2383,7 @@ ITrackedDevice* BaseInput::ivhToDev(VRInputValueHandle_t handle)
 {
 	const InputValueHandle* ivh = cast_IVH(handle);
 
-	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
+	ITrackedDevice::TrackedDeviceType hand = ITrackedDevice::HAND_NONE;
 	switch (ivh->type) {
 	case InputSource::HAND_LEFT:
 		hand = ITrackedDevice::HAND_LEFT;
@@ -2524,7 +2531,7 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	// SteamVR seemingly writes to these two axis to represent finger curl on legacy input.
 	VRSkeletalSummaryData_t skeletonData = { 0 };
 	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
-		getRealSkeletalSummary((ITrackedDevice::HandType)hand, &skeletonData);
+		getRealSkeletalSummary((ITrackedDevice::TrackedDeviceType)hand, &skeletonData);
 	} else {
 		return true;
 	}
@@ -2569,7 +2576,7 @@ int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 	if (!dev)
 		return false;
 
-	ITrackedDevice::HandType hand = dev->GetHand();
+	ITrackedDevice::TrackedDeviceType hand = dev->GetHand();
 
 	switch (hand) {
 	case ITrackedDevice::HAND_LEFT:
@@ -2593,11 +2600,11 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, boo
 	if (!dev)
 		return;
 
-	ITrackedDevice::HandType hand = dev->GetHand();
+	ITrackedDevice::TrackedDeviceType hand = dev->GetHand();
 	GetHandSpace(hand, space, aimPose);
 }
 
-void BaseInput::GetHandSpace(ITrackedDevice::HandType hand, XrSpace& space, bool aimPose)
+void BaseInput::GetHandSpace(ITrackedDevice::TrackedDeviceType hand, XrSpace& space, bool aimPose)
 {
 	LegacyControllerActions& ctrl = legacyControllers[hand];
 
@@ -2609,7 +2616,7 @@ bool BaseInput::AreActionsLoaded()
 	return hasLoadedActions;
 }
 
-ITrackedDevice::HandType BaseInput::ParseAndRemoveHandPrefix(std::string& toModify)
+ITrackedDevice::TrackedDeviceType BaseInput::ParseAndRemoveHandPrefix(std::string& toModify)
 {
 	static std::string leftPrefix = "/user/hand/left/";
 	static std::string rightPrefix = "/user/hand/right/";

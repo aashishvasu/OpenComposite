@@ -329,7 +329,7 @@ ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t d
 	if (deviceIndex == leftHandIndex || deviceIndex == rightHandIndex)
 		return TrackedDeviceClass_Controller;
 
-	if (deviceIndex == thirdTouchIndex)
+	if (deviceIndex >= thirdTouchIndex)
 		return TrackedDeviceClass_GenericTracker;
 
 	return TrackedDeviceClass_Invalid;
