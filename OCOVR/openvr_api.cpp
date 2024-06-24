@@ -265,7 +265,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApp
 	running = true;
 
 	// TODO seperate this from the rest of dllmain
-	IBackend* backend = DrvOpenXR::CreateOpenXRBackend();
+	IBackend* backend = DrvOpenXR::CreateOpenXRBackend(pStartupInfo);
 	if (!backend && peError) {
 		*peError = VRInitError_Init_Internal;
 	} else {

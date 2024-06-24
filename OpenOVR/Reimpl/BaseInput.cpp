@@ -15,7 +15,7 @@
 #include <codecvt>
 #include <cstdint>
 #include <cstdlib>
-#include <filesystem>
+#include <locale>
 #include <fstream>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <map>
@@ -195,177 +195,6 @@ static std::string pathFromParts(const std::initializer_list<std::string>& parts
 	return str;
 }
 
-// Adapted from https://github.com/ValvePython/steam/blob/26166e047b66a7be10bdf3c90e2e14de9283ab5a/steam/utils/appcache.py#L47
-static std::optional<std::string> parseAppinfoForManifestPath(const std::filesystem::path& appinfo, uint32_t gameAppId)
-{
-	// format:
-	//   uint32   - MAGIC: "'DV\x07" or "(DV\x07"
-	//   uint32   - UNIVERSE: 1
-	//   ---- repeated app sections ----
-	//   uint32   - AppID
-	//   uint32   - size
-	//   uint32   - infoState
-	//   uint32   - lastUpdated
-	//   uint64   - accessToken
-	//   20bytes  - SHA1
-	//   uint32   - changeNumber
-	//   20bytes  - binary_vdf SHA1 (added in "(DV\x07"
-	//   variable - binary_vdf
-	//   ---- end of section ---------
-	//   uint32   - EOF: 0
-	//
-
-	constexpr char expectedMagic[4] = { '(', 'D', 'V', 7 };
-	std::ifstream stream(appinfo, std::ios_base::in | std::ios_base::binary);
-	char magic[4] = { 0 };
-	stream.read(magic, 4);
-	if (!std::ranges::equal(magic, expectedMagic)) {
-		OOVR_LOGF("Unexpected appinfo magic sequence %x%x%x%x - please report a bug!", magic[0], magic[1], magic[2], magic[3]);
-		return std::nullopt;
-	}
-
-	// skip over universe
-	stream.seekg(4, std::ios_base::cur);
-
-	auto parse_string = [&stream] {
-		std::string s(128, 0);
-		stream.getline(s.data(), s.size(), 0);
-		auto size = stream.gcount();
-		while (stream.fail()) {
-			OOVR_FALSE_ABORT(stream.gcount() != 0);
-			stream.clear();
-			auto old_size = s.size();
-			s.resize(old_size + 64);
-			stream.getline(s.data() + old_size - 1, 64, 0);
-			size += stream.gcount();
-		}
-		s.resize(static_cast<size_t>(size) - 1);
-		return s;
-	};
-
-	auto parse_u32 = [&stream] {
-		char buf[4] = { 0 };
-		stream.read(buf, 4);
-		return ((uint8_t)buf[3] << 0x18) | ((uint8_t)buf[2] << 0x10) | ((uint8_t)buf[1] << 0x8) | ((uint8_t)buf[0]);
-	};
-
-	struct {
-		std::string current_key;
-		bool final_key = false;
-		void next_key()
-		{
-			if (current_key.empty()) {
-				current_key = "appinfo";
-			} else if (current_key == "appinfo") {
-				current_key = "common";
-			} else if (current_key == "common") {
-				current_key = "openvr_action_manifest_path";
-			} else if (current_key == "openvr_action_manifest_path") {
-				final_key = true;
-			}
-		}
-	} key_tracker;
-
-	// app sections
-	while (true) {
-		uint32_t appid = parse_u32();
-		if (appid == gameAppId) {
-			key_tracker.next_key();
-		} else {
-			// skip over irrelevant appid to next one
-			uint32_t remaining_size = parse_u32();
-			stream.seekg(remaining_size, std::ios_base::cur);
-			continue;
-		}
-		// skip to final binary_vdf, which contains the info we're interested in
-		stream.seekg(64, std::ios_base::cur);
-		OOVR_FALSE_ABORT(!stream.fail());
-
-		int current_level = 0;
-		enum class DataType {
-			NewLevel,
-			Int32,
-			String,
-			Uint64,
-			End
-		};
-
-		while (true) {
-			DataType data_type;
-			char type;
-			stream.get(type);
-			OOVR_FALSE_ABORT(!stream.fail());
-			switch (type) {
-			case 0: {
-				data_type = DataType::NewLevel;
-				break;
-			}
-			case 1: {
-				data_type = DataType::String;
-				break;
-			}
-			case 2: {
-				data_type = DataType::Int32;
-				break;
-			}
-			case 7: {
-				data_type = DataType::Uint64;
-				break;
-			}
-			case 8: {
-				data_type = DataType::End;
-				break;
-			}
-			default: {
-				OOVR_LOGF("Unknown type while parsing VDF: %d", (int)type);
-				return std::nullopt;
-			}
-			}
-
-			if (data_type != DataType::End) {
-				const std::string key = parse_string();
-				OOVR_FALSE_ABORT(!stream.fail());
-				if (!key_tracker.current_key.empty() && key == key_tracker.current_key) {
-					key_tracker.next_key();
-					current_level = -1;
-				}
-			}
-
-			switch (data_type) {
-			case DataType::NewLevel: {
-				current_level++;
-				break;
-			}
-			case DataType::String: {
-				std::string key = parse_string();
-				OOVR_FALSE_ABORT(!stream.fail());
-				if (key_tracker.final_key) {
-					return key;
-				}
-				break;
-			}
-			case DataType::Int32: {
-				stream.seekg(4, std::ios_base::cur);
-				break;
-			}
-			case DataType::Uint64: {
-				stream.seekg(8, std::ios_base::cur);
-				break;
-			}
-			case DataType::End: {
-				if (current_level == 0) {
-					OOVR_LOGF("Could not find next key in appinfo: %s", key_tracker.current_key.c_str());
-					return std::nullopt;
-				} else {
-					current_level--;
-				}
-				break;
-			}
-			}
-		}
-	}
-}
-
 // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
 BaseInput::Action::~Action() = default;
 BaseInput::ActionSource::~ActionSource() = default;
@@ -499,6 +328,10 @@ BaseInput::BaseInput()
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
 		allSubactionPaths.push_back(path);
 	}
+
+	if (!startupManifest.empty()) {
+		SetActionManifestPath(startupManifest.c_str());
+	}
 }
 BaseInput::~BaseInput()
 {
@@ -506,6 +339,14 @@ BaseInput::~BaseInput()
 		if (handTracker != XR_NULL_HANDLE)
 			xr_ext->xrDestroyHandTrackerEXT(handTracker);
 		handTracker = XR_NULL_HANDLE;
+	}
+}
+
+void BaseInput::setStartupManifest(std::string manifest)
+{
+	startupManifest = manifest;
+	if (auto input = GetUnsafeBaseInput(); input) {
+		input->SetActionManifestPath(startupManifest.c_str());
 	}
 }
 
@@ -1443,73 +1284,9 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 	return XR_SUCCESS;
 }
 
-void BaseInput::checkIfActionsMustBeDiscoveredFromSteam()
-{
-	if (triedDiscoveringManifest || hasLoadedActions) {
-		return;
-	}
-
-	triedDiscoveringManifest = true;
-
-	const char* steam_folder_win = std::getenv("SteamPath");
-	const char* steam_folder_lin = std::getenv("STEAM_BASE_FOLDER");
-	const char* steam_folder = (steam_folder_win) ? steam_folder_win : steam_folder_lin;
-	if (!steam_folder) {
-		OOVR_LOG("WARNING: Game trying to load action data but manifest and STEAM_BASE_FOLDER/SteamPath env var missing, controls may not work");
-		return;
-	}
-	const char* appid_str = std::getenv("SteamAppId");
-	if (!appid_str) {
-		OOVR_LOG("WARNING: Game trying to load action data but manifest and SteamAppId env var missing, controls may not work");
-		return;
-	}
-
-	uint32_t appid = std::stoi(std::string(appid_str));
-
-	namespace fs = std::filesystem;
-
-	fs::path steam_path(steam_folder);
-	if (!fs::exists(steam_path)) {
-		OOVR_LOGF("Provided Steam folder %s is invalid, cannot determine manifest location, controls may not work", steam_folder);
-		return;
-	}
-
-	fs::path appcache = steam_path / "appcache/appinfo.vdf";
-	if (!fs::exists(appcache)) {
-		OOVR_LOGF("Steam app cache (at %s) is missing, cannot determine manifest location, controls may not work", appcache.c_str());
-		return;
-	}
-
-	OOVR_LOGF("Parsing %s for manifest path...", appcache.c_str());
-	auto manifest_path = parseAppinfoForManifestPath(appcache, appid);
-	if (!manifest_path.has_value()) {
-		OOVR_LOG("Failed to get manifest path from appinfo.vdf, controls may not work.");
-		return;
-	}
-
-#ifndef _WIN32
-	// If this is a game being run through Proton, the returned manifest path from the appcache will likely be a
-	// Windows style path, which uses backslash as a separator. However, this is a valid character in a Linux path,
-	// so std::filesystem::path won't convert it. We'll just blindly convert all backslashes to forward slashes on Linux
-	// and hope no game is crazy enough to put backslashes in their path intentionally.
-	std::ranges::replace(*manifest_path, '\\', '/');
-#endif
-
-	fs::path full_manifest_path
-	    = fs::current_path() / *manifest_path;
-
-	if (!fs::exists(full_manifest_path)) {
-		OOVR_LOGF("Got manifest path %s from parsing appcache, but this path does not exist. Controls may not work.", full_manifest_path.generic_string().c_str());
-		return;
-	}
-
-	SetActionManifestPath(full_manifest_path.generic_string().c_str());
-}
-
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1552,7 +1329,6 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1629,7 +1405,6 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow,
     InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice)
 {
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1776,7 +1551,6 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, In
 	// sets unActionDataSize to what we're expecting so we don't have to handle that here.
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*out));
 
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(action, actionHandle);
 
 	// Zero out the output data, leaving:

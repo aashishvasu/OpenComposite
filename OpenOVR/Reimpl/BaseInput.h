@@ -145,6 +145,8 @@ public:
 	BaseInput();
 	~BaseInput();
 
+	static void setStartupManifest(std::string manifest);
+
 public:
 	typedef vr::VRInputValueHandle_t VRInputValueHandle_t;
 	typedef vr::EVRInputError EVRInputError;
@@ -370,6 +372,8 @@ public: // INTERNAL FUNCTIONS
 	inline uint64_t GetSyncSerial() const { return syncSerial; }
 
 private:
+	inline static std::string startupManifest;
+
 	enum class ActionRequirement {
 		Suggested = 0, // default
 		Mandatory,
