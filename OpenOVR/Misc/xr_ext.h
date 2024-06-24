@@ -213,12 +213,12 @@ private:
 	PFN_xrDestroyHandTrackerEXT pfnXrDestroyHandTrackerExt = nullptr;
 	PFN_xrLocateHandJointsEXT pfnXrLocateHandJointsExt = nullptr;
 
-	PFN_xrCreateXDevListMNDX pfnxrCreateXDevListMNDX;
-	PFN_xrGetXDevListGenerationNumberMNDX pfnxrGetXDevListGenerationNumberMNDX;
-	PFN_xrEnumerateXDevsMNDX pfnxrEnumerateXDevsMNDX;
-	PFN_xrGetXDevPropertiesMNDX pfnxrGetXDevPropertiesMNDX;
-	PFN_xrDestroyXDevListMNDX pfnxrDestroyXDevListMNDX;
-	PFN_xrCreateXDevSpaceMNDX pfnxrCreateXDevSpaceMNDX;
+	PFN_xrCreateXDevListMNDX pfnxrCreateXDevListMNDX = nullptr;
+	PFN_xrGetXDevListGenerationNumberMNDX pfnxrGetXDevListGenerationNumberMNDX = nullptr;
+	PFN_xrEnumerateXDevsMNDX pfnxrEnumerateXDevsMNDX = nullptr;
+	PFN_xrGetXDevPropertiesMNDX pfnxrGetXDevPropertiesMNDX = nullptr;
+	PFN_xrDestroyXDevListMNDX pfnxrDestroyXDevListMNDX = nullptr;
+	PFN_xrCreateXDevSpaceMNDX pfnxrCreateXDevSpaceMNDX = nullptr;
 
 	bool supportsG2Controller = false;
 
