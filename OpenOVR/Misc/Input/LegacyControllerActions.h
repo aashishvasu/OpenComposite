@@ -9,7 +9,7 @@ struct LegacyControllerActions {
 
 	std::string handPath; // eg /user/hand/left
 	XrPath handPathXr;
-	ITrackedDevice::HandType handType;
+	ITrackedDevice::TrackedDeviceType handType;
 
 	// Matches up with EVRButtonId
 	XrAction system; // 'system' button, on Vive the SteamVR buttons, on Oculus Touch the menu button on the left controller

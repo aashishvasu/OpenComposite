@@ -118,6 +118,11 @@ public:
 	virtual std::optional<const char*> GetOpenVRName() const = 0;
 
 	/**
+	 * Whether the profile supports bindings or not.
+	 */
+	virtual bool CanHaveBindings() const { return true; }
+
+	/**
 	 * Returns the transform matrix from grip space to the SteamVR controller pose.
 	 *
 	 * This only affects games which use the controller's pose directly, without using
@@ -131,7 +136,7 @@ public:
 	 *
 	 * By default, this returns the identity matrix.
 	 */
-	virtual glm::mat4 GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const;
+	virtual glm::mat4 GetGripToSteamVRTransform(ITrackedDevice::TrackedDeviceType hand) const;
 
 	/**
 	 * Get the transform of a controller component relative to the SteamVR hand position (when
@@ -144,7 +149,7 @@ public:
 	 * For the 'tip' pose in particular, the OpenXR aim space should be used if this function
 	 * does not provide anything.
 	 */
-	std::optional<glm::mat4> GetComponentTransform(ITrackedDevice::HandType hand, const std::string& name) const;
+	std::optional<glm::mat4> GetComponentTransform(ITrackedDevice::TrackedDeviceType hand, const std::string& name) const;
 
 	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
@@ -157,10 +162,10 @@ public:
 	 */
 	template <typename T>
 	    requires(in_variant<T, property_types>::value)
-	std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::HandType hand)
+	std::optional<T> GetProperty(vr::ETrackedDeviceProperty property, ITrackedDevice::TrackedDeviceType hand)
 	    const
 	{
-		using enum ITrackedDevice::HandType;
+		using enum ITrackedDevice::TrackedDeviceType;
 		if (hand != HAND_NONE && propertiesMap.contains(property)) {
 			hand_values_type ret = propertiesMap.at(property);
 			return std::get<T>((hand == HAND_RIGHT && ret.right.has_value()) ? ret.right.value() : ret.left);

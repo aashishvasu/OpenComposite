@@ -17,7 +17,6 @@
 
 // Specific to OCOVR
 #include "Drivers/Backend.h"
-#include "Drivers/DriverManager.h"
 #include "DrvOpenXR.h"
 
 using namespace vr;
@@ -126,7 +125,7 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 		correct_layout_unique ptr(impl, [](CVRCorrectLayout* cl) {
 			cl->Delete();
 		});
-		interfaces[interfaceVersion] = move(ptr);
+		interfaces[interfaceVersion] = std::move(ptr);
 		return impl;
 	}
 
@@ -222,7 +221,9 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError* peError, EVRAppl
 VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApplicationType eApplicationType, const char* pStartupInfo)
 {
 	BaseClientCore::appType = eApplicationType;
-	*peError = VRInitError_None;
+	if (peError) {
+		*peError = VRInitError_None;
+	}
 
 	if (eApplicationType == VRApplication_Bootstrapper) {
 #ifdef _WIN32
@@ -258,18 +259,14 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApp
 	if (running)
 		ERR("Cannot init VR: Already running!");
 
-#ifndef OC_XR_PORT
-	ovr::Setup();
-#endif
 	running_ovr = true;
 
-success:
 	current_apptype = eApplicationType;
 	running = true;
 
 	// TODO seperate this from the rest of dllmain
-	IBackend* backend = DrvOpenXR::CreateOpenXRBackend();
-	if (!backend) {
+	IBackend* backend = DrvOpenXR::CreateOpenXRBackend(pStartupInfo);
+	if (!backend && peError) {
 		*peError = VRInitError_Init_Internal;
 	} else {
 		BackendManager::Create(backend);

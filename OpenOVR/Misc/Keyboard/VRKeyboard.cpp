@@ -18,144 +18,19 @@
 #include <vector>
 
 #ifdef _WIN32
+#pragma warning(disable : 4722) // ignore destructor never returning
 #pragma comment(lib, "d3d11.lib")
 
 // for debugging only for now
 #include <comdef.h>
 #endif
 
-// If you're working on the keyboard, it may be useful to have it headlocked so you can easily see it in the Oculus mirror
-static const bool DBG_STUCK_TO_FACE = false;
-
-static std::vector<char> loadResource(int rid, int type)
-{
-#ifdef _WIN32
-	// Open our OBJ file
-	HRSRC ref = FindResource(openovr_module_id, MAKEINTRESOURCE(rid), MAKEINTRESOURCE(type));
-	if (!ref) {
-		string err = "FindResource error: " + std::to_string(GetLastError());
-		OOVR_ABORT(err.c_str());
-	}
-
-	char* cstr = (char*)LoadResource(openovr_module_id, ref);
-	if (!cstr) {
-		string err = "LoadResource error: " + std::to_string(GetLastError());
-		OOVR_ABORT(err.c_str());
-	}
-
-	DWORD len = SizeofResource(openovr_module_id, ref);
-	if (!len) {
-		string err = "SizeofResource error: " + std::to_string(GetLastError());
-		OOVR_ABORT(err.c_str());
-	}
-
-	// Do we need to use UnlockResource on cstr?
-
-	return std::vector<char>(cstr, cstr + len);
-#else
-#ifdef OC_XR_PORT
-	XR_STUBBED();
-#else
-#error TODO implement keyboard font loading on Linux
-#endif
-#endif
-}
-
 std::wstring_convert<std::codecvt_utf8<wchar_t>> VRKeyboard::CHAR_CONV;
 
-#ifndef OC_XR_PORT
-
-VRKeyboard::VRKeyboard(ID3D11Device* dev, uint64_t userValue, uint32_t maxLength, bool minimal, eventDispatch_t eventDispatch,
-    EGamepadTextInputMode inputMode)
-    : dev(dev), userValue(userValue), maxLength(maxLength), minimal(minimal), eventDispatch(eventDispatch), inputMode(inputMode)
-{
-
-	std::shared_ptr<BaseCompositor> cmp = GetBaseCompositor();
-	if (!cmp)
-		OOVR_ABORT("Keyboard: Compositor must be active!");
-
-	if (!dev)
-		OOVR_ABORT("Keyboard currently only works on DX11, and game must have submitted at least a single frame");
-
-	if (inputMode == EGamepadTextInputMode::k_EGamepadTextInputModePassword)
-		OOVR_ABORT("Password input mode not yet supported!");
-
-	// zero stuff out
-	memset(lastInputTime, 0, sizeof(lastInputTime));
-	memset(repeatCount, 0, sizeof(repeatCount));
-	memset(selected, 0, sizeof(selected));
-	memset(lastButtonState, 0, sizeof(lastButtonState));
-
-	// D3D setup
-	dev->GetImmediateContext(&ctx);
-
-	Sizei bufferSize(1024, 512);
-
-	ovrTextureSwapChainDesc& desc = chainDesc;
-	desc = {};
-	desc.Type = ovrTexture_2D;
-	desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-	desc.ArraySize = 1;
-	desc.Width = bufferSize.w;
-	desc.Height = bufferSize.h;
-	desc.MipLevels = 1;
-	desc.SampleCount = 1;
-	desc.StaticImage = ovrFalse;
-	desc.MiscFlags = ovrTextureMisc_None;
-	desc.BindFlags = ovrTextureBind_None;
-
-	OOVR_FAILED_OVR_ABORT(ovr_CreateTextureSwapChainDX(*ovr::session, dev, &desc, &chain));
-
-	// Create HUD layer, fixed to the player's torso
-	memset(&layer, 0, sizeof(layer));
-	layer.Header.Type = ovrLayerType_Quad;
-	layer.Header.Flags = DBG_STUCK_TO_FACE ? ovrLayerFlag_HeadLocked : 0; // | ovrLayerFlag_HighQuality;;
-	layer.ColorTexture = chain;
-	// 50cm in front and 20cm down from the player's nose,
-	// fixed relative to their torso.
-	layer.QuadPoseCenter.Position.x = 0.00f;
-	layer.QuadPoseCenter.Position.y = 0.00f; // -0.20f;
-	layer.QuadPoseCenter.Position.z = -0.50f;
-	layer.QuadPoseCenter.Orientation.x = 0;
-	layer.QuadPoseCenter.Orientation.y = 0;
-	layer.QuadPoseCenter.Orientation.z = 0;
-	layer.QuadPoseCenter.Orientation.w = 1;
-	// HUD is 50cm wide, 30cm tall.
-	layer.QuadSize.x = 0.50f;
-	layer.QuadSize.y = 0.30f;
-
-	// Display all of the HUD texture.
-	layer.Viewport.Pos.x = 0;
-	layer.Viewport.Pos.y = 0;
-	layer.Viewport.Size.w = desc.Width;
-	layer.Viewport.Size.h = desc.Height;
-
-	font = make_unique<SudoFontMeta>(loadResource(RES_O_FNT_UBUNTU, RES_T_FNTMETA), loadResource(RES_O_FNT_UBUNTU, RES_T_PNG));
-	layout = make_unique<KeyboardLayout>(loadResource(RES_O_KB_EN_GB, RES_T_KBLAYOUT));
-
-	if (!DBG_STUCK_TO_FACE) {
-		BaseCompositor* comp = GetUnsafeBaseCompositor();
-		vr::TrackedDevicePose_t spose = { 0 };
-		comp->GetLastPoses(&spose, 1, nullptr, 0);
-
-		OVR::Posef offset(OVR::Quatf::Identity(), OVR::Vector3f(0.0f, 0.0f, -1.0f));
-		OVR::Posef headPose = S2O_om34_pose(spose.mDeviceToAbsoluteTracking);
-		layer.QuadPoseCenter = headPose * offset;
-	}
-}
-
-VRKeyboard::~VRKeyboard()
-{
-	if (ctx)
-		ctx->Release();
-}
-
-#else
 VRKeyboard::~VRKeyboard()
 {
 	XR_STUBBED();
 }
-#endif
 wstring VRKeyboard::contents()
 {
 	return text;

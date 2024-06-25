@@ -149,7 +149,7 @@ uint32_t XrController::GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty
 	return XrTrackedDevice::GetStringTrackedDeviceProperty(prop, value, bufferSize, pErrorL);
 }
 
-ITrackedDevice::HandType XrController::GetHand()
+ITrackedDevice::TrackedDeviceType XrController::GetHand()
 {
 	switch (type) {
 	case XCT_LEFT:

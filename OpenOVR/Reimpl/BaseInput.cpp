@@ -1,7 +1,7 @@
-#include "Misc/json/json.h"
 #include "generated/interfaces/vrtypes.h"
 #include "logging.h"
 #include "openxr/openxr.h"
+#include "json/json.h"
 #define BASE_IMPL
 #include "BaseInput.h"
 #include <string>
@@ -15,11 +15,12 @@
 #include <codecvt>
 #include <cstdint>
 #include <cstdlib>
-#include <filesystem>
+#include <locale>
 #include <fstream>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <map>
 #include <math.h>
+#include <numbers>
 #include <optional>
 #include <set>
 #include <utility>
@@ -110,19 +111,6 @@ static std::string dirnameOf(const std::string& fname)
 	    : fname.substr(0, pos);
 }
 
-// Case-insensitively compares two strings
-static bool iequals(const std::string& a, const std::string& b)
-{
-	// from https://stackoverflow.com/a/4119881
-	size_t sz = a.size();
-	if (b.size() != sz)
-		return false;
-	for (unsigned int i = 0; i < sz; ++i)
-		if (tolower(a[i]) != tolower(b[i]))
-			return false;
-	return true;
-}
-
 // ASCII-only to-lower-case - for use with strings in maps, since steamvr is case-independent (In which
 // locale you might wonder? Good question).
 static std::string lowerStr(const std::string& in)
@@ -205,177 +193,6 @@ static std::string pathFromParts(const std::initializer_list<std::string>& parts
 		str += part;
 	}
 	return str;
-}
-
-// Adapted from https://github.com/ValvePython/steam/blob/26166e047b66a7be10bdf3c90e2e14de9283ab5a/steam/utils/appcache.py#L47
-static std::optional<std::string> parseAppinfoForManifestPath(const std::filesystem::path& appinfo, uint32_t gameAppId)
-{
-	// format:
-	//   uint32   - MAGIC: "'DV\x07" or "(DV\x07"
-	//   uint32   - UNIVERSE: 1
-	//   ---- repeated app sections ----
-	//   uint32   - AppID
-	//   uint32   - size
-	//   uint32   - infoState
-	//   uint32   - lastUpdated
-	//   uint64   - accessToken
-	//   20bytes  - SHA1
-	//   uint32   - changeNumber
-	//   20bytes  - binary_vdf SHA1 (added in "(DV\x07"
-	//   variable - binary_vdf
-	//   ---- end of section ---------
-	//   uint32   - EOF: 0
-	//
-
-	constexpr char expectedMagic[4] = { '(', 'D', 'V', 7 };
-	std::ifstream stream(appinfo, std::ios_base::in | std::ios_base::binary);
-	char magic[4] = { 0 };
-	stream.read(magic, 4);
-	if (!std::ranges::equal(magic, expectedMagic)) {
-		OOVR_LOGF("Unexpected appinfo magic sequence %x%x%x%x - please report a bug!", magic[0], magic[1], magic[2], magic[3]);
-		return std::nullopt;
-	}
-
-	// skip over universe
-	stream.seekg(4, std::ios_base::cur);
-
-	auto parse_string = [&stream] {
-		std::string s(128, 0);
-		stream.getline(s.data(), s.size(), 0);
-		auto size = stream.gcount();
-		while (stream.fail()) {
-			OOVR_FALSE_ABORT(stream.gcount() != 0);
-			stream.clear();
-			auto old_size = s.size();
-			s.resize(old_size + 64);
-			stream.getline(s.data() + old_size - 1, 64, 0);
-			size += stream.gcount();
-		}
-		s.resize(size - 1);
-		return s;
-	};
-
-	auto parse_u32 = [&stream] {
-		char buf[4] = { 0 };
-		stream.read(buf, 4);
-		return ((uint8_t)buf[3] << 0x18) | ((uint8_t)buf[2] << 0x10) | ((uint8_t)buf[1] << 0x8) | ((uint8_t)buf[0]);
-	};
-
-	struct {
-		std::string current_key;
-		bool final_key = false;
-		void next_key()
-		{
-			if (current_key.empty()) {
-				current_key = "appinfo";
-			} else if (current_key == "appinfo") {
-				current_key = "common";
-			} else if (current_key == "common") {
-				current_key = "openvr_action_manifest_path";
-			} else if (current_key == "openvr_action_manifest_path") {
-				final_key = true;
-			}
-		}
-	} key_tracker;
-
-	// app sections
-	while (true) {
-		uint32_t appid = parse_u32();
-		if (appid == gameAppId) {
-			key_tracker.next_key();
-		} else {
-			// skip over irrelevant appid to next one
-			uint32_t remaining_size = parse_u32();
-			stream.seekg(remaining_size, std::ios_base::cur);
-			continue;
-		}
-		// skip to final binary_vdf, which contains the info we're interested in
-		stream.seekg(64, std::ios_base::cur);
-		OOVR_FALSE_ABORT(!stream.fail());
-
-		int current_level = 0;
-		enum class DataType {
-			NewLevel,
-			Int32,
-			String,
-			Uint64,
-			End
-		};
-
-		while (true) {
-			DataType data_type;
-			char type;
-			stream.get(type);
-			OOVR_FALSE_ABORT(!stream.fail());
-			switch (type) {
-			case 0: {
-				data_type = DataType::NewLevel;
-				break;
-			}
-			case 1: {
-				data_type = DataType::String;
-				break;
-			}
-			case 2: {
-				data_type = DataType::Int32;
-				break;
-			}
-			case 7: {
-				data_type = DataType::Uint64;
-				break;
-			}
-			case 8: {
-				data_type = DataType::End;
-				break;
-			}
-			default: {
-				OOVR_LOGF("Unknown type while parsing VDF: %d", (int)type);
-				return std::nullopt;
-			}
-			}
-
-			if (data_type != DataType::End) {
-				const std::string key = parse_string();
-				OOVR_FALSE_ABORT(!stream.fail());
-				if (!key_tracker.current_key.empty() && key == key_tracker.current_key) {
-					key_tracker.next_key();
-					current_level = -1;
-				}
-			}
-
-			switch (data_type) {
-			case DataType::NewLevel: {
-				current_level++;
-				break;
-			}
-			case DataType::String: {
-				std::string key = parse_string();
-				OOVR_FALSE_ABORT(!stream.fail());
-				if (key_tracker.final_key) {
-					return key;
-				}
-				break;
-			}
-			case DataType::Int32: {
-				stream.seekg(4, std::ios_base::cur);
-				break;
-			}
-			case DataType::Uint64: {
-				stream.seekg(8, std::ios_base::cur);
-				break;
-			}
-			case DataType::End: {
-				if (current_level == 0) {
-					OOVR_LOGF("Could not find next key in appinfo: %s", key_tracker.current_key.c_str());
-					return std::nullopt;
-				} else {
-					current_level--;
-				}
-				break;
-			}
-			}
-		}
-	}
 }
 
 // Must be defined non-inline to avoid it ending up in stubs.gen.cpp
@@ -511,6 +328,10 @@ BaseInput::BaseInput()
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
 		allSubactionPaths.push_back(path);
 	}
+
+	if (!startupManifest.empty()) {
+		SetActionManifestPath(startupManifest.c_str());
+	}
 }
 BaseInput::~BaseInput()
 {
@@ -518,6 +339,14 @@ BaseInput::~BaseInput()
 		if (handTracker != XR_NULL_HANDLE)
 			xr_ext->xrDestroyHandTrackerEXT(handTracker);
 		handTracker = XR_NULL_HANDLE;
+	}
+}
+
+void BaseInput::setStartupManifest(std::string manifest)
+{
+	startupManifest = manifest;
+	if (auto input = GetUnsafeBaseInput(); input) {
+		input->SetActionManifestPath(startupManifest.c_str());
 	}
 }
 
@@ -576,7 +405,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		stringSplit(action.fullName, parts);
 
 		if (parts.size() != 4)
-			OOVR_ABORTF("Invalid action name '%s' - wrong number of parts %d", action.fullName.c_str(), parts.size());
+			OOVR_ABORTF("Invalid action name '%s' - wrong number of parts %zu", action.fullName.c_str(), parts.size());
 
 		if (parts.at(0) != "actions")
 			OOVR_ABORTF("Invalid action name '%s' - bad first parts '%s'", action.fullName.c_str(), parts.at(0).c_str());
@@ -662,7 +491,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		stringSplit(set.fullName, parts);
 
 		if (parts.size() != 2)
-			OOVR_ABORTF("Invalid action set name '%s' - wrong number of parts %d", set.fullName.c_str(), parts.size());
+			OOVR_ABORTF("Invalid action set name '%s' - wrong number of parts %zu", set.fullName.c_str(), parts.size());
 
 		if (parts.at(0) != "actions")
 			OOVR_ABORTF("Invalid action name '%s' - bad first parts '%s'", set.fullName.c_str(), parts.at(0).c_str());
@@ -745,7 +574,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 			// Don't actually create an action for skeletons, since we'll get their data from the hand tracking extension.
 			continue;
 		default:
-			OOVR_SOFT_ABORTF("Bad action type while remapping action %s: %d", act->fullName.c_str(), act->type);
+			OOVR_SOFT_ABORTF("Bad action type while remapping action %s: %d", act->fullName.c_str(), static_cast<int>(act->type));
 		}
 
 		// Listen on all the subactions
@@ -839,6 +668,9 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 	// Load in the suggested bindings for the legacy input actions
 	for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
+		if (!profile->CanHaveBindings())
+			continue;
+
 		std::vector<XrActionSuggestedBinding> bindings;
 		for (const auto& legacyController : legacyControllers) {
 			profile->AddLegacyBindings(legacyController, bindings);
@@ -917,9 +749,13 @@ void BaseInput::BindInputsForSession()
 	}
 }
 
-void BaseInput::LoadBindingsSet(const struct InteractionProfile& profile, const std::string& bindingsPath)
+void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath)
 {
 	OOVR_LOGF("Loading bindings for %s", profile.GetPath().c_str());
+
+	if (!profile.CanHaveBindings())
+		return;
+
 	Json::Value bindingsRoot;
 	if (!ReadJson(utf8to16(bindingsPath), bindingsRoot)) {
 		OOVR_ABORTF("Failed to read and parse JSON binding descriptor: %s", bindingsPath.c_str());
@@ -1309,19 +1145,19 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	// Make sure all the ActionSets have the same priority, since we don't have any way around that right now
 	if (unSetCount > 1) {
 		int priority = pSets[0].nPriority;
-		for (int i = 1; i < unSetCount; i++) {
+		for (uint32_t i = 1; i < unSetCount; i++) {
 			if (pSets[i].nPriority != priority) {
 				ActionSet* as1 = cast_ASH(pSets[0].ulActionSet);
 				ActionSet* curAs = cast_ASH(pSets[1].ulActionSet);
 				OOVR_SOFT_ABORTF("Active action set %s (%d) and %s (%d) have different priorities, this is not yet supported",
-				    as1->fullName.c_str(), curAs->fullName.c_str());
+				    as1->fullName.c_str(), pSets[0].nPriority, curAs->fullName.c_str(), pSets[1].nPriority);
 			}
 		}
 	}
 
 	std::vector<XrActiveActionSet> aas(unSetCount + 1);
 
-	for (int i = 0; i < unSetCount; i++) {
+	for (uint32_t i = 0; i < unSetCount; i++) {
 		VRActiveActionSet_t& set = pSets[i];
 
 		GET_ACTION_SET_FROM_HANDLE(as, set.ulActionSet);
@@ -1392,8 +1228,8 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 
 		// convert to polar coordinates
 		// angle is in radians
-		float radius = sqrt(pow(parent_state.currentState.x, 2) + pow(parent_state.currentState.y, 2));
-		float angle = atan2(parent_state.currentState.y, parent_state.currentState.x);
+		float radius = sqrtf(powf(parent_state.currentState.x, 2) + powf(parent_state.currentState.y, 2));
+		float angle = atan2f(parent_state.currentState.y, parent_state.currentState.x);
 
 		// note: since the range of atan2 is (-pi, pi), the east and west directions will have points between the negative and positive portions (if you think of the dpad as a circle)
 		bool within_bounds = false;
@@ -1448,73 +1284,9 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 	return XR_SUCCESS;
 }
 
-void BaseInput::checkIfActionsMustBeDiscoveredFromSteam()
-{
-	if (triedDiscoveringManifest || hasLoadedActions) {
-		return;
-	}
-
-	triedDiscoveringManifest = true;
-
-	const char* steam_folder_win = std::getenv("SteamPath");
-	const char* steam_folder_lin = std::getenv("STEAM_BASE_FOLDER");
-	const char* steam_folder = (steam_folder_win) ? steam_folder_win : steam_folder_lin;
-	if (!steam_folder) {
-		OOVR_LOG("WARNING: Game trying to load action data but manifest and STEAM_BASE_FOLDER/SteamPath env var missing, controls may not work");
-		return;
-	}
-	const char* appid_str = std::getenv("SteamAppId");
-	if (!appid_str) {
-		OOVR_LOG("WARNING: Game trying to load action data but manifest and SteamAppId env var missing, controls may not work");
-		return;
-	}
-
-	uint32_t appid = std::stoi(std::string(appid_str));
-
-	namespace fs = std::filesystem;
-
-	fs::path steam_path(steam_folder);
-	if (!fs::exists(steam_path)) {
-		OOVR_LOGF("Provided Steam folder %s is invalid, cannot determine manifest location, controls may not work", steam_folder);
-		return;
-	}
-
-	fs::path appcache = steam_path / "appcache/appinfo.vdf";
-	if (!fs::exists(appcache)) {
-		OOVR_LOGF("Steam app cache (at %s) is missing, cannot determine manifest location, controls may not work", appcache.c_str());
-		return;
-	}
-
-	OOVR_LOGF("Parsing %s for manifest path...", appcache.c_str());
-	auto manifest_path = parseAppinfoForManifestPath(appcache, appid);
-	if (!manifest_path.has_value()) {
-		OOVR_LOG("Failed to get manifest path from appinfo.vdf, controls may not work.");
-		return;
-	}
-
-#ifndef _WIN32
-	// If this is a game being run through Proton, the returned manifest path from the appcache will likely be a
-	// Windows style path, which uses backslash as a separator. However, this is a valid character in a Linux path,
-	// so std::filesystem::path won't convert it. We'll just blindly convert all backslashes to forward slashes on Linux
-	// and hope no game is crazy enough to put backslashes in their path intentionally.
-	std::ranges::replace(*manifest_path, '\\', '/');
-#endif
-
-	fs::path full_manifest_path
-	    = fs::current_path() / *manifest_path;
-
-	if (!fs::exists(full_manifest_path)) {
-		OOVR_LOGF("Got manifest path %s from parsing appcache, but this path does not exist. Controls may not work.", full_manifest_path.generic_string().c_str());
-		return;
-	}
-
-	SetActionManifestPath(full_manifest_path.generic_string().c_str());
-}
-
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1524,7 +1296,7 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 	getInfo.action = act->xr;
 
 	// Unfortunately to implement activeOrigin we have to loop through and query each action state
-	for (int i = 0; i < allSubactionPaths.size(); i++) {
+	for (size_t i = 0; i < allSubactionPaths.size(); i++) {
 		XrPath subactionPath = allSubactionPaths[i];
 
 		if (!checkRestrictToDevice(ulRestrictToDevice, subactionPath))
@@ -1536,7 +1308,9 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 
 		// If the subaction isn't set, or it was set but not active, or it was set
 		// but the state was false and it's not now, then override it.
-		if (!(state.isActive > pActionData->bActive || state.currentState > pActionData->bState))
+		const bool nowActive = state.isActive && !pActionData->bActive;
+		const bool nowSet = state.currentState && !pActionData->bState;
+		if (!nowActive && !nowSet)
 			continue;
 
 		pActionData->bState = state.currentState;
@@ -1555,7 +1329,6 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1569,7 +1342,7 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 	float maxLengthSq = 0;
 
 	// Unfortunately to implement activeOrigin we have to loop through and query each action state
-	for (int i = 0; i < allSubactionPaths.size(); i++) {
+	for (size_t i = 0; i < allSubactionPaths.size(); i++) {
 		XrPath subactionPath = allSubactionPaths[i];
 		if (!checkRestrictToDevice(ulRestrictToDevice, subactionPath))
 			continue;
@@ -1621,7 +1394,7 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			OOVR_ABORTF("Input type vector3 unsupported: %s", act->fullName.c_str());
 			break;
 		default:
-			OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
+			OOVR_ABORTF("Invalid action type %d for action %s", static_cast<int>(act->type), act->fullName.c_str());
 			break;
 		}
 	}
@@ -1632,7 +1405,6 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow,
     InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice)
 {
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1650,7 +1422,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	}
 
 	if (act->type != ActionType::Pose)
-		OOVR_ABORTF("Invalid action type %d for action %s", act->type, act->fullName.c_str());
+		OOVR_ABORTF("Invalid action type %d for action %s", static_cast<int>(act->type), act->fullName.c_str());
 
 	const InputValueHandle* restrictToDevice = nullptr;
 	if (ulRestrictToDevice)
@@ -1658,7 +1430,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 
 	for (int handNum = 0; handNum < 2; handNum++) {
 		// Check this hand is permitted
-		ITrackedDevice::HandType handType = handNum == 0 ? ITrackedDevice::HAND_LEFT : ITrackedDevice::HAND_RIGHT;
+		ITrackedDevice::TrackedDeviceType handType = handNum == 0 ? ITrackedDevice::HAND_LEFT : ITrackedDevice::HAND_RIGHT;
 		InputSource sourceType = handNum == 0 ? InputSource::HAND_LEFT : InputSource::HAND_RIGHT;
 
 		if (restrictToDevice && restrictToDevice->type != sourceType) {
@@ -1697,6 +1469,8 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 			const char* componentName = nullptr;
 			switch (binding.point) {
 			case PoseBindingPoint::RAW:
+			case PoseBindingPoint::BODY:
+			case PoseBindingPoint::GDC2015:
 				// No component name
 				break;
 			case PoseBindingPoint::GRIP:
@@ -1777,7 +1551,6 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, In
 	// sets unActionDataSize to what we're expecting so we don't have to handle that here.
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*out));
 
-	checkIfActionsMustBeDiscoveredFromSteam();
 	GET_ACTION_FROM_HANDLE(action, actionHandle);
 
 	// Zero out the output data, leaving:
@@ -1923,7 +1696,7 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 	return getEstimatedSkeletalSummary(action->skeletalHand, pSkeletalSummaryData);
 }
 
-EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
+EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
 	locateInfo.baseSpace = legacyControllers[hand].aimPoseSpace;
@@ -1995,7 +1768,7 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::HandType hand, V
 			if (angCos > 1.0f)
 				angCos = 1.0f;
 			float ang = acosf(angCos);
-			curl = 1.0f - (ang / M_PI);
+			curl = 1.0f - (ang / std::numbers::pi_v<float>);
 		}
 
 		pSkeletalSummaryData->flFingerCurl[i] = curl;
@@ -2009,11 +1782,11 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::HandType hand, V
 	return vr::VRInputError_None;
 }
 
-EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::HandType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
+EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	OOVR_FALSE_ABORT(hand != ITrackedDevice::HAND_NONE);
 
-	std::fill(std::begin(pSkeletalSummaryData->flFingerSplay), std::end(pSkeletalSummaryData->flFingerSplay), 0.2);
+	std::fill(std::begin(pSkeletalSummaryData->flFingerSplay), std::end(pSkeletalSummaryData->flFingerSplay), 0.2f);
 
 	LegacyControllerActions& controller = legacyControllers[hand];
 	XrActionStateGetInfo info = { XR_TYPE_ACTION_STATE_GET_INFO };
@@ -2076,7 +1849,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	if (act->type != ActionType::Vibration) {
-		OOVR_ABORTF("Cannot trigger vibration on non-vibration (type=%d) action '%s'", act->type, act->fullName.c_str());
+		OOVR_ABORTF("Cannot trigger vibration on non-vibration (type=%d) action '%s'", static_cast<int>(act->type), act->fullName.c_str());
 	}
 
 	// TODO check the subaction stuff works properly
@@ -2135,7 +1908,7 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 
 	// Now for each source find the /user/hand/abc substring that it starts with
 	char buff[XR_MAX_PATH_LENGTH + 1];
-	for (int i = 0; i < count; i++) {
+	for (uint32_t i = 0; i < count; i++) {
 		uint32_t len;
 		OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, tmp[i], XR_MAX_PATH_LENGTH, &len, buff));
 
@@ -2146,7 +1919,7 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 	}
 
 	// Copy out the sources
-	int i = 0;
+	uint32_t i = 0;
 	for (const std::string& path : sources) {
 		if (i >= originOutCount)
 			return vr::VRInputError_MaxCapacityReached; // TODO check this is correct
@@ -2163,7 +1936,7 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 }
 
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize,
-    int32_t unStringSectionsToInclude)
+    uint64_t unStringSectionsToInclude)
 {
 	if (origin == vr::k_ulInvalidInputValueHandle)
 		return vr::VRInputError_InvalidHandle;
@@ -2260,13 +2033,13 @@ EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOV
 
 	// TODO should we return an error if there are no sources bound?
 
-	int count = boundActionPaths.size();
+	size_t count = boundActionPaths.size();
 	if (count > unBindingInfoCount)
 		count = unBindingInfoCount;
 	if (punReturnedBindingInfoCount)
 		*punReturnedBindingInfoCount = count;
 
-	for (int i = 0; i < count; i++) {
+	for (size_t i = 0; i < count; i++) {
 		OOVR_InputBindingInfo_t& info = bindingInfo[i];
 		XrPath path = boundActionPaths.at(i);
 
@@ -2304,7 +2077,7 @@ EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOV
 			strcpy_arr(bindingInfo->rchInputSourceType, "joystick");
 			break;
 		default:
-			OOVR_ABORTF("Unimplemented action type %d for %s", action->type, pathStr.c_str());
+			OOVR_ABORTF("Unimplemented action type %d for %s", static_cast<int>(action->type), pathStr.c_str());
 		}
 	}
 
@@ -2376,7 +2149,7 @@ ITrackedDevice* BaseInput::ivhToDev(VRInputValueHandle_t handle)
 {
 	const InputValueHandle* ivh = cast_IVH(handle);
 
-	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
+	ITrackedDevice::TrackedDeviceType hand = ITrackedDevice::HAND_NONE;
 	switch (ivh->type) {
 	case InputSource::HAND_LEFT:
 		hand = ITrackedDevice::HAND_LEFT;
@@ -2522,20 +2295,20 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	grip.y = 0;
 
 	// SteamVR seemingly writes to these two axis to represent finger curl on legacy input.
-	VRSkeletalSummaryData_t skeletonData = { 0 };
+	VRSkeletalSummaryData_t skeletonData{};
 	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
-		getRealSkeletalSummary((ITrackedDevice::HandType)hand, &skeletonData);
+		getRealSkeletalSummary((ITrackedDevice::TrackedDeviceType)hand, &skeletonData);
 	} else {
 		return true;
 	}
 
 	VRControllerAxis_t& fingers = state->rAxis[3];
-	fingers.x = skeletonData.flFingerCurl[1] * 1.66 * 1.33;
-	fingers.y = skeletonData.flFingerCurl[2] * 1.66;
+	fingers.x = skeletonData.flFingerCurl[1] * 1.66f * 1.33f;
+	fingers.y = skeletonData.flFingerCurl[2] * 1.66f;
 
 	VRControllerAxis_t& fingers2 = state->rAxis[4];
-	fingers2.x = skeletonData.flFingerCurl[3] * 1.66;
-	fingers2.y = skeletonData.flFingerCurl[4] * 1.66;
+	fingers2.x = skeletonData.flFingerCurl[3] * 1.66f;
+	fingers2.y = skeletonData.flFingerCurl[4] * 1.66f;
 
 	return true;
 }
@@ -2569,7 +2342,7 @@ int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 	if (!dev)
 		return false;
 
-	ITrackedDevice::HandType hand = dev->GetHand();
+	ITrackedDevice::TrackedDeviceType hand = dev->GetHand();
 
 	switch (hand) {
 	case ITrackedDevice::HAND_LEFT:
@@ -2593,11 +2366,11 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, boo
 	if (!dev)
 		return;
 
-	ITrackedDevice::HandType hand = dev->GetHand();
+	ITrackedDevice::TrackedDeviceType hand = dev->GetHand();
 	GetHandSpace(hand, space, aimPose);
 }
 
-void BaseInput::GetHandSpace(ITrackedDevice::HandType hand, XrSpace& space, bool aimPose)
+void BaseInput::GetHandSpace(ITrackedDevice::TrackedDeviceType hand, XrSpace& space, bool aimPose)
 {
 	LegacyControllerActions& ctrl = legacyControllers[hand];
 
@@ -2609,7 +2382,7 @@ bool BaseInput::AreActionsLoaded()
 	return hasLoadedActions;
 }
 
-ITrackedDevice::HandType BaseInput::ParseAndRemoveHandPrefix(std::string& toModify)
+ITrackedDevice::TrackedDeviceType BaseInput::ParseAndRemoveHandPrefix(std::string& toModify)
 {
 	static std::string leftPrefix = "/user/hand/left/";
 	static std::string rightPrefix = "/user/hand/right/";

@@ -13,6 +13,7 @@
 #include "OculusInteractionProfile.h"
 #include "ReverbG2InteractionProfile.h"
 #include "ViveInteractionProfile.h"
+#include "ViveTrackerInteractionProfile.h"
 
 #include "Reimpl/BaseInput.h"
 #include "generated/static_bases.gen.h"
@@ -107,6 +108,7 @@ const InteractionProfile::ProfileList& InteractionProfile::GetProfileList()
 		profiles.emplace_back(std::make_unique<ViveWandInteractionProfile>());
 		profiles.emplace_back(std::make_unique<OculusTouchInteractionProfile>());
 		profiles.emplace_back(std::make_unique<KhrSimpleInteractionProfile>());
+		profiles.emplace_back(std::make_unique<ViveTrackerInteractionProfile>());
 	}
 	return profiles;
 }
@@ -124,17 +126,17 @@ InteractionProfile* InteractionProfile::GetProfileByPath(const string& name)
 	return byPath.at(name);
 }
 
-glm::mat4 InteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::HandType hand) const
+glm::mat4 InteractionProfile::GetGripToSteamVRTransform(ITrackedDevice::TrackedDeviceType hand) const
 {
-	if (hand == ITrackedDevice::HandType::HAND_LEFT) {
+	if (hand == ITrackedDevice::TrackedDeviceType::HAND_LEFT) {
 		return leftHandGripTransform;
-	} else if (hand == ITrackedDevice::HandType::HAND_RIGHT) {
+	} else if (hand == ITrackedDevice::TrackedDeviceType::HAND_RIGHT) {
 		return rightHandGripTransform;
 	}
 	return glm::identity<glm::mat4>();
 }
 
-std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevice::HandType hand, const std::string& name) const
+std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevice::TrackedDeviceType hand, const std::string& name) const
 {
 	std::unordered_map<std::string, glm::mat4> transforms = hand == ITrackedDevice::HAND_RIGHT ? rightComponentTransforms : leftComponentTransforms;
 	const auto iter = transforms.find(name);

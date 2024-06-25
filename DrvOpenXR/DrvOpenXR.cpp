@@ -8,8 +8,11 @@
 #include "../OpenOVR/Misc/android_api.h"
 #include "../OpenOVR/Misc/xr_ext.h"
 #include "../OpenOVR/Reimpl/BaseInput.h"
+#include "../RuntimeExtensions/XR_MNDX_xdev_space.h"
 #include "XrBackend.h"
+#include "XrGenericTracker.h"
 #include "generated/static_bases.gen.h"
+#include "json/json.h"
 
 #include <chrono>
 #include <memory>
@@ -83,7 +86,35 @@ static void CreateSystemID()
 	OOVR_FAILED_XR_ABORT(xrGetSystem(xr_instance, &systemInfo, &xr_system));
 }
 
-IBackend* DrvOpenXR::CreateOpenXRBackend()
+static void handleStartupInfo(const char* startupInfo)
+{
+	// According to some Proton code (vrclient_x64/json_converter.cpp::json_convert_startup_info), the startup info is json.
+	if (!startupInfo) {
+		return;
+	}
+
+	std::string info(startupInfo);
+	OOVR_LOGF("got startup info: %s", startupInfo);
+
+	Json::CharReaderBuilder builder;
+	auto reader = std::unique_ptr<Json::CharReader>(builder.newCharReader());
+	Json::Value root;
+	std::string errs;
+	if (!reader->parse(info.data(), info.data() + info.size(), &root, &errs)) {
+		OOVR_LOGF("WARNING: Failed to parse startupInfo: %s (%c)", errs.c_str(), errs.back());
+		return;
+	}
+
+	if (!root.isMember("action_manifest_path")) {
+		return;
+	}
+
+	std::string manifest = root["action_manifest_path"].asString();
+	OOVR_LOGF("Got action manifest path: %s", manifest.c_str());
+	BaseInput::setStartupManifest(manifest);
+}
+
+IBackend* DrvOpenXR::CreateOpenXRBackend(const char *startupInfo)
 {
 	// TODO handle something like Unity which stops and restarts the instance
 	if (initialised) {
@@ -103,10 +134,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #endif
 
 	// Enumerate the available extensions
-	uint32_t availableExtensionsCount;
-	if (XR_FAILED(xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr)))
-	{
-		OOVR_LOGF("Failed to enumerate XR extensions");
+	uint32_t availableExtensionsCount = 0;
+	if (XrResult res = xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr); XR_FAILED(res)) {
+		OOVR_LOGF("Failed to enumerate XR extensions: %d", res);
 		return nullptr;
 	}
 	std::vector<XrExtensionProperties> extensionProperties;
@@ -193,6 +223,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	if (availableExtensions.count(XR_EXT_HAND_TRACKING_EXTENSION_NAME))
 		extensions.push_back(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
 
+	if (availableExtensions.count(XR_MNDX_XDEV_SPACE_EXTENSION_NAME))
+		extensions.push_back(XR_MNDX_XDEV_SPACE_EXTENSION_NAME);
+
 	if (availableExtensions.contains(XR_EXT_HP_MIXED_REALITY_CONTROLLER_EXTENSION_NAME))
 		extensions.push_back(XR_EXT_HP_MIXED_REALITY_CONTROLLER_EXTENSION_NAME);
 
@@ -275,6 +308,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	// Setup our OpenXR session
 	SetupSession();
+	handleStartupInfo(startupInfo);
 
 	return currentBackend;
 }

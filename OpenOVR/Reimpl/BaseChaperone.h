@@ -50,7 +50,7 @@ public:
 	 *
 	 * NOTE: This used to be called BaseSystem::ResetSeatedZeroPose but was moved in OpenVR 1.13.10
 	 **/
-	virtual void ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin);
+	void ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin);
 
 	enum BaseChaperoneCalibrationState : int {
 		// OK!

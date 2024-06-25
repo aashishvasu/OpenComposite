@@ -12,6 +12,9 @@
 # Visual Studio
 /.vs
 
+# Visual Studio Code
+/.vscode
+
 # Libraries
 /libs/libovr/OculusSDK
 /libs/vulkan

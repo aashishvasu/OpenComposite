@@ -229,7 +229,7 @@ void oovr_soft_abort_raw(const char* file, long line, const char* func, int* cou
 {
 	// If this has been hit already, just ignore it - if we needed a crash that would've been done.
 	if (*count > 0) {
-		*count++;
+		count++;
 		return;
 	}
 

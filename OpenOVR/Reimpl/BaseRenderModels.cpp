@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <numbers>
 #define BASE_IMPL
 #include "BaseRenderModels.h"
 #include "Misc/Config.h"
@@ -24,7 +25,9 @@ using glm::quat;
 using glm::vec3;
 using glm::vec4;
 
+#ifdef _MSC_VER
 #pragma region structs
+#endif
 
 enum OOVR_EVRRenderModelError : int {
 	VRRenderModelError_None = 0,
@@ -81,7 +84,9 @@ enum OOVR_EVRComponentProperty {
 	VRComponentProperty_IsScrolled = (1 << 4),
 };
 
+#ifdef _MSC_VER
 #pragma endregion
+#endif
 
 typedef OOVR_RenderModel_t RenderModel_t;
 typedef OOVR_EVRRenderModelError EVRRenderModelError;
@@ -143,7 +148,7 @@ static OOVR_RenderModel_Vertex_t split_face(
 	norm--;
 
 	// Build the result
-	OOVR_RenderModel_Vertex_t out = { 0 };
+	OOVR_RenderModel_Vertex_t out{};
 	out.vPosition = verts[vert];
 	out.vNormal = normals[norm];
 	out.rfTextureCoord[0] = uvs[uv].v[0];
@@ -153,6 +158,7 @@ static OOVR_RenderModel_Vertex_t split_face(
 
 EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRenderModelName, RenderModel_t** renderModel)
 {
+	OOVR_LOGF("LoadRenderModel_Async %s", pchRenderModelName);
 	string name = pchRenderModelName;
 	int rid;
 	float sided;
@@ -176,6 +182,9 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 	} else if (name == "{indexcontroller}valve_controller_knu_1_0_right") {
 		rid = RES_O_HAND_RIGHT;
 		sided = -1;
+	} else if (name == "vive_tracker") {
+		rid = RES_O_VIVE_TRACKER;
+		sided = 1;
 	} else if (name == "oculusHmdRenderModel") {
 		// no model for the HMD
 		return VRRenderModelError_NotSupported;
@@ -193,14 +202,13 @@ EVRRenderModelError BaseRenderModels::LoadRenderModel_Async(const char* pchRende
 	std::vector<OOVR_RenderModel_Vertex_t> vertexData;
 
 	// Transform to line up the model with the Touch controller
-	mat4 modelTransform = mat4(glm::rotate(sided * math_pi / 2, vec3(0, 0, 1)));
+	mat4 modelTransform = mat4(glm::rotate(sided * std::numbers::pi_v<float> / 2, vec3(0, 0, 1)));
 	modelTransform[3] = vec4(sided * 0.015f, 0.0f, 0.03f, 1.0f);
 
 	// SteamVR rotates it's models 180deg around the Y axis for some reason
-	modelTransform *= mat4(glm::rotate(math_pi, vec3(0, 1, 0)));
+	modelTransform *= mat4(glm::rotate(std::numbers::pi_v<float>, vec3(0, 1, 0)));
 
-	mat4 transform = glm::inverse(BaseCompositor::GetHandTransform()) * modelTransform;
-	quat rotate = quat(transform);
+	mat4 transform = glm::inverse(rid == RES_O_VIVE_TRACKER ? BaseCompositor::GetTrackerTransform() : BaseCompositor::GetHandTransform()) * modelTransform;
 
 	while (!res.eof()) {
 		string op;
@@ -373,6 +381,8 @@ uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OU
 	const char* renderModelName = nullptr;
 	uint32_t strLen = 0;
 
+	OOVR_LOGF("GetRenderModelName %d", unRenderModelIndex);
+
 	switch (unRenderModelIndex) {
 	case 0:
 		renderModelName = "renderLeftHand";
@@ -380,6 +390,10 @@ uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OU
 		break;
 	case 1:
 		renderModelName = "renderRightHand";
+		strLen = strlen(renderModelName);
+		break;
+	case 2:
+		renderModelName = "vive_tracker";
 		strLen = strlen(renderModelName);
 		break;
 	default:
@@ -396,7 +410,7 @@ uint32_t BaseRenderModels::GetRenderModelName(uint32_t unRenderModelIndex, VR_OU
 
 uint32_t BaseRenderModels::GetRenderModelCount()
 {
-	return 2;
+	return 3;
 }
 
 uint32_t BaseRenderModels::GetComponentCount(const char* pchRenderModelName)
@@ -420,7 +434,8 @@ uint32_t BaseRenderModels::GetComponentName(const char* pchRenderModelName, uint
 	    && name != "oculus_quest2_controller_left"
 	    && name != "oculus_quest2_controller_right"
 	    && name != "{indexcontroller}valve_controller_knu_1_0_left"
-	    && name != "{indexcontroller}valve_controller_knu_1_0_right") {
+	    && name != "{indexcontroller}valve_controller_knu_1_0_right"
+	    && name != "vive_tracker") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
@@ -462,7 +477,8 @@ uint32_t BaseRenderModels::GetComponentRenderModelName(const char* pchRenderMode
 	    && name != "oculus_quest2_controller_left"
 	    && name != "oculus_quest2_controller_right"
 	    && name != "{indexcontroller}valve_controller_knu_1_0_left"
-	    && name != "{indexcontroller}valve_controller_knu_1_0_right") {
+	    && name != "{indexcontroller}valve_controller_knu_1_0_right"
+	    && name != "vive_tracker") {
 		string err = "Unknown render model name: " + string(pchRenderModelName);
 		OOVR_ABORT(err.c_str());
 		return VRRenderModelError_None;
@@ -511,13 +527,15 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 
 	std::string componentName = pchComponentName;
 
-	ITrackedDevice::HandType hand = ITrackedDevice::HAND_NONE;
+	ITrackedDevice::TrackedDeviceType hand = ITrackedDevice::HAND_NONE;
 	if (pchRenderModelName) {
 		std::string renderModelName = pchRenderModelName;
 		if (renderModelName == "renderLeftHand") {
 			hand = ITrackedDevice::HAND_LEFT;
 		} else if (renderModelName == "renderRightHand") {
 			hand = ITrackedDevice::HAND_RIGHT;
+		} else if (renderModelName == "vive_tracker") {
+			hand = ITrackedDevice::GENERIC_TRACKER;
 		} else {
 			hand = ITrackedDevice::HAND_NONE;
 		}
@@ -534,7 +552,7 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 		warnedAboutComponents.insert(componentName);
 	}
 
-	vr::HmdMatrix34_t ident = { 0 };
+	vr::HmdMatrix34_t ident{};
 	ident.m[0][0] = ident.m[1][1] = ident.m[2][2] = 1;
 
 	pComponentState->mTrackingToComponentLocal = ident;
@@ -545,7 +563,7 @@ bool BaseRenderModels::GetComponentState(const char* pchRenderModelName, const c
 	return true;
 }
 
-bool BaseRenderModels::TryGetComponentState(ITrackedDevice::HandType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result)
+bool BaseRenderModels::TryGetComponentState(ITrackedDevice::TrackedDeviceType hand, const std::string& componentName, OOVR_RenderModel_ComponentState_t* result)
 {
 	if (hand == ITrackedDevice::HAND_NONE)
 		return false;

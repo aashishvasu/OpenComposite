@@ -12,9 +12,11 @@
 #include <memory>
 #include <vector>
 
+class XrGenericTracker;
+
 class XrBackend : public IBackend {
 public:
-	DECLARE_BACKEND_FUNCS(virtual, override);
+	DECLARE_BACKEND_FUNCS(virtual, override)
 
 	XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx);
 	~XrBackend() override;
@@ -62,6 +64,8 @@ private:
 	std::unique_ptr<XrController> hand_left;
 	std::unique_ptr<XrController> hand_right;
 
+	std::vector<std::unique_ptr<XrGenericTracker>> generic_trackers;
+
 	void CheckOrInitCompositors(const vr::Texture_t* tex);
 	std::unique_ptr<Compositor> compositors[XruEyeCount];
 	std::unique_ptr<Compositor> skybox_compositor;
@@ -75,6 +79,12 @@ private:
 	 * Called from PumpEvents on an INTERACTION_PROFILE_CHANGED event.
 	 */
 	void UpdateInteractionProfile();
+
+	/**
+	 * Queries xdevs from MNDX_xdev_space, if the runtime supports it. Ignores HMD & Controllers.
+	 * These "Generic Trackers" act like an HTC vive tracker, but support no bindings.
+	 */
+	void CreateGenericTrackers();
 
 	/**
 	 * Attempts to force the runtime to expose an interaction profile
@@ -138,7 +148,7 @@ private:
 		~BindingWrapper() override
 		{
 #if defined(SUPPORT_GL) && !defined(_WIN32)
-			if constexpr (std::is_same_v<T, XrGraphicsBindingOpenGLXlibKHR>)
+			if constexpr (std::is_same_v<T, struct XrGraphicsBindingOpenGLXlibKHR>)
 				glXDestroyContext(data.xDisplay, data.glxContext);
 #endif
 		}

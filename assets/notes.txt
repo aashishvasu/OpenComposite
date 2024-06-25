@@ -7,5 +7,11 @@ These Maya models were exported without modification as OBJs, from Maya 2016.
 
 Only normals were enabled
 
+Tracker model
+
+"HTC Vive Tracker" (https://skfb.ly/67p6q) by Marco_Romero 
+is licensed under Creative Commons Attribution 
+(http://creativecommons.org/licenses/by/4.0/).
+
 The Ubuntu font has been packaged for use with the keyboard, and has been converted via SudoFont
 https://github.com/SudoMike/SudoFont

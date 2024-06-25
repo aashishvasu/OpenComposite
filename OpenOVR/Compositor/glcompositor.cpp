@@ -17,6 +17,7 @@
 
 #include "../DrvOpenXR/XrBackend.h"
 #include <algorithm>
+#include <cinttypes>
 #include <string>
 
 // On Linux these seem to already be defined
@@ -212,7 +213,7 @@ void GLBaseCompositor::CheckCreateSwapChain(int width, int height, vr::EColorSpa
 	if (std::count(formats.begin(), formats.end(), format) == 0) {
 		OOVR_LOG("Missing format for swapchain creation, using fallback. Valid formats:");
 		for (int64_t f : formats) {
-			OOVR_LOGF("Valid format: %d", f);
+			OOVR_LOGF("Valid format: %" PRIi64, f);
 		}
 		desc.format = NormaliseFormat(c_space, GL_RGBA8);
 		if (!std::count(formats.begin(), formats.end(), desc.format))
