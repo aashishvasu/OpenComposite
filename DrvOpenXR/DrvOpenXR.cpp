@@ -114,7 +114,7 @@ static void handleStartupInfo(const char* startupInfo)
 	BaseInput::setStartupManifest(manifest);
 }
 
-IBackend* DrvOpenXR::CreateOpenXRBackend(const char *startupInfo)
+IBackend* DrvOpenXR::CreateOpenXRBackend(const char* startupInfo)
 {
 	// TODO handle something like Unity which stops and restarts the instance
 	if (initialised) {

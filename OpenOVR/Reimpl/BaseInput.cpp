@@ -15,9 +15,9 @@
 #include <codecvt>
 #include <cstdint>
 #include <cstdlib>
-#include <locale>
 #include <fstream>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <locale>
 #include <map>
 #include <math.h>
 #include <numbers>

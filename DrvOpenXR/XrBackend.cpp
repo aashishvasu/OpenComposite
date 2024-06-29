@@ -41,9 +41,9 @@
 #include "tmp_gfx/TemporaryD3D11.h"
 #endif
 
+#include <algorithm>
 #include <chrono>
 #include <cinttypes>
-#include <algorithm>
 
 using namespace vr;
 
