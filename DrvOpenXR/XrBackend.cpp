@@ -1006,6 +1006,9 @@ void XrBackend::CreateGenericTrackers()
 
 		std::string name = cur_properties.name;
 
+		if (!cur_properties.canCreateSpace)
+			return true;
+
 		if (name.find("Tracker") == std::string::npos) {
 			return true;
 		}
