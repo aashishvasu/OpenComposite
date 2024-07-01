@@ -2340,7 +2340,7 @@ int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 {
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(idx);
 	if (!dev)
-		return false;
+		return -1;
 
 	ITrackedDevice::TrackedDeviceType hand = dev->GetHand();
 
