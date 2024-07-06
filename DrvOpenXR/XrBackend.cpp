@@ -41,9 +41,9 @@
 #include "tmp_gfx/TemporaryD3D11.h"
 #endif
 
+#include <algorithm>
 #include <chrono>
 #include <cinttypes>
-#include <algorithm>
 
 using namespace vr;
 
@@ -1005,6 +1005,9 @@ void XrBackend::CreateGenericTrackers()
 		_generic_tracker_count_unused--;
 
 		std::string name = cur_properties.name;
+
+		if (!cur_properties.canCreateSpace)
+			return true;
 
 		if (name.find("Tracker") == std::string::npos) {
 			return true;

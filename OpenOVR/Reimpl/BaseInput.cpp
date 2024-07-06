@@ -15,9 +15,9 @@
 #include <codecvt>
 #include <cstdint>
 #include <cstdlib>
-#include <locale>
 #include <fstream>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <locale>
 #include <map>
 #include <math.h>
 #include <numbers>
@@ -2340,7 +2340,7 @@ int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 {
 	ITrackedDevice* dev = BackendManager::Instance().GetDevice(idx);
 	if (!dev)
-		return false;
+		return -1;
 
 	ITrackedDevice::TrackedDeviceType hand = dev->GetHand();
 
