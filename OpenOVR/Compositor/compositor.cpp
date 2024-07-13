@@ -11,22 +11,16 @@ Compositor::~Compositor()
 	}
 }
 
-void Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, XrSwapchainSubImage& subImage)
+void Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, XrSwapchainSubImage& subImage, std::optional<XruEye> eye, vr::EVRSubmitFlags submitFlags)
 {
 	bool invertInCompositor = oovr_global_configuration.InvertUsingShaders();
 	if (bounds && bounds->vMin == 0.0f && bounds->vMax == 1.0f && bounds->uMin == 0.0f && bounds->uMax == 1.0f)
 		bounds = nullptr;
-	Invoke(texture, invertInCompositor ? bounds : nullptr);
+	CopyToSwapchain(texture, invertInCompositor ? bounds : nullptr, eye, submitFlags);
 	subImage.swapchain = GetSwapChain();
 	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
 	XrExtent2Di src = GetSrcSize();
 	CalculateViewport(invertInCompositor ? nullptr : bounds, src.width, src.height, true, subImage.imageRect);
-}
-
-void Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
-    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
-{
-	Invoke(texture, bounds, layer.subImage);
 }
 
 bool Compositor::CalculateViewport(const vr::VRTextureBounds_t* ptrBounds, int32_t width, int32_t height, bool supportsInvert, XrRect2Di& viewport)

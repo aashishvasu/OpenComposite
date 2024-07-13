@@ -8,8 +8,7 @@ public:
 
 	~VkCompositor() override;
 
-	// Override
-	void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds) override;
+	void CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye> eye, vr::EVRSubmitFlags submitFlags) override;
 
 	void InvokeCubemap(const vr::Texture_t* textures) override;
 

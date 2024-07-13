@@ -277,7 +277,7 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 	}
 }
 
-void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
+void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye> eye, vr::EVRSubmitFlags submitFlags)
 {
 	auto* src = (ID3D11Texture2D*)texture->handle;
 
@@ -385,13 +385,15 @@ void DX11Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBou
 
 		context->RSSetState(pRSState);
 	} else {
+		// Apparently SteamVR supports apps just sending array textures without specifying what's what.
+		const int arrayIndex = (srcDesc.ArraySize > 1 && eye.has_value()) ? static_cast<int>(*eye) : 0;
 		if (srcDesc.SampleDesc.Count > 1) {
 			D3D11_TEXTURE2D_DESC resDesc = srcDesc;
 			resDesc.SampleDesc.Count = 1;
-			context->ResolveSubresource(resolvedMSAATextures[currentIndex], 0, src, 0, resDesc.Format);
-			context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, resolvedMSAATextures[currentIndex], 0, &sourceRegion);
+			context->ResolveSubresource(resolvedMSAATextures[currentIndex], 0, src, arrayIndex, resDesc.Format);
+			context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, resolvedMSAATextures[currentIndex], arrayIndex, &sourceRegion);
 		} else {
-			context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, src, 0, &sourceRegion);
+			context->CopySubresourceRegion(imagesHandles[currentIndex].texture, 0, 0, 0, 0, src, arrayIndex, &sourceRegion);
 		}
 	}
 
@@ -441,38 +443,6 @@ void DX11Compositor::InvokeCubemap(const vr::Texture_t* textures)
 	context->CopySubresourceRegion(tex, 3, 0, 0, 0, faceSrc, 0, nullptr);
 
 	tex->Release();
-}
-
-void DX11Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds,
-    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
-{
-
-	// Copy the texture across
-	Invoke(texture, ptrBounds);
-
-	// Set the viewport up
-	// TODO deduplicate with dx11compositor, and use for all compositors
-	XrSwapchainSubImage& subImage = layer.subImage;
-	subImage.swapchain = chain;
-	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
-	XrRect2Di& viewport = subImage.imageRect;
-	if (ptrBounds) {
-		vr::VRTextureBounds_t bounds = *ptrBounds;
-
-		if (bounds.vMin > bounds.vMax && !oovr_global_configuration.InvertUsingShaders()) {
-			std::swap(layer.fov.angleUp, layer.fov.angleDown);
-			std::swap(bounds.vMin, bounds.vMax);
-		}
-
-		viewport.offset.x = 0;
-		viewport.offset.y = 0;
-		viewport.extent.width = createInfo.width;
-		viewport.extent.height = createInfo.height;
-	} else {
-		viewport.offset.x = viewport.offset.y = 0;
-		viewport.extent.width = createInfo.width;
-		viewport.extent.height = createInfo.height;
-	}
 }
 
 bool DX11Compositor::CheckChainCompatible(D3D11_TEXTURE2D_DESC& inputDesc, vr::EColorSpace colourSpace)

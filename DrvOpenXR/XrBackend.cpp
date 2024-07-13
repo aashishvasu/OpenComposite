@@ -449,7 +449,7 @@ void XrBackend::StoreEyeTexture(
 
 	// If the session is inactive, we may be unable to write to the surface
 	if (sessionActive && renderingFrame)
-		comp.Invoke((XruEye)eye, texture, bounds, submitFlags, layer);
+		comp.Invoke(texture, bounds, layer.subImage, (XruEye)eye, submitFlags);
 
 	submittedEyeTextures = true;
 

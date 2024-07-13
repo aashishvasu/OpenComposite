@@ -10,13 +10,10 @@ public:
 	virtual ~DX12Compositor() override;
 
 	// Override
-	virtual void Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds) override;
+	void CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye> eye, vr::EVRSubmitFlags submitFlags) override;
 
-	virtual void InvokeCubemap(const vr::Texture_t* textures) override;
+	void InvokeCubemap(const vr::Texture_t* textures) override;
 	virtual bool SupportsCubemap() override { return false; }
-
-	virtual void Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds,
-	    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& viewport) override;
 
 	ComPtr<ID3D12Device> GetDevice() { return device; }
 

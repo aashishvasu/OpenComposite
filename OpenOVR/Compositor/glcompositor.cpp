@@ -86,8 +86,9 @@ void GLCompositor::ReadSwapchainImages()
 
 #if defined(SUPPORT_GL) || defined(SUPPORT_GLES)
 
-void GLBaseCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
+void GLBaseCompositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye>, vr::EVRSubmitFlags)
 {
+	// TODO: support array textures
 	// Clear any pre-existing OpenGL errors
 	while (glGetError() != GL_NO_ERROR) {
 	}
