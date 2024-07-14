@@ -7,6 +7,7 @@
 #include <errno.h> // errno, ENOENT, EEXIST
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdarg.h>
 #include <sys/stat.h> // stat
 #ifdef _WIN32
@@ -261,7 +262,24 @@ void oovr_message_raw(const char* message, const char* title)
 	// Display a message box on Windows
 	MessageBoxA(nullptr, message, title, MB_OK);
 #else
-	// Print to stderr on Linux
-	std::cerr << "OOVR_MESSAGE: " << title << ": " << message << std::endl;
+	// Try using zenity or kdialog on Linux, otherwise just print to stderr
+	bool message_displayed = false;
+
+	std::stringstream command;
+
+	if (system("type zenity") == 0) {
+		command << "zenity --error --title=\"" << title << "\" --text=\"" << message << "\"";
+	} else if (system("type kdialog") == 0) {
+		command << "kdialog --title \"" << title << "\" --error \"" << message << "\"";
+	}
+
+	auto c = command.str();
+	if (!c.empty()) {
+		message_displayed = system(c.c_str()) == 0;
+	}
+
+	if (!message_displayed) {
+		std::cerr << "OOVR_MESSAGE: " << title << ": " << message << std::endl;
+	}
 #endif
 }
