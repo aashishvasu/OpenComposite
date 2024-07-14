@@ -111,10 +111,6 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 			HideKeyboard();
 	}
 
-	if (!oovr_global_configuration.EnableLayers()) {
-		goto done;
-	}
-
 	for (const auto& kv : overlays) {
 		if (kv.second) {
 			OverlayData& overlay = *kv.second;
@@ -155,7 +151,6 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 		}
 	}
 
-done:
 	usingInput = checkUsingInput;
 	layers = layerHeaders.data();
 	return static_cast<int>(layerHeaders.size());
@@ -734,7 +729,7 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 
 	BackendManager::Instance().OnOverlayTexture(pTexture);
 
-	if (!oovr_global_configuration.EnableLayers() || !BackendManager::Instance().IsGraphicsConfigured())
+	if (!BackendManager::Instance().IsGraphicsConfigured())
 		return VROverlayError_None;
 
 	std::shared_ptr<Compositor> compositor = overlay->compositor.lock();

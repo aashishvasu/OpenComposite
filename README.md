@@ -128,14 +128,15 @@ The available options are:
 * `supersampleRatio` - float, default `1.0`. 
 	* The supersample ratio in use - this is similar to what you would enter into SteamVR, a value of `145%` in SteamVR is a value of `1.45` here. A value of `80%` in SteamVR is `0.8` here, and so on. Higher numbers improve graphics, at a major performance cost.
 * `haptics` - boolean, default `enabled`. 
-	* Should haptic feedback to the Touch controllers be enabled.
+	* Should haptic feedback to the controllers be enabled.
 * `admitUnknownProps` - boolean, default `disabled`. 
 	* If asked for a tracked device property it does not understand, should OpenComposite ignore it.
-* `forceConnectedTouch` - boolean, default `enabled`. 
-	* If this is enabled, games are always told that the Touch controllers are connected, even if they are not. This ensures controllers will work if they were asleep when the game was started. If you use a gamepad and don't want
-the game to think controllers are connected, disable this option. See issue #25. 
 * `logGetTrackedProperty` - boolean, default `disabled`. 
 	* Print logging information when the app requests information about tracked devices, such as the HMD or the Touch controllers. On some games, this causes a log entry to be generated every frame, which isn't great for performance and clutters up the log. This is potentially useful for troubleshooting, and was enabled by default before the config option existed. In general, unless you've been told to enable this (or you know what you're doing while troubleshooting) you don't need to enable this.
+* `stopOnSoftAbort` - boolean, default `disabled`.
+    * Crashes the game whenever OpenComposite reaches a soft abort. Currently games can cause OpenComposite to hit a soft abort for a lot of trivial reasons, so you probably shouldn't enable this. 
+* `dx10Mode` - booelan, default `disabled`.
+    * Use DX10 instead of DX11 for games submitting DirectX textures.
 * `enableHiddenMeshFix` - boolean, default `enabled`. 
 	* Alter the coordinates of the hidden area mesh mask to fit within the view's projection. The hidden area mesh mask defines a region to which the game will not draw and is used to mask off areas of the display that you typically cannot see in the headset. If you see odd black regions around the view then try disabling this fix.
 * `invertUsingShaders` - boolean, default `disabled`. 
