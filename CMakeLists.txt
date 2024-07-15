@@ -267,6 +267,17 @@ set(OVR_PCH_EXCLUDED
 	OpenOVR/Misc/lodepng.cpp
 )
 
+# Generate version string from git revision, or supplied OC_VERSION setting
+add_custom_command(
+	OUTPUT ${GENERATED_DIR}/version.h
+		non_existent_file # forces this command to run every build
+	COMMAND ${CMAKE_COMMAND}
+		-DIN=${CMAKE_SOURCE_DIR}/scripts/version.h.in
+		-DOUT=${GENERATED_DIR}/version.h
+		-DOC_VERSION=${OC_VERSION}
+		-P ${CMAKE_SOURCE_DIR}/scripts/cmake/genversion.cmake
+	VERBATIM
+)
 add_library(OCCore STATIC
 	# This file is used to generate the precompiled headers
 	OpenOVR/stdafx.cpp
@@ -338,6 +349,7 @@ add_library(OCCore STATIC
 	${OVR_PCH_EXCLUDED}
 
 	# Headers
+	${GENERATED_DIR}/version.h
 	OpenOVR/BaseCommon.h
 	OpenOVR/Compositor/compositor.h
 	OpenOVR/convert.h
