@@ -268,14 +268,14 @@ set(OVR_PCH_EXCLUDED
 )
 
 # Generate version string from git revision, or supplied OC_VERSION setting
-add_custom_command(
-	OUTPUT ${GENERATED_DIR}/version.h
-		non_existent_file # forces this command to run every build
+add_custom_target(VersionHeader
+	COMMENT "Generating version.h..."
 	COMMAND ${CMAKE_COMMAND}
 		-DIN=${CMAKE_SOURCE_DIR}/scripts/version.h.in
 		-DOUT=${GENERATED_DIR}/version.h
 		-DOC_VERSION=${OC_VERSION}
 		-P ${CMAKE_SOURCE_DIR}/scripts/cmake/genversion.cmake
+	BYPRODUCTS ${GENERATED_DIR}/version.h
 	VERBATIM
 )
 add_library(OCCore STATIC
