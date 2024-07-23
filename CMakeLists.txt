@@ -124,21 +124,27 @@ endif()
 if (USE_SYSTEM_OPENXR)
 	find_package(OpenXR)
 	set(XrLib OpenXR::openxr_loader)
+
+	find_package(jsoncpp)
+	set(jsoncppLib JsonCpp::JsonCpp)
 endif()
 
-set(XrDir libs/openxr-sdk)
-add_library(jsoncpp STATIC
-	${XrDir}/src/external/jsoncpp/src/lib_json/json_reader.cpp
-	${XrDir}/src/external/jsoncpp/src/lib_json/json_value.cpp
-	${XrDir}/src/external/jsoncpp/src/lib_json/json_writer.cpp
-)
+if (NOT OpenXR_FOUND OR NOT jsoncpp_FOUND)
+	set(XrDir libs/openxr-sdk)
 
-target_include_directories(jsoncpp PUBLIC ${XrDir}/src/external/jsoncpp/include)
-if (NOT MSVC)
-	target_compile_options(jsoncpp PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wno-volatile>)
-endif()
+	add_library(jsoncpp STATIC
+		${XrDir}/src/external/jsoncpp/src/lib_json/json_reader.cpp
+		${XrDir}/src/external/jsoncpp/src/lib_json/json_value.cpp
+		${XrDir}/src/external/jsoncpp/src/lib_json/json_writer.cpp
+	)
 
-if (NOT OpenXR_FOUND)
+	target_include_directories(jsoncpp PUBLIC ${XrDir}/src/external/jsoncpp/include)
+	if (NOT MSVC)
+		target_compile_options(jsoncpp PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Wno-volatile>)
+	endif()
+
+	set(jsoncppLib jsoncpp)
+
 	# Building CMake subprojects is a real pain (IMO), so just build this here
 	set(XrDirLoader libs/openxr-sdk/src/loader)
 	set(XrDirCommon libs/openxr-sdk/src/common)
@@ -190,6 +196,9 @@ endif()
 if (USE_SYSTEM_GLM)
 	find_package(glm)
 	set(glmLib glm::glm)
+	if(glm_FOUND)
+		target_compile_options(glm::glm INTERFACE -DGLM_ENABLE_EXPERIMENTAL)
+	endif()
 endif()
 
 if (NOT glm_FOUND)
@@ -234,7 +243,7 @@ add_library(DrvOpenXR STATIC
 )
 target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub ${CMAKE_BINARY_DIR})
 target_include_directories(DrvOpenXR PRIVATE DrvOpenXR OpenOVR)
-target_link_libraries(DrvOpenXR PUBLIC OpenVR ${XrLib} ${glmLib})
+target_link_libraries(DrvOpenXR PUBLIC OpenVR ${XrLib} ${jsoncppLib} ${glmLib})
 if (NOT WIN32 AND NOT ANDROID)
 	target_link_libraries(DrvOpenXR PRIVATE X11) # for XFree()
 endif ()
@@ -267,6 +276,17 @@ set(OVR_PCH_EXCLUDED
 	OpenOVR/Misc/lodepng.cpp
 )
 
+# Generate version string from git revision, or supplied OC_VERSION setting
+add_custom_target(VersionHeader
+	COMMENT "Generating version.h..."
+	COMMAND ${CMAKE_COMMAND}
+		-DIN=${CMAKE_SOURCE_DIR}/scripts/version.h.in
+		-DOUT=${GENERATED_DIR}/version.h
+		-DOC_VERSION=${OC_VERSION}
+		-P ${CMAKE_SOURCE_DIR}/scripts/cmake/genversion.cmake
+	BYPRODUCTS ${GENERATED_DIR}/version.h
+	VERBATIM
+)
 add_library(OCCore STATIC
 	# This file is used to generate the precompiled headers
 	OpenOVR/stdafx.cpp
@@ -338,6 +358,7 @@ add_library(OCCore STATIC
 	${OVR_PCH_EXCLUDED}
 
 	# Headers
+	${GENERATED_DIR}/version.h
 	OpenOVR/BaseCommon.h
 	OpenOVR/Compositor/compositor.h
 	OpenOVR/convert.h
@@ -452,10 +473,10 @@ endif ()
 # If we're on Linux, compile everything as position-independent
 if (WIN32)
 else ()
-	target_compile_options(jsoncpp PRIVATE -fPIC)
 	target_compile_options(DrvOpenXR PRIVATE -fPIC)
-	if (NOT OpenXR_FOUND)
+	if (NOT OpenXR_FOUND OR NOT jsoncpp_FOUND)
 		target_compile_options(OpenXR PRIVATE -fPIC)
+		target_compile_options(jsoncpp PRIVATE -fPIC)
 	endif ()
 	target_compile_options(OCCore PRIVATE -fPIC)
 endif ()

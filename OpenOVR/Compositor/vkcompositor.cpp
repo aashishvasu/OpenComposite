@@ -99,7 +99,7 @@ VkCompositor::~VkCompositor()
 	vkDestroyCommandPool(appDevice, appCommandPool, nullptr);
 }
 
-void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
+void VkCompositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye>, vr::EVRSubmitFlags submitFlags)
 {
 	const vr::VRVulkanTextureData_t* tex = (vr::VRVulkanTextureData_t*)texture->handle;
 
@@ -209,11 +209,16 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	    0, nullptr,
 	    1, &barrier);
 
+	uint32_t arrayLayer = 0;
+	if (submitFlags & vr::Submit_VulkanTextureWithArrayData) {
+		auto tex = static_cast<vr::VRVulkanTextureArrayData_t*>(texture->handle);
+		arrayLayer = tex->m_unArrayIndex;
+	}
 	if (bounds) {
 		VkImageBlit region = {};
 		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.mipLevel = 0;
-		region.srcSubresource.baseArrayLayer = 0;
+		region.srcSubresource.baseArrayLayer = arrayLayer;
 		region.srcSubresource.layerCount = 1;
 		region.srcOffsets[0] = { (int)(bounds->uMin * tex->m_nWidth), (int)(bounds->vMin * tex->m_nHeight), 0 };
 		region.srcOffsets[1] = { (int)(bounds->uMax * tex->m_nWidth), (int)(bounds->vMax * tex->m_nHeight), 1 };
@@ -236,7 +241,7 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 		VkImageCopy region = {};
 		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.mipLevel = 0;
-		region.srcSubresource.baseArrayLayer = 0;
+		region.srcSubresource.baseArrayLayer = arrayLayer;
 		region.srcSubresource.layerCount = 1;
 		region.srcOffset = { 0, 0, 0 };
 		region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

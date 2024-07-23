@@ -7,9 +7,9 @@
 
 // Needed for the system-wide usage of this DLL (when renamed to vrclient[_x64].dll)
 #include "generated/GVRClientCore.gen.h"
+#include "generated/version.h"
 
-#include "Misc/Config.h"
-#include "Misc/debug_helper.h"
+#include "logging.h"
 #include "steamvr_abi.h"
 #include <functional>
 #include <map>
@@ -220,6 +220,7 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal(EVRInitError* peError, EVRAppl
 
 VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApplicationType eApplicationType, const char* pStartupInfo)
 {
+	OOVR_LOG_ONCEF("Initializing OpenComposite - revision %s", OC_VERSION);
 	BaseClientCore::appType = eApplicationType;
 	if (peError) {
 		*peError = VRInitError_None;

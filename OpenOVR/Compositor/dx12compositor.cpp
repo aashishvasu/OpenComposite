@@ -173,8 +173,9 @@ void DX12Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 	}
 }
 
-void DX12Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds)
+void DX12Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye> eye, vr::EVRSubmitFlags submitFlags)
 {
+	// TODO: support array textures
 	D3D12TextureData_t* input = (D3D12TextureData_t*)texture->handle;
 
 	// OpenXR swap chain doesn't support weird formats like DXGI_FORMAT_BC1_TYPELESS
@@ -249,37 +250,6 @@ void DX12Compositor::InvokeCubemap(const vr::Texture_t* textures)
 	CheckCreateSwapChain(&textures[0], nullptr, true);
 
 	OOVR_SOFT_ABORT("TODO cubemap");
-}
-
-void DX12Compositor::Invoke(XruEye eye, const vr::Texture_t* texture, const vr::VRTextureBounds_t* ptrBounds,
-    vr::EVRSubmitFlags submitFlags, XrCompositionLayerProjectionView& layer)
-{
-
-	// Copy the texture across
-	Invoke(texture, ptrBounds);
-
-	// Set the viewport up
-	XrSwapchainSubImage& subImage = layer.subImage;
-	subImage.swapchain = chain;
-	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
-	XrRect2Di& viewport = subImage.imageRect;
-	if (ptrBounds) {
-		vr::VRTextureBounds_t bounds = *ptrBounds;
-
-		if (bounds.vMin > bounds.vMax && !oovr_global_configuration.InvertUsingShaders()) {
-			std::swap(layer.fov.angleUp, layer.fov.angleDown);
-			std::swap(bounds.vMin, bounds.vMax);
-		}
-
-		viewport.offset.x = 0;
-		viewport.offset.y = 0;
-		viewport.extent.width = createInfo.width;
-		viewport.extent.height = createInfo.height;
-	} else {
-		viewport.offset.x = viewport.offset.y = 0;
-		viewport.extent.width = createInfo.width;
-		viewport.extent.height = createInfo.height;
-	}
 }
 
 bool DX12Compositor::CheckChainCompatible(D3D12_RESOURCE_DESC& inputDesc, vr::EColorSpace colourSpace)

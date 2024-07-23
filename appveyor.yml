@@ -15,7 +15,8 @@ before_build:
       mkdir build;
       cd build
 
-      cmake .. -A $env:Platform -DERROR_ON_WARNING=ON
+      cmake .. -A $env:Platform -DERROR_ON_WARNING=ON `
+      -DOC_VERSION="$env:APPVEYOR_REPO_COMMIT ($env:APPVEYOR_BUILD_VERSION, $env:APPVEYOR_REPO_COMMIT_MESSAGE, $env:APPVEYOR_REPO_COMMIT_TIMESTAMP)"
 
       cd ..
 build:
