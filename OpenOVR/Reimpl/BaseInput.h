@@ -5,6 +5,7 @@
 
 #include "Drivers/Backend.h"
 #include <numbers>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -794,6 +795,7 @@ private:
 	 * Uses input state (trigger and grip) to generate a skeletal summary.
 	 */
 	EVRInputError getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
+	EVRInputError getEstimatedBoneData(ITrackedDevice::TrackedDeviceType hand, EVRSkeletalTransformSpace transformSpace, std::span<VRBoneTransform_t, eBone_Count> boneData);
 
 	/**
 	 * Some games (i.e. newer Unity games) won't explicitly call SetActionManifestPath, but instead will set the path through
