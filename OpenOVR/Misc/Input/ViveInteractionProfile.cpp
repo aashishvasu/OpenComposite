@@ -74,6 +74,11 @@ std::optional<const char*> ViveWandInteractionProfile::GetOpenVRName() const
 	return "vive_controller";
 }
 
+std::optional<vr::EVRSkeletalTrackingLevel> ViveWandInteractionProfile::GetOpenVRTrackinglevel() const
+{
+	return vr::VRSkeletalTracking_Estimated;
+}
+
 const InteractionProfile::LegacyBindings* ViveWandInteractionProfile::GetLegacyBindings(const std::string& handPath) const
 {
 	static LegacyBindings bindings = {};

@@ -1610,10 +1610,24 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionH
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel)
 {
-	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
-		// We can't know if this should be partial or full, but I'm guessing
-		// applications don't care too much in practice
-		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Full;
+	GET_ACTION_FROM_HANDLE(act, action);
+
+	if (act->skeletalHand == ITrackedDevice::HAND_NONE)
+		return vr::VRInputError_InvalidHandle;
+
+	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+	if (!dev)
+		return vr::VRInputError_InvalidDevice;
+
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+	if (profile) {
+		std::optional<vr::EVRSkeletalTrackingLevel> level = profile->GetOpenVRTrackinglevel();
+		if (level.has_value()) {
+			*pSkeletalTrackingLevel = static_cast<vr::EVRSkeletalTrackingLevel>(level.value());
+			return vr::VRInputError_None;
+		} else {
+			*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Estimated;
+		}
 	} else {
 		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Estimated;
 	}

@@ -55,6 +55,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "grip/click", "squeeze/value" },
 		{ "grip/touch", "squeeze/value" },
 		{ "grip/value", "squeeze/value" },
+		{ "grip/grab", "squeeze/value" },
 	};
 
 	this->hmdPropertiesMap = {
@@ -140,6 +141,11 @@ std::optional<const char*> IndexControllerInteractionProfile::GetRightHandRender
 std::optional<const char*> IndexControllerInteractionProfile::GetOpenVRName() const
 {
 	return "knuckles";
+}
+
+std::optional<vr::EVRSkeletalTrackingLevel> IndexControllerInteractionProfile::GetOpenVRTrackinglevel() const
+{
+	return vr::VRSkeletalTracking_Partial;
 }
 
 const InteractionProfile::LegacyBindings* IndexControllerInteractionProfile::GetLegacyBindings(const std::string& handPath) const

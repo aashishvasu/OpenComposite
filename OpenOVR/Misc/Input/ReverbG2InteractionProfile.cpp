@@ -129,6 +129,11 @@ std::optional<const char*> ReverbG2InteractionProfile::GetOpenVRName() const
 	return "hpmotioncontroller";
 }
 
+std::optional<vr::EVRSkeletalTrackingLevel> ReverbG2InteractionProfile::GetOpenVRTrackinglevel() const
+{
+	return vr::VRSkeletalTracking_Estimated;
+}
+
 const InteractionProfile::LegacyBindings* ReverbG2InteractionProfile::GetLegacyBindings(const std::string& handPath) const
 {
 	static LegacyBindings allBindings[2] = { {}, {} };

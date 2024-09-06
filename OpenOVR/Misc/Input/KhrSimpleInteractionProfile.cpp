@@ -55,6 +55,11 @@ std::optional<const char*> KhrSimpleInteractionProfile::GetOpenVRName() const
 	return std::nullopt;
 }
 
+std::optional<vr::EVRSkeletalTrackingLevel> KhrSimpleInteractionProfile::GetOpenVRTrackinglevel() const
+{
+	return vr::VRSkeletalTracking_Estimated;
+}
+
 const InteractionProfile::LegacyBindings* KhrSimpleInteractionProfile::GetLegacyBindings(const std::string& handPath) const
 {
 	static LegacyBindings bindings = {};
