@@ -1678,8 +1678,8 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(handTrackers[(int)action->skeletalHand], &locateInfo, &locations));
 
 	if (!locations.isActive) {
-		// Leave empty-handed, IDK if this is the right error or not
-		return vr::VRInputError_InvalidSkeleton;
+		// Fallback to estimated bone data (e.g. for controllers)
+		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
