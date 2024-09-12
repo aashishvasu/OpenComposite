@@ -144,6 +144,20 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 			glm::mat4 parentPose = readBoneTransform(parent);
 
 			pose = glm::affineInverse(parentPose) * pose;
+		} else {
+			pose = glm::identity<glm::mat4>();
+
+			glm::mat4 handOffsetLeft = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-180.f), { 1, 0, 0 });
+			glm::mat4 handOffsetRight = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-180.f), { 1, 0, 0 });
+
+			handOffsetLeft = glm::rotate(handOffsetLeft, glm::radians(-90.f), { 0, 0, 1 });
+			handOffsetRight = glm::rotate(handOffsetRight, glm::radians(90.f), { 0, 0, 1 });
+
+			if (isRight) {
+				pose *= handOffsetRight;
+			} else {
+				pose *= handOffsetLeft;
+			}
 		}
 
 		// TODO eMotionRange, if that's even possible

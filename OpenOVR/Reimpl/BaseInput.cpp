@@ -1668,7 +1668,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	}
 
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	locateInfo.baseSpace = legacyControllers[static_cast<int>(hand)].aimPoseSpace;
+	locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
@@ -1710,7 +1710,7 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	locateInfo.baseSpace = legacyControllers[hand].aimPoseSpace;
+	locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };

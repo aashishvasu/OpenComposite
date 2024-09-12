@@ -167,6 +167,8 @@ public:
 	typedef OOVR_EVRSummaryType EVRSummaryType;
 	typedef OOVR_VRSkeletalSummaryData_t VRSkeletalSummaryData_t;
 
+	XrHandTrackerEXT handTrackers[2] = { XR_NULL_HANDLE, XR_NULL_HANDLE };
+
 	// ---------------  Handle management   --------------- //
 
 	/** Sets the path to the action manifest JSON file that is used by this application. If this information
@@ -760,8 +762,6 @@ private:
 
 	void ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output);
 	void ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* out_transforms);
-
-	XrHandTrackerEXT handTrackers[2] = { XR_NULL_HANDLE, XR_NULL_HANDLE };
 
 	// Utility functions
 	Action* cast_AH(VRActionHandle_t);

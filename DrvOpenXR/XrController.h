@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Misc/Input/InteractionProfile.h"
+#include "../OpenOVR/Reimpl/BaseInput.h"
 #include "XrTrackedDevice.h"
 
 class XrController : public XrTrackedDevice {
@@ -16,6 +17,7 @@ public:
 	TrackedDeviceType GetHand() override;
 
 	void GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t* pose, ETrackingStateType trackingState) override;
+	bool GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePose_t* pose);
 
 	vr::ETrackedDeviceClass GetTrackedDeviceClass() override;
 
