@@ -38,8 +38,8 @@ public:
 	 *  called before calling either Invoke or ovr_CommitTextureSwapChain, and ResetSubmitContext after
 	 *  calling both of them.
 	 */
-	virtual void LoadSubmitContext(){};
-	virtual void ResetSubmitContext(){};
+	virtual void LoadSubmitContext() {};
+	virtual void ResetSubmitContext() {};
 
 protected:
 	virtual void CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye> eye, vr::EVRSubmitFlags submitFlags) = 0;

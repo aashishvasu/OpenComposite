@@ -145,6 +145,9 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 
 			pose = glm::affineInverse(parentPose) * pose;
 		} else {
+			// We're now taking hand data at face value for full fidelity hand tracking (LeapMotion, Mercury, Quest Hand Tracking)
+			// and need to apply these to the root bone. I'm honestly unsure *why* it's so horribly offset, including position, but it is what it is.
+			// This looks pretty natural on index and quest hand tracking.
 			pose = glm::identity<glm::mat4>();
 
 			glm::mat4 handOffsetLeft = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-180.f), { 1, 0, 0 });

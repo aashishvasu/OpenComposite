@@ -202,7 +202,7 @@ bool XrController::GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePo
 {
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking)
 		return false;
-	
+
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
 	locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
@@ -217,7 +217,6 @@ bool XrController::GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePo
 	std::vector<XrHandJointLocationEXT> jointLocations(locations.jointCount);
 	locations.jointLocations = jointLocations.data();
 	locations.next = &velocities;
-
 
 	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(input->handTrackers[(int)GetHand()], &locateInfo, &locations));
 
