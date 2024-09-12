@@ -1,6 +1,10 @@
+#include "Misc/xrmoreutils.h"
 #include "stdafx.h"
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 #define BASE_IMPL
 #include "BaseInput.h"
+#include "BaseInput_HandPoses.hpp"
 
 #include <convert.h>
 
@@ -10,6 +14,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include <optional>
+#include <ranges>
 
 // Think of this file as just a part of BaseInput.cpp.
 // It's split out in pursuit of lower compile times.
@@ -194,4 +199,129 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 	// clang-format on
 
 	// TODO aux bones - they're equal to the distal bones but always use VRSkeletalTransformSpace_Model mode
+}
+
+namespace {
+// The estimated poses are given in terms of root being located at (0, 0, 0), i.e, the wrist will
+// start where the grip pose starts. However, the OpenXR spec specifies that the grip pose is
+// supposed to roughly line up with the palm centroid, so this (arbitrary) constant will
+// slide the bone poses back to meet this expectation.
+constexpr float handZDisplacement = 0.2;
+// How much trigger/grip needs to be pressed before simulating fingers curling
+constexpr float simulateCurlThreshold = 0.08;
+
+} // namespace
+
+EVRInputError BaseInput::getEstimatedBoneData(
+    ITrackedDevice::TrackedDeviceType hand,
+    EVRSkeletalTransformSpace transformSpace,
+    std::span<VRBoneTransform_t, eBone_Count> boneData)
+{
+	auto& controller = legacyControllers[hand];
+
+	XrActionStateGetInfo info{
+		.type = XR_TYPE_ACTION_STATE_GET_INFO,
+		.action = controller.trigger,
+		.subactionPath = XR_NULL_PATH,
+	};
+	XrActionStateFloat state{ XR_TYPE_ACTION_STATE_FLOAT };
+	XrResult actionRes = xrGetActionStateFloat(xr_session.get(), &info, &state);
+
+	float trigger_pct = 0.0f;
+	if (XR_SUCCEEDED(actionRes) && state.currentState >= simulateCurlThreshold) {
+		trigger_pct = state.currentState;
+	} else if (XR_FAILED(actionRes)) {
+		OOVR_LOGF("WARNING: couldn't get trigger percentage (%d)", actionRes);
+	}
+
+	info.action = controller.grip;
+	actionRes = xrGetActionStateFloat(xr_session.get(), &info, &state);
+	float grip_pct = 0.0f;
+	if (XR_SUCCEEDED(actionRes) && state.currentState >= simulateCurlThreshold) {
+		grip_pct = state.currentState;
+	} else if (XR_FAILED(actionRes)) {
+		OOVR_LOGF("WARNING: couldn't get grip percentage (%d)", actionRes);
+	}
+
+	auto boneDataGen = [trigger_pct, grip_pct](const BoneArray& bindPose, const BoneArray& squeezePose, const BoneArray& openHandPose) {
+		return std::ranges::iota_view(0, static_cast<int>(eBone_Count)) | std::views::transform([=](int bone_index) {
+			auto bone = bindPose[bone_index];
+			// set pointer and thumb straight on grip
+			if (bone_index <= eBone_IndexFinger4 && grip_pct > 0.0f && trigger_pct == 0.0f) {
+				bone = openHandPose[bone_index];
+			}
+
+			// set all fingers to fist on trigger (and last 3 fingers on grip)
+			float bend_pct = (bone_index > eBone_IndexFinger4 && grip_pct > 0.0f) ? grip_pct : trigger_pct;
+			if (bend_pct > 0.0f) {
+				const glm::vec3 startPos(bone.position.v[0], bone.position.v[1], bone.position.v[2]);
+				const glm::quat startRot(bone.orientation.w, bone.orientation.x, bone.orientation.y, bone.orientation.z);
+
+				const auto squeezeBone = squeezePose[bone_index];
+				const glm::vec3 fistPos(squeezeBone.position.v[0], squeezeBone.position.v[1], squeezeBone.position.v[2]);
+				const glm::quat fistRot(squeezeBone.orientation.w, squeezeBone.orientation.x, squeezeBone.orientation.y, squeezeBone.orientation.z);
+
+				// interpolate between bind pose and fist
+				const glm::vec3 resPos = glm::mix(startPos, fistPos, bend_pct);
+				const glm::quat resRot = glm::mix(startRot, fistRot, bend_pct);
+				bone.position = { resPos.x, resPos.y, resPos.z, 1.f };
+				bone.orientation = { resRot.w, resRot.x, resRot.y, resRot.z };
+			}
+
+			return bone;
+		});
+	};
+
+	auto modelSpaceZDisplace = std::views::transform([](const auto& bone) {
+		auto ret = bone;
+		ret.position.v[2] += handZDisplacement;
+		return ret;
+	});
+
+	switch (hand) {
+	case ITrackedDevice::HAND_LEFT: {
+		switch (transformSpace) {
+		case VRSkeletalTransformSpace_Model: {
+			std::ranges::copy(
+			    boneDataGen(left_hand::bindPoseModelSpace, left_hand::squeezeModelSpace, left_hand::openHandModelSpace)
+			        | modelSpaceZDisplace,
+			    boneData.begin());
+			break;
+		}
+		case VRSkeletalTransformSpace_Parent: {
+			std::ranges::copy(
+			    boneDataGen(left_hand::bindPoseParentSpace, left_hand::squeezeParentSpace, left_hand::openHandParentSpace),
+			    boneData.begin());
+			boneData[eBone_Root].position.v[2] -= handZDisplacement;
+			break;
+		}
+		}
+		break;
+	}
+	case ITrackedDevice::HAND_RIGHT: {
+		switch (transformSpace) {
+		case VRSkeletalTransformSpace_Model: {
+			std::ranges::copy(
+			    boneDataGen(right_hand::bindPoseModelSpace, right_hand::squeezeModelSpace, right_hand::openHandModelSpace)
+			        | modelSpaceZDisplace,
+			    boneData.begin());
+			break;
+		}
+		case VRSkeletalTransformSpace_Parent: {
+			std::ranges::copy(
+			    boneDataGen(right_hand::bindPoseParentSpace, right_hand::squeezeParentSpace, right_hand::openHandParentSpace),
+			    boneData.begin());
+			boneData[eBone_Root].position.v[2] -= handZDisplacement;
+			break;
+		}
+		}
+		break;
+	}
+	default: {
+		OOVR_LOGF("WARNING: Not a hand: %d", hand);
+		return vr::VRInputError_InvalidHandle;
+	}
+	}
+
+	return vr::VRInputError_None;
 }

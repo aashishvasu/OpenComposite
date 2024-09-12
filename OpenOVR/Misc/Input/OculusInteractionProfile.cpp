@@ -141,6 +141,11 @@ std::optional<const char*> OculusTouchInteractionProfile::GetOpenVRName() const
 	return "oculus_touch";
 }
 
+std::optional<vr::EVRSkeletalTrackingLevel> OculusTouchInteractionProfile::GetOpenVRTrackinglevel() const
+{
+	return vr::VRSkeletalTracking_Estimated;
+}
+
 const InteractionProfile::LegacyBindings* OculusTouchInteractionProfile::GetLegacyBindings(const std::string& handPath) const
 {
 	static LegacyBindings allBindings[2] = { {}, {} };

@@ -1,4 +1,5 @@
 #include "HolographicInteractionProfile.h"
+#include "generated/interfaces/vrtypes.h"
 
 HolographicInteractionProfile::HolographicInteractionProfile()
 {
@@ -63,6 +64,11 @@ std::optional<const char*> HolographicInteractionProfile::GetRightHandRenderMode
 std::optional<const char*> HolographicInteractionProfile::GetOpenVRName() const
 {
 	return "holographic_controller";
+}
+
+std::optional<vr::EVRSkeletalTrackingLevel> HolographicInteractionProfile::GetOpenVRTrackinglevel() const
+{
+	return vr::VRSkeletalTracking_Estimated;
 }
 
 const InteractionProfile::LegacyBindings* HolographicInteractionProfile::GetLegacyBindings(const std::string& handPath) const

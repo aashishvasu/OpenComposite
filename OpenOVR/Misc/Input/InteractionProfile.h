@@ -118,6 +118,11 @@ public:
 	virtual std::optional<const char*> GetOpenVRName() const = 0;
 
 	/**
+	 * Returns the skeletal fidelity for the controller type.
+	 */
+	virtual std::optional<vr::EVRSkeletalTrackingLevel> GetOpenVRTrackinglevel() const = 0;
+
+	/**
 	 * Whether the profile supports bindings or not.
 	 */
 	virtual bool CanHaveBindings() const { return true; }

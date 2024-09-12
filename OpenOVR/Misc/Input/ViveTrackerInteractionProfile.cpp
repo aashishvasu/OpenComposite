@@ -36,6 +36,11 @@ std::optional<const char*> ViveTrackerInteractionProfile::GetOpenVRName() const
 	return "vive_tracker";
 }
 
+std::optional<vr::EVRSkeletalTrackingLevel> ViveTrackerInteractionProfile::GetOpenVRTrackinglevel() const
+{
+	return vr::VRSkeletalTracking_Estimated;
+}
+
 bool ViveTrackerInteractionProfile::CanHaveBindings() const
 {
 	// generic trackers do not support any actions, therefore no bindings.

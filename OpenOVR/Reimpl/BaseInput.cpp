@@ -4,6 +4,7 @@
 #include "json/json.h"
 #define BASE_IMPL
 #include "BaseInput.h"
+#include "BaseInput_HandPoses.hpp"
 #include <string>
 
 #include <convert.h>
@@ -1601,17 +1602,32 @@ EVRInputError BaseInput::GetBoneName(VRActionHandle_t action, BoneIndex_t nBoneI
 {
 	STUBBED();
 }
-EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalReferencePose eReferencePose, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
+EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionHandle, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalReferencePose eReferencePose, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
 	OOVR_SOFT_ABORT("Skeletal reference transforms not implemented");
 	return vr::VRInputError_InvalidSkeleton;
+	// TODO: figure out why returning transforms here causes Alyx to freeze...
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel)
 {
-	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
-		// We can't know if this should be partial or full, but I'm guessing
-		// applications don't care too much in practice
-		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Full;
+	GET_ACTION_FROM_HANDLE(act, action);
+
+	if (act->skeletalHand == ITrackedDevice::HAND_NONE)
+		return vr::VRInputError_InvalidHandle;
+
+	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+	if (!dev)
+		return vr::VRInputError_InvalidDevice;
+
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+	if (profile) {
+		std::optional<vr::EVRSkeletalTrackingLevel> level = profile->GetOpenVRTrackinglevel();
+		if (level.has_value()) {
+			*pSkeletalTrackingLevel = static_cast<vr::EVRSkeletalTrackingLevel>(level.value());
+			return vr::VRInputError_None;
+		} else {
+			*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Estimated;
+		}
 	} else {
 		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Estimated;
 	}
@@ -1644,20 +1660,14 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	// Check for the right number of bones
 	OOVR_FALSE_ABORT(unTransformArrayCount == 31);
 
-	// If there's no action, leave the transforms zeroed out
-	if (action == nullptr) {
-		return vr::VRInputError_None;
-	}
-
-	// If the runtime doesn't support hand-tracking, leave the data zeroed out. We should eventually
-	// make our own data in this case.
+	const auto hand = action->skeletalHand;
+	OOVR_FALSE_ABORT(static_cast<int>(hand) < 2);
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
-		OOVR_SOFT_ABORT("Runtime does not support hand-tracking, skeletal data unavailable");
-		return vr::VRInputError_None;
+		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	locateInfo.baseSpace = legacyControllers[(int)action->skeletalHand].aimPoseSpace;
+	locateInfo.baseSpace = legacyControllers[static_cast<int>(hand)].aimPoseSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
@@ -1668,8 +1678,8 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(handTrackers[(int)action->skeletalHand], &locateInfo, &locations));
 
 	if (!locations.isActive) {
-		// Leave empty-handed, IDK if this is the right error or not
-		return vr::VRInputError_InvalidSkeleton;
+		// Fallback to estimated bone data (e.g. for controllers)
+		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);

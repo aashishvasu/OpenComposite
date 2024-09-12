@@ -567,3 +567,11 @@ set_target_properties(OCOVR PROPERTIES
 get_target_property(output_dir OCOVR LIBRARY_OUTPUT_DIRECTORY)
 add_custom_command(TARGET OCOVR
 	PRE_LINK COMMAND ${CMAKE_COMMAND} -E make_directory ${output_dir})
+
+# Installation
+include(GNUInstallDirs)
+install(TARGETS OCOVR
+	LIBRARY
+	DESTINATION "${PROJECT_NAME}/${VRCLIENT_DIR}"
+	COMPONENT Runtime
+)
