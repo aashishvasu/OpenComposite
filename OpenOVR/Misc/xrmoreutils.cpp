@@ -40,7 +40,7 @@ bool xr_utils::PoseFromHandTracking(vr::TrackedDevicePose_t* pose, XrHandJointLo
 	XrHandJointLocationEXT location = locations.jointLocations[boneToUse];
 	XrHandJointVelocityEXT velocity = velocities.jointVelocities[boneToUse];
 
-	bool positionTracked = (location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT != 0);
+	bool positionTracked = location.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT != 0);
 
 	if (!locations.isActive || !positionTracked) {
 		return false;
