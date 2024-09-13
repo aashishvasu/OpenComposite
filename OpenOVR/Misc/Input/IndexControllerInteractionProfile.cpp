@@ -56,6 +56,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		{ "grip/touch", "squeeze/value" },
 		{ "grip/value", "squeeze/value" },
 		{ "grip/grab", "squeeze/value" },
+		{ "grip/pull", "squeeze/value" },
 	};
 
 	this->hmdPropertiesMap = {
