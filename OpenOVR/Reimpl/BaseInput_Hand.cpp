@@ -150,17 +150,14 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 			// This looks pretty natural on index and quest hand tracking.
 			pose = glm::identity<glm::mat4>();
 
-			glm::mat4 handOffsetLeft = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-180.f), { 1, 0, 0 });
-			glm::mat4 handOffsetRight = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-180.f), { 1, 0, 0 });
+			//invert translation we did to the grip pose
+			pose = glm::translate(pose, {isRight ? 0.05f : -0.05f, 0.0f, 0.1f});
 
-			handOffsetLeft = glm::rotate(handOffsetLeft, glm::radians(-90.f), { 0, 0, 1 });
-			handOffsetRight = glm::rotate(handOffsetRight, glm::radians(90.f), { 0, 0, 1 });
+			pose = glm::rotate(pose, glm::radians(90.f + 25.f), { 1, 0, 0 });
+			pose = glm::rotate(pose, glm::radians(195.f), { 0, 0, 1 });
+			//pose = glm::rotate(pose, glm::radians(25.f), { 0, 1, 0 });
 
-			if (isRight) {
-				pose *= handOffsetRight;
-			} else {
-				pose *= handOffsetLeft;
-			}
+			pose = glm::translate(pose, { 0, 0, -0.05f });
 		}
 
 		// TODO eMotionRange, if that's even possible

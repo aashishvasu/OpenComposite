@@ -203,6 +203,9 @@ bool XrController::GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePo
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking)
 		return false;
 
+	if (!input->handTrackers[(int)GetHand()])
+		return false;
+
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
 	locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
@@ -220,7 +223,7 @@ bool XrController::GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePo
 
 	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(input->handTrackers[(int)GetHand()], &locateInfo, &locations));
 
-	return xr_utils::PoseFromHandTracking(pose, locations, velocities);
+	return xr_utils::PoseFromHandTracking(pose, locations, velocities, GetHand() == HAND_RIGHT);
 }
 
 vr::ETrackedDeviceClass XrController::GetTrackedDeviceClass()

@@ -8,6 +8,8 @@
 
 #include "generated/interfaces/vrtypes.h"
 #include <glm/mat4x4.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/orthonormalize.hpp>
 #include <openxr/openxr.h>
 #include <optional>
 
@@ -16,5 +18,7 @@ namespace xr_utils {
 void PoseFromSpace(vr::TrackedDevicePose_t* pose, XrSpace space, vr::ETrackingUniverseOrigin origin,
     std::optional<glm::mat4> extraTransform = {});
 
-bool PoseFromHandTracking(vr::TrackedDevicePose_t* pose, XrHandJointLocationsEXT locations, XrHandJointVelocitiesEXT velocities);
+bool PoseFromHandTracking(vr::TrackedDevicePose_t* pose, XrHandJointLocationsEXT locations, XrHandJointVelocitiesEXT velocities, bool isRight);
+
+bool PoseFromHandTrackingWithoutVelocity(vr::TrackedDevicePose_t* pose, const std::vector<XrHandJointLocationEXT>&, bool isRight);
 } // namespace xr_utils
