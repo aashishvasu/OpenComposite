@@ -19,6 +19,4 @@ void PoseFromSpace(vr::TrackedDevicePose_t* pose, XrSpace space, vr::ETrackingUn
     std::optional<glm::mat4> extraTransform = {});
 
 bool PoseFromHandTracking(vr::TrackedDevicePose_t* pose, XrHandJointLocationsEXT locations, XrHandJointVelocitiesEXT velocities, bool isRight);
-
-bool PoseFromHandTrackingWithoutVelocity(vr::TrackedDevicePose_t* pose, const std::vector<XrHandJointLocationEXT>&, bool isRight);
 } // namespace xr_utils

@@ -153,9 +153,9 @@ void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>
 			//invert translation we did to the grip pose
 			pose = glm::translate(pose, {isRight ? 0.05f : -0.05f, 0.0f, 0.1f});
 
+			//some needed rotations
 			pose = glm::rotate(pose, glm::radians(90.f + 25.f), { 1, 0, 0 });
 			pose = glm::rotate(pose, glm::radians(195.f), { 0, 0, 1 });
-			//pose = glm::rotate(pose, glm::radians(25.f), { 0, 1, 0 });
 
 			pose = glm::translate(pose, { 0, 0, -0.05f });
 		}
