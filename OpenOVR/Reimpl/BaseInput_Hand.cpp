@@ -88,15 +88,6 @@ static void vectorRotate(XrVector3f* dst, const XrQuaternionf& a, const XrVector
 	dst->z = aqaInv.z;
 }
 
-static glm::mat4 readBoneTransform(const vr::VRBoneTransform_t& src)
-{
-	glm::quat srcQuat;
-	quaternionCopy(src.orientation, srcQuat);
-	glm::mat4 pose = glm::mat4_cast(srcQuat);
-	pose[3] = { src.position.v[0], src.position.v[1], src.position.v[2], 1.f };
-	return pose;
-}
-
 static bool isBoneMetacarpal(XrHandJointEXT handJoint)
 {
 	return handJoint == XR_HAND_JOINT_THUMB_METACARPAL_EXT || handJoint == XR_HAND_JOINT_INDEX_METACARPAL_EXT || handJoint == XR_HAND_JOINT_MIDDLE_METACARPAL_EXT || handJoint == XR_HAND_JOINT_RING_METACARPAL_EXT || handJoint == XR_HAND_JOINT_LITTLE_METACARPAL_EXT;
