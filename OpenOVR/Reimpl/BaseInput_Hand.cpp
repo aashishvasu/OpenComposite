@@ -1,5 +1,6 @@
 #include "Misc/xrmoreutils.h"
 #include "stdafx.h"
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/quaternion.hpp>
 #define BASE_IMPL

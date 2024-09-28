@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/matrix_inverse.hpp>
 #include <locale>
 #include <map>
