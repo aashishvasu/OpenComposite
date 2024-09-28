@@ -32,6 +32,62 @@ static void quaternionCopy(const T& src, U& dst)
 	dst.w = src.w;
 }
 
+static void quaternionInverse(XrQuaternionf* result, const XrQuaternionf& src)
+{
+	result->x = -src.x;
+	result->y = -src.y;
+	result->z = -src.z;
+	result->w = src.w;
+}
+
+static void quaternionMultiply(XrQuaternionf* dst, const XrQuaternionf& a, const XrQuaternionf& b)
+{
+	dst->x = (b.w * a.x) + (b.x * a.w) + (b.y * a.z) - (b.z * a.y);
+	dst->y = (b.w * a.y) - (b.x * a.z) + (b.y * a.w) + (b.z * a.x);
+	dst->z = (b.w * a.z) + (b.x * a.y) - (b.y * a.x) + (b.z * a.w);
+	dst->w = (b.w * a.w) - (b.x * a.x) - (b.y * a.y) - (b.z * a.z);
+}
+
+static XrQuaternionf ApplyBoneHandTransform(XrQuaternionf quat, bool isRight)
+{
+	std::swap(quat.x, quat.z);
+	quat.z *= -1.f;
+	if (isRight) {
+		return quat;
+	}
+
+	quat.x *= -1.f;
+	quat.y *= -1.f;
+	return quat;
+}
+
+static void vectorSubtract(XrVector3f* dst, XrVector3f a, XrVector3f b)
+{
+	dst->x = a.x - b.x;
+	dst->y = a.y - b.y;
+	dst->z = a.z - b.z;
+}
+
+static float vectorLength(const XrVector3f& a)
+{
+	return sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+}
+
+static void vectorRotate(XrVector3f* dst, const XrQuaternionf& a, const XrVector3f& v)
+{
+	XrQuaternionf q = { v.x, v.y, v.z, 0.f };
+	XrQuaternionf aq;
+	quaternionMultiply(&aq, q, a);
+	XrQuaternionf aInv;
+	quaternionInverse(&aInv, a);
+	XrQuaternionf aqaInv;
+	quaternionMultiply(&aqaInv, aInv, aq);
+
+	dst->x = aqaInv.x;
+	dst->y = aqaInv.y;
+	dst->z = aqaInv.z;
+}
+
 static glm::mat4 readBoneTransform(const vr::VRBoneTransform_t& src)
 {
 	glm::quat srcQuat;
@@ -41,179 +97,170 @@ static glm::mat4 readBoneTransform(const vr::VRBoneTransform_t& src)
 	return pose;
 }
 
-// Games that use this:
-// * NeosVR
-// Any others? Please add them to the list!
-void BaseInput::ConvertHandModelSpace(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
+static bool isBoneMetacarpal(XrHandJointEXT handJoint)
 {
-	// The root bone should just be left at identity? TODO check SteamVR
-	output[eBone_Root].orientation = vr::HmdQuaternionf_t{ /* w */ 1, 0, 0, 0 };
-	output[eBone_Root].position = vr::HmdVector4_t{ 0, 0, 0, 1 };
-
-	// Note: go to https://gltf-viewer.donmccurdy.com/ and load up the hand glTF model from the test suite
-	// Turn the axes on and compare it to the OpenXR hand tracking extension diagram:
-	// https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html#_conventions_of_hand_joints
-
-	// We need to apply a local transform to the coordinate spaces of the non-thumb fingers. This is because
-	// the bones are set up in such a way that their local-to-the-bone coordinate system that the geometry works
-	// in varies between SteamVR and OpenXR. Oddly this is rotated 90deg around the Y axis (local to that bone),
-	// which suggests it's not caused by rotating the bone.
-	// This has to be the first transform applied when calculating the bone's rotation, since it needs to rotate
-	// in the bone's local space rather than in model space.
-	glm::mat4 localTransform = glm::rotate(glm::identity<glm::mat4>(), glm::radians(-90.f), { 0, 1, 0 });
-
-	// The wrist bone has it's own special transform, with all axes negated
-	glm::mat4 rightWristTransform = glm::zero<glm::mat4>();
-	rightWristTransform[1][0] = -1;
-	rightWristTransform[0][1] = -1;
-	rightWristTransform[2][2] = -1;
-	rightWristTransform[3][3] = 1;
-
-	// Wrists are a special case of being different between sides
-	glm::mat4 leftWristTransform = glm::zero<glm::mat4>();
-	leftWristTransform[1][0] = 1;
-	leftWristTransform[0][1] = 1;
-	leftWristTransform[2][2] = -1;
-	leftWristTransform[3][3] = 1;
-
-	// And the left hand gets it's own special transform
-	glm::mat4 leftHandTransform = glm::scale(glm::identity<glm::mat4>(), { -1, -1, 1 });
-
-	for (int XrId = XR_HAND_JOINT_WRIST_EXT; XrId <= XR_HAND_JOINT_LITTLE_TIP_EXT; XrId++) {
-		const XrHandJointLocationEXT& this_joint = joints[XrId];
-		glm::mat4 pose = X2G_om34_pose(this_joint.pose);
-
-		// Not a bug - xrIds match vrIds except for palm pose and aux bones.
-		vr::VRBoneTransform_t& out = output[XrId];
-
-		// Position is easy enough...
-		out.position = { pose[3][0], pose[3][1], pose[3][2], 1.f };
-
-		// But the transform to correct the bone's local coordinate system varies between bones, so add
-		// that in here. It's also different on the left and right hands.
-		if (XrId == XR_HAND_JOINT_WRIST_EXT) {
-			if (isRight) {
-				pose *= rightWristTransform;
-			} else {
-				pose *= leftWristTransform;
-			}
-		} else {
-			pose *= localTransform;
-
-			if (!isRight) {
-				pose *= leftHandTransform;
-			}
-		}
-
-		glm::quat out_rotation(pose);
-		quaternionCopy(out_rotation, out.orientation);
-	}
-
-	OOVR_SOFT_ABORT("Aux bones not yet implemented!");
+	return handJoint == XR_HAND_JOINT_THUMB_METACARPAL_EXT || handJoint == XR_HAND_JOINT_INDEX_METACARPAL_EXT || handJoint == XR_HAND_JOINT_MIDDLE_METACARPAL_EXT || handJoint == XR_HAND_JOINT_RING_METACARPAL_EXT || handJoint == XR_HAND_JOINT_LITTLE_METACARPAL_EXT;
 }
 
-// END MODEL POSE STUFF
+static std::map<HandSkeletonBone, XrHandJointEXT> auxBoneMap = {
+	{ eBone_Aux_Thumb, XR_HAND_JOINT_THUMB_DISTAL_EXT },
+	{ eBone_Aux_IndexFinger, XR_HAND_JOINT_INDEX_DISTAL_EXT },
+	{ eBone_Aux_MiddleFinger, XR_HAND_JOINT_MIDDLE_DISTAL_EXT },
+	{ eBone_Aux_RingFinger, XR_HAND_JOINT_RING_DISTAL_EXT },
+	{ eBone_Aux_PinkyFinger, XR_HAND_JOINT_LITTLE_DISTAL_EXT },
+};
 
-// RELATIVE POSE STUFF
-
-// This is just exactly what OC did before. It probably doesn't do the right thing.
-void BaseInput::ConvertHandParentSpace(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* out_transforms)
+static bool GetJointRelative(const XrHandJointLocationEXT& currentJoint, const XrHandJointLocationEXT& parentJoint, bool isRight, vr::VRBoneTransform_t& outBoneTransform)
 {
-	// First, get everything into the SteamVR coordinate system, to avoid duplicating the delicate space conversion system
-	VRBoneTransform_t modelRelative[31];
-	ConvertHandModelSpace(joints, isRight, modelRelative);
+	XrQuaternionf quatInvParent;
+	quaternionInverse(&quatInvParent, parentJoint.pose.orientation);
+	XrQuaternionf quatDiffXR;
+	quaternionMultiply(&quatDiffXR, currentJoint.pose.orientation, quatInvParent);
 
-	// Load the data into the output bones, with the correct mapping
-	std::optional<XrHandJointEXT> parentId;
-	auto mapBone = [&](XrHandJointEXT xrId, int vrId) {
-		OOVR_FALSE_ABORT(vrId < 31);
-		const vr::VRBoneTransform_t& src = modelRelative[xrId];
-		vr::VRBoneTransform_t& out = out_transforms[vrId];
+	XrQuaternionf quatDiffVR = ApplyBoneHandTransform(quatDiffXR, isRight);
+	quaternionCopy(quatDiffVR, outBoneTransform.orientation);
 
-		// Read the model-relative transform
-		glm::mat4 pose = readBoneTransform(src);
+	XrVector3f vecDiffFromParent;
+	vectorSubtract(&vecDiffFromParent, currentJoint.pose.position, parentJoint.pose.position);
 
-		// All the OpenXR transforms are relative to the space we specified as baseSpace, in this case the grip pose. If the
-		// application wants each bone's transform relative to it's parent, apply that now.
-		// If this bone is the root bone (parentId is not set), then it's the same in either space mode.
-		// Get the required transform from:
-		// Tbone_in_model = Tparent_in_model * Tbone_in_parent
-		// inv(Tparent_in_model) * Tbone_in_model = Tbone_in_parent
-		if (parentId) {
-			const vr::VRBoneTransform_t& parent = modelRelative[parentId.value()];
-			glm::mat4 parentPose = readBoneTransform(parent);
+	float boneLength = vectorLength(vecDiffFromParent);
+	outBoneTransform.position = { boneLength, 0.f, 0.f, 1 };
 
-			pose = glm::affineInverse(parentPose) * pose;
-		} else {
-			// We're now taking hand data at face value for full fidelity hand tracking (LeapMotion, Mercury, Quest Hand Tracking)
-			// and need to apply these to the root bone. I'm honestly unsure *why* it's so horribly offset, including position, but it is what it is.
-			// This looks pretty natural on index and quest hand tracking.
-			pose = glm::identity<glm::mat4>();
+	if (isRight) {
+		outBoneTransform.position.v[0] *= -1;
+	}
 
-			//invert translation we did to the grip pose
-			pose = glm::translate(pose, {isRight ? 0.05f : -0.05f, 0.0f, 0.1f});
+	return true;
+}
 
-			//some needed rotations
-			pose = glm::rotate(pose, glm::radians(90.f + 25.f), { 1, 0, 0 });
-			pose = glm::rotate(pose, glm::radians(195.f), { 0, 0, 1 });
+static vr::VRBoneTransform_t leftOpenPose[2] = {
+	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, 0.000000f, 0.000000f, 0.000000f } },
+	{ { -0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, -0.920279f, 0.379296f } },
+};
 
-			pose = glm::translate(pose, { 0, 0, -0.05f });
+static vr::VRBoneTransform_t rightOpenPose[2] = {
+	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, -0.000000f, -0.000000f, 0.000000f } },
+	{ { 0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, 0.920279f, -0.379296f } },
+};
+
+static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+{
+	for (int joint :
+	    {
+	        XR_HAND_JOINT_THUMB_METACARPAL_EXT,
+	        XR_HAND_JOINT_INDEX_METACARPAL_EXT,
+	        XR_HAND_JOINT_MIDDLE_METACARPAL_EXT,
+	        XR_HAND_JOINT_RING_METACARPAL_EXT,
+	        XR_HAND_JOINT_LITTLE_METACARPAL_EXT }) {
+
+		const XrHandJointLocationEXT& currentJoint = joints[joint];
+		const XrHandJointLocationEXT& parentJoint = joints[XR_HAND_JOINT_WRIST_EXT];
+
+		if (currentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0) || parentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0))
+			return false;
+
+		XrQuaternionf quatInvParent;
+		quaternionInverse(&quatInvParent, parentJoint.pose.orientation);
+		XrQuaternionf quatDiffXR;
+		quaternionMultiply(&quatDiffXR, currentJoint.pose.orientation, quatInvParent);
+
+		XrQuaternionf quatDiffVR = ApplyBoneHandTransform(quatDiffXR, isRight);
+
+		XrQuaternionf quatMagic;
+		quatMagic.w = 0.5f;
+		quatMagic.x = 0.5f;
+		quatMagic.y = -0.5f;
+		quatMagic.z = 0.5f;
+
+		if (isRight) {
+			quatMagic.x *= -1;
+			quatMagic.y *= -1;
 		}
 
-		// TODO eMotionRange, if that's even possible
+		XrQuaternionf quatFinalDiff;
+		quaternionMultiply(&quatFinalDiff, quatDiffVR, quatMagic);
 
-		glm::quat rotation(pose);
-		out.position = vr::HmdVector4_t{ pose[3][0], pose[3][1], pose[3][2], 1.f }; // What's the fourth value for?
-		quaternionCopy(rotation, out.orientation);
+		quaternionCopy(quatFinalDiff, output[joint].orientation);
 
-		// Update the parent to make it convenient to declare bones moving towards the finger tip
-		parentId = xrId;
-	};
+		XrVector3f vecDiffFromParent;
+		vectorSubtract(&vecDiffFromParent, currentJoint.pose.position, parentJoint.pose.position);
 
-	// Set up the root bone
-	out_transforms[0].orientation = vr::HmdQuaternionf_t{ /* w */ 1, 0, 0, 0 };
-	out_transforms[0].position = vr::HmdVector4_t{ 0, 0, 0, 1 };
+		XrVector3f vecWristRel;
+		vectorRotate(&vecWristRel, quatInvParent, vecDiffFromParent);
 
-	parentId = {};
-	mapBone(XR_HAND_JOINT_WRIST_EXT, eBone_Wrist);
+		output[joint].position.v[0] = vecWristRel.y;
+		output[joint].position.v[1] = vecWristRel.x;
+		output[joint].position.v[2] = -vecWristRel.z;
+		output[joint].position.v[3] = 1.f;
 
-	// clang-format off
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_THUMB_METACARPAL_EXT, eBone_Thumb0);
-	mapBone(XR_HAND_JOINT_THUMB_PROXIMAL_EXT,   eBone_Thumb1);
-	mapBone(XR_HAND_JOINT_THUMB_DISTAL_EXT,     eBone_Thumb2);
-	mapBone(XR_HAND_JOINT_THUMB_TIP_EXT,        eBone_Thumb3);
+		if (isRight) {
+			output[joint].position.v[0] *= -1;
+			output[joint].position.v[1] *= -1;
+		}
+	}
 
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_INDEX_METACARPAL_EXT,   eBone_IndexFinger0);
-	mapBone(XR_HAND_JOINT_INDEX_PROXIMAL_EXT,     eBone_IndexFinger1);
-	mapBone(XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT, eBone_IndexFinger2);
-	mapBone(XR_HAND_JOINT_INDEX_DISTAL_EXT,       eBone_IndexFinger3);
-	mapBone(XR_HAND_JOINT_INDEX_TIP_EXT,          eBone_IndexFinger4);
+	return true;
+}
 
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_MIDDLE_METACARPAL_EXT,   eBone_MiddleFinger0);
-	mapBone(XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT,     eBone_MiddleFinger1);
-	mapBone(XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT, eBone_MiddleFinger2);
-	mapBone(XR_HAND_JOINT_MIDDLE_DISTAL_EXT,       eBone_MiddleFinger3);
-	mapBone(XR_HAND_JOINT_MIDDLE_TIP_EXT,          eBone_MiddleFinger4);
+static bool FlexionJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+{
+	int parentId = -1;
 
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_RING_METACARPAL_EXT,   eBone_RingFinger0);
-	mapBone(XR_HAND_JOINT_RING_PROXIMAL_EXT,     eBone_RingFinger1);
-	mapBone(XR_HAND_JOINT_RING_INTERMEDIATE_EXT, eBone_RingFinger2);
-	mapBone(XR_HAND_JOINT_RING_DISTAL_EXT,       eBone_RingFinger3);
-	mapBone(XR_HAND_JOINT_RING_TIP_EXT,          eBone_RingFinger4);
+	for (int joint = XR_HAND_JOINT_THUMB_METACARPAL_EXT; joint < XR_HAND_JOINT_COUNT_EXT; joint++) {
+		if (isBoneMetacarpal((XrHandJointEXT)joint)) {
+			parentId = joint;
+			continue;
+		}
 
-	parentId = XR_HAND_JOINT_WRIST_EXT;
-	mapBone(XR_HAND_JOINT_LITTLE_METACARPAL_EXT,   eBone_PinkyFinger0);
-	mapBone(XR_HAND_JOINT_LITTLE_PROXIMAL_EXT,     eBone_PinkyFinger1);
-	mapBone(XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT, eBone_PinkyFinger2);
-	mapBone(XR_HAND_JOINT_LITTLE_DISTAL_EXT,       eBone_PinkyFinger3);
-	mapBone(XR_HAND_JOINT_LITTLE_TIP_EXT,          BaseInput::eBone_PinkyFinger4);
-	// clang-format on
+		const XrHandJointLocationEXT& currentJoint = joints[joint];
+		const XrHandJointLocationEXT& parentJoint = joints[parentId];
 
-	// TODO aux bones - they're equal to the distal bones but always use VRSkeletalTransformSpace_Model mode
+		if (currentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0) || parentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0))
+			return false;
+
+		if (!GetJointRelative(currentJoint, parentJoint, isRight, output[joint]))
+			return false;
+
+		parentId = joint;
+	}
+
+	return true;
+}
+
+static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+{
+	XrHandJointLocationEXT currentJoint;
+	for (int i = eBone_Aux_Thumb; i <= eBone_Aux_PinkyFinger; i++) {
+		currentJoint = joints[auxBoneMap[(HandSkeletonBone)i]];
+
+		if (currentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0) || joints[XR_HAND_JOINT_WRIST_EXT].locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0))
+			return false;
+
+		if (!GetJointRelative(currentJoint, joints[XR_HAND_JOINT_WRIST_EXT], isRight, output[i]))
+			return false;
+	}
+
+	return true;
+}
+
+// OpenXR Hand Joints to OpenVR Hand Skeleton logic generously donated by danwillm from valve.
+// Logic will be adjusted to glm.
+bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+{
+	for (int i : { XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_WRIST_EXT }) {
+		output[i] = isRight ? rightOpenPose[i] : leftOpenPose[i];
+	}
+
+	if (!MetacarpalJointPass(joints, isRight, output, space))
+		return false;
+
+	if (!FlexionJointPass(joints, isRight, output, space))
+		return false;
+
+	if (!AuxJointPass(joints, isRight, output, space))
+		return false;
+
+	return true;
 }
 
 namespace {

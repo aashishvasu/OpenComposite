@@ -1686,11 +1686,9 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
-	if (eTransformSpace == VRSkeletalTransformSpace_Model) {
-		ConvertHandModelSpace(jointLocations, isRight, pTransformArray);
-	} else {
-		ConvertHandParentSpace(jointLocations, isRight, pTransformArray);
-	}
+	// It turns out that the transform space does not matter. Treat everything as parent space. Can be removed.
+	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray, eTransformSpace))
+		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 
 	// For now, just return with non-active data
 	return vr::VRInputError_None;

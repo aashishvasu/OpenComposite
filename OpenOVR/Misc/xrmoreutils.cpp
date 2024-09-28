@@ -37,55 +37,31 @@ bool xr_utils::PoseFromHandTracking(vr::TrackedDevicePose_t* pose, XrHandJointLo
 {
 	const int boneToUse = XR_HAND_JOINT_PALM_EXT;
 
-	XrHandJointLocationEXT location = locations.jointLocations[boneToUse];
+	XrHandJointLocationEXT palmJoint = locations.jointLocations[boneToUse];
 	XrHandJointVelocityEXT velocity = velocities.jointVelocities[boneToUse];
 
-	bool positionTracked = location.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT != 0);
+	bool positionTracked = palmJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT != 0);
 
 	if (!locations.isActive || !positionTracked) {
 		return false;
 	}
 
-	XrHandJointLocationEXT indexPosition = locations.jointLocations[XR_HAND_JOINT_RING_PROXIMAL_EXT];
-	XrHandJointLocationEXT ringPosition = locations.jointLocations[XR_HAND_JOINT_LITTLE_PROXIMAL_EXT];
+	glm::mat4 gripPoseMatrix = X2G_om34_pose(palmJoint.pose);
 
-	glm::vec3 plus_z = X2G_v3f(ringPosition.pose.position) - X2G_v3f(indexPosition.pose.position);
-	glm::vec3 toRotate = {0.0f, isRight ? 1.0f : -1.0f, 0.0f};
-	
-	glm::quat palmOrientation = X2G_quat(location.pose.orientation);
+	glm::mat4 transform = GetMat4x4FromOriginAndEulerRotations(
+	    {
+	        isRight ? -0.09 : 0.09,
+	        -0.03,
+	        -0.09,
+	    },
+	    { 0.0, isRight ? 45.0 : -45.0, isRight ? 90.0 : -90.0 });
 
-	glm::vec3 plus_x = palmOrientation * toRotate;
+	gripPoseMatrix = gripPoseMatrix * transform;
 
-	//in monado this is referred to as "orthonormalize"
-	float amnt = glm::dot(plus_x, plus_z) / glm::dot(plus_z, plus_z);
-	glm::vec3 projected = plus_z * amnt;
-	plus_x = plus_x - projected;
-
-	//normalize plus_x and z
-	plus_x = glm::normalize(plus_x);
-	plus_z = glm::normalize(plus_z);
-
-	//cross product to get y
-	glm::vec3 plus_y = glm::cross(plus_z, plus_x);
-
-	//create a matrix from the vectors
-	glm::mat3 m = glm::mat3(
-		plus_x.x, plus_x.y, plus_x.z,
-		plus_y.x, plus_y.y, plus_y.z,
-		plus_z.x, plus_z.y, plus_z.z);
-
-
-	glm::mat4 mat = glm::identity<glm::mat4>();
-	glm::quat q = glm::quat_cast(m);
-	mat = glm::translate(mat, X2G_v3f(location.pose.position)) * glm::mat4_cast(q);
-	
-	mat = glm::translate(mat, {isRight ? -0.05f : 0.05f, 0.0f, -0.1f});
-
-
+	pose->mDeviceToAbsoluteTracking = G2S_m34(gripPoseMatrix);
 
 	pose->bDeviceIsConnected = true;
 	pose->bPoseIsValid = true;
-	pose->mDeviceToAbsoluteTracking = G2S_m34(mat);
 	pose->eTrackingResult = pose->bPoseIsValid ? vr::TrackingResult_Running_OK : vr::TrackingResult_Running_OutOfRange;
 	pose->vVelocity = X2S_v3f(velocity.linearVelocity); // No offsetting transform - this is in world-space
 	pose->vAngularVelocity = X2S_v3f(velocity.angularVelocity); // TODO find out if this needs a transform
