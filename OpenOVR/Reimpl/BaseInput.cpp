@@ -1721,8 +1721,8 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceTyp
 	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(handTrackers[hand], &locateInfo, &locations));
 
 	if (!locations.isActive) {
-		// Leave empty-handed, IDK if this is the right error or not
-		return vr::VRInputError_InvalidSkeleton;
+		// Fallback to estimated skeletal summary data (e.g. for controllers)
+		return getEstimatedSkeletalSummary(hand, pSkeletalSummaryData);
 	}
 
 	for (int i = 0; i < 5; ++i) {
