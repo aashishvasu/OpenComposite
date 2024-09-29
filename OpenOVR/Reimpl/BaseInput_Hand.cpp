@@ -32,23 +32,8 @@ static void quaternionCopy(const T& src, U& dst)
 	dst.w = src.w;
 }
 
-static void quaternionInverse(XrQuaternionf* result, const XrQuaternionf& src)
-{
-	result->x = -src.x;
-	result->y = -src.y;
-	result->z = -src.z;
-	result->w = src.w;
-}
-
-static void quaternionMultiply(XrQuaternionf* dst, const XrQuaternionf& a, const XrQuaternionf& b)
-{
-	dst->x = (b.w * a.x) + (b.x * a.w) + (b.y * a.z) - (b.z * a.y);
-	dst->y = (b.w * a.y) - (b.x * a.z) + (b.y * a.w) + (b.z * a.x);
-	dst->z = (b.w * a.z) + (b.x * a.y) - (b.y * a.x) + (b.z * a.w);
-	dst->w = (b.w * a.w) - (b.x * a.x) - (b.y * a.y) - (b.z * a.z);
-}
-
-static XrQuaternionf ApplyBoneHandTransform(XrQuaternionf quat, bool isRight)
+// UTILITY FUNCTIONS
+static glm::quat ApplyBoneHandTransform(glm::quat quat, bool isRight)
 {
 	std::swap(quat.x, quat.z);
 	quat.z *= -1.f;
@@ -59,33 +44,6 @@ static XrQuaternionf ApplyBoneHandTransform(XrQuaternionf quat, bool isRight)
 	quat.x *= -1.f;
 	quat.y *= -1.f;
 	return quat;
-}
-
-static void vectorSubtract(XrVector3f* dst, XrVector3f a, XrVector3f b)
-{
-	dst->x = a.x - b.x;
-	dst->y = a.y - b.y;
-	dst->z = a.z - b.z;
-}
-
-static float vectorLength(const XrVector3f& a)
-{
-	return sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
-}
-
-static void vectorRotate(XrVector3f* dst, const XrQuaternionf& a, const XrVector3f& v)
-{
-	XrQuaternionf q = { v.x, v.y, v.z, 0.f };
-	XrQuaternionf aq;
-	quaternionMultiply(&aq, q, a);
-	XrQuaternionf aInv;
-	quaternionInverse(&aInv, a);
-	XrQuaternionf aqaInv;
-	quaternionMultiply(&aqaInv, aInv, aq);
-
-	dst->x = aqaInv.x;
-	dst->y = aqaInv.y;
-	dst->z = aqaInv.z;
 }
 
 static bool isBoneMetacarpal(XrHandJointEXT handJoint)
@@ -101,21 +59,37 @@ static std::map<HandSkeletonBone, XrHandJointEXT> auxBoneMap = {
 	{ eBone_Aux_PinkyFinger, XR_HAND_JOINT_LITTLE_DISTAL_EXT },
 };
 
+constexpr vr::VRBoneTransform_t leftOpenPose[2] = {
+	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, 0.000000f, 0.000000f, 0.000000f } },
+	{ { -0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, -0.920279f, 0.379296f } },
+};
+
+constexpr vr::VRBoneTransform_t rightOpenPose[2] = {
+	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, -0.000000f, -0.000000f, 0.000000f } },
+	{ { 0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, 0.920279f, -0.379296f } },
+};
+
+constexpr XrHandJointEXT metacarpalJoints[5] = {
+	XR_HAND_JOINT_THUMB_METACARPAL_EXT,
+	XR_HAND_JOINT_INDEX_METACARPAL_EXT,
+	XR_HAND_JOINT_MIDDLE_METACARPAL_EXT,
+	XR_HAND_JOINT_RING_METACARPAL_EXT,
+	XR_HAND_JOINT_LITTLE_METACARPAL_EXT
+};
+
+// Transform bones to be relative to their parent
 static bool GetJointRelative(const XrHandJointLocationEXT& currentJoint, const XrHandJointLocationEXT& parentJoint, bool isRight, vr::VRBoneTransform_t& outBoneTransform)
 {
-	XrQuaternionf quatInvParent;
-	quaternionInverse(&quatInvParent, parentJoint.pose.orientation);
-	XrQuaternionf quatDiffXR;
-	quaternionMultiply(&quatDiffXR, currentJoint.pose.orientation, quatInvParent);
+	glm::quat parentOrientationInverse = glm::conjugate(X2G_quat(parentJoint.pose.orientation));
+	glm::quat orientation = parentOrientationInverse * X2G_quat(currentJoint.pose.orientation); 
 
-	XrQuaternionf quatDiffVR = ApplyBoneHandTransform(quatDiffXR, isRight);
-	quaternionCopy(quatDiffVR, outBoneTransform.orientation);
+	// get us in the OpenVR coordinate space
+	orientation = ApplyBoneHandTransform(orientation, isRight);
+	quaternionCopy(orientation, outBoneTransform.orientation);
 
-	XrVector3f vecDiffFromParent;
-	vectorSubtract(&vecDiffFromParent, currentJoint.pose.position, parentJoint.pose.position);
+	glm::vec3 position = X2G_v3f(currentJoint.pose.position) - X2G_v3f(parentJoint.pose.position);
 
-	float boneLength = vectorLength(vecDiffFromParent);
-	outBoneTransform.position = { boneLength, 0.f, 0.f, 1 };
+	outBoneTransform.position = { glm::length(position), 0.f, 0.f, 1 };
 
 	if (isRight) {
 		outBoneTransform.position.v[0] *= -1;
@@ -124,25 +98,9 @@ static bool GetJointRelative(const XrHandJointLocationEXT& currentJoint, const X
 	return true;
 }
 
-static vr::VRBoneTransform_t leftOpenPose[2] = {
-	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, 0.000000f, 0.000000f, 0.000000f } },
-	{ { -0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, -0.920279f, 0.379296f } },
-};
-
-static vr::VRBoneTransform_t rightOpenPose[2] = {
-	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, -0.000000f, -0.000000f, 0.000000f } },
-	{ { 0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, 0.920279f, -0.379296f } },
-};
-
 static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
 {
-	for (int joint :
-	    {
-	        XR_HAND_JOINT_THUMB_METACARPAL_EXT,
-	        XR_HAND_JOINT_INDEX_METACARPAL_EXT,
-	        XR_HAND_JOINT_MIDDLE_METACARPAL_EXT,
-	        XR_HAND_JOINT_RING_METACARPAL_EXT,
-	        XR_HAND_JOINT_LITTLE_METACARPAL_EXT }) {
+	for (int joint : metacarpalJoints) {
 
 		const XrHandJointLocationEXT& currentJoint = joints[joint];
 		const XrHandJointLocationEXT& parentJoint = joints[XR_HAND_JOINT_WRIST_EXT];
@@ -150,39 +108,25 @@ static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joint
 		if (currentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0) || parentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0))
 			return false;
 
-		XrQuaternionf quatInvParent;
-		quaternionInverse(&quatInvParent, parentJoint.pose.orientation);
-		XrQuaternionf quatDiffXR;
-		quaternionMultiply(&quatDiffXR, currentJoint.pose.orientation, quatInvParent);
+		// Everything has to be done relative to its parent. 
+		// It was previously believed this matters if the application doesn't request this, but it doesn't. 
+		// The only Meaningful change is that the hand follows the grip pose of the controller if the `EVRSkeletalTransformSpace` is `VRSkeletalTransformSpace_Model`.
+		glm::quat parentOrientationInverse = glm::inverse(X2G_quat(parentJoint.pose.orientation));
+		glm::quat orientationXr = parentOrientationInverse * X2G_quat(currentJoint.pose.orientation);
 
-		XrQuaternionf quatDiffVR = ApplyBoneHandTransform(quatDiffXR, isRight);
+		// get us in the OpenVR coordinate space
+		glm::quat orientationVr = ApplyBoneHandTransform(orientationXr, isRight);
 
-		XrQuaternionf quatMagic;
-		quatMagic.w = 0.5f;
-		quatMagic.x = 0.5f;
-		quatMagic.y = -0.5f;
-		quatMagic.z = 0.5f;
+		// something to do with Maya apparently, unsure how this works. Something about render models?
+		glm::quat magicRotation = glm::quat(0.5f, isRight ? -0.5f : 0.5, isRight ? 0.5f : -0.5f, 0.5f);
+		orientationVr = magicRotation * orientationVr;
 
-		if (isRight) {
-			quatMagic.x *= -1;
-			quatMagic.y *= -1;
-		}
+		quaternionCopy(orientationVr, output[joint].orientation);
 
-		XrQuaternionf quatFinalDiff;
-		quaternionMultiply(&quatFinalDiff, quatDiffVR, quatMagic);
+		glm::vec3 position = X2G_v3f(currentJoint.pose.position) - X2G_v3f(parentJoint.pose.position);
+		position = glm::rotate(parentOrientationInverse, position);
 
-		quaternionCopy(quatFinalDiff, output[joint].orientation);
-
-		XrVector3f vecDiffFromParent;
-		vectorSubtract(&vecDiffFromParent, currentJoint.pose.position, parentJoint.pose.position);
-
-		XrVector3f vecWristRel;
-		vectorRotate(&vecWristRel, quatInvParent, vecDiffFromParent);
-
-		output[joint].position.v[0] = vecWristRel.y;
-		output[joint].position.v[1] = vecWristRel.x;
-		output[joint].position.v[2] = -vecWristRel.z;
-		output[joint].position.v[3] = 1.f;
+		output[joint].position = { position.y, position.x, -position.z, 1.f }; // What's the fourth value for?
 
 		if (isRight) {
 			output[joint].position.v[0] *= -1;
@@ -235,7 +179,6 @@ static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool
 }
 
 // OpenXR Hand Joints to OpenVR Hand Skeleton logic generously donated by danwillm from valve.
-// Logic will be adjusted to glm.
 bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
 {
 	for (int i : { XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_WRIST_EXT }) {
