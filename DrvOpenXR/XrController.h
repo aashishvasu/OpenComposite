@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../OpenOVR/Reimpl/BaseInput.h"
 #include "Misc/Input/InteractionProfile.h"
 #include "XrTrackedDevice.h"
+
+class BaseInput;
 
 class XrController : public XrTrackedDevice {
 public:

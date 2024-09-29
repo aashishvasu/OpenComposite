@@ -7,8 +7,6 @@
 #pragma once
 
 #include "generated/interfaces/vrtypes.h"
-#include <glm/gtx/orthonormalize.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include <glm/mat4x4.hpp>
 #include <openxr/openxr.h>
 #include <optional>

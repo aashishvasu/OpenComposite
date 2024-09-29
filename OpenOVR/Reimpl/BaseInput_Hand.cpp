@@ -98,7 +98,7 @@ static bool GetJointRelative(const XrHandJointLocationEXT& currentJoint, const X
 	return true;
 }
 
-static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
 	for (int joint : metacarpalJoints) {
 
@@ -137,7 +137,7 @@ static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joint
 	return true;
 }
 
-static bool FlexionJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+static bool FlexionJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
 	int parentId = -1;
 
@@ -162,7 +162,7 @@ static bool FlexionJointPass(const std::vector<XrHandJointLocationEXT>& joints, 
 	return true;
 }
 
-static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
 	XrHandJointLocationEXT currentJoint;
 	for (int i = eBone_Aux_Thumb; i <= eBone_Aux_PinkyFinger; i++) {
@@ -179,19 +179,19 @@ static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool
 }
 
 // OpenXR Hand Joints to OpenVR Hand Skeleton logic generously donated by danwillm from valve.
-bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, OOVR_EVRSkeletalTransformSpace space)
+bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
 	for (int i : { XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_WRIST_EXT }) {
 		output[i] = isRight ? rightOpenPose[i] : leftOpenPose[i];
 	}
 
-	if (!MetacarpalJointPass(joints, isRight, output, space))
+	if (!MetacarpalJointPass(joints, isRight, output))
 		return false;
 
-	if (!FlexionJointPass(joints, isRight, output, space))
+	if (!FlexionJointPass(joints, isRight, output))
 		return false;
 
-	if (!AuxJointPass(joints, isRight, output, space))
+	if (!AuxJointPass(joints, isRight, output))
 		return false;
 
 	return true;

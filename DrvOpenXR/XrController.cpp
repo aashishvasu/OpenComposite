@@ -2,6 +2,7 @@
 
 // HACK: grab the pose from BaseInput
 #include "../OpenOVR/Misc/xrmoreutils.h"
+#include "../OpenOVR/Reimpl/BaseInput.h"
 #include "generated/static_bases.gen.h"
 
 XrController::XrController(XrController::XrControllerType type, const InteractionProfile& profile)

@@ -111,7 +111,6 @@ public:
 
 private:
 	vr::TrackedDeviceIndex_t deviceIndex = vr::k_unTrackedDeviceIndexInvalid;
-	bool handTrackingValid = false;
 };
 
 /**
