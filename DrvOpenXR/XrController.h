@@ -30,7 +30,10 @@ public:
 	uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char* pchValue,
 	    uint32_t unBufferSize, vr::ETrackedPropertyError* pErrorL) override;
 
+	bool IsHandTrackingValid() override;
+
 private:
 	XrControllerType type;
 	const InteractionProfile& profile;
+	bool isHandTrackingValid = false;
 };

@@ -81,7 +81,7 @@ constexpr XrHandJointEXT metacarpalJoints[5] = {
 static bool GetJointRelative(const XrHandJointLocationEXT& currentJoint, const XrHandJointLocationEXT& parentJoint, bool isRight, vr::VRBoneTransform_t& outBoneTransform)
 {
 	glm::quat parentOrientationInverse = glm::conjugate(X2G_quat(parentJoint.pose.orientation));
-	glm::quat orientation = parentOrientationInverse * X2G_quat(currentJoint.pose.orientation); 
+	glm::quat orientation = parentOrientationInverse * X2G_quat(currentJoint.pose.orientation);
 
 	// get us in the OpenVR coordinate space
 	orientation = ApplyBoneHandTransform(orientation, isRight);
@@ -108,8 +108,8 @@ static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joint
 		if (currentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0) || parentJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0))
 			return false;
 
-		// Everything has to be done relative to its parent. 
-		// It was previously believed this matters if the application doesn't request this, but it doesn't. 
+		// Everything has to be done relative to its parent.
+		// It was previously believed this matters if the application doesn't request this, but it doesn't.
 		// The only Meaningful change is that the hand follows the grip pose of the controller if the `EVRSkeletalTransformSpace` is `VRSkeletalTransformSpace_Model`.
 		glm::quat parentOrientationInverse = glm::inverse(X2G_quat(parentJoint.pose.orientation));
 		glm::quat orientationXr = parentOrientationInverse * X2G_quat(currentJoint.pose.orientation);

@@ -245,6 +245,11 @@ const InteractionProfile* ITrackedDevice::GetInteractionProfile()
 	return nullptr;
 }
 
+bool ITrackedDevice::IsHandTrackingValid()
+{
+	return handTrackingValid;
+}
+
 vr::ETrackedDeviceClass IHMD::GetTrackedDeviceClass()
 {
 	return vr::TrackedDeviceClass_HMD;

@@ -180,8 +180,11 @@ void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 		pose->eTrackingResult = vr::TrackingResult_Running_OK;
 	}
 
-	if (GetPoseFromHandTracking(input, pose))
+	if (GetPoseFromHandTracking(input, pose)) {
+		isHandTrackingValid = true;
 		return;
+	} else
+		isHandTrackingValid = false;
 
 	// TODO do something with TrackingState
 	XrSpace space = XR_NULL_HANDLE;
@@ -229,6 +232,11 @@ bool XrController::GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePo
 vr::ETrackedDeviceClass XrController::GetTrackedDeviceClass()
 {
 	return vr::TrackedDeviceClass_Controller;
+}
+
+bool XrController::IsHandTrackingValid()
+{
+	return isHandTrackingValid;
 }
 
 const InteractionProfile* XrController::GetInteractionProfile()

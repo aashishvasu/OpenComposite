@@ -1620,6 +1620,11 @@ EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSk
 	if (!dev)
 		return vr::VRInputError_InvalidDevice;
 
+	if (dev->IsHandTrackingValid()) {
+		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Full;
+		return vr::VRInputError_None;
+	}
+
 	const InteractionProfile* profile = dev->GetInteractionProfile();
 	if (profile) {
 		std::optional<vr::EVRSkeletalTrackingLevel> level = profile->GetOpenVRTrackinglevel();
@@ -1663,7 +1668,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	const auto hand = action->skeletalHand;
 	OOVR_FALSE_ABORT(static_cast<int>(hand) < 2);
-	//return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
+	// return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
 		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
