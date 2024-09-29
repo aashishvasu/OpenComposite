@@ -1620,12 +1620,20 @@ EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSk
 	if (!dev)
 		return vr::VRInputError_InvalidDevice;
 
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+
+	//HACK until we have hand tracking data source in monado, i'm hardcoding this here so games won't think the index is a proper hand.
+	if (profile && profile->GetPath() == "/interaction_profiles/valve/index_controller")
+	{
+		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Partial;
+		return vr::VRInputError_None;
+	}
+
 	if (dev->IsHandTrackingValid()) {
 		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Full;
 		return vr::VRInputError_None;
 	}
 
-	const InteractionProfile* profile = dev->GetInteractionProfile();
 	if (profile) {
 		std::optional<vr::EVRSkeletalTrackingLevel> level = profile->GetOpenVRTrackinglevel();
 		if (level.has_value()) {
