@@ -17,7 +17,9 @@
 #include <string>
 #include <vector>
 
+#ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
+#endif
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/transform.hpp>
 

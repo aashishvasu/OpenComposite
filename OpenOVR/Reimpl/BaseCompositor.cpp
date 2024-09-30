@@ -6,7 +6,9 @@
 
 #include "convert.h"
 
+#ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
+#endif
 #include <glm/gtx/transform.hpp>
 
 using glm::mat4;
