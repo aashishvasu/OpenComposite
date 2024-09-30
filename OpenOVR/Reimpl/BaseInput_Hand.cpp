@@ -118,7 +118,7 @@ static bool MetacarpalJointPass(const std::vector<XrHandJointLocationEXT>& joint
 		glm::quat orientationVr = ApplyBoneHandTransform(orientationXr, isRight);
 
 		// something to do with Maya apparently, unsure how this works. Something about render models?
-		glm::quat magicRotation = glm::quat(0.5f, isRight ? -0.5f : 0.5, isRight ? 0.5f : -0.5f, 0.5f);
+		glm::quat magicRotation = glm::quat(0.5f, isRight ? -0.5f : 0.5f, isRight ? 0.5f : -0.5f, 0.5f);
 		orientationVr = magicRotation * orientationVr;
 
 		quaternionCopy(orientationVr, output[joint].orientation);
