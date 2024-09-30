@@ -180,6 +180,24 @@ static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool
 	return true;
 }
 
+static void InterpolateBone(VRBoneTransform_t& bone, const VRBoneTransform_t& targetBone, float pct, bool slerp = false) {
+	glm::vec3 startPos(bone.position.v[0], bone.position.v[1], bone.position.v[2]);
+	glm::quat startRot(bone.orientation.w, bone.orientation.x, bone.orientation.y, bone.orientation.z);
+
+	glm::vec3 targetPos(targetBone.position.v[0], targetBone.position.v[1], targetBone.position.v[2]);
+	glm::quat targetRot(targetBone.orientation.w, targetBone.orientation.x, targetBone.orientation.y, targetBone.orientation.z);
+
+	glm::vec3 resPos = glm::mix(startPos, targetPos, pct);
+	glm::quat resRot;
+	if (slerp)
+		resRot = glm::slerp(startRot, targetRot, pct);
+	else
+		resRot = glm::mix(startRot, targetRot, pct);
+
+	bone.position = { resPos.x, resPos.y, resPos.z, 1.f };
+	bone.orientation = { resRot.w, resRot.x, resRot.y, resRot.z };
+}
+
 // OpenXR Hand Joints to OpenVR Hand Skeleton logic generously donated by danwillm from valve.
 bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
@@ -217,53 +235,117 @@ EVRInputError BaseInput::getEstimatedBoneData(
 {
 	auto& controller = legacyControllers[hand];
 
-	XrActionStateGetInfo info{
+		XrActionStateGetInfo info{
 		.type = XR_TYPE_ACTION_STATE_GET_INFO,
 		.action = controller.trigger,
 		.subactionPath = XR_NULL_PATH,
 	};
 	XrActionStateFloat state{ XR_TYPE_ACTION_STATE_FLOAT };
-	XrResult actionRes = xrGetActionStateFloat(xr_session.get(), &info, &state);
+	XrActionStateBoolean stateBool{ XR_TYPE_ACTION_STATE_BOOLEAN };
 
-	float trigger_pct = 0.0f;
+	XrResult actionRes = xrGetActionStateFloat(xr_session.get(), &info, &state);
+	float triggerPct = 0.0f;
 	if (XR_SUCCEEDED(actionRes) && state.currentState >= simulateCurlThreshold) {
-		trigger_pct = state.currentState;
+		triggerPct = state.currentState;
 	} else if (XR_FAILED(actionRes)) {
 		OOVR_LOGF("WARNING: couldn't get trigger percentage (%d)", actionRes);
 	}
 
 	info.action = controller.grip;
 	actionRes = xrGetActionStateFloat(xr_session.get(), &info, &state);
-	float grip_pct = 0.0f;
+	float gripPct = 0.0f;
 	if (XR_SUCCEEDED(actionRes) && state.currentState >= simulateCurlThreshold) {
-		grip_pct = state.currentState;
+		gripPct = state.currentState;
 	} else if (XR_FAILED(actionRes)) {
 		OOVR_LOGF("WARNING: couldn't get grip percentage (%d)", actionRes);
 	}
 
-	auto boneDataGen = [trigger_pct, grip_pct](const BoneArray& bindPose, const BoneArray& squeezePose, const BoneArray& openHandPose) {
+	info.action = controller.triggerTouch;
+	actionRes = xrGetActionStateBoolean(xr_session.get(), &info, &stateBool);
+	bool triggerTouch = false;
+	if (XR_SUCCEEDED(actionRes)) {
+		triggerTouch = stateBool.currentState;
+	}
+
+	bool hasThumbInput = false;
+	bool thumbTouch = false;
+
+	// Put thumb down on any relevant touch inputs
+	const XrAction thumbActions[] = {controller.menuTouch, controller.btnATouch, controller.trackpadTouch, controller.stickBtnTouch};
+
+	for (const auto& action : thumbActions) {
+		info.action = action;
+		actionRes = xrGetActionStateBoolean(xr_session.get(), &info, &stateBool);
+		if (XR_SUCCEEDED(actionRes)) {
+			if (stateBool.currentState) {
+				thumbTouch = true;
+			}
+			hasThumbInput = true;
+		}
+	}
+	
+	// Allow for straightening the thumb on controllers with no touch inputs
+	if (!hasThumbInput)
+		thumbTouch = gripPct != 1.0f || triggerPct == 1.0f;
+
+	// Calculate deltaTime for binary input interpolation (per hand)
+	static std::array<std::chrono::high_resolution_clock::time_point, 2> lastTime{
+		std::chrono::high_resolution_clock::now(), 
+		std::chrono::high_resolution_clock::now()
+	};
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+
+	std::chrono::duration<float> deltaTimeDuration = currentTime - lastTime[hand];
+	float deltaTime = deltaTimeDuration.count();
+
+	lastTime[hand] = currentTime;
+
+	// Store interpolated floats for thumb and trigger
+	static std::array<float, 2> thumbTouchPcts = {0.0f, 0.0f}; 
+	static std::array<float, 2> triggerTouchPcts = {0.0f, 0.0f}; 
+	
+	const float touchTransitionSpeed = 8.0f;
+			
+	// Update floats using deltaTime
+	thumbTouchPcts[hand] = glm::clamp(thumbTouchPcts[hand] + (thumbTouch ? deltaTime * touchTransitionSpeed : -deltaTime * touchTransitionSpeed), 0.0f, 1.0f);
+	triggerTouchPcts[hand] = glm::clamp(triggerTouchPcts[hand] + (triggerTouch ? deltaTime * touchTransitionSpeed : -deltaTime * touchTransitionSpeed), 0.0f, 1.0f);
+
+	float thumbTouchPct = thumbTouchPcts[hand];
+	float triggerTouchPct = triggerTouchPcts[hand];
+
+	auto boneDataGen = [triggerPct, gripPct, triggerTouchPct, thumbTouchPct](const BoneArray& bindPose, const BoneArray& squeezePose, const BoneArray& openHandPose) {
 		return std::ranges::iota_view(0, static_cast<int>(eBone_Count)) | std::views::transform([=](int bone_index) {
-			auto bone = bindPose[bone_index];
-			// set pointer and thumb straight on grip
-			if (bone_index <= eBone_IndexFinger4 && grip_pct > 0.0f && trigger_pct == 0.0f) {
-				bone = openHandPose[bone_index];
+			auto bone = openHandPose[bone_index];
+			
+			// Put the thumb down on touch
+			if (bone_index <= eBone_Thumb3 && thumbTouchPct != 0.0f) {
+				// As the models are set up right now the thumb wants to rotate the long way around with glm::mix
+				// This uses slerp, which however isn't appropriate for other fingers
+				InterpolateBone(bone, bindPose[bone_index], thumbTouchPct, true);
+			}
+			
+			// Curl fingers on trigger touch
+			if (triggerTouchPct != 0.0f || triggerPct != 0.0f) {
+				// SteamVR does something similar, curling adjacent fingers to make them look more natural
+				if (bone_index < eBone_MiddleFinger0 && bone_index >= eBone_IndexFinger0) {
+					InterpolateBone(bone, bindPose[bone_index], triggerTouchPct);
+				} else if (bone_index < eBone_RingFinger0 && bone_index >= eBone_MiddleFinger0) {
+					InterpolateBone(bone, bindPose[bone_index], 0.75f * triggerTouchPct);
+				} else if (bone_index < eBone_PinkyFinger0 && bone_index >= eBone_RingFinger0) {
+					InterpolateBone(bone, bindPose[bone_index], 0.5f * triggerTouchPct);
+				}
+
 			}
 
-			// set all fingers to fist on trigger (and last 3 fingers on grip)
-			float bend_pct = (bone_index > eBone_IndexFinger4 && grip_pct > 0.0f) ? grip_pct : trigger_pct;
-			if (bend_pct > 0.0f) {
-				const glm::vec3 startPos(bone.position.v[0], bone.position.v[1], bone.position.v[2]);
-				const glm::quat startRot(bone.orientation.w, bone.orientation.x, bone.orientation.y, bone.orientation.z);
-
-				const auto squeezeBone = squeezePose[bone_index];
-				const glm::vec3 fistPos(squeezeBone.position.v[0], squeezeBone.position.v[1], squeezeBone.position.v[2]);
-				const glm::quat fistRot(squeezeBone.orientation.w, squeezeBone.orientation.x, squeezeBone.orientation.y, squeezeBone.orientation.z);
-
-				// interpolate between bind pose and fist
-				const glm::vec3 resPos = glm::mix(startPos, fistPos, bend_pct);
-				const glm::quat resRot = glm::mix(startRot, fistRot, bend_pct);
-				bone.position = { resPos.x, resPos.y, resPos.z, 1.f };
-				bone.orientation = { resRot.w, resRot.x, resRot.y, resRot.z };
+			// Bend the index finger on trigger
+			if (bone_index < eBone_MiddleFinger0 && bone_index >= eBone_IndexFinger0 && triggerPct > 0.0f) {
+				InterpolateBone(bone, squeezePose[bone_index], triggerPct);
+			}
+			
+			// Bend the 3 remaining fingers on grip
+			if (bone_index >= eBone_MiddleFinger0 && gripPct > 0.0f) {
+				InterpolateBone(bone, squeezePose[bone_index], gripPct);
 			}
 
 			return bone;
