@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/matrix_inverse.hpp>
 #include <locale>
 #include <map>
@@ -1620,6 +1621,19 @@ EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSk
 		return vr::VRInputError_InvalidDevice;
 
 	const InteractionProfile* profile = dev->GetInteractionProfile();
+
+	//HACK until we have hand tracking data source in monado, i'm hardcoding this here so games won't think the index is a proper hand.
+	if (profile && profile->GetPath() == "/interaction_profiles/valve/index_controller")
+	{
+		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Partial;
+		return vr::VRInputError_None;
+	}
+
+	if (dev->IsHandTrackingValid()) {
+		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Full;
+		return vr::VRInputError_None;
+	}
+
 	if (profile) {
 		std::optional<vr::EVRSkeletalTrackingLevel> level = profile->GetOpenVRTrackinglevel();
 		if (level.has_value()) {
@@ -1662,12 +1676,13 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	const auto hand = action->skeletalHand;
 	OOVR_FALSE_ABORT(static_cast<int>(hand) < 2);
+
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
 		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	locateInfo.baseSpace = legacyControllers[static_cast<int>(hand)].aimPoseSpace;
+	locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
@@ -1684,11 +1699,9 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
-	if (eTransformSpace == VRSkeletalTransformSpace_Model) {
-		ConvertHandModelSpace(jointLocations, isRight, pTransformArray);
-	} else {
-		ConvertHandParentSpace(jointLocations, isRight, pTransformArray);
-	}
+	// It turns out that the transform space does not matter. Treat everything as parent space. Can be removed.
+	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray))
+		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 
 	// For now, just return with non-active data
 	return vr::VRInputError_None;
@@ -1709,7 +1722,7 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	locateInfo.baseSpace = legacyControllers[hand].aimPoseSpace;
+	locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
@@ -1720,8 +1733,8 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceTyp
 	OOVR_FAILED_XR_ABORT(xr_ext->xrLocateHandJointsEXT(handTrackers[hand], &locateInfo, &locations));
 
 	if (!locations.isActive) {
-		// Leave empty-handed, IDK if this is the right error or not
-		return vr::VRInputError_InvalidSkeleton;
+		// Fallback to estimated skeletal summary data (e.g. for controllers)
+		return getEstimatedSkeletalSummary(hand, pSkeletalSummaryData);
 	}
 
 	for (int i = 0; i < 5; ++i) {

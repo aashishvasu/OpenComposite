@@ -32,3 +32,39 @@ void xr_utils::PoseFromSpace(vr::TrackedDevicePose_t* pose, XrSpace space, vr::E
 	pose->vVelocity = X2S_v3f(velocity.linearVelocity); // No offsetting transform - this is in world-space
 	pose->vAngularVelocity = X2S_v3f(velocity.angularVelocity); // TODO find out if this needs a transform
 }
+
+bool xr_utils::PoseFromHandTracking(vr::TrackedDevicePose_t* pose, XrHandJointLocationsEXT locations, XrHandJointVelocitiesEXT velocities, bool isRight)
+{
+	const int boneToUse = XR_HAND_JOINT_PALM_EXT;
+
+	XrHandJointLocationEXT palmJoint = locations.jointLocations[boneToUse];
+	XrHandJointVelocityEXT velocity = velocities.jointVelocities[boneToUse];
+
+	bool positionTracked = palmJoint.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT != 0);
+
+	if (!locations.isActive || !positionTracked) {
+		return false;
+	}
+
+	glm::mat4 gripPoseMatrix = X2G_om34_pose(palmJoint.pose);
+
+	glm::mat4 transform = GetMat4x4FromOriginAndEulerRotations(
+	    {
+	        isRight ? -0.09 : 0.09,
+	        -0.03,
+	        -0.09,
+	    },
+	    { 0.0, isRight ? 45.0 : -45.0, isRight ? 90.0 : -90.0 });
+
+	gripPoseMatrix = gripPoseMatrix * transform;
+
+	pose->mDeviceToAbsoluteTracking = G2S_m34(gripPoseMatrix);
+
+	pose->bDeviceIsConnected = true;
+	pose->bPoseIsValid = true;
+	pose->eTrackingResult = pose->bPoseIsValid ? vr::TrackingResult_Running_OK : vr::TrackingResult_Running_OutOfRange;
+	pose->vVelocity = X2S_v3f(velocity.linearVelocity); // No offsetting transform - this is in world-space
+	pose->vAngularVelocity = X2S_v3f(velocity.angularVelocity); // TODO find out if this needs a transform
+
+	return true;
+}
