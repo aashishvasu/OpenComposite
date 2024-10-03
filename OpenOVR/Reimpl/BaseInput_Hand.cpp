@@ -240,6 +240,67 @@ static void InterpolateBone(VRBoneTransform_t& bone, const VRBoneTransform_t& ta
 	bone.orientation = { resRot.w, resRot.x, resRot.y, resRot.z };
 }
 
+static void ApplyHandOffset(ITrackedDevice::TrackedDeviceType hand, OOVR_EVRSkeletalTransformSpace transformSpace, std::span<VRBoneTransform_t, eBone_Count> boneData) {
+	// Controller -> hand root offsets (thanks danwillm)
+	constexpr float handXOffset = -0.04; // This value taken from ALVR actually, no idea why it's the correct one
+	constexpr float handYOffset = 0.02;
+	constexpr float handZOffset = -0.15;
+	constexpr float handAngleOffset = 45;
+
+	switch (transformSpace) {
+		case VRSkeletalTransformSpace_Model: {
+			// Rotating the root bone in model space doesn't work, rotate all bones around the origin
+			for (auto i = 0u; i < boneData.size(); ++i) {
+				VRBoneTransform_t *bone = &boneData[i];
+
+				glm::vec3 bonePosition(bone->position.v[0], bone->position.v[1], bone->position.v[2]);
+
+				// Rotate the bone position
+				glm::quat rotationQuat = glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::radians(-handAngleOffset), glm::vec3(1.0f, 0.0f, 0.0f));
+				glm::vec3 rotatedPosition = glm::rotate(rotationQuat, bonePosition);
+
+				// Apply offsets
+				rotatedPosition.x += hand == ITrackedDevice::HAND_LEFT ? handXOffset : -handXOffset;
+				rotatedPosition.y += handYOffset;
+				rotatedPosition.z -= handZOffset;
+
+				bone->position.v[0] = rotatedPosition.x;
+				bone->position.v[1] = rotatedPosition.y;
+				bone->position.v[2] = rotatedPosition.z;
+
+				// Rotate the bone orientation
+				glm::quat boneOrientation(bone->orientation.w, bone->orientation.x, bone->orientation.y, bone->orientation.z);
+				boneOrientation = rotationQuat * boneOrientation;
+
+				bone->orientation.x = boneOrientation.x;
+				bone->orientation.y = boneOrientation.y;
+				bone->orientation.z = boneOrientation.z;
+				bone->orientation.w = boneOrientation.w;
+			}
+
+			break;
+		}
+		case VRSkeletalTransformSpace_Parent: {
+			VRBoneTransform_t *boneRoot = &boneData[eBone_Root];
+
+			boneRoot->position.v[0] += handXOffset;
+			boneRoot->position.v[1] += handYOffset;
+			boneRoot->position.v[2] += handZOffset;
+
+			glm::quat rootOrientation(boneRoot->orientation.w, boneRoot->orientation.x, boneRoot->orientation.y, boneRoot->orientation.z);
+			rootOrientation = glm::rotate(rootOrientation, glm::radians(handAngleOffset), glm::vec3(1.0f, 0.0f, 0.0f));
+
+			boneRoot->orientation.x = rootOrientation.x;
+			boneRoot->orientation.y = rootOrientation.y;
+			boneRoot->orientation.z = rootOrientation.z;
+			boneRoot->orientation.w = rootOrientation.w;
+
+			break;
+		}
+	}
+
+}
+
 // OpenXR Hand Joints to OpenVR Hand Skeleton logic generously donated by danwillm from valve.
 bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
@@ -283,14 +344,7 @@ void BaseInput::ParentSpaceSkeletonToModelSpace(VRBoneTransform_t* joints)
 }
 
 namespace {
-// The estimated poses are given in terms of root being located at (0, 0, 0), i.e, the wrist will
-// start where the grip pose starts. However, the OpenXR spec specifies that the grip pose is
-// supposed to roughly line up with the palm centroid, so this (arbitrary) constant will
-// slide the bone poses back to meet this expectation.
-constexpr float handZDisplacement = 0.2;
-// How much trigger/grip needs to be pressed before simulating fingers curling
 constexpr float simulateCurlThreshold = 0.08;
-
 } // namespace
 
 EVRInputError BaseInput::getEstimatedBoneData(
@@ -416,19 +470,12 @@ EVRInputError BaseInput::getEstimatedBoneData(
 		});
 	};
 
-	auto modelSpaceZDisplace = std::views::transform([](const auto& bone) {
-		auto ret = bone;
-		ret.position.v[2] += handZDisplacement;
-		return ret;
-	});
-
 	switch (hand) {
 	case ITrackedDevice::HAND_LEFT: {
 		switch (transformSpace) {
 		case VRSkeletalTransformSpace_Model: {
 			std::ranges::copy(
-			    boneDataGen(left_hand::bindPoseModelSpace, left_hand::squeezeModelSpace, left_hand::openHandModelSpace)
-			        | modelSpaceZDisplace,
+			    boneDataGen(left_hand::bindPoseModelSpace, left_hand::squeezeModelSpace, left_hand::openHandModelSpace),
 			    boneData.begin());
 			break;
 		}
@@ -436,7 +483,6 @@ EVRInputError BaseInput::getEstimatedBoneData(
 			std::ranges::copy(
 			    boneDataGen(left_hand::bindPoseParentSpace, left_hand::squeezeParentSpace, left_hand::openHandParentSpace),
 			    boneData.begin());
-			boneData[eBone_Root].position.v[2] -= handZDisplacement;
 			break;
 		}
 		}
@@ -446,8 +492,7 @@ EVRInputError BaseInput::getEstimatedBoneData(
 		switch (transformSpace) {
 		case VRSkeletalTransformSpace_Model: {
 			std::ranges::copy(
-			    boneDataGen(right_hand::bindPoseModelSpace, right_hand::squeezeModelSpace, right_hand::openHandModelSpace)
-			        | modelSpaceZDisplace,
+			    boneDataGen(right_hand::bindPoseModelSpace, right_hand::squeezeModelSpace, right_hand::openHandModelSpace),
 			    boneData.begin());
 			break;
 		}
@@ -455,7 +500,6 @@ EVRInputError BaseInput::getEstimatedBoneData(
 			std::ranges::copy(
 			    boneDataGen(right_hand::bindPoseParentSpace, right_hand::squeezeParentSpace, right_hand::openHandParentSpace),
 			    boneData.begin());
-			boneData[eBone_Root].position.v[2] -= handZDisplacement;
 			break;
 		}
 		}
@@ -466,6 +510,9 @@ EVRInputError BaseInput::getEstimatedBoneData(
 		return vr::VRInputError_InvalidHandle;
 	}
 	}
+
+	// Apply offsets to position the hand correctly
+	ApplyHandOffset(hand, transformSpace, boneData);
 
 	return vr::VRInputError_None;
 }
