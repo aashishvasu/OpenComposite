@@ -1809,39 +1809,6 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceTyp
 	return vr::VRInputError_None;
 }
 
-EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
-{
-	OOVR_FALSE_ABORT(hand != ITrackedDevice::HAND_NONE);
-
-	std::fill(std::begin(pSkeletalSummaryData->flFingerSplay), std::end(pSkeletalSummaryData->flFingerSplay), 0.2f);
-
-	LegacyControllerActions& controller = legacyControllers[hand];
-	XrActionStateGetInfo info = { XR_TYPE_ACTION_STATE_GET_INFO };
-	info.action = controller.gripClick;
-
-	XrActionStateBoolean state_grip = { XR_TYPE_ACTION_STATE_BOOLEAN };
-	OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info, &state_grip));
-
-	info.action = controller.trigger;
-
-	XrActionStateFloat state_trigger = { XR_TYPE_ACTION_STATE_FLOAT };
-	OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &info, &state_trigger));
-
-	if (state_grip.currentState) {
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Middle] = 1.0;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Ring] = 1.0;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Pinky] = 1.0;
-	} else {
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Middle] = state_trigger.currentState;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Ring] = state_trigger.currentState;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Pinky] = state_trigger.currentState;
-	}
-
-	pSkeletalSummaryData->flFingerCurl[VRFinger_Index] = state_trigger.currentState;
-
-	return vr::VRInputError_None;
-}
-
 EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t action, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	return GetSkeletalSummaryData(action, VRSummaryType_FromDevice, pSkeletalSummaryData);

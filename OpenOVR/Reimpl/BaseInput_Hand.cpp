@@ -463,11 +463,11 @@ EVRInputError BaseInput::getEstimatedBoneData(
 			if (state.triggerTouchPct != 0.0f || state.triggerPct != 0.0f) {
 				// SteamVR does something similar, curling adjacent fingers to make them look more natural
 				if (bone_index < eBone_MiddleFinger0 && bone_index >= eBone_IndexFinger0) {
-					InterpolateBone(bone, bindPose[bone_index], state.triggerTouchPct);
+					InterpolateBone(bone, squeezePose[bone_index], 0.4f * state.triggerTouchPct);
 				} else if (bone_index < eBone_RingFinger0 && bone_index >= eBone_MiddleFinger0) {
-					InterpolateBone(bone, bindPose[bone_index], 0.75f * state.triggerTouchPct);
+					InterpolateBone(bone, squeezePose[bone_index], 0.2f * state.triggerTouchPct);
 				} else if (bone_index < eBone_PinkyFinger0 && bone_index >= eBone_RingFinger0) {
-					InterpolateBone(bone, bindPose[bone_index], 0.5f * state.triggerTouchPct);
+					InterpolateBone(bone, squeezePose[bone_index], 0.1f * state.triggerTouchPct);
 				}
 			}
 
@@ -531,3 +531,38 @@ EVRInputError BaseInput::getEstimatedBoneData(
 
 	return vr::VRInputError_None;
 }
+
+EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
+{
+	OOVR_FALSE_ABORT(hand != ITrackedDevice::HAND_NONE);
+
+	std::fill(std::begin(pSkeletalSummaryData->flFingerSplay), std::end(pSkeletalSummaryData->flFingerSplay), 0.2f);
+
+	LegacyControllerActions& controller = legacyControllers[hand];
+
+	auto state = GetInterpolatedControllerState(hand, controller);
+
+	// Replicate what getEstimatedBoneData is doing
+
+	// Curl fingers on trigger touch
+	pSkeletalSummaryData->flFingerCurl[VRFinger_Thumb] = state.thumbTouchPct;
+	pSkeletalSummaryData->flFingerCurl[VRFinger_Index] = 0.4f * state.triggerTouchPct;
+	pSkeletalSummaryData->flFingerCurl[VRFinger_Middle] = 0.2f * state.triggerTouchPct;
+	pSkeletalSummaryData->flFingerCurl[VRFinger_Ring] = 0.1f * state.triggerTouchPct;
+	pSkeletalSummaryData->flFingerCurl[VRFinger_Pinky] = 0.0f;
+
+	// Curl index finger fully if triggered
+	if (state.triggerPct != 0.0f) {
+		pSkeletalSummaryData->flFingerCurl[VRFinger_Index] = glm::max(pSkeletalSummaryData->flFingerCurl[VRFinger_Index], state.triggerPct);
+	}
+
+	// Curl remaining fingers based on grip percentage
+	if (state.gripPct != 0.0f) {
+		pSkeletalSummaryData->flFingerCurl[VRFinger_Middle] = glm::max(pSkeletalSummaryData->flFingerCurl[VRFinger_Middle], state.gripPct);
+		pSkeletalSummaryData->flFingerCurl[VRFinger_Ring] = glm::max(pSkeletalSummaryData->flFingerCurl[VRFinger_Ring], state.gripPct);
+		pSkeletalSummaryData->flFingerCurl[VRFinger_Pinky] = glm::max(pSkeletalSummaryData->flFingerCurl[VRFinger_Pinky], state.gripPct);
+	}
+
+	return vr::VRInputError_None;
+}
+
