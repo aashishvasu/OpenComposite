@@ -343,10 +343,15 @@ static void ApplyHandOffset(ITrackedDevice::TrackedDeviceType hand, OOVR_EVRSkel
 	constexpr float handZOffset = -0.15;
 	constexpr float handAngleOffset = 45;
 
+	// Note to self and others, never transform the root bone, it will doom you
+
 	switch (transformSpace) {
 		case VRSkeletalTransformSpace_Model: {
-			// Rotating the root bone in model space doesn't work, rotate all bones around the origin
+			// Rotating just the wrist bone in model space doesn't work, rotate all bones around the origin
 			for (auto i = 0u; i < boneData.size(); ++i) {
+				if (i == eBone_Root) {
+					continue;
+				}
 				VRBoneTransform_t *bone = &boneData[i];
 
 				glm::vec3 bonePosition(bone->position.v[0], bone->position.v[1], bone->position.v[2]);
@@ -377,9 +382,9 @@ static void ApplyHandOffset(ITrackedDevice::TrackedDeviceType hand, OOVR_EVRSkel
 			break;
 		}
 		case VRSkeletalTransformSpace_Parent: {
-			VRBoneTransform_t *boneRoot = &boneData[eBone_Root];
+			VRBoneTransform_t *boneRoot = &boneData[eBone_Wrist];
 
-			boneRoot->position.v[0] += handXOffset;
+			boneRoot->position.v[0] -= hand == ITrackedDevice::HAND_LEFT ? handXOffset : -handXOffset;
 			boneRoot->position.v[1] += handYOffset;
 			boneRoot->position.v[2] += handZOffset;
 
