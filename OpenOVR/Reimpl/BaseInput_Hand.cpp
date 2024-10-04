@@ -50,9 +50,9 @@ static glm::quat ApplyBoneHandTransform(glm::quat quat, bool isRight)
 }
 
 // https://github.com/ValveSoftware/openvr/blob/master/samples/drivers/utils/vrmath/vrmath.h
-static HmdQuaternionf_t operator* (const vr::HmdQuaternionf_t& lhs, const vr::HmdQuaternionf_t& rhs)
+static HmdQuaternionf_t operator*(const vr::HmdQuaternionf_t& lhs, const vr::HmdQuaternionf_t& rhs)
 {
-    return {
+	return {
 		lhs.w * rhs.w - lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z,
 		lhs.w * rhs.x + lhs.x * rhs.w + lhs.y * rhs.z - lhs.z * rhs.y,
 		lhs.w * rhs.y - lhs.x * rhs.z + lhs.y * rhs.w + lhs.z * rhs.x,
@@ -60,22 +60,22 @@ static HmdQuaternionf_t operator* (const vr::HmdQuaternionf_t& lhs, const vr::Hm
 	};
 }
 
-static HmdVector4_t operator* (const HmdVector4_t& a, const HmdVector4_t& b)
+static HmdVector4_t operator*(const HmdVector4_t& a, const HmdVector4_t& b)
 {
-    return {
-        a.v[0] * b.v[0],
-        a.v[1] * b.v[1],
-        a.v[2] * b.v[2],
-        1.f
-    };
+	return {
+		a.v[0] * b.v[0],
+		a.v[1] * b.v[1],
+		a.v[2] * b.v[2],
+		1.f
+	};
 }
 
-static VRBoneTransform_t operator* (const VRBoneTransform_t& a, const VRBoneTransform_t& b)
+static VRBoneTransform_t operator*(const VRBoneTransform_t& a, const VRBoneTransform_t& b)
 {
-    return {
-        a.position * b.position,
-        a.orientation * b.orientation,
-    };
+	return {
+		a.position * b.position,
+		a.orientation * b.orientation,
+	};
 }
 
 static bool isBoneMetacarpal(XrHandJointEXT handJoint)
@@ -83,16 +83,15 @@ static bool isBoneMetacarpal(XrHandJointEXT handJoint)
 	return handJoint == XR_HAND_JOINT_THUMB_METACARPAL_EXT || handJoint == XR_HAND_JOINT_INDEX_METACARPAL_EXT || handJoint == XR_HAND_JOINT_MIDDLE_METACARPAL_EXT || handJoint == XR_HAND_JOINT_RING_METACARPAL_EXT || handJoint == XR_HAND_JOINT_LITTLE_METACARPAL_EXT;
 }
 
-//converts a range of finger bones to model space.
-static void convertJointRange(int start, int end, VRBoneTransform_t* joints)
+// converts a range of finger bones to model space.
+static void convertJointRange(HandSkeletonBone start, HandSkeletonBone end, VRBoneTransform_t* joints)
 {
-    int parentId = eBone_Wrist;
+	HandSkeletonBone parentId = eBone_Wrist;
 
-    for (int i = start; i <= end; i++)
-    {
-        joints[i] = joints[parentId] * joints[i];
-        parentId = i;
-    }
+	for (int i = start; i <= end; i++) {
+		joints[i] = joints[parentId] * joints[i];
+		parentId = (HandSkeletonBone)i;
+	}
 }
 
 static std::map<HandSkeletonBone, XrHandJointEXT> auxBoneMap = {
@@ -222,7 +221,8 @@ static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool
 	return true;
 }
 
-static void InterpolateBone(VRBoneTransform_t& bone, const VRBoneTransform_t& targetBone, float pct, bool slerp = false) {
+static void InterpolateBone(VRBoneTransform_t& bone, const VRBoneTransform_t& targetBone, float pct, bool slerp = false)
+{
 	glm::vec3 startPos(bone.position.v[0], bone.position.v[1], bone.position.v[2]);
 	glm::quat startRot(bone.orientation.w, bone.orientation.x, bone.orientation.y, bone.orientation.z);
 
@@ -261,25 +261,25 @@ bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>
 
 void BaseInput::ParentSpaceSkeletonToModelSpace(VRBoneTransform_t* joints)
 {
-    // To convert joints in parent space to model space, we need to concatenate each bone going up the chain.
-    // Using the index finger as an example:
-    //
-    // it has 5 bones. IndexFinger0 - IndexFinger4.
-    // for bone 0, we multiply it by the wrist.
-    // for bone 1, we multiply it by the result of 0, etc.
-    //
-    // Aux bones are all just multiplied with the wrist.
-    VRBoneTransform_t wrist = joints[eBone_Wrist];
+	// To convert joints in parent space to model space, we need to concatenate each bone going up the chain.
+	// Using the index finger as an example:
+	//
+	// it has 5 bones. IndexFinger0 - IndexFinger4.
+	// for bone 0, we multiply it by the wrist.
+	// for bone 1, we multiply it by the result of 0, etc.
+	//
+	// Aux bones are all just multiplied with the wrist.
+	VRBoneTransform_t wrist = joints[eBone_Wrist];
 
-    convertJointRange(eBone_Thumb0, eBone_Thumb3, joints);
-    convertJointRange(eBone_IndexFinger0, eBone_IndexFinger4, joints);
-    convertJointRange(eBone_MiddleFinger0, eBone_MiddleFinger4, joints);
-    convertJointRange(eBone_RingFinger0, eBone_RingFinger4, joints);
-    convertJointRange(eBone_PinkyFinger0, eBone_PinkyFinger4, joints);
+	convertJointRange(eBone_Thumb0, eBone_Thumb3, joints);
+	convertJointRange(eBone_IndexFinger0, eBone_IndexFinger4, joints);
+	convertJointRange(eBone_MiddleFinger0, eBone_MiddleFinger4, joints);
+	convertJointRange(eBone_RingFinger0, eBone_RingFinger4, joints);
+	convertJointRange(eBone_PinkyFinger0, eBone_PinkyFinger4, joints);
 
-    for (int i = eBone_Aux_Thumb; i <= eBone_Aux_PinkyFinger; i++) {
-        joints[i] = wrist * joints[i];
-    }
+	for (int i = eBone_Aux_Thumb; i <= eBone_Aux_PinkyFinger; i++) {
+		joints[i] = wrist * joints[i];
+	}
 }
 
 namespace {
@@ -300,7 +300,7 @@ EVRInputError BaseInput::getEstimatedBoneData(
 {
 	auto& controller = legacyControllers[hand];
 
-		XrActionStateGetInfo info{
+	XrActionStateGetInfo info{
 		.type = XR_TYPE_ACTION_STATE_GET_INFO,
 		.action = controller.trigger,
 		.subactionPath = XR_NULL_PATH,
@@ -336,7 +336,7 @@ EVRInputError BaseInput::getEstimatedBoneData(
 	bool thumbTouch = false;
 
 	// Put thumb down on any relevant touch inputs
-	const XrAction thumbActions[] = {controller.menuTouch, controller.btnATouch, controller.trackpadTouch, controller.stickBtnTouch};
+	const XrAction thumbActions[] = { controller.menuTouch, controller.btnATouch, controller.trackpadTouch, controller.stickBtnTouch };
 
 	for (const auto& action : thumbActions) {
 		info.action = action;
@@ -348,14 +348,14 @@ EVRInputError BaseInput::getEstimatedBoneData(
 			hasThumbInput = true;
 		}
 	}
-	
+
 	// Allow for straightening the thumb on controllers with no touch inputs
 	if (!hasThumbInput)
 		thumbTouch = gripPct != 1.0f || triggerPct == 1.0f;
 
 	// Calculate deltaTime for binary input interpolation (per hand)
 	static std::array<std::chrono::high_resolution_clock::time_point, 2> lastTime{
-		std::chrono::high_resolution_clock::now(), 
+		std::chrono::high_resolution_clock::now(),
 		std::chrono::high_resolution_clock::now()
 	};
 
@@ -367,11 +367,11 @@ EVRInputError BaseInput::getEstimatedBoneData(
 	lastTime[hand] = currentTime;
 
 	// Store interpolated floats for thumb and trigger
-	static std::array<float, 2> thumbTouchPcts = {0.0f, 0.0f}; 
-	static std::array<float, 2> triggerTouchPcts = {0.0f, 0.0f}; 
-	
+	static std::array<float, 2> thumbTouchPcts = { 0.0f, 0.0f };
+	static std::array<float, 2> triggerTouchPcts = { 0.0f, 0.0f };
+
 	const float touchTransitionSpeed = 8.0f;
-			
+
 	// Update floats using deltaTime
 	thumbTouchPcts[hand] = glm::clamp(thumbTouchPcts[hand] + (thumbTouch ? deltaTime * touchTransitionSpeed : -deltaTime * touchTransitionSpeed), 0.0f, 1.0f);
 	triggerTouchPcts[hand] = glm::clamp(triggerTouchPcts[hand] + (triggerTouch ? deltaTime * touchTransitionSpeed : -deltaTime * touchTransitionSpeed), 0.0f, 1.0f);
@@ -382,14 +382,14 @@ EVRInputError BaseInput::getEstimatedBoneData(
 	auto boneDataGen = [triggerPct, gripPct, triggerTouchPct, thumbTouchPct](const BoneArray& bindPose, const BoneArray& squeezePose, const BoneArray& openHandPose) {
 		return std::ranges::iota_view(0, static_cast<int>(eBone_Count)) | std::views::transform([=](int bone_index) {
 			auto bone = openHandPose[bone_index];
-			
+
 			// Put the thumb down on touch
 			if (bone_index <= eBone_Thumb3 && thumbTouchPct != 0.0f) {
 				// As the models are set up right now the thumb wants to rotate the long way around with glm::mix
 				// This uses slerp, which however isn't appropriate for other fingers
 				InterpolateBone(bone, bindPose[bone_index], thumbTouchPct, true);
 			}
-			
+
 			// Curl fingers on trigger touch
 			if (triggerTouchPct != 0.0f || triggerPct != 0.0f) {
 				// SteamVR does something similar, curling adjacent fingers to make them look more natural
@@ -400,14 +400,13 @@ EVRInputError BaseInput::getEstimatedBoneData(
 				} else if (bone_index < eBone_PinkyFinger0 && bone_index >= eBone_RingFinger0) {
 					InterpolateBone(bone, bindPose[bone_index], 0.5f * triggerTouchPct);
 				}
-
 			}
 
 			// Bend the index finger on trigger
 			if (bone_index < eBone_MiddleFinger0 && bone_index >= eBone_IndexFinger0 && triggerPct > 0.0f) {
 				InterpolateBone(bone, squeezePose[bone_index], triggerPct);
 			}
-			
+
 			// Bend the 3 remaining fingers on grip
 			if (bone_index >= eBone_MiddleFinger0 && gripPct > 0.0f) {
 				InterpolateBone(bone, squeezePose[bone_index], gripPct);
