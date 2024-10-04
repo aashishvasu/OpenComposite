@@ -1414,13 +1414,14 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
-	// Skeletons go through the legacy input thing, since they're tightly bound to either hand
 	if (act->type == ActionType::Skeleton) {
-		XrSpace space = legacyControllers[act->skeletalHand].gripPoseSpace;
+		ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+		if (!dev)
+			return vr::VRInputError_InvalidDevice;
 
-		pActionData->bActive = true; // TODO this should probably come from reading the skeleton data
+		dev->GetPose(eOrigin, &pActionData->pose, ETrackingStateType::TrackingStateType_Now);
+		pActionData->bActive = pActionData->pose.bPoseIsValid && pActionData->pose.bDeviceIsConnected;
 		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle; // TODO implement activeOrigin
-		xr_utils::PoseFromSpace(&pActionData->pose, space, eOrigin);
 
 		return vr::VRInputError_None;
 	}
@@ -1624,9 +1625,8 @@ EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSk
 
 	const InteractionProfile* profile = dev->GetInteractionProfile();
 
-	//HACK until we have hand tracking data source in monado, i'm hardcoding this here so games won't think the index is a proper hand.
-	if (profile && profile->GetPath() == "/interaction_profiles/valve/index_controller")
-	{
+	// HACK until we have hand tracking data source in monado, i'm hardcoding this here so games won't think the index is a proper hand.
+	if (profile && profile->GetPath() == "/interaction_profiles/valve/index_controller") {
 		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Partial;
 		return vr::VRInputError_None;
 	}
@@ -1701,9 +1701,11 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
-	// It turns out that the transform space does not matter. Treat everything as parent space. Can be removed.
 	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray))
 		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
+
+	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
+		ParentSpaceSkeletonToModelSpace(pTransformArray);
 
 	// For now, just return with non-active data
 	return vr::VRInputError_None;

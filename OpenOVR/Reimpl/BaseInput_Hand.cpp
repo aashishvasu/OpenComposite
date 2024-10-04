@@ -1,4 +1,5 @@
 #include "Misc/xrmoreutils.h"
+#include "generated/interfaces/public_vrtypes.h"
 #include "stdafx.h"
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
@@ -48,9 +49,50 @@ static glm::quat ApplyBoneHandTransform(glm::quat quat, bool isRight)
 	return quat;
 }
 
+// https://github.com/ValveSoftware/openvr/blob/master/samples/drivers/utils/vrmath/vrmath.h
+static HmdQuaternionf_t operator* (const vr::HmdQuaternionf_t& lhs, const vr::HmdQuaternionf_t& rhs)
+{
+    return {
+		lhs.w * rhs.w - lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z,
+		lhs.w * rhs.x + lhs.x * rhs.w + lhs.y * rhs.z - lhs.z * rhs.y,
+		lhs.w * rhs.y - lhs.x * rhs.z + lhs.y * rhs.w + lhs.z * rhs.x,
+		lhs.w * rhs.z + lhs.x * rhs.y - lhs.y * rhs.x + lhs.z * rhs.w,
+	};
+}
+
+static HmdVector4_t operator* (const HmdVector4_t& a, const HmdVector4_t& b)
+{
+    return {
+        a.v[0] * b.v[0],
+        a.v[1] * b.v[1],
+        a.v[2] * b.v[2],
+        1.f
+    };
+}
+
+static VRBoneTransform_t operator* (const VRBoneTransform_t& a, const VRBoneTransform_t& b)
+{
+    return {
+        a.position * b.position,
+        a.orientation * b.orientation,
+    };
+}
+
 static bool isBoneMetacarpal(XrHandJointEXT handJoint)
 {
 	return handJoint == XR_HAND_JOINT_THUMB_METACARPAL_EXT || handJoint == XR_HAND_JOINT_INDEX_METACARPAL_EXT || handJoint == XR_HAND_JOINT_MIDDLE_METACARPAL_EXT || handJoint == XR_HAND_JOINT_RING_METACARPAL_EXT || handJoint == XR_HAND_JOINT_LITTLE_METACARPAL_EXT;
+}
+
+//converts a range of finger bones to model space.
+static void convertJointRange(int start, int end, VRBoneTransform_t* joints)
+{
+    int parentId = eBone_Wrist;
+
+    for (int i = start; i <= end; i++)
+    {
+        joints[i] = joints[parentId] * joints[i];
+        parentId = i;
+    }
 }
 
 static std::map<HandSkeletonBone, XrHandJointEXT> auxBoneMap = {
@@ -215,6 +257,29 @@ bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>
 		return false;
 
 	return true;
+}
+
+void BaseInput::ParentSpaceSkeletonToModelSpace(VRBoneTransform_t* joints)
+{
+    // To convert joints in parent space to model space, we need to concatenate each bone going up the chain.
+    // Using the index finger as an example:
+    //
+    // it has 5 bones. IndexFinger0 - IndexFinger4.
+    // for bone 0, we multiply it by the wrist.
+    // for bone 1, we multiply it by the result of 0, etc.
+    //
+    // Aux bones are all just multiplied with the wrist.
+    VRBoneTransform_t wrist = joints[eBone_Wrist];
+
+    convertJointRange(eBone_Thumb0, eBone_Thumb3, joints);
+    convertJointRange(eBone_IndexFinger0, eBone_IndexFinger4, joints);
+    convertJointRange(eBone_MiddleFinger0, eBone_MiddleFinger4, joints);
+    convertJointRange(eBone_RingFinger0, eBone_RingFinger4, joints);
+    convertJointRange(eBone_PinkyFinger0, eBone_PinkyFinger4, joints);
+
+    for (int i = eBone_Aux_Thumb; i <= eBone_Aux_PinkyFinger; i++) {
+        joints[i] = wrist * joints[i];
+    }
 }
 
 namespace {
