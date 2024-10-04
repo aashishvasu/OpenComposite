@@ -416,32 +416,32 @@ EVRInputError BaseInput::getEstimatedBoneData(
 			auto bone = openHandPose[bone_index];
 
 			// Put the thumb down on touch
-			if (bone_index <= eBone_Thumb3 && state.thumbTouchPct != 0.0f) {
-				// As the models are set up right now the thumb wants to rotate the long way around with glm::mix
-				// This uses slerp, which however isn't appropriate for other fingers
-				InterpolateBone(bone, bindPose[bone_index], state.thumbTouchPct, true);
+			if (state.thumbTouchPct != 0.0f) {
+				if ((bone_index >= eBone_Thumb0 && bone_index <= eBone_Thumb3) || bone_index == eBone_Aux_Thumb) 
+					InterpolateBone(bone, bindPose[bone_index], state.thumbTouchPct);
 			}
 
 			// Curl fingers on trigger touch
 			if (state.triggerTouchPct != 0.0f || state.triggerPct != 0.0f) {
 				// SteamVR does something similar, curling adjacent fingers to make them look more natural
-				if (bone_index < eBone_MiddleFinger0 && bone_index >= eBone_IndexFinger0) {
+				if ((bone_index >= eBone_IndexFinger0 && bone_index <= eBone_IndexFinger4) || bone_index == eBone_Aux_IndexFinger)
 					InterpolateBone(bone, squeezePose[bone_index], 0.4f * state.triggerTouchPct);
-				} else if (bone_index < eBone_RingFinger0 && bone_index >= eBone_MiddleFinger0) {
+				else if ((bone_index >= eBone_MiddleFinger0 && bone_index <= eBone_MiddleFinger4) || bone_index == eBone_Aux_MiddleFinger)
 					InterpolateBone(bone, squeezePose[bone_index], 0.2f * state.triggerTouchPct);
-				} else if (bone_index < eBone_PinkyFinger0 && bone_index >= eBone_RingFinger0) {
+				else if ((bone_index >= eBone_RingFinger0 && bone_index <= eBone_RingFinger4) || bone_index == eBone_Aux_RingFinger)
 					InterpolateBone(bone, squeezePose[bone_index], 0.1f * state.triggerTouchPct);
-				}
 			}
 
 			// Bend the index finger on trigger
-			if (bone_index < eBone_MiddleFinger0 && bone_index >= eBone_IndexFinger0 && state.triggerPct > 0.0f) {
-				InterpolateBone(bone, squeezePose[bone_index], state.triggerPct);
+			if (state.triggerPct != 0.0f) {
+				if ((bone_index >= eBone_IndexFinger0 && bone_index <= eBone_IndexFinger4) || bone_index == eBone_Aux_IndexFinger)
+					InterpolateBone(bone, squeezePose[bone_index], state.triggerPct);
 			}
 
 			// Bend the 3 remaining fingers on grip
-			if (bone_index >= eBone_MiddleFinger0 && state.gripPct > 0.0f) {
-				InterpolateBone(bone, squeezePose[bone_index], state.gripPct);
+			if (state.gripPct != 0.0f) {
+				if ((bone_index >= eBone_MiddleFinger0 && bone_index <= eBone_PinkyFinger4) || (bone_index >= eBone_Aux_MiddleFinger && bone_index <= eBone_Aux_PinkyFinger))
+					InterpolateBone(bone, squeezePose[bone_index], state.gripPct);
 			}
 
 			return bone;
