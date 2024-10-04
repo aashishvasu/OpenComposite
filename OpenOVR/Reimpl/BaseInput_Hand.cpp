@@ -336,7 +336,7 @@ static auto GetInterpolatedControllerState(const ITrackedDevice::TrackedDeviceTy
 	return output;
 }
 
-static void ApplyHandOffset(ITrackedDevice::TrackedDeviceType hand, std::span<VRBoneTransform_t, eBone_Count> boneData) {
+void BaseInput::ApplyHandOffset(ITrackedDevice::TrackedDeviceType hand, VRBoneTransform_t* boneData) {
 	// Controller -> hand root offsets (thanks danwillm)
 	constexpr float handXOffset = -0.04; // This value taken from ALVR actually, no idea why it's the correct one
 	constexpr float handYOffset = 0.02;
@@ -468,7 +468,7 @@ EVRInputError BaseInput::getEstimatedBoneData(
 	}
 
 	// Apply offsets to position the hand correctly
-	ApplyHandOffset(hand, boneData);
+	ApplyHandOffset(hand, boneData.data());
 
 	if (transformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
 		ParentSpaceSkeletonToModelSpace(boneData.data());
@@ -509,4 +509,3 @@ EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::TrackedDevi
 
 	return vr::VRInputError_None;
 }
-

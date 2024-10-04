@@ -1608,9 +1608,77 @@ EVRInputError BaseInput::GetBoneName(VRActionHandle_t action, BoneIndex_t nBoneI
 }
 EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionHandle, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalReferencePose eReferencePose, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
-	OOVR_SOFT_ABORT("Skeletal reference transforms not implemented");
-	return vr::VRInputError_InvalidSkeleton;
-	// TODO: figure out why returning transforms here causes Alyx to freeze...
+	GET_ACTION_FROM_HANDLE(act, actionHandle);
+
+	std::span<VRBoneTransform_t> out(pTransformArray, unTransformArrayCount);
+
+	switch (act->skeletalHand)
+	{
+		case ITrackedDevice::HAND_LEFT:
+			switch (eReferencePose)
+			{
+				case VRSkeletalReferencePose_BindPose:
+					std::copy(std::begin(left_hand::bindPoseParentSpace),
+						  std::end(left_hand::bindPoseParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_OpenHand:
+					std::copy(std::begin(left_hand::openHandParentSpace),
+						  std::end(left_hand::openHandParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_Fist:
+					std::copy(std::begin(left_hand::squeezeParentSpace),
+						  std::end(left_hand::squeezeParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_GripLimit:
+					std::copy(std::begin(left_hand::squeezeParentSpace), // We don't have that sadly, so squeeze will have to do for now
+						  std::end(left_hand::squeezeParentSpace),
+						  out.begin());
+					break;
+				default:
+					return vr::VRInputError_InvalidParam;
+			}
+			break;
+		case ITrackedDevice::HAND_RIGHT:
+			switch (eReferencePose)
+			{
+				case VRSkeletalReferencePose_BindPose:
+					std::copy(std::begin(right_hand::bindPoseParentSpace),
+						  std::end(right_hand::bindPoseParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_OpenHand:
+					std::copy(std::begin(right_hand::openHandParentSpace),
+						  std::end(right_hand::openHandParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_Fist:
+					std::copy(std::begin(right_hand::squeezeParentSpace),
+						  std::end(right_hand::squeezeParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_GripLimit:
+					std::copy(std::begin(right_hand::squeezeParentSpace),
+						  std::end(right_hand::squeezeParentSpace),
+						  out.begin());
+					break;
+				default:
+					return vr::VRInputError_InvalidParam;
+			}
+			break;
+		default:
+			OOVR_LOGF("WARNING: Not a hand: %d", act->skeletalHand);
+			return vr::VRInputError_InvalidHandle;
+	}
+
+	ApplyHandOffset(act->skeletalHand, pTransformArray);
+
+	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
+		ParentSpaceSkeletonToModelSpace(pTransformArray);
+
+	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel)
 {

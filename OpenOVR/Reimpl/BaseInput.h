@@ -762,6 +762,7 @@ private:
 
 	static bool XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output);
 	static void ParentSpaceSkeletonToModelSpace(VRBoneTransform_t* joints);
+	static void ApplyHandOffset(ITrackedDevice::TrackedDeviceType hand, VRBoneTransform_t* boneData);
 
 	// Utility functions
 	Action* cast_AH(VRActionHandle_t);
