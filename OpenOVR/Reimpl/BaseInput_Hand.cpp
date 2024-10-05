@@ -336,30 +336,6 @@ static auto GetInterpolatedControllerState(const ITrackedDevice::TrackedDeviceTy
 	return output;
 }
 
-void BaseInput::ApplyHandOffset(ITrackedDevice::TrackedDeviceType hand, VRBoneTransform_t* boneData) {
-	// Controller -> hand root offsets (thanks danwillm)
-	constexpr float handXOffset = -0.04; // This value taken from ALVR actually, no idea why it's the correct one
-	constexpr float handYOffset = 0.02;
-	constexpr float handZOffset = 0.15;
-	constexpr float handAngleOffset = 45;
-
-	// Note to self and others, never transform the root bone, it will doom you
-
-	VRBoneTransform_t *boneRoot = &boneData[eBone_Wrist];
-
-	boneRoot->position.v[0] += hand == ITrackedDevice::HAND_LEFT ? handXOffset : -handXOffset;
-	boneRoot->position.v[1] += handYOffset;
-	boneRoot->position.v[2] += handZOffset;
-
-	glm::quat rootOrientation(boneRoot->orientation.w, boneRoot->orientation.x, boneRoot->orientation.y, boneRoot->orientation.z);
-	rootOrientation = glm::rotate(rootOrientation, glm::radians(handAngleOffset), glm::vec3(1.0f, 0.0f, 0.0f));
-
-	boneRoot->orientation.x = rootOrientation.x;
-	boneRoot->orientation.y = rootOrientation.y;
-	boneRoot->orientation.z = rootOrientation.z;
-	boneRoot->orientation.w = rootOrientation.w;
-}
-
 // OpenXR Hand Joints to OpenVR Hand Skeleton logic generously donated by danwillm from valve.
 bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
 {
@@ -418,7 +394,7 @@ EVRInputError BaseInput::getEstimatedBoneData(
 			// Put the thumb down on touch
 			if (state.thumbTouchPct != 0.0f) {
 				if ((bone_index >= eBone_Thumb0 && bone_index <= eBone_Thumb3) || bone_index == eBone_Aux_Thumb) 
-					InterpolateBone(bone, bindPose[bone_index], state.thumbTouchPct);
+					InterpolateBone(bone, squeezePose[bone_index], state.thumbTouchPct);
 			}
 
 			// Curl fingers on trigger touch
@@ -466,9 +442,6 @@ EVRInputError BaseInput::getEstimatedBoneData(
 		return vr::VRInputError_InvalidHandle;
 	}
 	}
-
-	// Apply offsets to position the hand correctly
-	ApplyHandOffset(hand, boneData.data());
 
 	if (transformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
 		ParentSpaceSkeletonToModelSpace(boneData.data());

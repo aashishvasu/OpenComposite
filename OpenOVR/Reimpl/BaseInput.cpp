@@ -1633,8 +1633,8 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionH
 						  out.begin());
 					break;
 				case VRSkeletalReferencePose_GripLimit:
-					std::copy(std::begin(left_hand::squeezeParentSpace), // We don't have that sadly, so squeeze will have to do for now
-						  std::end(left_hand::squeezeParentSpace),
+					std::copy(std::begin(left_hand::gripLimitParentSpace),
+						  std::end(left_hand::gripLimitParentSpace),
 						  out.begin());
 					break;
 				default:
@@ -1660,8 +1660,8 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionH
 						  out.begin());
 					break;
 				case VRSkeletalReferencePose_GripLimit:
-					std::copy(std::begin(right_hand::squeezeParentSpace),
-						  std::end(right_hand::squeezeParentSpace),
+					std::copy(std::begin(right_hand::gripLimitParentSpace),
+						  std::end(right_hand::gripLimitParentSpace),
 						  out.begin());
 					break;
 				default:
@@ -1672,8 +1672,6 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionH
 			OOVR_LOGF("WARNING: Not a hand: %d", act->skeletalHand);
 			return vr::VRInputError_InvalidHandle;
 	}
-
-	ApplyHandOffset(act->skeletalHand, pTransformArray);
 
 	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
 		ParentSpaceSkeletonToModelSpace(pTransformArray);
