@@ -825,11 +825,23 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					continue;
 				}
 
+				if (inputName == "double") {
+					if (srcJson["mode"].asString() != "button") {
+						OOVR_LOGF("WARNING: The 'double' input only supports the 'button' mode, '%s' mode was used instead, skipping", srcJson["mode"].asString().c_str());
+						continue;
+					}
+
+					LoadDclickAction(profile, importBasePath, action, bindings);
+					continue;
+				}
+
 				// Translate path string to an appropriate path supported by this interaction profile, if necessary
 				std::string pathStr;
 				// special case: "position" in OpenVR is a 2D vector, in OpenXR this can be represented by the parent of the input value
 				// See the OpenXR spec section 11.4 ("Suggested Bindings")
-				if (inputName == "position") {
+				// extra special case: in the default bindings for HL:A, the "walk" action is bound with the "click" input and an extra
+				// "force_input" parameter, here we just treat this combination as a normal position input (not sure if this is correct)
+				if (inputName == "position" || srcJson["parameters"]["force_input"].asString() == "position") {
 					pathStr = profile.TranslateAction(importBasePath);
 				} else {
 					pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
@@ -963,7 +975,7 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 		return;
 	}
 
-	// check if parent is in dpadBindingParens
+	// check if parent is in dpadBindingParents
 	// get parent name: remove /user/hand and /input/ parts, add end of openxr path (so we don't i.e. confuse dpad bindings from the knuckles joystick with dpad bindings from the oculus joystick)
 	std::string to_delete[] = { "/user/hand/", "/input/" };
 	auto& path = profile.GetPath();
@@ -1030,6 +1042,45 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 
 	// add dpad parent to action
 	action->dpadBindings.push_back({ parentName, dpad_info });
+}
+
+void BaseInput::LoadDclickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings)
+{
+	std::string clickPath = profile.TranslateAction(importBasePath + "/click");
+
+	if (!profile.IsInputPathValid(clickPath)) {
+		OOVR_LOGF("WARNING: No such input path %s for profile %s, cannot bind double input, skipping", clickPath.c_str(), profile.GetPath().c_str());
+		return;
+	}
+
+	DClickBindingInfo dclickInfo;
+	dclickInfo.first_click_time = 0;
+	dclickInfo.last_state = false;
+
+	// create the source click action
+	XrActionCreateInfo info{ XR_TYPE_ACTION_CREATE_INFO };
+	info.subactionPaths = allSubactionPaths.data();
+	info.countSubactionPaths = allSubactionPaths.size();
+
+	// same as dpad action names
+	std::string to_delete[] = { "/user/hand/", "/input/" };
+	auto& path = profile.GetPath();
+	std::string end = path.substr(path.rfind("/") + 1);
+	std::string clickName = importBasePath + "-" + end + "-double-click";
+	for (const auto& str : to_delete) {
+		clickName.replace(clickName.find(str), str.size(), "");
+	}
+
+	info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+	strcpy_arr(info.actionName, clickName.c_str());
+	strcpy_arr(info.localizedActionName, clickName.c_str()); // TODO: localization
+	OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &dclickInfo.click_action)); // FIXME: share click actions
+
+	XrPath suggested_path;
+	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, clickPath.c_str(), &suggested_path));
+	bindings.push_back(XrActionSuggestedBinding{ dclickInfo.click_action, suggested_path });
+
+	action->dclickBindings.push_back(dclickInfo);
 }
 
 void BaseInput::CreateLegacyActions()
@@ -1220,11 +1271,58 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 		OOVR_FAILED_XR_ABORT(ret);
 
 		// actions could be bound to regular buttons and dpad buttons
-		if (action.dpadBindings.empty() || state->currentState == XR_TRUE)
+		if ((action.dpadBindings.empty() && action.dclickBindings.empty()) || state->currentState == XR_TRUE)
 			return ret;
 	}
 
 	bool compoundLastState = false;
+	// emulated openvr double click inputs
+	for (auto& dclick_info : action.dclickBindings) {
+		XrActionStateBoolean click_state = { XR_TYPE_ACTION_STATE_BOOLEAN };
+
+		// read state of the source click binding
+		XrActionStateGetInfo info2 = *getInfo;
+		info2.action = dclick_info.click_action;
+		OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
+
+		compoundLastState |= dclick_info.last_state;
+
+		if (!click_state.isActive)
+			continue;
+		state->isActive = XR_TRUE;
+
+		// if the double click has been triggered, hold it triggered until depressed
+		if (dclick_info.last_state) {
+			if (click_state.currentState) {
+				state->currentState = XR_TRUE;
+			} else {
+				dclick_info.last_state = false;
+				state->lastChangeTime = click_state.lastChangeTime;
+			}
+
+			continue;
+		}
+
+		// only check if there has been a *new* button press down
+		if (!click_state.changedSinceLastSync || !click_state.currentState)
+			continue;
+
+		if (!dclick_info.first_click_time) {
+			// first click, record the timestamp
+			dclick_info.first_click_time = xr_gbl->GetBestTime();
+		} else {
+			// second click, check if in time window
+			if (xr_gbl->GetBestTime() - dclick_info.first_click_time < DClickBindingInfo::max_dclick_pause) {
+				state->currentState = XR_TRUE;
+				state->lastChangeTime = click_state.lastChangeTime;
+
+				dclick_info.last_state = true;
+			}
+
+			dclick_info.first_click_time = 0;
+		}
+	}
+
 	// dpad bindings: need to read parent state(s) and fill in state ourselves
 	for (auto& [parent_name, dpad_info] : action.dpadBindings) {
 		// read state of parent

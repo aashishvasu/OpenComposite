@@ -547,6 +547,17 @@ private:
 		bool lastState = false;
 	};
 
+	struct DClickBindingInfo {
+		static constexpr XrTime max_dclick_pause = 1'000'000'000 * .5f;
+
+		XrAction click_action;
+
+		// when a click is received, it's timestamp is saved to be compared with the following click
+		// when a second click is received (in the max_dclick_pause time window or not) it's reset back to 0
+		XrTime first_click_time;
+		bool last_state;
+	};
+
 	enum class PoseBindingPoint {
 		RAW, // From /raw or /aim - this is the pose returned by WaitGetPoses
 		BASE, // This is the pose from the 'base' component
@@ -610,6 +621,9 @@ private:
 		// first member of the pair is the parent name, the second is the corresponding binding info
 		using DpadGrouping = std::pair<std::string, DpadBindingInfo>;
 		std::vector<DpadGrouping> dpadBindings;
+
+		// list of double click input bindings
+		std::vector<DClickBindingInfo> dclickBindings;
 
 		// If this is a pose action, we calculate it from the legacy pose inputs rather than giving it
 		// it's own OpenXR action, since it may need some special transforms to make it line up properly.
@@ -752,6 +766,8 @@ private:
 	void LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath);
 
 	void LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
+	void LoadDclickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
+
 	void CreateLegacyActions();
 
 	/**
