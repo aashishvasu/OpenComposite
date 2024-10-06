@@ -235,7 +235,7 @@ static bool AuxJointPass(const std::vector<XrHandJointLocationEXT>& joints, bool
 	return true;
 }
 
-static void InterpolateBone(VRBoneTransform_t& bone, const VRBoneTransform_t& targetBone, float pct, bool slerp = false)
+static void InterpolateBone(VRBoneTransform_t& bone, const VRBoneTransform_t& targetBone, float pct)
 {
 	glm::vec3 startPos(bone.position.v[0], bone.position.v[1], bone.position.v[2]);
 	glm::quat startRot(bone.orientation.w, bone.orientation.x, bone.orientation.y, bone.orientation.z);
@@ -245,10 +245,7 @@ static void InterpolateBone(VRBoneTransform_t& bone, const VRBoneTransform_t& ta
 
 	glm::vec3 resPos = glm::mix(startPos, targetPos, pct);
 	glm::quat resRot;
-	if (slerp)
-		resRot = glm::slerp(startRot, targetRot, pct);
-	else
-		resRot = glm::mix(startRot, targetRot, pct);
+	resRot = glm::mix(startRot, targetRot, pct);
 
 	bone.position = { resPos.x, resPos.y, resPos.z, 1.f };
 	bone.orientation = { resRot.w, resRot.x, resRot.y, resRot.z };
