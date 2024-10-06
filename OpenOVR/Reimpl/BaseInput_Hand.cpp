@@ -60,20 +60,34 @@ static HmdQuaternionf_t operator*(const vr::HmdQuaternionf_t& lhs, const vr::Hmd
 	};
 }
 
-static HmdVector4_t operator*(const HmdVector4_t& a, const HmdVector4_t& b)
+static HmdVector4_t operator+(const HmdVector4_t& a, const HmdVector4_t& b)
 {
 	return {
-		a.v[0] * b.v[0],
-		a.v[1] * b.v[1],
-		a.v[2] * b.v[2],
-		1.f
+		a.v[0] + b.v[0],
+		a.v[1] + b.v[1],
+		a.v[2] + b.v[2],
+		a.v[3] + 1.f // SteamVR seems to accumulate this? Might not be needed
 	};
+}
+
+static HmdQuaternionf_t operator-( const HmdQuaternionf_t &q )
+{
+	return { q.w, -q.x, -q.y, -q.z };
+}
+
+static HmdVector4_t operator*( const HmdVector4_t &vec, const HmdQuaternionf_t &q )
+{
+	const HmdQuaternionf_t qvec = { 0.0, vec.v[ 0 ], vec.v[ 1 ], vec.v[ 2 ] };
+
+	const HmdQuaternionf_t qResult = (q * qvec) * (-q);
+
+	return { static_cast< float >( qResult.x ), static_cast< float >( qResult.y ), static_cast< float >( qResult.z ), static_cast< float >(vec.v[3]) };
 }
 
 static VRBoneTransform_t operator*(const VRBoneTransform_t& a, const VRBoneTransform_t& b)
 {
 	return {
-		a.position * b.position,
+		a.position + (b.position * a.orientation),
 		a.orientation * b.orientation,
 	};
 }
@@ -363,19 +377,12 @@ void BaseInput::ParentSpaceSkeletonToModelSpace(VRBoneTransform_t* joints)
 	// it has 5 bones. IndexFinger0 - IndexFinger4.
 	// for bone 0, we multiply it by the wrist.
 	// for bone 1, we multiply it by the result of 0, etc.
-	//
-	// Aux bones are all just multiplied with the wrist.
-	VRBoneTransform_t wrist = joints[eBone_Wrist];
 
 	convertJointRange(eBone_Thumb0, eBone_Thumb3, joints);
 	convertJointRange(eBone_IndexFinger0, eBone_IndexFinger4, joints);
 	convertJointRange(eBone_MiddleFinger0, eBone_MiddleFinger4, joints);
 	convertJointRange(eBone_RingFinger0, eBone_RingFinger4, joints);
 	convertJointRange(eBone_PinkyFinger0, eBone_PinkyFinger4, joints);
-
-	for (int i = eBone_Aux_Thumb; i <= eBone_Aux_PinkyFinger; i++) {
-		joints[i] = wrist * joints[i];
-	}
 }
 
 EVRInputError BaseInput::getEstimatedBoneData(
