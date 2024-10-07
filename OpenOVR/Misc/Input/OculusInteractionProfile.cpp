@@ -6,7 +6,9 @@
 
 #include "OculusInteractionProfile.h"
 
+#ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
+#endif
 #include <glm/gtc/matrix_inverse.hpp>
 
 OculusTouchInteractionProfile::OculusTouchInteractionProfile()

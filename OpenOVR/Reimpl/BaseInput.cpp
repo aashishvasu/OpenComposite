@@ -17,7 +17,9 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
+#ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
+#endif
 #include <glm/gtc/matrix_inverse.hpp>
 #include <locale>
 #include <map>
@@ -1412,13 +1414,14 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
-	// Skeletons go through the legacy input thing, since they're tightly bound to either hand
 	if (act->type == ActionType::Skeleton) {
-		XrSpace space = legacyControllers[act->skeletalHand].gripPoseSpace;
+		ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+		if (!dev)
+			return vr::VRInputError_InvalidDevice;
 
-		pActionData->bActive = true; // TODO this should probably come from reading the skeleton data
+		dev->GetPose(eOrigin, &pActionData->pose, ETrackingStateType::TrackingStateType_Now);
+		pActionData->bActive = pActionData->pose.bPoseIsValid && pActionData->pose.bDeviceIsConnected;
 		pActionData->activeOrigin = vr::k_ulInvalidInputValueHandle; // TODO implement activeOrigin
-		xr_utils::PoseFromSpace(&pActionData->pose, space, eOrigin);
 
 		return vr::VRInputError_None;
 	}
@@ -1605,9 +1608,75 @@ EVRInputError BaseInput::GetBoneName(VRActionHandle_t action, BoneIndex_t nBoneI
 }
 EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionHandle, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalReferencePose eReferencePose, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
-	OOVR_SOFT_ABORT("Skeletal reference transforms not implemented");
-	return vr::VRInputError_InvalidSkeleton;
-	// TODO: figure out why returning transforms here causes Alyx to freeze...
+	GET_ACTION_FROM_HANDLE(act, actionHandle);
+
+	std::span<VRBoneTransform_t> out(pTransformArray, unTransformArrayCount);
+
+	switch (act->skeletalHand)
+	{
+		case ITrackedDevice::HAND_LEFT:
+			switch (eReferencePose)
+			{
+				case VRSkeletalReferencePose_BindPose:
+					std::copy(std::begin(left_hand::bindPoseParentSpace),
+						  std::end(left_hand::bindPoseParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_OpenHand:
+					std::copy(std::begin(left_hand::openHandParentSpace),
+						  std::end(left_hand::openHandParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_Fist:
+					std::copy(std::begin(left_hand::squeezeParentSpace),
+						  std::end(left_hand::squeezeParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_GripLimit:
+					std::copy(std::begin(left_hand::gripLimitParentSpace),
+						  std::end(left_hand::gripLimitParentSpace),
+						  out.begin());
+					break;
+				default:
+					return vr::VRInputError_InvalidParam;
+			}
+			break;
+		case ITrackedDevice::HAND_RIGHT:
+			switch (eReferencePose)
+			{
+				case VRSkeletalReferencePose_BindPose:
+					std::copy(std::begin(right_hand::bindPoseParentSpace),
+						  std::end(right_hand::bindPoseParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_OpenHand:
+					std::copy(std::begin(right_hand::openHandParentSpace),
+						  std::end(right_hand::openHandParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_Fist:
+					std::copy(std::begin(right_hand::squeezeParentSpace),
+						  std::end(right_hand::squeezeParentSpace),
+						  out.begin());
+					break;
+				case VRSkeletalReferencePose_GripLimit:
+					std::copy(std::begin(right_hand::gripLimitParentSpace),
+						  std::end(right_hand::gripLimitParentSpace),
+						  out.begin());
+					break;
+				default:
+					return vr::VRInputError_InvalidParam;
+			}
+			break;
+		default:
+			OOVR_LOGF("WARNING: Not a hand: %d", act->skeletalHand);
+			return vr::VRInputError_InvalidHandle;
+	}
+
+	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
+		ParentSpaceSkeletonToModelSpace(pTransformArray);
+
+	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel)
 {
@@ -1622,9 +1691,8 @@ EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSk
 
 	const InteractionProfile* profile = dev->GetInteractionProfile();
 
-	//HACK until we have hand tracking data source in monado, i'm hardcoding this here so games won't think the index is a proper hand.
-	if (profile && profile->GetPath() == "/interaction_profiles/valve/index_controller")
-	{
+	// HACK until we have hand tracking data source in monado, i'm hardcoding this here so games won't think the index is a proper hand.
+	if (profile && profile->GetPath() == "/interaction_profiles/valve/index_controller") {
 		*pSkeletalTrackingLevel = vr::VRSkeletalTracking_Partial;
 		return vr::VRInputError_None;
 	}
@@ -1699,9 +1767,11 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
-	// It turns out that the transform space does not matter. Treat everything as parent space. Can be removed.
 	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray))
 		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
+
+	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
+		ParentSpaceSkeletonToModelSpace(pTransformArray);
 
 	// For now, just return with non-active data
 	return vr::VRInputError_None;
@@ -1801,39 +1871,6 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceTyp
 		OOVR_LOG_ONCE("Finger splay hardcoded at 0.2");
 		pSkeletalSummaryData->flFingerSplay[i] = 0.2f; // TODO
 	}
-
-	return vr::VRInputError_None;
-}
-
-EVRInputError BaseInput::getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
-{
-	OOVR_FALSE_ABORT(hand != ITrackedDevice::HAND_NONE);
-
-	std::fill(std::begin(pSkeletalSummaryData->flFingerSplay), std::end(pSkeletalSummaryData->flFingerSplay), 0.2f);
-
-	LegacyControllerActions& controller = legacyControllers[hand];
-	XrActionStateGetInfo info = { XR_TYPE_ACTION_STATE_GET_INFO };
-	info.action = controller.gripClick;
-
-	XrActionStateBoolean state_grip = { XR_TYPE_ACTION_STATE_BOOLEAN };
-	OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info, &state_grip));
-
-	info.action = controller.trigger;
-
-	XrActionStateFloat state_trigger = { XR_TYPE_ACTION_STATE_FLOAT };
-	OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &info, &state_trigger));
-
-	if (state_grip.currentState) {
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Middle] = 1.0;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Ring] = 1.0;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Pinky] = 1.0;
-	} else {
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Middle] = state_trigger.currentState;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Ring] = state_trigger.currentState;
-		pSkeletalSummaryData->flFingerCurl[VRFinger_Pinky] = state_trigger.currentState;
-	}
-
-	pSkeletalSummaryData->flFingerCurl[VRFinger_Index] = state_trigger.currentState;
 
 	return vr::VRInputError_None;
 }
