@@ -831,7 +831,7 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 						continue;
 					}
 
-					LoadDclickAction(profile, importBasePath, action, bindings);
+					LoadDClickAction(profile, importBasePath, action, bindings);
 					continue;
 				}
 
@@ -1044,7 +1044,7 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 	action->dpadBindings.push_back({ parentName, dpad_info });
 }
 
-void BaseInput::LoadDclickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings)
+void BaseInput::LoadDClickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings)
 {
 	std::string clickPath = profile.TranslateAction(importBasePath + "/click");
 
@@ -1303,23 +1303,25 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 			continue;
 		}
 
-		// only check if there has been a *new* button press down
+		// only check if there has been a *new* button down press
 		if (!click_state.changedSinceLastSync || !click_state.currentState)
 			continue;
 
 		if (!dclick_info.first_click_time) {
 			// first click, record the timestamp
-			dclick_info.first_click_time = xr_gbl->GetBestTime();
+			dclick_info.first_click_time = click_state.lastChangeTime;
 		} else {
 			// second click, check if in time window
-			if (xr_gbl->GetBestTime() - dclick_info.first_click_time < DClickBindingInfo::max_dclick_pause) {
+			if (click_state.lastChangeTime - dclick_info.first_click_time < DClickBindingInfo::max_dclick_pause) {
 				state->currentState = XR_TRUE;
 				state->lastChangeTime = click_state.lastChangeTime;
 
+				dclick_info.first_click_time = 0;
 				dclick_info.last_state = true;
+			} else {
+				// missed time window, treat as a first click
+				dclick_info.first_click_time = click_state.lastChangeTime;
 			}
-
-			dclick_info.first_click_time = 0;
 		}
 	}
 

@@ -548,13 +548,17 @@ private:
 	};
 
 	struct DClickBindingInfo {
-		static constexpr XrTime max_dclick_pause = 1'000'000'000 * .5f;
+		// the maximum allowed time between the first click and the second click for the double binding to trigger
+		static constexpr XrDuration max_dclick_pause = 1'000'000'000 * .5f;
 
+		// the source click action this double click bindings is listening on
 		XrAction click_action;
 
 		// when a click is received, it's timestamp is saved to be compared with the following click
 		// when a second click is received (in the max_dclick_pause time window or not) it's reset back to 0
 		XrTime first_click_time;
+
+		// the previous state of the double click binding
 		bool last_state;
 	};
 
@@ -766,7 +770,7 @@ private:
 	void LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath);
 
 	void LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
-	void LoadDclickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
+	void LoadDClickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
 
 	void CreateLegacyActions();
 
