@@ -4,7 +4,6 @@
 #include "json/json.h"
 #define BASE_IMPL
 #include "BaseInput.h"
-#include "BaseInput_HandPoses.hpp"
 #include <string>
 
 #include <convert.h>
@@ -1623,66 +1622,22 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionH
 
 	std::span<VRBoneTransform_t> out(pTransformArray, unTransformArrayCount);
 
-	switch (act->skeletalHand)
-	{
-		case ITrackedDevice::HAND_LEFT:
-			switch (eReferencePose)
-			{
-				case VRSkeletalReferencePose_BindPose:
-					std::copy(std::begin(left_hand::bindPoseParentSpace),
-						  std::end(left_hand::bindPoseParentSpace),
-						  out.begin());
-					break;
-				case VRSkeletalReferencePose_OpenHand:
-					std::copy(std::begin(left_hand::openHandParentSpace),
-						  std::end(left_hand::openHandParentSpace),
-						  out.begin());
-					break;
-				case VRSkeletalReferencePose_Fist:
-					std::copy(std::begin(left_hand::squeezeParentSpace),
-						  std::end(left_hand::squeezeParentSpace),
-						  out.begin());
-					break;
-				case VRSkeletalReferencePose_GripLimit:
-					std::copy(std::begin(left_hand::gripLimitParentSpace),
-						  std::end(left_hand::gripLimitParentSpace),
-						  out.begin());
-					break;
-				default:
-					return vr::VRInputError_InvalidParam;
-			}
-			break;
-		case ITrackedDevice::HAND_RIGHT:
-			switch (eReferencePose)
-			{
-				case VRSkeletalReferencePose_BindPose:
-					std::copy(std::begin(right_hand::bindPoseParentSpace),
-						  std::end(right_hand::bindPoseParentSpace),
-						  out.begin());
-					break;
-				case VRSkeletalReferencePose_OpenHand:
-					std::copy(std::begin(right_hand::openHandParentSpace),
-						  std::end(right_hand::openHandParentSpace),
-						  out.begin());
-					break;
-				case VRSkeletalReferencePose_Fist:
-					std::copy(std::begin(right_hand::squeezeParentSpace),
-						  std::end(right_hand::squeezeParentSpace),
-						  out.begin());
-					break;
-				case VRSkeletalReferencePose_GripLimit:
-					std::copy(std::begin(right_hand::gripLimitParentSpace),
-						  std::end(right_hand::gripLimitParentSpace),
-						  out.begin());
-					break;
-				default:
-					return vr::VRInputError_InvalidParam;
-			}
-			break;
-		default:
-			OOVR_LOGF("WARNING: Not a hand: %d", act->skeletalHand);
-			return vr::VRInputError_InvalidHandle;
+	// Find the interaction profile to retrieve hand pose
+	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+	if (!dev)
+		return vr::VRInputError_InvalidDevice;
+
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+	if (!profile)
+		return vr::VRInputError_InvalidDevice;
+
+	const std::optional<BoneArray> pose = profile->GetSkeletalReferencePose(act->skeletalHand, eReferencePose);
+	if (!pose.has_value()) {
+		OOVR_LOGF("WARNING: Couldn't find reference pose: %d, %d", act->skeletalHand, eReferencePose);
+		return vr::VRInputError_InvalidParam;
 	}
+
+	std::copy(std::begin(pose.value()), std::end(pose.value()), out.begin());
 
 	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
 		ParentSpaceSkeletonToModelSpace(pTransformArray);
@@ -1757,7 +1712,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	OOVR_FALSE_ABORT(static_cast<int>(hand) < 2);
 
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
-		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
+		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
 	// Determine the skeletal tracking level, this is sort of a hack around not having hand tracking data source
@@ -1781,7 +1736,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	if (!locations.isActive) {
 		// Fallback to estimated bone data (e.g. for controllers)
-		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
+		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
@@ -1796,7 +1751,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	glm::mat4 transform = profile->GetGripToSteamVRTransform(hand);
 
 	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray, transform))
-		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
+		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 
 	// With real hand tracking we get a hand positioned relative to floor space, change that to be relative to a fake controller
 	if (skeletalTrackingLevel == vr::VRSkeletalTracking_Full) {

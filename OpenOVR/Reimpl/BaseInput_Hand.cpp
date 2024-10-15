@@ -8,7 +8,6 @@
 #include <glm/gtx/quaternion.hpp>
 #define BASE_IMPL
 #include "BaseInput.h"
-#include "BaseInput_HandPoses.hpp"
 
 #include <convert.h>
 
@@ -436,67 +435,76 @@ void BaseInput::ParentSpaceSkeletonToModelSpace(VRBoneTransform_t* joints)
 EVRInputError BaseInput::getEstimatedBoneData(
     ITrackedDevice::TrackedDeviceType hand,
     EVRSkeletalTransformSpace transformSpace,
+    EVRSkeletalMotionRange eMotionRange,
     std::span<VRBoneTransform_t, eBone_Count> boneData)
 {
 	auto& controller = legacyControllers[hand];
 
 	auto state = GetInterpolatedControllerState(hand, controller);
 
-	auto boneDataGen = [state](const BoneArray& bindPose, const BoneArray& squeezePose, const BoneArray& openHandPose) {
+	auto boneDataGen = [state](const BoneArray& openPose, const BoneArray& closedPose) {
 		return std::ranges::iota_view(0, static_cast<int>(eBone_Count)) | std::views::transform([=](int bone_index) {
-			auto bone = openHandPose[bone_index];
+			auto bone = openPose[bone_index];
 
 			// Put the thumb down on touch
 			if (state.thumbTouchPct != 0.0f) {
 				if ((bone_index >= eBone_Thumb0 && bone_index <= eBone_Thumb3) || bone_index == eBone_Aux_Thumb) 
-					InterpolateBone(bone, squeezePose[bone_index], state.thumbTouchPct);
+					InterpolateBone(bone, closedPose[bone_index], state.thumbTouchPct);
 			}
 
 			// Curl fingers on trigger touch
 			if (state.triggerTouchPct != 0.0f || state.triggerPct != 0.0f) {
 				// SteamVR does something similar, curling adjacent fingers to make them look more natural
 				if ((bone_index >= eBone_IndexFinger0 && bone_index <= eBone_IndexFinger4) || bone_index == eBone_Aux_IndexFinger)
-					InterpolateBone(bone, squeezePose[bone_index], 0.4f * state.triggerTouchPct);
+					InterpolateBone(bone, closedPose[bone_index], 0.4f * state.triggerTouchPct);
 				else if ((bone_index >= eBone_MiddleFinger0 && bone_index <= eBone_MiddleFinger4) || bone_index == eBone_Aux_MiddleFinger)
-					InterpolateBone(bone, squeezePose[bone_index], 0.2f * state.triggerTouchPct);
+					InterpolateBone(bone, closedPose[bone_index], 0.2f * state.triggerTouchPct);
 				else if ((bone_index >= eBone_RingFinger0 && bone_index <= eBone_RingFinger4) || bone_index == eBone_Aux_RingFinger)
-					InterpolateBone(bone, squeezePose[bone_index], 0.1f * state.triggerTouchPct);
+					InterpolateBone(bone, closedPose[bone_index], 0.1f * state.triggerTouchPct);
 			}
 
 			// Bend the index finger on trigger
 			if (state.triggerPct != 0.0f) {
 				if ((bone_index >= eBone_IndexFinger0 && bone_index <= eBone_IndexFinger4) || bone_index == eBone_Aux_IndexFinger)
-					InterpolateBone(bone, squeezePose[bone_index], state.triggerPct);
+					InterpolateBone(bone, closedPose[bone_index], state.triggerPct);
 			}
 
 			// Bend the 3 remaining fingers on grip
 			if (state.gripPct != 0.0f) {
 				if ((bone_index >= eBone_MiddleFinger0 && bone_index <= eBone_PinkyFinger4) || (bone_index >= eBone_Aux_MiddleFinger && bone_index <= eBone_Aux_PinkyFinger))
-					InterpolateBone(bone, squeezePose[bone_index], state.gripPct);
+					InterpolateBone(bone, closedPose[bone_index], state.gripPct);
 			}
 
 			return bone;
 		});
 	};
 
-	switch (hand) {
-	case ITrackedDevice::HAND_LEFT: {
-			std::ranges::copy(
-			    boneDataGen(left_hand::bindPoseParentSpace, left_hand::squeezeParentSpace, left_hand::openHandParentSpace),
-			    boneData.begin());
-		break;
+	// Find the interaction profile to retrieve hand poses
+	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
+	if (!dev)
+		return vr::VRInputError_InvalidDevice;
+
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+	if (!profile)
+		return vr::VRInputError_InvalidDevice;
+
+	const std::optional<BoneArray> open = profile->GetSkeletalReferencePose(hand, VRSkeletalReferencePose_OpenHand);
+	if (!open.has_value()) {
+		OOVR_LOGF("WARNING: Couldn't find reference pose: %d, %d", hand, VRSkeletalReferencePose_OpenHand);
+		return vr::VRInputError_InvalidSkeleton;
 	}
-	case ITrackedDevice::HAND_RIGHT: {
-			std::ranges::copy(
-			    boneDataGen(right_hand::bindPoseParentSpace, right_hand::squeezeParentSpace, right_hand::openHandParentSpace),
-			    boneData.begin());
-		break;
+	
+	// GripLimit is the pose that takes the controller into account
+	const EVRSkeletalReferencePose closedPose = eMotionRange == VRSkeletalMotionRange_WithController 
+		? VRSkeletalReferencePose_GripLimit : VRSkeletalReferencePose_Fist;
+
+	const std::optional<BoneArray> closed = profile->GetSkeletalReferencePose(hand, closedPose);
+	if (!closed.has_value()) {
+		OOVR_LOGF("WARNING: Couldn't find reference pose: %d, %d", hand, closedPose);
+		return vr::VRInputError_InvalidSkeleton;
 	}
-	default: {
-		OOVR_LOGF("WARNING: Not a hand: %d", hand);
-		return vr::VRInputError_InvalidHandle;
-	}
-	}
+
+	std::ranges::copy(boneDataGen(open.value(), closed.value()), boneData.begin());
 
 	if (transformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
 		ParentSpaceSkeletonToModelSpace(boneData.data());

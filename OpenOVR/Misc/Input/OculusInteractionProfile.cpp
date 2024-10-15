@@ -6,6 +6,9 @@
 
 #include "OculusInteractionProfile.h"
 
+#include "OculusHandPoses.h"
+#include "Reimpl/BaseInput.h"
+
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
 #endif
@@ -121,6 +124,17 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	this->rightComponentTransforms["tip"] = GetMat4x4FromOriginAndEulerRotations(
 	    { -0.016694, -0.02522, 0.024687 },
 	    { -37.4, 0.0, 0.0 });
+	
+	// Define reference poses
+	leftHandPoses[VRSkeletalReferencePose_BindPose] = oculus::leftBindPose;
+	leftHandPoses[VRSkeletalReferencePose_OpenHand] = oculus::leftOpenHandPose;
+	leftHandPoses[VRSkeletalReferencePose_Fist] = oculus::leftFistPose;
+	leftHandPoses[VRSkeletalReferencePose_GripLimit] = oculus::leftGripLimitPose;
+
+	rightHandPoses[VRSkeletalReferencePose_BindPose] = oculus::rightBindPose;
+	rightHandPoses[VRSkeletalReferencePose_OpenHand] = oculus::rightOpenHandPose;
+	rightHandPoses[VRSkeletalReferencePose_Fist] = oculus::rightFistPose;
+	rightHandPoses[VRSkeletalReferencePose_GripLimit] = oculus::rightGripLimitPose;
 }
 
 const std::string& OculusTouchInteractionProfile::GetPath() const

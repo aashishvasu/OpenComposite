@@ -15,6 +15,7 @@
 #include "Misc/Input/LegacyControllerActions.h"
 #include "generated/interfaces/vrannotation.h"
 
+typedef std::array<vr::VRBoneTransform_t, 31> BoneArray;
 typedef vr::EVRSkeletalTrackingLevel OOVR_EVRSkeletalTrackingLevel;
 
 enum OOVR_EVRSkeletalReferencePose {
@@ -795,7 +796,7 @@ private:
 	 * Uses input state (trigger and grip) to generate a skeletal summary.
 	 */
 	EVRInputError getEstimatedSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData);
-	EVRInputError getEstimatedBoneData(ITrackedDevice::TrackedDeviceType hand, EVRSkeletalTransformSpace transformSpace, std::span<VRBoneTransform_t, eBone_Count> boneData);
+	EVRInputError getEstimatedBoneData(ITrackedDevice::TrackedDeviceType hand, EVRSkeletalTransformSpace transformSpace, EVRSkeletalMotionRange eMotionRange, std::span<VRBoneTransform_t, eBone_Count> boneData);
 
 	/**
 	 * Some games (i.e. newer Unity games) won't explicitly call SetActionManifestPath, but instead will set the path through

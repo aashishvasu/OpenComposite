@@ -158,6 +158,13 @@ public:
 	std::optional<glm::mat4> GetComponentTransform(ITrackedDevice::TrackedDeviceType hand, const std::string& name) const;
 
 	/**
+	 * Get the specified reference pose of a controller (in parent space).
+	 *
+	 * These will unfortunately need to be specified for each controller, but the Quest poses are used as a good-enough fallback.
+	 */
+	std::optional<std::array<vr::VRBoneTransform_t, 31>> GetSkeletalReferencePose(ITrackedDevice::TrackedDeviceType hand, int) const;
+
+	/**
 	 * Build a list of suggested bindings for attaching the legacy actions to this profile.
 	 */
 	void AddLegacyBindings(const LegacyControllerActions& actions, std::vector<XrActionSuggestedBinding>& bindings) const;
@@ -243,4 +250,7 @@ protected:
 	// Grip transforms for left and right hand
 	glm::mat4 leftHandGripTransform = glm::identity<glm::mat4>();
 	glm::mat4 rightHandGripTransform = glm::identity<glm::mat4>();
+
+	// Reference poses for each hand
+	std::unordered_map<int, std::array<vr::VRBoneTransform_t, 31>> leftHandPoses, rightHandPoses;
 };
