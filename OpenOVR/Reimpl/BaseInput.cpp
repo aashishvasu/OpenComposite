@@ -28,6 +28,7 @@
 #include <optional>
 #include <set>
 #include <utility>
+#include <filesystem>
 
 #include "Misc/xrmoreutils.h"
 
@@ -616,6 +617,14 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 	for (Json::Value item : root["default_bindings"]) {
 		std::string controller_type = item["controller_type"].asString();
 		std::string path = dirnameOf(pchActionManifestPath) + "/" + item["binding_url"].asString();
+
+		//check if a custom binding file exists in current_dir/OpenComposite/controller_type.json
+		std::filesystem::path customPath = std::filesystem::current_path() / "OpenComposite" / (controller_type + ".json");
+
+		if (std::filesystem::exists(customPath)) {
+			OOVR_LOGF("Loading user-defined custom bindings file for controller type %s", controller_type.c_str());
+			path = customPath.string();
+		}
 
 		// look if we know about this OpenVR name
 		// have to loop through every binding type because default_bindings is an array for some reason
