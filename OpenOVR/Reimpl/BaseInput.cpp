@@ -853,8 +853,10 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 
 			std::string actionName = lowerStr(item["output"].asString());
 			Action* action = actions.LookupItem(actionName);
-			if (action == nullptr)
-				OOVR_ABORTF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
+			if (action == nullptr) {
+				OOVR_LOGF("Missing action '%s' in bindings file '%s'", actionName.c_str(), bindingsPath.c_str());
+				continue;
+			}
 
 			PoseBindingInfo info;
 
