@@ -134,6 +134,44 @@ constexpr XrHandJointEXT metacarpalJoints[5] = {
 	XR_HAND_JOINT_LITTLE_METACARPAL_EXT
 };
 
+static bool ConvertWristPose(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, glm::mat4 transform)
+{
+	const XrHandJointLocationEXT& wrist = joints[XR_HAND_JOINT_WRIST_EXT];
+
+	if (wrist.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0))
+		return false;
+
+	// The SteamVR grip pose gets derived from the OpenXR grip using the provided transform
+	// this needs to be accounted for by moving the wrist the opposite direction
+	transform = glm::inverse(transform);
+
+	glm::quat orientation = X2G_quat(wrist.pose.orientation);
+	
+	// TODO: Clean up and document whatever magic this is
+	glm::quat xRotation = glm::angleAxis(glm::radians(isRight ? -90.0f : 90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	orientation = xRotation * orientation;
+	
+	glm::quat zRotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	orientation = zRotation * orientation;
+	
+	// Apply transform to the orientation and position of the wrist
+	// this needs to be done after everything else to not mess up the coordinate conversion
+	glm::quat rotation = glm::toQuat(transform);
+	orientation = rotation * orientation;
+	
+	glm::vec3 position = X2G_v3f(wrist.pose.position);
+	position = glm::vec3(transform * glm::vec4(position, 1.0f));
+
+	// Copy results
+	vr::VRBoneTransform_t& out = output[eBone_Wrist];
+
+	quaternionCopy(orientation, out.orientation);
+
+	out.position = { position.y, position.x, position.z, 1.f };
+	
+	return true;
+}
+
 // Transform bones to be relative to their parent
 static bool GetJointRelative(const XrHandJointLocationEXT& currentJoint, const XrHandJointLocationEXT& parentJoint, bool isRight, vr::VRBoneTransform_t& outBoneTransform)
 {
@@ -348,11 +386,14 @@ static auto GetInterpolatedControllerState(const ITrackedDevice::TrackedDeviceTy
 }
 
 // OpenXR Hand Joints to OpenVR Hand Skeleton logic generously donated by danwillm from valve.
-bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output)
+bool BaseInput::XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, glm::mat4 transform)
 {
-	for (int i : { XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_WRIST_EXT }) {
-		output[i] = isRight ? rightOpenPose[i] : leftOpenPose[i];
-	}
+	// The root bone should just be left at identity
+	output[eBone_Root].orientation = vr::HmdQuaternionf_t{ /* w */ 1, 0, 0, 0 };
+	output[eBone_Root].position = vr::HmdVector4_t{ 0, 0, 0, 1 };
+
+	if (!ConvertWristPose(joints, isRight, output, transform))
+		return false;
 
 	if (!MetacarpalJointPass(joints, isRight, output))
 		return false;

@@ -760,7 +760,7 @@ private:
 
 	LegacyControllerActions legacyControllers[2] = {};
 
-	static bool XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output);
+	static bool XrHandJointsToSkeleton(const std::vector<XrHandJointLocationEXT>& joints, bool isRight, VRBoneTransform_t* output, glm::mat4 transform);
 	static void ParentSpaceSkeletonToModelSpace(VRBoneTransform_t* joints);
 
 	// Utility functions

@@ -1760,8 +1760,16 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
+	// Determine the skeletal tracking level, this is sort of a hack around not having hand tracking data source
+	vr::EVRSkeletalTrackingLevel skeletalTrackingLevel;
+	GetSkeletalTrackingLevel(actionHandle, &skeletalTrackingLevel);
+
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	locateInfo.baseSpace = xr_gbl->floorSpace;
+	// For partial (controller-based) hand tracking we want the pose relative to its grip
+	if (skeletalTrackingLevel == vr::VRSkeletalTracking_Partial)
+		locateInfo.baseSpace = legacyControllers[static_cast<int>(hand)].gripPoseSpace;
+	else
+		locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
@@ -1778,8 +1786,29 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
 
-	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray))
+	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
+	if (!dev)
+		return vr::VRInputError_InvalidDevice;
+
+	const InteractionProfile* profile = dev->GetInteractionProfile();
+
+	// Retrieve the appropriate hand transform to account for the SteamVR pose being different from OpenXR grip
+	glm::mat4 transform = profile->GetGripToSteamVRTransform(hand);
+
+	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray, transform))
 		return getEstimatedBoneData(hand, eTransformSpace, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
+
+	// With real hand tracking we get a hand positioned relative to floor space, change that to be relative to a fake controller
+	if (skeletalTrackingLevel == vr::VRSkeletalTracking_Full) {
+		vr::VRBoneTransform_t& wrist = pTransformArray[eBone_Wrist];
+		if (isRight) {
+			wrist.position = { 0.034038f, 0.036503f, 0.164722f, 1.000000f };
+			wrist.orientation = { -0.055147f, -0.078608f, 0.920279f, -0.379296f };
+		} else {
+			wrist.position = { -0.034038f, 0.036503f, 0.164722f, 1.000000f };
+			wrist.orientation = { -0.055147f, -0.078608f, -0.920279f, 0.379296f };
+		}
+	}
 
 	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
 		ParentSpaceSkeletonToModelSpace(pTransformArray);
