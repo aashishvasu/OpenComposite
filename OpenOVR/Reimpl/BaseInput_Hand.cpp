@@ -140,35 +140,45 @@ static bool ConvertWristPose(const std::vector<XrHandJointLocationEXT>& joints, 
 
 	if (wrist.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT == 0))
 		return false;
+	
+	// The wrist bone has it's own special transform, with all axes negated
+	glm::mat4 rightWristTransform = glm::zero<glm::mat4>();
+	rightWristTransform[1][0] = -1;
+	rightWristTransform[0][1] = -1;
+	rightWristTransform[2][2] = -1;
+	rightWristTransform[3][3] = 1;
+
+	// Wrists are a special case of being different between sides
+	glm::mat4 leftWristTransform = glm::zero<glm::mat4>();
+	leftWristTransform[1][0] = 1;
+	leftWristTransform[0][1] = 1;
+	leftWristTransform[2][2] = -1;
+	leftWristTransform[3][3] = 1;
+
+	glm::mat4 pose = X2G_om34_pose(wrist.pose);
+
+	glm::vec4 position = glm::vec4(pose[3][0], pose[3][1], pose[3][2], 1.0f);
+
+	if (isRight) {
+		pose *= rightWristTransform;
+	} else {
+		pose *= leftWristTransform;
+	}
+
+	glm::quat out_rotation(pose);
 
 	// The SteamVR grip pose gets derived from the OpenXR grip using the provided transform
 	// this needs to be accounted for by moving the wrist the opposite direction
-	transform = glm::inverse(transform);
+	glm::mat4 transformInverse = glm::affineInverse(transform);
 
-	glm::quat orientation = X2G_quat(wrist.pose.orientation);
-	
-	// TODO: Clean up and document whatever magic this is
-	glm::quat xRotation = glm::angleAxis(glm::radians(isRight ? -90.0f : 90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	orientation = xRotation * orientation;
-	
-	glm::quat zRotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	orientation = zRotation * orientation;
-	
-	// Apply transform to the orientation and position of the wrist
-	// this needs to be done after everything else to not mess up the coordinate conversion
-	glm::quat rotation = glm::toQuat(transform);
-	orientation = rotation * orientation;
-	
-	glm::vec3 position = X2G_v3f(wrist.pose.position);
-	position = glm::vec3(transform * glm::vec4(position, 1.0f));
+	position = transformInverse * position;
+	out_rotation = glm::toQuat(transformInverse) * out_rotation;
 
-	// Copy results
+	// Copy data
 	vr::VRBoneTransform_t& out = output[eBone_Wrist];
+	out.position = { position.x, position.y, position.z, 1.0f };
+	quaternionCopy(out_rotation, out.orientation);
 
-	quaternionCopy(orientation, out.orientation);
-
-	out.position = { position.y, position.x, position.z, 1.f };
-	
 	return true;
 }
 
