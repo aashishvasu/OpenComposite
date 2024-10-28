@@ -115,16 +115,6 @@ static std::map<HandSkeletonBone, XrHandJointEXT> auxBoneMap = {
 	{ eBone_Aux_PinkyFinger, XR_HAND_JOINT_LITTLE_DISTAL_EXT },
 };
 
-constexpr vr::VRBoneTransform_t leftOpenPose[2] = {
-	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, 0.000000f, 0.000000f, 0.000000f } },
-	{ { -0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, -0.920279f, 0.379296f } },
-};
-
-constexpr vr::VRBoneTransform_t rightOpenPose[2] = {
-	{ { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, -0.000000f, -0.000000f, 0.000000f } },
-	{ { 0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, 0.920279f, -0.379296f } },
-};
-
 constexpr XrHandJointEXT metacarpalJoints[5] = {
 	XR_HAND_JOINT_THUMB_METACARPAL_EXT,
 	XR_HAND_JOINT_INDEX_METACARPAL_EXT,
