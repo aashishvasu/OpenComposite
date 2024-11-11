@@ -21,6 +21,7 @@ void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 
 vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention)
 {
+	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	if (eEye < 0 || (int)eEye >= 2)
 		eEye = vr::Eye_Left;
 
@@ -124,6 +125,7 @@ bool XrHMD::ComputeDistortion(vr::EVREye eEye, float fU, float fV, vr::Distortio
 
 vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 {
+	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	static XrTime time = ~0; // Don't set to zero by default, otherwise we'll return an identity matrix before the first frame
 	static XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
 
@@ -269,6 +271,7 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 
 float XrHMD::GetIPD()
 {
+	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->viewSpace);
 	const XrViewState& state = cachedViews.viewState;
 	const std::array<XrView, XruEyeCount>& views = cachedViews.views;

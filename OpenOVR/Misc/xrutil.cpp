@@ -153,6 +153,7 @@ const XruCachedViews& XrSessionGlobals::GetCachedViews(XrSpace space)
 
 void XrSessionGlobals::ClearCachedViews()
 {
+	std::lock_guard lock(cachedViewsMtx);
 	cachedViews.clear();
 }
 
@@ -234,7 +235,7 @@ void rotate_vector_by_quaternion(const XrVector3f& v, const XrQuaternionf& q, Xr
 
 XrSession& SessionWrapper::get()
 {
-	return SessionLock(*this, false);
+	return session;
 }
 
 SessionLock SessionWrapper::lock_shared()
