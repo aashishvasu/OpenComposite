@@ -825,23 +825,29 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					continue;
 				}
 
+				if (srcJson["mode"].asString() == "button") {
 				if (inputName == "double") {
-					if (srcJson["mode"].asString() != "button") {
-						OOVR_LOGF("WARNING: The 'double' input only supports the 'button' mode, '%s' mode was used instead, skipping", srcJson["mode"].asString().c_str());
+						LoadDClickAction(profile, importBasePath, action, bindings);
 						continue;
 					}
 
-					LoadDClickAction(profile, importBasePath, action, bindings);
+					// special case: in the default bindings for HL:A, the "walk" action is bound with the "click" input and has an extra
+					// "force_input" parameter, here we just treat this binding as always returning true to allow thumbsticks to work (not sure if this is correct)
+					if (srcJson["parameters"]["force_input"] == "position") {
+						for (uint32_t i = 0; i < allSubactionPathNames.size(); i++) {
+							if (importBasePath.starts_with(allSubactionPathNames[i]))
+								action->forcedSubactionPaths.emplace_back(allSubactionPaths[i]);
+						}
+
 					continue;
+					}
 				}
 
 				// Translate path string to an appropriate path supported by this interaction profile, if necessary
 				std::string pathStr;
 				// special case: "position" in OpenVR is a 2D vector, in OpenXR this can be represented by the parent of the input value
 				// See the OpenXR spec section 11.4 ("Suggested Bindings")
-				// extra special case: in the default bindings for HL:A, the "walk" action is bound with the "click" input and an extra
-				// "force_input" parameter, here we just treat this combination as a normal position input (not sure if this is correct)
-				if (inputName == "position" || srcJson["parameters"]["force_input"].asString() == "position") {
+				if (inputName == "position") {
 					pathStr = profile.TranslateAction(importBasePath);
 				} else {
 					pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
@@ -1265,7 +1271,20 @@ void BaseInput::InternalUpdate()
 
 XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
 {
-	// If an action is bound to a dpad action in every profile, action.xr will be XR_NULL_HANDLE
+	for (auto forced_path : action.forcedSubactionPaths) {
+		if (forced_path != getInfo->subactionPath)
+			continue;
+
+		state->currentState = XR_TRUE;
+		state->isActive = XR_TRUE;
+
+		state->lastChangeTime = 0;
+		state->changedSinceLastSync = XR_FALSE; // TODO: is initial rising edge needed for first query?
+
+		return XR_SUCCESS;
+	}
+
+	// If an action is bound to a dpad or dclick action in every profile, action.xr will be XR_NULL_HANDLE
 	if (action.xr != XR_NULL_HANDLE) {
 		XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
 		OOVR_FAILED_XR_ABORT(ret);
@@ -1276,7 +1295,8 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 	}
 
 	bool compoundLastState = false;
-	// emulated openvr double click inputs
+	
+	// double clicks: check time between clicks and emulate openvr 'double' inputs
 	for (auto& dclick_info : action.dclickBindings) {
 		XrActionStateBoolean click_state = { XR_TYPE_ACTION_STATE_BOOLEAN };
 
@@ -1303,7 +1323,7 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 			continue;
 		}
 
-		// only check if there has been a *new* button down press
+		// check if there has been a *new* button down press
 		if (!click_state.changedSinceLastSync || !click_state.currentState)
 			continue;
 
@@ -1311,7 +1331,7 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 			// first click, record the timestamp
 			dclick_info.first_click_time = click_state.lastChangeTime;
 		} else {
-			// second click, check if in time window
+			// second click, check if in max time window
 			if (click_state.lastChangeTime - dclick_info.first_click_time < DClickBindingInfo::max_dclick_pause) {
 				state->currentState = XR_TRUE;
 				state->lastChangeTime = click_state.lastChangeTime;

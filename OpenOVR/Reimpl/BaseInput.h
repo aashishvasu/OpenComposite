@@ -629,6 +629,9 @@ private:
 		// list of double click input bindings
 		std::vector<DClickBindingInfo> dclickBindings;
 
+		// contains all subaction paths which are forced by bindings to always return true (for boolean queries)
+		std::vector<XrPath> forcedSubactionPaths;
+
 		// If this is a pose action, we calculate it from the legacy pose inputs rather than giving it
 		// it's own OpenXR action, since it may need some special transforms to make it line up properly.
 		std::unordered_map<const InteractionProfile*, PoseBindingInfo> poseBindingsLeft, poseBindingsRight;
