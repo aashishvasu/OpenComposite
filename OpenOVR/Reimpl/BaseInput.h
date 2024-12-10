@@ -549,13 +549,13 @@ private:
 
 	struct DClickBindingInfo {
 		// the maximum allowed time between the first click and the second click for the double binding to trigger
-		static constexpr XrDuration max_dclick_pause = 1'000'000'000 * .5f;
+		static constexpr XrDuration max_dclick_pause = 500 * 1'000'000; /* 500ms */
 
 		// the source click action this double click bindings is listening on
 		XrAction click_action;
 
 		// when a click is received, it's timestamp is saved to be compared with the following click
-		// when a second click is received (in the max_dclick_pause time window or not) it's reset back to 0
+		// when a second click is received (in the max_dclick_pause time window) it's reset back to 0
 		XrTime first_click_time;
 
 		// the previous state of the double click binding
