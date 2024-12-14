@@ -621,6 +621,14 @@ private:
 			float z = 0;
 		} previousState;
 
+		// The syncSerial from when previousState was populated.
+		uint64_t previousSerial = 0;
+
+		struct {
+			float x = 0;
+			float y = 0;
+		} deltaState;
+
 		// list of dpad directions to check
 		// first member of the pair is the parent name, the second is the corresponding binding info
 		using DpadGrouping = std::pair<std::string, DpadBindingInfo>;
@@ -745,6 +753,9 @@ private:
 
 	// See GetSyncSerial
 	uint64_t syncSerial = 0;
+
+	// For some reason, the behavior is different for digital input actions
+	uint64_t syncSerialDigital = 0;
 
 	bool hasLoadedActions = false;
 	std::string loadedActionsPath;
