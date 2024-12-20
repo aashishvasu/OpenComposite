@@ -1502,8 +1502,8 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	GET_ACTION_FROM_HANDLE(act, action);
 
+	GET_ACTION_FROM_HANDLE(act, action);
 	ZeroMemory(pActionData, unActionDataSize);
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
@@ -1511,10 +1511,9 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 	getInfo.action = act->xr;
 
 	// Only return the input with the greatest magnitude
-	// To do this, track the input with the greatest length.
 	float maxLengthSq = 0;
+	bool foundValidInput = false;
 
-	// Unfortunately to implement activeOrigin we have to loop through and query each action state
 	for (size_t i = 0; i < allSubactionPaths.size(); i++) {
 		XrPath subactionPath = allSubactionPaths[i];
 		if (!checkRestrictToDevice(ulRestrictToDevice, subactionPath))
@@ -1527,68 +1526,100 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			XrActionStateFloat state = { XR_TYPE_ACTION_STATE_FLOAT };
 			OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &getInfo, &state));
 
+			if (!state.isActive)
+				continue;
+
 			float length = fabs(state.currentState);
-			if(length < act->deadzone)
+			if (length < act->deadzone)
+				continue;
+
+			// Avoid division by zero by checking if maxzone and deadzone are equal
+			if (std::abs(act->maxzone - act->deadzone) < std::numeric_limits<float>::epsilon())
 				continue;
 
 			length = (length - act->deadzone) / (act->maxzone - act->deadzone);
-			length = length > 1.f ? 1.f : length;
-			state.currentState = state.currentState > 0.f ? length : -length;
+			length = std::min(1.0f, length); // Clamp to maximum of 1.0
 
-			float lengthSq = state.currentState * state.currentState;
-			if (lengthSq < maxLengthSq || !state.isActive)
+			float currentState = state.currentState > 0.f ? length : -length;
+			float lengthSq = currentState * currentState;
+
+			if (lengthSq < maxLengthSq)
 				continue;
-			lengthSq = maxLengthSq;
 
-			pActionData->x = state.currentState;
+			maxLengthSq = lengthSq;
+			foundValidInput = true;
+
+			pActionData->x = currentState;
 			pActionData->y = 0;
 			pActionData->z = 0;
-			pActionData->deltaX = state.currentState - act->previousState.x;
-			pActionData->bActive = state.isActive;
+			pActionData->deltaX = currentState - act->previousState.x;
+			pActionData->bActive = true;
 			pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
-
-			act->previousState.x = state.currentState;
+			act->previousState.x = currentState;
 			break;
 		}
 		case ActionType::Vector2: {
 			XrActionStateVector2f state = { XR_TYPE_ACTION_STATE_VECTOR2F };
 			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session.get(), &getInfo, &state));
 
+			if (!state.isActive)
+				continue;
+
 			float lengthSq = state.currentState.x * state.currentState.x + state.currentState.y * state.currentState.y;
+			float length = std::sqrt(lengthSq);
 
-			float length = sqrt(lengthSq);
-			float oldlength = length;
-			if(length < act->deadzone)
+			if (length < act->deadzone)
 				continue;
-			length = (length - act->deadzone) / (act->maxzone - act->deadzone);
-			length = length > 1.f ? 1.f : length;
-			state.currentState.x = length * state.currentState.x / oldlength;
-			state.currentState.y = length * state.currentState.y / oldlength;
-			lengthSq = state.currentState.x * state.currentState.x + state.currentState.y * state.currentState.y;
 
-			if (lengthSq < maxLengthSq || !state.isActive)
+			// Avoid division by zero by checking if maxzone and deadzone are equal
+			if (std::abs(act->maxzone - act->deadzone) < std::numeric_limits<float>::epsilon())
 				continue;
-			maxLengthSq = lengthSq;
 
-			pActionData->x = state.currentState.x;
-			pActionData->y = state.currentState.y;
+			// Ensure we're not dividing by zero when normalizing
+			if (length < std::numeric_limits<float>::epsilon())
+				continue;
+
+			float normalizedLength = (length - act->deadzone) / (act->maxzone - act->deadzone);
+			normalizedLength = std::min(1.0f, normalizedLength);
+
+			// Calculate normalized vector components
+			float scale = normalizedLength / length;
+			XrVector2f normalizedState = {
+				state.currentState.x * scale,
+				state.currentState.y * scale
+			};
+
+			float normalizedLengthSq = normalizedState.x * normalizedState.x + normalizedState.y * normalizedState.y;
+
+			if (normalizedLengthSq < maxLengthSq)
+				continue;
+
+			maxLengthSq = normalizedLengthSq;
+			foundValidInput = true;
+
+			pActionData->x = normalizedState.x;
+			pActionData->y = normalizedState.y;
 			pActionData->z = 0;
-			pActionData->deltaX = state.currentState.x - act->previousState.x;
-			pActionData->deltaY = state.currentState.y - act->previousState.y;
-			pActionData->bActive = state.isActive;
+			pActionData->deltaX = normalizedState.x - act->previousState.x;
+			pActionData->deltaY = normalizedState.y - act->previousState.y;
+			pActionData->bActive = true;
 			pActionData->activeOrigin = activeOriginFromSubaction(act, allSubactionPathNames[i].c_str());
-
-			act->previousState.x = state.currentState.x;
-			act->previousState.y = state.currentState.y;
+			act->previousState.x = normalizedState.x;
+			act->previousState.y = normalizedState.y;
 			break;
 		}
 		case ActionType::Vector3:
 			OOVR_ABORTF("Input type vector3 unsupported: %s", act->fullName.c_str());
 			break;
 		default:
-			OOVR_ABORTF("Invalid action type %d for action %s", static_cast<int>(act->type), act->fullName.c_str());
+			OOVR_ABORTF("Invalid action type %d for action %s",
+			    static_cast<int>(act->type), act->fullName.c_str());
 			break;
 		}
+	}
+
+	if (!foundValidInput) {
+		pActionData->bActive = false;
 	}
 
 	return VRInputError_None;
