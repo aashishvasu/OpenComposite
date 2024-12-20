@@ -635,6 +635,13 @@ private:
 		// If this is a pose action, we calculate it from the legacy pose inputs rather than giving it
 		// it's own OpenXR action, since it may need some special transforms to make it line up properly.
 		std::unordered_map<const InteractionProfile*, PoseBindingInfo> poseBindingsLeft, poseBindingsRight;
+
+		// parameters to modify how some inputs behave. There's probably a cleaner way to do this, but whatever
+		float click_activate_threshold = 0.7;
+		float click_deactivate_threshold = 0.55;
+		float deadzone = 0.0;
+		float maxzone = 1.0;
+		std::unordered_map<XrPath, XrBool32> analog_to_digital_last_state_subaction;
 	};
 
 	enum class InputSource {

@@ -557,7 +557,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 		switch (act->type) {
 		case ActionType::Boolean:
-			info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+			info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;	// do the float->boolean conversion in here
 			break;
 		case ActionType::Vector1:
 			info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
@@ -843,12 +843,32 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					}
 				}
 
+				for(auto& parameter_name : srcJson["parameters"].getMemberNames()){
+					OOVR_LOGF("Parameter: %s=%s", parameter_name.c_str(), srcJson["parameters"][parameter_name].asString().c_str());
+					if(parameter_name == "click_activate_threshold"){
+						action->click_activate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
+					}
+					if(parameter_name == "click_deactivate_threshold"){
+						action->click_deactivate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
+					}
+					if(parameter_name == "deadzone_pct"){
+						action->deadzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
+					}
+					if(parameter_name == "maxzone_pct"){
+						action->maxzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
+					}
+				}
+
 				// Translate path string to an appropriate path supported by this interaction profile, if necessary
 				std::string pathStr;
 				// special case: "position" in OpenVR is a 2D vector, in OpenXR this can be represented by the parent of the input value
 				// See the OpenXR spec section 11.4 ("Suggested Bindings")
 				if (inputName == "position") {
 					pathStr = profile.TranslateAction(importBasePath);
+				} else if (inputName == "click" && importBasePath.find("trigger") != std::string::npos){
+					// vive wands only need this for the trigger to do thr thresholds
+					pathStr = profile.TranslateAction(importBasePath + "/" + "value");
+					OOVR_LOGF("Using input value instead of click");
 				} else {
 					pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
 				}
@@ -1286,8 +1306,27 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 
 	// If an action is bound to a dpad or dclick action in every profile, action.xr will be XR_NULL_HANDLE
 	if (action.xr != XR_NULL_HANDLE) {
-		XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
+		//XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
+		//OOVR_FAILED_XR_ABORT(ret);
+
+		XrActionStateFloat fstate = {XR_TYPE_ACTION_STATE_FLOAT};
+		XrResult ret = xrGetActionStateFloat(xr_session.get(), getInfo, &fstate);
 		OOVR_FAILED_XR_ABORT(ret);
+
+		// it would be better to only do this for inputs which actually can use the conversion
+		XrBool32& subaction_state = action.analog_to_digital_last_state_subaction[getInfo->subactionPath];
+		XrBool32 oldstate = subaction_state;
+		if (fstate.currentState >= action.click_activate_threshold){
+			subaction_state = XR_TRUE;
+		}
+		if (fstate.currentState <= action.click_deactivate_threshold){
+			subaction_state = XR_FALSE;
+		}
+		state->currentState = subaction_state;
+		state->changedSinceLastSync = oldstate != subaction_state;
+		state->isActive = fstate.isActive;
+		state->lastChangeTime = fstate.lastChangeTime;
+		state->next = nullptr;
 
 		// actions could be bound to regular buttons and dpad buttons
 		if ((action.dpadBindings.empty() && action.dclickBindings.empty()) || state->currentState == XR_TRUE)
@@ -1488,6 +1527,14 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			XrActionStateFloat state = { XR_TYPE_ACTION_STATE_FLOAT };
 			OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &getInfo, &state));
 
+			float length = fabs(state.currentState);
+			if(length < act->deadzone)
+				continue;
+
+			length = (length - act->deadzone) / (act->maxzone - act->deadzone);
+			length = length > 1.f ? 1.f : length;
+			state.currentState = state.currentState > 0.f ? length : -length;
+
 			float lengthSq = state.currentState * state.currentState;
 			if (lengthSq < maxLengthSq || !state.isActive)
 				continue;
@@ -1508,6 +1555,17 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session.get(), &getInfo, &state));
 
 			float lengthSq = state.currentState.x * state.currentState.x + state.currentState.y * state.currentState.y;
+
+			float length = sqrt(lengthSq);
+			float oldlength = length;
+			if(length < act->deadzone)
+				continue;
+			length = (length - act->deadzone) / (act->maxzone - act->deadzone);
+			length = length > 1.f ? 1.f : length;
+			state.currentState.x = length * state.currentState.x / oldlength;
+			state.currentState.y = length * state.currentState.y / oldlength;
+			lengthSq = state.currentState.x * state.currentState.x + state.currentState.y * state.currentState.y;
+
 			if (lengthSq < maxLengthSq || !state.isActive)
 				continue;
 			maxLengthSq = lengthSq;
