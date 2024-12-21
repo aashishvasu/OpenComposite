@@ -1,3 +1,4 @@
+#include "logging.h"
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseCompositor.h"
@@ -800,7 +801,7 @@ vr::EVRFirmwareError BaseSystem::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t 
 
 void BaseSystem::AcknowledgeQuit_Exiting()
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("No implementation");
 }
 
 void BaseSystem::AcknowledgeQuit_UserPrompt()
