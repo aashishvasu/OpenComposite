@@ -1575,15 +1575,16 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			if (std::abs(act->maxzone - act->deadzone) < std::numeric_limits<float>::epsilon())
 				continue;
 
-			// Ensure we're not dividing by zero when normalizing
-			if (length < std::numeric_limits<float>::epsilon())
-				continue;
-
 			float normalizedLength = (length - act->deadzone) / (act->maxzone - act->deadzone);
 			normalizedLength = std::min(1.0f, normalizedLength);
 
 			// Calculate normalized vector components
-			float scale = normalizedLength / length;
+			float scale;
+			if (length < std::numeric_limits<float>::epsilon()){
+				scale = 0.f;
+			} else {
+				scale = normalizedLength / length;
+			}
 			XrVector2f normalizedState = {
 				state.currentState.x * scale,
 				state.currentState.y * scale
