@@ -109,6 +109,8 @@ public:
 
 	virtual bool IsHandTrackingValid();
 
+	virtual void SetHandTrackingValid(bool valid);
+
 private:
 	vr::TrackedDeviceIndex_t deviceIndex = vr::k_unTrackedDeviceIndexInvalid;
 };

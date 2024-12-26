@@ -250,6 +250,8 @@ bool ITrackedDevice::IsHandTrackingValid()
 	return false;
 }
 
+void ITrackedDevice::SetHandTrackingValid(bool valid) {}
+
 vr::ETrackedDeviceClass IHMD::GetTrackedDeviceClass()
 {
 	return vr::TrackedDeviceClass_HMD;

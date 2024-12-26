@@ -19,6 +19,7 @@
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
 #endif
+#include <filesystem>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <locale>
 #include <map>
@@ -27,7 +28,6 @@
 #include <optional>
 #include <set>
 #include <utility>
-#include <filesystem>
 
 #include "Misc/xrmoreutils.h"
 
@@ -557,7 +557,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 		switch (act->type) {
 		case ActionType::Boolean:
-			info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;	// do the float->boolean conversion in here
+			info.actionType = XR_ACTION_TYPE_FLOAT_INPUT; // do the float->boolean conversion in here
 			break;
 		case ActionType::Vector1:
 			info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
@@ -617,7 +617,7 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 		std::string controller_type = item["controller_type"].asString();
 		std::string path = dirnameOf(pchActionManifestPath) + "/" + item["binding_url"].asString();
 
-		//check if a custom binding file exists in current_dir/OpenComposite/controller_type.json
+		// check if a custom binding file exists in current_dir/OpenComposite/controller_type.json
 		std::filesystem::path customPath = std::filesystem::current_path() / "OpenComposite" / (controller_type + ".json");
 
 		if (std::filesystem::exists(customPath)) {
@@ -826,7 +826,7 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 				}
 
 				if (srcJson["mode"].asString() == "button") {
-				if (inputName == "double") {
+					if (inputName == "double") {
 						LoadDClickAction(profile, importBasePath, action, bindings);
 						continue;
 					}
@@ -839,22 +839,22 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 								action->forcedSubactionPaths.emplace_back(allSubactionPaths[i]);
 						}
 
-					continue;
+						continue;
 					}
 				}
 
-				for(auto& parameter_name : srcJson["parameters"].getMemberNames()){
+				for (auto& parameter_name : srcJson["parameters"].getMemberNames()) {
 					OOVR_LOGF("Parameter: %s=%s", parameter_name.c_str(), srcJson["parameters"][parameter_name].asString().c_str());
-					if(parameter_name == "click_activate_threshold"){
+					if (parameter_name == "click_activate_threshold") {
 						action->click_activate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
 					}
-					if(parameter_name == "click_deactivate_threshold"){
+					if (parameter_name == "click_deactivate_threshold") {
 						action->click_deactivate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
 					}
-					if(parameter_name == "deadzone_pct"){
+					if (parameter_name == "deadzone_pct") {
 						action->deadzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
 					}
-					if(parameter_name == "maxzone_pct"){
+					if (parameter_name == "maxzone_pct") {
 						action->maxzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
 					}
 				}
@@ -865,7 +865,7 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 				// See the OpenXR spec section 11.4 ("Suggested Bindings")
 				if (inputName == "position") {
 					pathStr = profile.TranslateAction(importBasePath);
-				} else if (inputName == "click" && importBasePath.find("trigger") != std::string::npos){
+				} else if (inputName == "click" && importBasePath.find("trigger") != std::string::npos) {
 					// vive wands only need this for the trigger to do thr thresholds
 					pathStr = profile.TranslateAction(importBasePath + "/" + "value");
 					OOVR_LOGF("Using input value instead of click");
@@ -1306,20 +1306,20 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 
 	// If an action is bound to a dpad or dclick action in every profile, action.xr will be XR_NULL_HANDLE
 	if (action.xr != XR_NULL_HANDLE) {
-		//XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
-		//OOVR_FAILED_XR_ABORT(ret);
+		// XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
+		// OOVR_FAILED_XR_ABORT(ret);
 
-		XrActionStateFloat fstate = {XR_TYPE_ACTION_STATE_FLOAT};
+		XrActionStateFloat fstate = { XR_TYPE_ACTION_STATE_FLOAT };
 		XrResult ret = xrGetActionStateFloat(xr_session.get(), getInfo, &fstate);
 		OOVR_FAILED_XR_ABORT(ret);
 
 		// it would be better to only do this for inputs which actually can use the conversion
 		XrBool32& subaction_state = action.analog_to_digital_last_state_subaction[getInfo->subactionPath];
 		XrBool32 oldstate = subaction_state;
-		if (fstate.currentState >= action.click_activate_threshold){
+		if (fstate.currentState >= action.click_activate_threshold) {
 			subaction_state = XR_TRUE;
 		}
-		if (fstate.currentState <= action.click_deactivate_threshold){
+		if (fstate.currentState <= action.click_deactivate_threshold) {
 			subaction_state = XR_FALSE;
 		}
 		state->currentState = subaction_state;
@@ -1334,7 +1334,7 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 	}
 
 	bool compoundLastState = false;
-	
+
 	// double clicks: check time between clicks and emulate openvr 'double' inputs
 	for (auto& dclick_info : action.dclickBindings) {
 		XrActionStateBoolean click_state = { XR_TYPE_ACTION_STATE_BOOLEAN };
@@ -1580,7 +1580,7 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 
 			// Calculate normalized vector components
 			float scale;
-			if (length < std::numeric_limits<float>::epsilon()){
+			if (length < std::numeric_limits<float>::epsilon()) {
 				scale = 0.f;
 			} else {
 				scale = normalizedLength / length;
@@ -1921,7 +1921,12 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	const auto hand = action->skeletalHand;
 	OOVR_FALSE_ABORT(static_cast<int>(hand) < 2);
 
+	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
+	if (!dev)
+		return vr::VRInputError_InvalidDevice;
+
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
+		dev->SetHandTrackingValid(false);
 		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
@@ -1946,15 +1951,11 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	if (!locations.isActive) {
 		// Fallback to estimated bone data (e.g. for controllers)
+		dev->SetHandTrackingValid(false);
 		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
 	bool isRight = (action->skeletalHand == ITrackedDevice::HAND_RIGHT);
-
-	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
-	if (!dev)
-		return vr::VRInputError_InvalidDevice;
-
 	const InteractionProfile* profile = dev->GetInteractionProfile();
 
 	// Retrieve the appropriate hand transform to account for the SteamVR pose being different from OpenXR grip
@@ -1977,6 +1978,8 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 
 	if (eTransformSpace == EVRSkeletalTransformSpace::VRSkeletalTransformSpace_Model)
 		ParentSpaceSkeletonToModelSpace(pTransformArray);
+
+	dev->SetHandTrackingValid(true);
 
 	// For now, just return with non-active data
 	return vr::VRInputError_None;
