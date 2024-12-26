@@ -1964,7 +1964,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 
 	// With real hand tracking we get a hand positioned relative to floor space, change that to be relative to a fake controller
-	if (skeletalTrackingLevel == vr::VRSkeletalTracking_Full) {
+	if (skeletalTrackingLevel != vr::VRSkeletalTracking_Partial) {
 		vr::VRBoneTransform_t& wrist = pTransformArray[eBone_Wrist];
 		if (isRight) {
 			wrist.position = { 0.034038f, 0.036503f, 0.164722f, 1.000000f };
