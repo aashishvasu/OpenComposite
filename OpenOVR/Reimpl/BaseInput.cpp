@@ -1498,7 +1498,7 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 
 	if (pActionData->bActive) {
 		if (syncSerialDigital > act->previousSerial) {
-			const float fState = pActionData->bState ? 1.0 : 0.0;
+			const float fState = pActionData->bState ? 1.0f : 0.0f;
 			act->deltaState.x = fState - act->previousState.x;
 			act->previousState.x = fState;
 			act->previousSerial = syncSerialDigital;
