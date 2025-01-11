@@ -60,6 +60,8 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 		{ "joystick", "thumbstick" },
 		{ "pull", "value" },
 		{ "grip/click", "squeeze/value" },
+		{ "grip/force", "squeeze/value" },
+		{ "grip/value", "squeeze/value" },
 		{ "trigger/click", "trigger/value" },
 		{ "application_menu", "menu" }
 	};
