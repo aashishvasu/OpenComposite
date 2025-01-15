@@ -857,19 +857,10 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					if (parameter_name == "maxzone_pct") {
 						action->maxzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
 					}
-					if(parameter_name == "force_hold_threshold"){
-						action->click_activate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
-						//action->click_deactivate_threshold = 0.0f;
-					}
-					if(parameter_name == "value_hold_threshold"){
-						action->click_deactivate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
-						action->hasSeparateReleaseAction = true;
-					}
 				}
 
 				// Translate path string to an appropriate path supported by this interaction profile, if necessary
 				std::string pathStr;
-				std::string pathStr2;
 				// special case: "position" in OpenVR is a 2D vector, in OpenXR this can be represented by the parent of the input value
 				// See the OpenXR spec section 11.4 ("Suggested Bindings")
 				if (inputName == "position") {
@@ -878,16 +869,8 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					// vive wands only need this for the trigger to do thr thresholds
 					pathStr = profile.TranslateAction(importBasePath + "/" + "value");
 					OOVR_LOGF("Using input value instead of click");
-				} else if(srcJson["mode"].asString() == "grab" && importBasePath.find("grip") != std::string::npos){
-					pathStr = profile.TranslateAction(importBasePath + "/" + "force");
-					OOVR_LOGF("Using input force for grip");
 				} else {
 					pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
-				}
-
-				if(srcJson["mode"].asString() == "grab" && importBasePath.find("grip") != std::string::npos && action->hasSeparateReleaseAction){
-					pathStr2 = profile.TranslateAction(importBasePath + "/" + "value");
-					OOVR_LOGF("Using input value for grip release");
 				}
 
 				if (!profile.IsInputPathValid(pathStr)) {
@@ -896,32 +879,9 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					continue;
 				}
 
-				if (action->hasSeparateReleaseAction && !profile.IsInputPathValid(pathStr2)) {
-					OOVR_LOGF("WARNING: Built invalid input path %s for profile %s from action %s, skipping",
-					    pathStr2.c_str(), profile.GetPath().c_str(), actionName.c_str());
-					continue;
-				}
-
-				OOVR_LOGF("Binding action %s to path %s", action->fullName.c_str(), pathStr.c_str());
 				XrPath path;
 				OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
 				bindings.push_back(XrActionSuggestedBinding{ action->xr, path });
-				if(action->hasSeparateReleaseAction){
-					if(action->releaseAction == XR_NULL_HANDLE){
-						XrActionCreateInfo createInfo = {XR_TYPE_ACTION_CREATE_INFO};
-						std::string safeName = escapePathString(action->shortName + "_release");
-						strcpy_arr(createInfo.actionName, safeName.c_str());
-						strcpy_arr(createInfo.localizedActionName, safeName.c_str());
-						createInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
-
-						createInfo.subactionPaths = allSubactionPaths.data();
-						createInfo.countSubactionPaths = allSubactionPaths.size();
-						OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &createInfo, &action->releaseAction));
-					}
-
-					OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr2.c_str(), &path));
-					bindings.push_back(XrActionSuggestedBinding{ action->releaseAction, path });
-				}
 			}
 		}
 
@@ -1352,25 +1312,17 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 		// XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
 		// OOVR_FAILED_XR_ABORT(ret);
 
+		XrActionStateFloat fstate = { XR_TYPE_ACTION_STATE_FLOAT };
+		XrResult ret = xrGetActionStateFloat(xr_session.get(), getInfo, &fstate);
+		OOVR_FAILED_XR_ABORT(ret);
+
 		// it would be better to only do this for inputs which actually can use the conversion
 		XrBool32& subaction_state = action.analog_to_digital_last_state_subaction[getInfo->subactionPath];
 		XrBool32 oldstate = subaction_state;
-		XrActionStateGetInfo getInfo2 = *getInfo;
-		XrActionStateFloat fstate = {XR_TYPE_ACTION_STATE_FLOAT};
-		if(action.hasSeparateReleaseAction && (subaction_state == XR_TRUE)){
-			getInfo2.action = action.releaseAction;
-		}
-		XrResult ret = xrGetActionStateFloat(xr_session.get(), &getInfo2, &fstate);
-		OOVR_FAILED_XR_ABORT(ret);
-
-		if (fstate.currentState >= action.click_activate_threshold && !(action.hasSeparateReleaseAction && (oldstate == XR_TRUE))){
+		if (fstate.currentState >= action.click_activate_threshold) {
 			subaction_state = XR_TRUE;
 		}
-		if (
-			(action.click_deactivate_threshold >= 1.0 ?
-				fstate.currentState < 1.0 :
-				fstate.currentState <= action.click_deactivate_threshold)
-			&& !(action.hasSeparateReleaseAction && (oldstate == XR_FALSE))){
+		if (fstate.currentState <= action.click_deactivate_threshold) {
 			subaction_state = XR_FALSE;
 		}
 		state->currentState = subaction_state;

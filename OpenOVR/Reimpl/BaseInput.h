@@ -650,8 +650,6 @@ private:
 		float deadzone = 0.0;
 		float maxzone = 1.0;
 		std::unordered_map<XrPath, XrBool32> analog_to_digital_last_state_subaction;
-		bool hasSeparateReleaseAction = false;
-		XrAction releaseAction = XR_NULL_HANDLE;
 	};
 
 	enum class InputSource {

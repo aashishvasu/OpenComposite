@@ -54,7 +54,7 @@ IndexControllerInteractionProfile::IndexControllerInteractionProfile()
 		// you have to pull really hard which is nerve racking
 		// If you look at the bindings_knuckles.json you can see some more compliated thresholds, which I believe OC ignores.
 		// If we add support for respecting those, change these to more reasonable replacements.
-		{ "grip/force", "squeeze/force" },
+		{ "grip/force", "squeeze/value" },
 		{ "grip/click", "squeeze/value" },
 		{ "grip/touch", "squeeze/value" },
 		{ "grip/value", "squeeze/value" },
