@@ -851,6 +851,55 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					}
 				}
 
+				bool knucklesGripMainInput = false;
+				// Don't activate split grip handling anywhere but knuckles
+				if (isKnuckles && srcJson["mode"].asString() == "grab" && importBasePath.ends_with("grip")) {
+					float activateValue = 0.7f;
+					float releaseValue = 0.65f; // These are SteamVR defaults
+
+					if (!srcJson["parameters"]["value_hold_threshold"].empty())
+						activateValue = std::stof(srcJson["parameters"]["value_hold_threshold"].asString().c_str());
+
+					if (!srcJson["parameters"]["value_release_threshold"].empty())
+						releaseValue = std::stof(srcJson["parameters"]["value_release_threshold"].asString().c_str());
+
+					action->perProfileData[&profile].click_activate_threshold = activateValue;
+					action->perProfileData[&profile].click_deactivate_threshold = releaseValue;
+
+					const auto forceActionKey = action->setName + "-" + action->shortName;
+					auto existingAction = indexGripExtensionActions.find(forceActionKey);
+					if (existingAction == indexGripExtensionActions.end()) {
+						XrAction forceAction = XR_NULL_HANDLE;
+
+						XrActionCreateInfo info{ XR_TYPE_ACTION_CREATE_INFO };
+						info.subactionPaths = allSubactionPaths.data();
+						info.countSubactionPaths = allSubactionPaths.size();
+						std::string extends_name = forceActionKey + "-grip-force-extra";
+						strcpy_arr(info.actionName, extends_name.c_str());
+						info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
+						strcpy_arr(info.localizedActionName, extends_name.c_str());
+						OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &forceAction));
+
+						indexGripExtensionActions[forceActionKey] = forceAction;
+						existingAction = indexGripExtensionActions.find(forceActionKey);
+					}
+
+					auto forceAction = existingAction->second;
+					auto pathStr = profile.TranslateAction(importBasePath + "/force");
+					if (!profile.IsInputPathValid(pathStr)) {
+						OOVR_LOGF("Trying to bind index extendo action to non-existent path %s? Ignoring...", pathStr.c_str());
+					} else {
+						OOVR_LOGF("Bound index extendo action to %s for original %s (%s)", pathStr.c_str(), importBasePath.c_str(), action->fullName.c_str());
+						XrPath path;
+						OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, pathStr.c_str(), &path));
+						bindings.push_back(XrActionSuggestedBinding{ forceAction, path });
+					}
+
+					action->stackedValueExtension = forceAction;
+
+					knucklesGripMainInput = true;
+				}
+
 				for (auto& parameter_name : srcJson["parameters"].getMemberNames()) {
 					OOVR_LOGF("Parameter: %s=%s", parameter_name.c_str(), srcJson["parameters"][parameter_name].asString().c_str());
 					if (parameter_name == "click_activate_threshold") {
@@ -877,6 +926,8 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					// vive wands only need this for the trigger to do thr thresholds
 					pathStr = profile.TranslateAction(importBasePath + "/" + "value");
 					OOVR_LOGF("Using input value instead of click");
+				} else if (knucklesGripMainInput) {
+					pathStr = profile.TranslateAction(importBasePath + "/value");
 				} else {
 					pathStr = profile.TranslateAction(importBasePath + "/" + inputName);
 				}
@@ -1341,17 +1392,35 @@ XrResult BaseInput::getBooleanOrDpadData(const InteractionProfile* profile, Acti
 		// XrResult ret = xrGetActionStateBoolean(xr_session.get(), getInfo, state);
 		// OOVR_FAILED_XR_ABORT(ret);
 
+		float value = 0;
+
 		XrActionStateFloat fstate = { XR_TYPE_ACTION_STATE_FLOAT };
-		XrResult ret = xrGetActionStateFloat(xr_session.get(), getInfo, &fstate);
-		OOVR_FAILED_XR_ABORT(ret);
+		XrResult ret;
+
+		if (action.stackedValueExtension != XR_NULL_HANDLE) {
+			auto getInfo2 = *getInfo;
+			getInfo2.action = action.stackedValueExtension;
+			ret = xrGetActionStateFloat(xr_session.get(), &getInfo2, &fstate);
+			OOVR_FAILED_XR_ABORT(ret);
+
+			if (fstate.currentState > 0) {
+				value = 1 + fstate.currentState;
+			}
+		}
+
+		if (value <= 0) { // only query base action if its value will be used to ensure that active/change time are sourced properly
+			ret = xrGetActionStateFloat(xr_session.get(), getInfo, &fstate);
+			OOVR_FAILED_XR_ABORT(ret);
+			value = fstate.currentState;
+		}
 
 		// it would be better to only do this for inputs which actually can use the conversion
 		XrBool32& subaction_state = action.analog_to_digital_last_state_subaction[getInfo->subactionPath];
 		XrBool32 oldstate = subaction_state;
-		if (fstate.currentState >= perProfileData.click_activate_threshold) {
+		if (value >= perProfileData.click_activate_threshold) {
 			subaction_state = XR_TRUE;
 		}
-		if (fstate.currentState <= perProfileData.click_deactivate_threshold) {
+		if (value <= perProfileData.click_deactivate_threshold) {
 			subaction_state = XR_FALSE;
 		}
 		state->currentState = subaction_state;
