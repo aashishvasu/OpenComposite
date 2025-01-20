@@ -781,6 +781,11 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 	if (!bindingsJson.isObject())
 		OOVR_ABORTF("Invalid bindings file %s, missing or invalid bindings object", bindingsPath.c_str());
 
+	// Index controllers require special handling of grip and touchpads
+	auto isKnuckles = bindingsRoot["controller_type"] == "knuckles";
+	if (isKnuckles)
+		OOVR_LOGF("Bindings detected as knuckles, fixups enabled (%s)", bindingsPath.c_str());
+
 	std::vector<XrActionSuggestedBinding> bindings;
 
 	for (std::string setFullName : bindingsJson.getMemberNames()) {
@@ -821,7 +826,7 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 				}
 
 				if (srcJson["mode"].asString() == "dpad") {
-					LoadDpadAction(profile, importBasePath, inputName, srcJson["parameters"]["sub_mode"].asString(), action, bindings);
+					LoadDpadAction(profile, importBasePath, inputName, srcJson["parameters"]["sub_mode"].asString(), action, bindings, isKnuckles);
 					continue;
 				}
 
@@ -977,7 +982,7 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 	OOVR_FAILED_XR_ABORT(xrSuggestInteractionProfileBindings(xr_instance, &suggestedBindings));
 }
 
-void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings)
+void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings, bool isKnuckles)
 {
 	// special case for dpad: we need to create additional inputs and read them ourselves
 	// verify that we actually have an input that can be used as an dpad for this profile
@@ -1037,14 +1042,24 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 	if (subMode == "click") {
 		dpad_info.click = true;
 		if (parent_iter->second.clickAction == XR_NULL_HANDLE) {
+
+			auto manualThreshold = isKnuckles && importBasePath.ends_with("trackpad");
+			dpad_info.customClickThresholds = manualThreshold;
+
 			std::string click_name = parentName + "-click";
 			strcpy_arr(info.actionName, click_name.c_str());
-			info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+			info.actionType = manualThreshold ? XR_ACTION_TYPE_FLOAT_INPUT : XR_ACTION_TYPE_BOOLEAN_INPUT;
 			strcpy_arr(info.localizedActionName, click_name.c_str());
 			OOVR_FAILED_XR_ABORT(xrCreateAction(action->set->xr, &info, &parent_iter->second.clickAction));
 
+			if (manualThreshold) {
+				// TODO: it's unclear what the actual threshold value used by SteamVR is, and it's not configurable in bindings json
+				action->click_activate_threshold = 0.33f;
+				action->click_deactivate_threshold = 0.2f;
+			}
+
 			XrPath suggested_path;
-			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + "/click").c_str(), &suggested_path));
+			OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, profile.TranslateAction(importBasePath + (manualThreshold ? "/force" : "/click")).c_str(), &suggested_path));
 			bindings.push_back(XrActionSuggestedBinding{ parent_iter->second.clickAction, suggested_path });
 		}
 	} else {
@@ -1434,10 +1449,21 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 
 		bool active;
 		if (dpad_info.click) {
-			XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
-			info2.action = iter->second.clickAction;
-			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
-			active = click_state.currentState;
+			if (dpad_info.customClickThresholds) {
+				XrActionStateFloat click_state{ XR_TYPE_ACTION_STATE_FLOAT };
+				info2.action = iter->second.clickAction;
+				OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &info2, &click_state));
+				if (state->currentState == XR_TRUE) {
+					active = click_state.currentState > action.click_deactivate_threshold;
+				} else {
+					active = click_state.currentState > action.click_activate_threshold;
+				}
+			} else {
+				XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
+				info2.action = iter->second.clickAction;
+				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
+				active = click_state.currentState;
+			}
 		} else if (iter->second.touchAction != XR_NULL_HANDLE) {
 			XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
 			info2.action = iter->second.touchAction;
@@ -1454,6 +1480,21 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 		if (currentState != dpad_info.lastState) {
 			state->lastChangeTime = parent_state.lastChangeTime;
 			dpad_info.lastState = currentState;
+
+			if (currentState && dpad_info.triggerHapticOnClick) {
+				for (auto &otherAction : actions.GetItems()) {
+					if (!otherAction->haptic || otherAction->xr == XR_NULL_HANDLE) continue;
+					XrHapticActionInfo hapticInfo = { XR_TYPE_HAPTIC_ACTION_INFO };
+					hapticInfo.action = otherAction->xr;
+					hapticInfo.subactionPath = getInfo->subactionPath;
+					XrHapticVibration vibration = { XR_TYPE_HAPTIC_VIBRATION };
+					vibration.frequency = XR_FREQUENCY_UNSPECIFIED;
+					vibration.duration = XR_MIN_HAPTIC_DURATION;
+					vibration.amplitude = 0.25f;
+					OOVR_FAILED_XR_SOFT_ABORT(xrApplyHapticFeedback(xr_session.get(), &hapticInfo, (XrHapticBaseHeader*)&vibration));
+					break;
+				}
+			}
 		}
 	}
 	state->changedSinceLastSync = compoundLastState != (bool)state->currentState;

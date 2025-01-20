@@ -545,6 +545,9 @@ private:
 
 		// The previous state for the dpad binding.
 		bool lastState = false;
+
+		// If custom thresholds are used for click action, which needs to be read as float (useful for Index)
+		bool customClickThresholds = false;
 	};
 
 	struct DClickBindingInfo {
@@ -790,7 +793,7 @@ private:
 
 	void LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath);
 
-	void LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
+	void LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings, bool isKnuckles);
 	void LoadDClickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings);
 
 	void CreateLegacyActions();
