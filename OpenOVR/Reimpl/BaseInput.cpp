@@ -1045,6 +1045,7 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 
 			auto manualThreshold = isKnuckles && importBasePath.ends_with("trackpad");
 			dpad_info.customClickThresholds = manualThreshold;
+			dpad_info.triggerHapticOnClick = manualThreshold;
 
 			std::string click_name = parentName + "-click";
 			strcpy_arr(info.actionName, click_name.c_str());

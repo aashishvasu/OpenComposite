@@ -546,8 +546,11 @@ private:
 		// The previous state for the dpad binding.
 		bool lastState = false;
 
-		// If custom thresholds are used for click action, which needs to be read as float (useful for Index)
+		// If custom thresholds are used for click action, which needs to be read as float (useful for Index touchpads)
 		bool customClickThresholds = false;
+
+		// Triggers the haptic action in the current action set once this becomes clicked (useful for Index touchpads)
+		bool triggerHapticOnClick = false;
 	};
 
 	struct DClickBindingInfo {
