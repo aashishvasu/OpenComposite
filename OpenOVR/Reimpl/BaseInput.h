@@ -583,6 +583,28 @@ private:
 		ITrackedDevice::TrackedDeviceType hand = ITrackedDevice::HAND_LEFT;
 	};
 
+	struct ActionPerProfileData {
+	public:
+		// used for extending float value range: if this reports a value above 0, the value read by this action is one plus that value
+		XrAction stackedValueExtension = XR_NULL_HANDLE;
+
+		// list of dpad directions to check
+		// first member of the pair is the parent name, the second is the corresponding binding info
+		using DpadGrouping = std::pair<std::string, DpadBindingInfo>;
+		std::vector<DpadGrouping> dpadBindings;
+
+		// list of double click input bindings
+		std::vector<DClickBindingInfo> dclickBindings;
+
+		// contains all subaction paths which are forced by bindings to always return true (for boolean queries)
+		std::vector<XrPath> forcedSubactionPaths;
+		// parameters to modify how some inputs behave. There's probably a cleaner way to do this, but whatever
+		float click_activate_threshold = 0.7;
+		float click_deactivate_threshold = 0.55;
+		float deadzone = 0.0;
+		float maxzone = 1.0;
+	};
+
 	struct Action {
 	private:
 		static constexpr size_t sources_size = 32;
@@ -635,26 +657,13 @@ private:
 			float y = 0;
 		} deltaState;
 
-		// list of dpad directions to check
-		// first member of the pair is the parent name, the second is the corresponding binding info
-		using DpadGrouping = std::pair<std::string, DpadBindingInfo>;
-		std::vector<DpadGrouping> dpadBindings;
-
-		// list of double click input bindings
-		std::vector<DClickBindingInfo> dclickBindings;
-
-		// contains all subaction paths which are forced by bindings to always return true (for boolean queries)
-		std::vector<XrPath> forcedSubactionPaths;
-
 		// If this is a pose action, we calculate it from the legacy pose inputs rather than giving it
 		// it's own OpenXR action, since it may need some special transforms to make it line up properly.
 		std::unordered_map<const InteractionProfile*, PoseBindingInfo> poseBindingsLeft, poseBindingsRight;
 
-		// parameters to modify how some inputs behave. There's probably a cleaner way to do this, but whatever
-		float click_activate_threshold = 0.7;
-		float click_deactivate_threshold = 0.55;
-		float deadzone = 0.0;
-		float maxzone = 1.0;
+		std::unordered_map<const InteractionProfile*, ActionPerProfileData> perProfileData;
+		static const ActionPerProfileData defaultActionData;
+
 		std::unordered_map<XrPath, XrBool32> analog_to_digital_last_state_subaction;
 	};
 
@@ -794,6 +803,8 @@ private:
 		"/user/hand/right",
 	};
 
+	std::vector<const InteractionProfile*> handInteractionProfiles;
+
 	void LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath);
 
 	void LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings, bool isKnuckles);
@@ -832,7 +843,7 @@ private:
 	/**
 	 * Get the state for a digital action, which could be bound to a DPad action.
 	 */
-	XrResult getBooleanOrDpadData(Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
+	XrResult getBooleanOrDpadData(const InteractionProfile* profile, Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
 
 	/**
 	 * Uses the finger tracking extensions to generate a skeletal summary.

@@ -323,6 +323,8 @@ void BaseInput::Registry<T>::Reset()
 
 // ---
 
+const BaseInput::ActionPerProfileData BaseInput::Action::defaultActionData;
+
 BaseInput::BaseInput()
     : actionSets(XR_MAX_ACTION_SET_NAME_SIZE), actions(XR_MAX_ACTION_NAME_SIZE)
 {
@@ -331,6 +333,7 @@ BaseInput::BaseInput()
 		XrPath path;
 		OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, str.c_str(), &path));
 		allSubactionPaths.push_back(path);
+		handInteractionProfiles.push_back(nullptr);
 	}
 
 	if (!startupManifest.empty()) {
@@ -841,7 +844,7 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 					if (srcJson["parameters"]["force_input"] == "position") {
 						for (uint32_t i = 0; i < allSubactionPathNames.size(); i++) {
 							if (importBasePath.starts_with(allSubactionPathNames[i]))
-								action->forcedSubactionPaths.emplace_back(allSubactionPaths[i]);
+								action->perProfileData[&profile].forcedSubactionPaths.emplace_back(allSubactionPaths[i]);
 						}
 
 						continue;
@@ -851,16 +854,16 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 				for (auto& parameter_name : srcJson["parameters"].getMemberNames()) {
 					OOVR_LOGF("Parameter: %s=%s", parameter_name.c_str(), srcJson["parameters"][parameter_name].asString().c_str());
 					if (parameter_name == "click_activate_threshold") {
-						action->click_activate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
+						action->perProfileData[&profile].click_activate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
 					}
 					if (parameter_name == "click_deactivate_threshold") {
-						action->click_deactivate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
+						action->perProfileData[&profile].click_deactivate_threshold = std::stof(srcJson["parameters"][parameter_name].asString().c_str());
 					}
 					if (parameter_name == "deadzone_pct") {
-						action->deadzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
+						action->perProfileData[&profile].deadzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
 					}
 					if (parameter_name == "maxzone_pct") {
-						action->maxzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
+						action->perProfileData[&profile].maxzone = std::stof(srcJson["parameters"][parameter_name].asString().c_str()) / 100.f;
 					}
 				}
 
@@ -1055,8 +1058,8 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 
 			if (manualThreshold) {
 				// TODO: it's unclear what the actual threshold value used by SteamVR is, and it's not configurable in bindings json
-				action->click_activate_threshold = 0.33f;
-				action->click_deactivate_threshold = 0.2f;
+				action->perProfileData[&profile].click_activate_threshold = 0.33f;
+				action->perProfileData[&profile].click_deactivate_threshold = 0.2f;
 			}
 
 			XrPath suggested_path;
@@ -1083,7 +1086,7 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 	}
 
 	// add dpad parent to action
-	action->dpadBindings.push_back({ parentName, dpad_info });
+	action->perProfileData[&profile].dpadBindings.push_back({ parentName, dpad_info });
 }
 
 void BaseInput::LoadDClickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings)
@@ -1122,7 +1125,7 @@ void BaseInput::LoadDClickAction(const InteractionProfile& profile, const std::s
 	OOVR_FAILED_XR_ABORT(xrStringToPath(xr_instance, clickPath.c_str(), &suggested_path));
 	bindings.push_back(XrActionSuggestedBinding{ dclickInfo.click_action, suggested_path });
 
-	action->dclickBindings.push_back(dclickInfo);
+	action->perProfileData[&profile].dclickBindings.push_back(dclickInfo);
 }
 
 void BaseInput::CreateLegacyActions()
@@ -1288,6 +1291,15 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session.get(), &syncInfo));
 	syncSerial++;
 
+	for (size_t i = 0; i < allSubactionPaths.size(); i++) {
+		auto handDevice = BackendManager::Instance().GetBackendInstance()->GetDeviceByHand(static_cast<ITrackedDevice::TrackedDeviceType>(i));
+		auto newProfile = handDevice == nullptr ? nullptr : handDevice->GetInteractionProfile();
+		if (handInteractionProfiles[i] != newProfile) {
+			OOVR_LOGF("Hand %s switching to profile %s", allSubactionPathNames[i].c_str(), newProfile == nullptr ? "<null>" : newProfile->GetPath().c_str());
+			handInteractionProfiles[i] = newProfile;
+		}
+	}
+
 	return VRInputError_None;
 }
 
@@ -1308,9 +1320,10 @@ void BaseInput::InternalUpdate()
 	syncSerial++;
 }
 
-XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
+XrResult BaseInput::getBooleanOrDpadData(const InteractionProfile* profile, Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
 {
-	for (auto forced_path : action.forcedSubactionPaths) {
+	const auto& perProfileData = action.perProfileData.contains(profile) ? action.perProfileData[profile] : Action::defaultActionData;
+	for (auto forced_path : perProfileData.forcedSubactionPaths) {
 		if (forced_path != getInfo->subactionPath)
 			continue;
 
@@ -1335,10 +1348,10 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 		// it would be better to only do this for inputs which actually can use the conversion
 		XrBool32& subaction_state = action.analog_to_digital_last_state_subaction[getInfo->subactionPath];
 		XrBool32 oldstate = subaction_state;
-		if (fstate.currentState >= action.click_activate_threshold) {
+		if (fstate.currentState >= perProfileData.click_activate_threshold) {
 			subaction_state = XR_TRUE;
 		}
-		if (fstate.currentState <= action.click_deactivate_threshold) {
+		if (fstate.currentState <= perProfileData.click_deactivate_threshold) {
 			subaction_state = XR_FALSE;
 		}
 		state->currentState = subaction_state;
@@ -1348,156 +1361,158 @@ XrResult BaseInput::getBooleanOrDpadData(Action& action, const XrActionStateGetI
 		state->next = nullptr;
 
 		// actions could be bound to regular buttons and dpad buttons
-		if ((action.dpadBindings.empty() && action.dclickBindings.empty()) || state->currentState == XR_TRUE)
+		if ((perProfileData.dpadBindings.empty() && perProfileData.dclickBindings.empty()) || state->currentState == XR_TRUE)
 			return ret;
 	}
 
 	bool compoundLastState = false;
 
 	// double clicks: check time between clicks and emulate openvr 'double' inputs
-	for (auto& dclick_info : action.dclickBindings) {
-		XrActionStateBoolean click_state = { XR_TYPE_ACTION_STATE_BOOLEAN };
+	if (!perProfileData.dclickBindings.empty())
+		for (auto& dclick_info : action.perProfileData[profile].dclickBindings) {
+			XrActionStateBoolean click_state = { XR_TYPE_ACTION_STATE_BOOLEAN };
 
-		// read state of the source click binding
-		XrActionStateGetInfo info2 = *getInfo;
-		info2.action = dclick_info.click_action;
-		OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
+			// read state of the source click binding
+			XrActionStateGetInfo info2 = *getInfo;
+			info2.action = dclick_info.click_action;
+			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
 
-		compoundLastState |= dclick_info.last_state;
+			compoundLastState |= dclick_info.last_state;
 
-		if (!click_state.isActive)
-			continue;
-		state->isActive = XR_TRUE;
+			if (!click_state.isActive)
+				continue;
+			state->isActive = XR_TRUE;
 
-		// if the double click has been triggered, hold it triggered until depressed
-		if (dclick_info.last_state) {
-			if (click_state.currentState) {
-				state->currentState = XR_TRUE;
-			} else {
-				dclick_info.last_state = false;
-				state->lastChangeTime = click_state.lastChangeTime;
+			// if the double click has been triggered, hold it triggered until depressed
+			if (dclick_info.last_state) {
+				if (click_state.currentState) {
+					state->currentState = XR_TRUE;
+				} else {
+					dclick_info.last_state = false;
+					state->lastChangeTime = click_state.lastChangeTime;
+				}
+
+				continue;
 			}
 
-			continue;
-		}
+			// check if there has been a *new* button down press
+			if (!click_state.changedSinceLastSync || !click_state.currentState)
+				continue;
 
-		// check if there has been a *new* button down press
-		if (!click_state.changedSinceLastSync || !click_state.currentState)
-			continue;
-
-		if (!dclick_info.first_click_time) {
-			// first click, record the timestamp
-			dclick_info.first_click_time = click_state.lastChangeTime;
-		} else {
-			// second click, check if in max time window
-			if (click_state.lastChangeTime - dclick_info.first_click_time < DClickBindingInfo::max_dclick_pause) {
-				state->currentState = XR_TRUE;
-				state->lastChangeTime = click_state.lastChangeTime;
-
-				dclick_info.first_click_time = 0;
-				dclick_info.last_state = true;
-			} else {
-				// missed time window, treat as a first click
+			if (!dclick_info.first_click_time) {
+				// first click, record the timestamp
 				dclick_info.first_click_time = click_state.lastChangeTime;
+			} else {
+				// second click, check if in max time window
+				if (click_state.lastChangeTime - dclick_info.first_click_time < DClickBindingInfo::max_dclick_pause) {
+					state->currentState = XR_TRUE;
+					state->lastChangeTime = click_state.lastChangeTime;
+
+					dclick_info.first_click_time = 0;
+					dclick_info.last_state = true;
+				} else {
+					// missed time window, treat as a first click
+					dclick_info.first_click_time = click_state.lastChangeTime;
+				}
 			}
 		}
-	}
 
 	// dpad bindings: need to read parent state(s) and fill in state ourselves
-	for (auto& [parent_name, dpad_info] : action.dpadBindings) {
-		// read state of parent
-		XrActionStateVector2f parent_state = { XR_TYPE_ACTION_STATE_VECTOR2F };
-		auto iter = DpadBindingInfo::parents.find(parent_name);
-		OOVR_FALSE_ABORT(iter != DpadBindingInfo::parents.end());
-		XrActionStateGetInfo info2 = *getInfo;
-		info2.action = iter->second.vectorAction;
-		OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session.get(), &info2, &parent_state));
+	if (!perProfileData.dpadBindings.empty())
+		for (auto& [parent_name, dpad_info] : action.perProfileData[profile].dpadBindings) {
+			// read state of parent
+			XrActionStateVector2f parent_state = { XR_TYPE_ACTION_STATE_VECTOR2F };
+			auto iter = DpadBindingInfo::parents.find(parent_name);
+			OOVR_FALSE_ABORT(iter != DpadBindingInfo::parents.end());
+			XrActionStateGetInfo info2 = *getInfo;
+			info2.action = iter->second.vectorAction;
+			OOVR_FAILED_XR_ABORT(xrGetActionStateVector2f(xr_session.get(), &info2, &parent_state));
 
-		compoundLastState |= dpad_info.lastState;
-		if (!parent_state.isActive)
-			continue;
-		state->isActive = XR_TRUE;
+			compoundLastState |= dpad_info.lastState;
+			if (!parent_state.isActive)
+				continue;
+			state->isActive = XR_TRUE;
 
-		// convert to polar coordinates
-		// angle is in radians
-		float radius = sqrtf(powf(parent_state.currentState.x, 2) + powf(parent_state.currentState.y, 2));
-		float angle = atan2f(parent_state.currentState.y, parent_state.currentState.x);
+			// convert to polar coordinates
+			// angle is in radians
+			float radius = sqrtf(powf(parent_state.currentState.x, 2) + powf(parent_state.currentState.y, 2));
+			float angle = atan2f(parent_state.currentState.y, parent_state.currentState.x);
 
-		// note: since the range of atan2 is (-pi, pi), the east and west directions will have points between the negative and positive portions (if you think of the dpad as a circle)
-		bool within_bounds = false;
-		switch (dpad_info.direction) {
-		case DpadBindingInfo::Direction::CENTER: {
-			within_bounds = (radius <= DpadBindingInfo::dpadDeadzoneRadius);
-			break;
-		}
-		case DpadBindingInfo::Direction::NORTH: {
-			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > DpadBindingInfo::angle45deg && angle <= DpadBindingInfo::angle135deg);
-			break;
-		}
-		case DpadBindingInfo::Direction::WEST: {
-			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > DpadBindingInfo::angle135deg || angle <= -DpadBindingInfo::angle135deg);
-			break;
-		}
-		case DpadBindingInfo::Direction::SOUTH: {
-			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle135deg && angle <= -DpadBindingInfo::angle45deg);
-			break;
-		}
-		case DpadBindingInfo::Direction::EAST: {
-			within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle45deg && angle <= DpadBindingInfo::angle45deg);
-			break;
-		}
-		}
+			// note: since the range of atan2 is (-pi, pi), the east and west directions will have points between the negative and positive portions (if you think of the dpad as a circle)
+			bool within_bounds = false;
+			switch (dpad_info.direction) {
+			case DpadBindingInfo::Direction::CENTER: {
+				within_bounds = (radius <= DpadBindingInfo::dpadDeadzoneRadius);
+				break;
+			}
+			case DpadBindingInfo::Direction::NORTH: {
+				within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > DpadBindingInfo::angle45deg && angle <= DpadBindingInfo::angle135deg);
+				break;
+			}
+			case DpadBindingInfo::Direction::WEST: {
+				within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > DpadBindingInfo::angle135deg || angle <= -DpadBindingInfo::angle135deg);
+				break;
+			}
+			case DpadBindingInfo::Direction::SOUTH: {
+				within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle135deg && angle <= -DpadBindingInfo::angle45deg);
+				break;
+			}
+			case DpadBindingInfo::Direction::EAST: {
+				within_bounds = (radius > DpadBindingInfo::dpadDeadzoneRadius) && (angle > -DpadBindingInfo::angle45deg && angle <= DpadBindingInfo::angle45deg);
+				break;
+			}
+			}
 
-		bool active;
-		if (dpad_info.click) {
-			if (dpad_info.customClickThresholds) {
-				XrActionStateFloat click_state{ XR_TYPE_ACTION_STATE_FLOAT };
-				info2.action = iter->second.clickAction;
-				OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &info2, &click_state));
-				if (state->currentState == XR_TRUE) {
-					active = click_state.currentState > action.click_deactivate_threshold;
+			bool active;
+			if (dpad_info.click) {
+				if (dpad_info.customClickThresholds) {
+					XrActionStateFloat click_state{ XR_TYPE_ACTION_STATE_FLOAT };
+					info2.action = iter->second.clickAction;
+					OOVR_FAILED_XR_ABORT(xrGetActionStateFloat(xr_session.get(), &info2, &click_state));
+					if (state->currentState == XR_TRUE) {
+						active = click_state.currentState > perProfileData.click_deactivate_threshold;
+					} else {
+						active = click_state.currentState > perProfileData.click_activate_threshold;
+					}
 				} else {
-					active = click_state.currentState > action.click_activate_threshold;
+					XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
+					info2.action = iter->second.clickAction;
+					OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
+					active = click_state.currentState;
 				}
+			} else if (iter->second.touchAction != XR_NULL_HANDLE) {
+				XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
+				info2.action = iter->second.touchAction;
+				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &touch_state));
+				active = touch_state.currentState;
 			} else {
-				XrActionStateBoolean click_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
-				info2.action = iter->second.clickAction;
-				OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &click_state));
-				active = click_state.currentState;
+				// touch dpad, but our dpad parent doesn't have a touch input
+				active = true;
 			}
-		} else if (iter->second.touchAction != XR_NULL_HANDLE) {
-			XrActionStateBoolean touch_state{ XR_TYPE_ACTION_STATE_BOOLEAN };
-			info2.action = iter->second.touchAction;
-			OOVR_FAILED_XR_ABORT(xrGetActionStateBoolean(xr_session.get(), &info2, &touch_state));
-			active = touch_state.currentState;
-		} else {
-			// touch dpad, but our dpad parent doesn't have a touch input
-			active = true;
-		}
-		bool currentState = active && within_bounds;
-		if (currentState)
-			state->currentState = XR_TRUE;
+			bool currentState = active && within_bounds;
+			if (currentState)
+				state->currentState = XR_TRUE;
 
-		if (currentState != dpad_info.lastState) {
-			state->lastChangeTime = parent_state.lastChangeTime;
-			dpad_info.lastState = currentState;
+			if (currentState != dpad_info.lastState) {
+				state->lastChangeTime = parent_state.lastChangeTime;
+				dpad_info.lastState = currentState;
 
-			if (currentState && dpad_info.triggerHapticOnClick) {
-				for (auto &otherAction : actions.GetItems()) {
-					if (!otherAction->haptic || otherAction->xr == XR_NULL_HANDLE) continue;
-					XrHapticActionInfo hapticInfo = { XR_TYPE_HAPTIC_ACTION_INFO };
-					hapticInfo.action = otherAction->xr;
-					hapticInfo.subactionPath = getInfo->subactionPath;
-					XrHapticVibration vibration = { XR_TYPE_HAPTIC_VIBRATION };
-					vibration.frequency = XR_FREQUENCY_UNSPECIFIED;
-					vibration.duration = XR_MIN_HAPTIC_DURATION;
-					vibration.amplitude = 0.25f;
-					OOVR_FAILED_XR_SOFT_ABORT(xrApplyHapticFeedback(xr_session.get(), &hapticInfo, (XrHapticBaseHeader*)&vibration));
-					break;
+				if (currentState && dpad_info.triggerHapticOnClick) {
+					for (auto &otherAction : actions.GetItems()) {
+						if (!otherAction->haptic || otherAction->xr == XR_NULL_HANDLE) continue;
+						XrHapticActionInfo hapticInfo = { XR_TYPE_HAPTIC_ACTION_INFO };
+						hapticInfo.action = otherAction->xr;
+						hapticInfo.subactionPath = getInfo->subactionPath;
+						XrHapticVibration vibration = { XR_TYPE_HAPTIC_VIBRATION };
+						vibration.frequency = XR_FREQUENCY_UNSPECIFIED;
+						vibration.duration = XR_MIN_HAPTIC_DURATION;
+						vibration.amplitude = 0.25f;
+						OOVR_FAILED_XR_SOFT_ABORT(xrApplyHapticFeedback(xr_session.get(), &hapticInfo, (XrHapticBaseHeader*)&vibration));
+						break;
+					}
 				}
 			}
 		}
-	}
 	state->changedSinceLastSync = compoundLastState != (bool)state->currentState;
 	return XR_SUCCESS;
 }
@@ -1522,7 +1537,7 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 
 		getInfo.subactionPath = subactionPath;
 		XrActionStateBoolean state = { XR_TYPE_ACTION_STATE_BOOLEAN };
-		OOVR_FAILED_XR_ABORT(getBooleanOrDpadData(*act, &getInfo, &state));
+		OOVR_FAILED_XR_ABORT(getBooleanOrDpadData(handInteractionProfiles[i], *act, &getInfo, &state));
 
 		// If the subaction isn't set, or it was set but not active, or it was set
 		// but the state was false and it's not now, then override it.
@@ -1576,6 +1591,8 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 
 		getInfo.subactionPath = subactionPath;
 
+		auto profile = handInteractionProfiles[i];
+		const auto& action_per_profile_data = act->perProfileData.contains(profile) ? act->perProfileData[profile] : Action::defaultActionData;
 		switch (act->type) {
 		case ActionType::Vector1: {
 			XrActionStateFloat state = { XR_TYPE_ACTION_STATE_FLOAT };
@@ -1584,15 +1601,16 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			if (!state.isActive)
 				continue;
 
+
 			float length = fabs(state.currentState);
-			if (length < act->deadzone)
+			if (length < action_per_profile_data.deadzone)
 				continue;
 
 			// Avoid division by zero by checking if maxzone and deadzone are equal
-			if (std::abs(act->maxzone - act->deadzone) < std::numeric_limits<float>::epsilon())
+			if (std::abs(action_per_profile_data.maxzone - action_per_profile_data.deadzone) < std::numeric_limits<float>::epsilon())
 				continue;
 
-			length = (length - act->deadzone) / (act->maxzone - act->deadzone);
+			length = (length - action_per_profile_data.deadzone) / (action_per_profile_data.maxzone - action_per_profile_data.deadzone);
 			length = std::min(1.0f, length); // Clamp to maximum of 1.0
 
 			float currentState = state.currentState > 0.f ? length : -length;
@@ -1629,14 +1647,14 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 			float lengthSq = state.currentState.x * state.currentState.x + state.currentState.y * state.currentState.y;
 			float length = std::sqrt(lengthSq);
 
-			if (length < act->deadzone)
+			if (length < action_per_profile_data.deadzone)
 				continue;
 
 			// Avoid division by zero by checking if maxzone and deadzone are equal
-			if (std::abs(act->maxzone - act->deadzone) < std::numeric_limits<float>::epsilon())
+			if (std::abs(action_per_profile_data.maxzone - action_per_profile_data.deadzone) < std::numeric_limits<float>::epsilon())
 				continue;
 
-			float normalizedLength = (length - act->deadzone) / (act->maxzone - act->deadzone);
+			float normalizedLength = (length - action_per_profile_data.deadzone) / (action_per_profile_data.maxzone - action_per_profile_data.deadzone);
 			normalizedLength = std::min(1.0f, normalizedLength);
 
 			// Calculate normalized vector components
