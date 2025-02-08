@@ -485,7 +485,10 @@ else ()
 	target_link_options(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
 
 	# Ensure all required symbols are actually found, don't produce a binary that can't be loaded
-	target_link_options(OCOVR PRIVATE -z defs)
+	target_link_options(OCOVR PRIVATE "LINKER:-z,defs")
+	# Because of the resources_linux.s assembly file, the linker may ask for an executable stack
+	# glibc >= 2.41 will refuse to load the shared library
+	target_link_options(OCOVR PRIVATE "LINKER:-z,noexecstack")
 
 	# Oh, and we need dlopen
 	target_link_libraries(OCOVR PUBLIC -ldl)
