@@ -769,7 +769,8 @@ void XrBackend::PumpEvents()
 				// End the session. The session is still valid and we can still query some information
 				// from it, but we're not allowed to submit frames anymore. This is done when the engagement
 				// sensor detects the user has taken off the headset, for example.
-				OOVR_FAILED_XR_ABORT(xrEndSession(xr_session.get()));
+				if (sessionActive) // could be the case if we missed XR_SESSION_STATE_READY for some reason
+					OOVR_FAILED_XR_ABORT(xrEndSession(xr_session.get()));
 				sessionActive = false;
 				renderingFrame = false;
 				break;
