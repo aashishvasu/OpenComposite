@@ -12,6 +12,7 @@ constexpr int MAX_GENERIC_TRACKERS = vr::k_unMaxTrackedDeviceCount - RESERVED_DE
 class XrGenericTracker : public virtual XrTrackedDevice {
 public:
 	explicit XrGenericTracker(const InteractionProfile& profile, XrXDevPropertiesMNDX properties, uint32_t index, XrSpace space);
+	~XrGenericTracker();
 
 	void GetPose(
 	    vr::ETrackingUniverseOrigin origin,
