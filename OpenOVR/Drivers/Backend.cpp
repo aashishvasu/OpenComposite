@@ -57,17 +57,17 @@ BackendManager::~BackendManager()
 {
 }
 
-ITrackedDevice* BackendManager::GetDevice(vr::TrackedDeviceIndex_t index)
+std::shared_ptr<ITrackedDevice> BackendManager::GetDevice(vr::TrackedDeviceIndex_t index)
 {
 	return backend->GetDevice(index);
 }
 
-ITrackedDevice* BackendManager::GetDeviceByHand(ITrackedDevice::TrackedDeviceType hand)
+std::shared_ptr<ITrackedDevice> BackendManager::GetDeviceByHand(ITrackedDevice::TrackedDeviceType hand)
 {
 	return backend->GetDeviceByHand(hand);
 }
 
-IHMD* BackendManager::GetPrimaryHMD()
+std::shared_ptr<IHMD> BackendManager::GetPrimaryHMD()
 {
 	return backend->GetPrimaryHMD();
 }
@@ -79,7 +79,7 @@ void BackendManager::GetSinglePose(
     ETrackingStateType trackingState)
 {
 
-	ITrackedDevice* dev = backend->GetDevice(index);
+	std::shared_ptr<ITrackedDevice> dev = backend->GetDevice(index);
 
 	if (dev) {
 		dev->GetPose(origin, pose, trackingState);

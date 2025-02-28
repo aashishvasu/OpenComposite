@@ -60,11 +60,11 @@ public:
 #endif
 
 private:
-	std::unique_ptr<XrHMD> hmd = std::make_unique<XrHMD>();
-	std::unique_ptr<XrController> hand_left;
-	std::unique_ptr<XrController> hand_right;
+	std::shared_ptr<XrHMD> hmd = std::make_shared<XrHMD>();
+	std::shared_ptr<XrController> hand_left;
+	std::shared_ptr<XrController> hand_right;
 
-	std::vector<std::unique_ptr<XrGenericTracker>> generic_trackers;
+	std::vector<std::shared_ptr<XrGenericTracker>> generic_trackers;
 
 	void CheckOrInitCompositors(const vr::Texture_t* tex);
 	std::unique_ptr<Compositor> compositors[XruEyeCount];

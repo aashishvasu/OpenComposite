@@ -166,13 +166,13 @@ public:
 };
 
 #define DECLARE_BACKEND_FUNCS(PREPEND, APPEND)                                                                                                     \
-	PREPEND IHMD* GetPrimaryHMD() APPEND;                                                                                                          \
+	PREPEND std::shared_ptr<IHMD> GetPrimaryHMD() APPEND;                                                                                          \
                                                                                                                                                    \
-	PREPEND ITrackedDevice* GetDevice(                                                                                                             \
+	PREPEND std::shared_ptr<ITrackedDevice> GetDevice(                                                                                             \
 	    vr::TrackedDeviceIndex_t index) APPEND;                                                                                                    \
                                                                                                                                                    \
 	/* Get the first (and hopefully only) device of a given hand type, or nullptr */                                                               \
-	PREPEND ITrackedDevice* GetDeviceByHand(                                                                                                       \
+	PREPEND std::shared_ptr<ITrackedDevice> GetDeviceByHand(                                                                                       \
 	    ITrackedDevice::TrackedDeviceType hand) APPEND;                                                                                            \
                                                                                                                                                    \
 	PREPEND void GetDeviceToAbsoluteTrackingPose(                                                                                                  \

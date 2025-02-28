@@ -1325,7 +1325,7 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 		aas[i].actionSet = as->xr;
 
 		if (set.ulRestrictedToDevice != vr::k_ulInvalidInputValueHandle) {
-			ITrackedDevice* dev = ivhToDev(set.ulRestrictedToDevice);
+			std::shared_ptr<ITrackedDevice> dev = ivhToDev(set.ulRestrictedToDevice);
 			if (dev && dev->GetHand() != ITrackedDevice::HAND_NONE) {
 				LegacyControllerActions& ctrl = legacyControllers[dev->GetHand()];
 				aas[i].subactionPath = ctrl.handPathXr;
@@ -1790,7 +1790,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 	OOVR_FALSE_ABORT(unActionDataSize == sizeof(*pActionData));
 
 	if (act->type == ActionType::Skeleton) {
-		ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+		std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
 		if (!dev)
 			return vr::VRInputError_InvalidDevice;
 
@@ -1818,7 +1818,7 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 		}
 
 		// Find the device for this hand, and look up it's interaction profile
-		ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(handType);
+		std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDeviceByHand(handType);
 		if (!dev)
 			continue;
 
@@ -1988,7 +1988,7 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionH
 	std::span<VRBoneTransform_t> out(pTransformArray, unTransformArrayCount);
 
 	// Find the interaction profile to retrieve hand pose
-	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
 	if (!dev)
 		return vr::VRInputError_InvalidDevice;
 
@@ -2016,7 +2016,7 @@ EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSk
 	if (act->skeletalHand == ITrackedDevice::HAND_NONE)
 		return vr::VRInputError_InvalidHandle;
 
-	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDeviceByHand(act->skeletalHand);
 	if (!dev)
 		return vr::VRInputError_InvalidDevice;
 
@@ -2076,7 +2076,7 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	const auto hand = action->skeletalHand;
 	OOVR_FALSE_ABORT(static_cast<int>(hand) < 2);
 
-	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDeviceByHand(hand);
 	if (!dev)
 		return vr::VRInputError_InvalidDevice;
 
@@ -2278,7 +2278,7 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 	// TODO check the subaction stuff works properly
 	XrPath subactionPath = XR_NULL_PATH;
 	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle) {
-		ITrackedDevice* dev = ivhToDev(ulRestrictToDevice);
+		std::shared_ptr<ITrackedDevice> dev = ivhToDev(ulRestrictToDevice);
 		if (dev && dev->GetHand() != ITrackedDevice::HAND_NONE) {
 			LegacyControllerActions& ctrl = legacyControllers[dev->GetHand()];
 			subactionPath = ctrl.handPathXr;
@@ -2364,7 +2364,7 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 	if (origin == vr::k_ulInvalidInputValueHandle)
 		return vr::VRInputError_InvalidHandle;
 
-	ITrackedDevice* dev = ivhToDev(origin);
+	std::shared_ptr<ITrackedDevice> dev = ivhToDev(origin);
 
 	if (!dev)
 		return VRInputError_InvalidHandle;
@@ -2421,7 +2421,7 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 	if (origin == vr::k_ulInvalidInputValueHandle)
 		return vr::VRInputError_InvalidHandle;
 
-	ITrackedDevice* dev = ivhToDev(origin);
+	std::shared_ptr<ITrackedDevice> dev = ivhToDev(origin);
 
 	if (!dev)
 		return vr::VRInputError_InvalidHandle;
@@ -2568,7 +2568,7 @@ BaseInput::InputValueHandle* BaseInput::cast_IVH(VRInputValueHandle_t handle)
 	return (InputValueHandle*)handle;
 }
 
-ITrackedDevice* BaseInput::ivhToDev(VRInputValueHandle_t handle)
+std::shared_ptr<ITrackedDevice> BaseInput::ivhToDev(VRInputValueHandle_t handle)
 {
 	const InputValueHandle* ivh = cast_IVH(handle);
 
@@ -2761,7 +2761,7 @@ void BaseInput::TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDevi
 
 int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 {
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(idx);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(idx);
 	if (!dev)
 		return -1;
 
@@ -2785,7 +2785,7 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, boo
 	if (!hasLoadedActions)
 		return;
 
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(index);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(index);
 	if (!dev)
 		return;
 

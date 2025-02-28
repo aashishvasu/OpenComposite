@@ -830,7 +830,7 @@ private:
 	Action* cast_AH(VRActionHandle_t);
 	ActionSet* cast_ASH(VRActionSetHandle_t);
 	static InputValueHandle* cast_IVH(VRInputValueHandle_t);
-	static ITrackedDevice* ivhToDev(VRInputValueHandle_t handle);
+	static std::shared_ptr<ITrackedDevice> ivhToDev(VRInputValueHandle_t handle);
 	static bool checkRestrictToDevice(vr::VRInputValueHandle_t restrict, XrPath subactionPath);
 	static ITrackedDevice::TrackedDeviceType ParseAndRemoveHandPrefix(std::string& toModify);
 

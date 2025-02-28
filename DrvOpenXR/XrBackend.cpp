@@ -72,7 +72,7 @@ XrBackend::XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx)
 
 	// setup the device indexes
 	for (vr::TrackedDeviceIndex_t i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
-		ITrackedDevice* dev = GetDevice(i);
+		std::shared_ptr<ITrackedDevice> dev = GetDevice(i);
 
 		if (dev)
 			dev->InitialiseDevice(i);
@@ -99,38 +99,38 @@ XrSessionState XrBackend::GetSessionState()
 	return sessionState;
 }
 
-IHMD* XrBackend::GetPrimaryHMD()
+std::shared_ptr<IHMD> XrBackend::GetPrimaryHMD()
 {
-	return hmd.get();
+	return hmd;
 }
 
-ITrackedDevice* XrBackend::GetDevice(
+std::shared_ptr<ITrackedDevice> XrBackend::GetDevice(
     vr::TrackedDeviceIndex_t index)
 {
 	switch (index) {
 	case vr::k_unTrackedDeviceIndex_Hmd:
 		return GetPrimaryHMD();
 	case 1:
-		return hand_left.get();
+		return hand_left;
 	case 2:
-		return hand_right.get();
+		return hand_right;
 	default:
 		vr::TrackedDeviceIndex_t corrected_index = index - RESERVED_DEVICE_INDICES;
 		if (corrected_index >= generic_trackers.size())
 			return nullptr;
 
-		return generic_trackers.at(corrected_index).get();
+		return generic_trackers.at(corrected_index);
 	}
 }
 
-ITrackedDevice* XrBackend::GetDeviceByHand(
+std::shared_ptr<ITrackedDevice> XrBackend::GetDeviceByHand(
     ITrackedDevice::TrackedDeviceType hand)
 {
 	switch (hand) {
 	case ITrackedDevice::HAND_LEFT:
-		return hand_left.get();
+		return hand_left;
 	case ITrackedDevice::HAND_RIGHT:
-		return hand_right.get();
+		return hand_right;
 	default:
 		OOVR_SOFT_ABORTF("Cannot get hand by type '%d'", (int)hand);
 		return nullptr;
@@ -144,7 +144,7 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
     uint32_t poseArrayCount)
 {
 	for (uint32_t i = 0; i < poseArrayCount; ++i) {
-		ITrackedDevice* dev = GetDevice(i);
+		std::shared_ptr<ITrackedDevice> dev = GetDevice(i);
 		if (dev) {
 			dev->GetPose(toOrigin, &poseArray[i], ETrackingStateType::TrackingStateType_Rendering);
 		} else {
@@ -897,7 +897,7 @@ void XrBackend::UpdateInteractionProfile()
 {
 	struct hand_info {
 		const char* pathstr;
-		std::unique_ptr<XrController>& controller;
+		std::shared_ptr<XrController>& controller;
 		const XrController::XrControllerType hand;
 	};
 
