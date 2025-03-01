@@ -126,7 +126,6 @@ bool XrHMD::ComputeDistortion(vr::EVREye eEye, float fU, float fV, vr::Distortio
 
 vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 {
-	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	static XrTime time = ~0; // Don't set to zero by default, otherwise we'll return an identity matrix before the first frame
 	static XrView views[XruEyeCount] = { { XR_TYPE_VIEW }, { XR_TYPE_VIEW } };
 
@@ -135,6 +134,7 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 		std::this_thread::sleep_for(20ms);
 	}
 
+	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	// This won't exactly work for HMDs designed for spiders, but it's how SteamVR handles invalid eye numbers.
 	if (eEye < 0 || (int)eEye >= 2)
 		eEye = vr::Eye_Left;
