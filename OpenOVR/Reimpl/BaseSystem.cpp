@@ -10,6 +10,7 @@
 #include "convert.h"
 #include "generated/static_bases.gen.h"
 
+#include <cmath>
 #include <cinttypes>
 #include <string>
 
@@ -566,7 +567,7 @@ float BaseSystem::SGetIpd()
 	std::shared_ptr<IHMD> dev = BackendManager::Instance().GetPrimaryHMD();
 	float ipd = dev->GetIPD();
 	static float lastIpd = NAN;
-	if (ipd != lastIpd) {
+	if (std::isnan(lastIpd) || std::fabs(ipd - lastIpd) > 1e-5) {
 		lastIpd = ipd;
 		OOVR_LOGF("IPD: %f", ipd);
 	}
