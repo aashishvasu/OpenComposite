@@ -551,6 +551,7 @@ void BaseSystem::_OnPostFrame()
 
 void BaseSystem::_EnqueueEvent(const VREvent_t& e)
 {
+	std::unique_lock lock(events_mutex);
 	events.push(e);
 }
 
@@ -609,6 +610,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 		if (newState != oldState) {
 			VREvent_t e = ev_base;
 			e.eventType = newState ? VREvent_ButtonPress : VREvent_ButtonUnpress;
+			std::unique_lock lock(events_mutex);
 			events.push(event_info_t(e, pose));
 		}
 
@@ -619,6 +621,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 		if (newState != oldState) {
 			VREvent_t e = ev_base;
 			e.eventType = newState ? VREvent_ButtonTouch : VREvent_ButtonUntouch;
+			std::unique_lock lock(events_mutex);
 			events.push(event_info_t(e, pose));
 		}
 	}
@@ -634,6 +637,8 @@ bool BaseSystem::PollNextEvent(VREvent_t* pEvent, uint32_t uncbVREvent)
 bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t* pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t* pTrackedDevicePose)
 {
 	memset(pEvent, 0, uncbVREvent);
+
+	std::unique_lock lock(events_mutex);
 
 	if (events.empty()) {
 		return false;

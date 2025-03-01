@@ -5,6 +5,7 @@
 #include "openxr/openxr.h"
 #include <memory>
 #include <queue>
+#include <mutex>
 
 class BaseSystem {
 	// Copied from IVRSystem, because MSVC made me.
@@ -22,6 +23,7 @@ private:
 	};
 
 	std::queue<event_info_t> events;
+	std::mutex events_mutex;
 
 	bool blockingInputsUntilRelease[2] = { false, false };
 
