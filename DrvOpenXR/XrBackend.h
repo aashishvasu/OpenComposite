@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <vector>
+#include <mutex>
 
 class XrGenericTracker;
 
@@ -65,6 +66,7 @@ private:
 	std::shared_ptr<XrController> hand_right;
 
 	std::vector<std::shared_ptr<XrGenericTracker>> generic_trackers;
+	std::shared_mutex generic_trackers_mutex;
 
 	void CheckOrInitCompositors(const vr::Texture_t* tex);
 	std::unique_ptr<Compositor> compositors[XruEyeCount];

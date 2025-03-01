@@ -115,6 +115,7 @@ std::shared_ptr<ITrackedDevice> XrBackend::GetDevice(
 	case 2:
 		return hand_right;
 	default:
+		std::shared_lock lock(generic_trackers_mutex);
 		vr::TrackedDeviceIndex_t corrected_index = index - RESERVED_DEVICE_INDICES;
 		if (corrected_index >= generic_trackers.size())
 			return nullptr;
@@ -965,9 +966,10 @@ void XrBackend::UpdateInteractionProfile()
 
 void XrBackend::CreateGenericTrackers()
 {
-
 	if (!xr_ext->xrMndxXdevSpace_Available())
 		return;
+
+	std::unique_lock lock(generic_trackers_mutex);
 
 	OOVR_LOGF("Checking for generic trackers...");
 
