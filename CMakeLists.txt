@@ -262,10 +262,9 @@ if (WIN32)
 	)
 else ()
 	enable_language(ASM)
-	set_property(SOURCE OpenOVR/Misc/resources_linux.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
-	set_property(SOURCE OpenOVR/Misc/resources_linux.s SET PROPERTY INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}")
+	set_property(SOURCE OpenOVR/Misc/resources_linux.S SET PROPERTY INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}")
 	set(OVR_RESOURCES
-		OpenOVR/Misc/resources_linux.s
+		OpenOVR/Misc/resources_linux.S
 	)
 endif ()
 set(OVR_PCH_EXCLUDED
