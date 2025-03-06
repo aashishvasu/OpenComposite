@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 RUN dpkg --add-architecture i386 && \
 	apt-get update && \
 	apt-get install -y --no-install-recommends \
