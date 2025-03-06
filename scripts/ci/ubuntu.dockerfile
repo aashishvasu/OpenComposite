@@ -5,7 +5,6 @@ RUN dpkg --add-architecture i386 && \
 		g++ \
 		g++-multilib \
 		cmake \
-		ninja \
 		make \
 		automake \
 		autoconf \

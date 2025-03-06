@@ -32,10 +32,10 @@ ubuntu-build:
   stage: build
   image: ${UBUNTU_IMAGE}
   script:
-    - mkdir build && cd build
-    - cmake .. -G Ninja -DERROR_ON_WARNING=ON -DOC_VERSION="${CI_COMMIT_SHORT_SHA} (${CI_COMMIT_TITLE}, ${CI_COMMIT_TIMESTAMP})"
-    - ninja
-    - cd ..
+    - cmake -B build -S . -G "Unix Makefiles"
+      -DERROR_ON_WARNING=ON
+      -DOC_VERSION="${CI_COMMIT_SHORT_SHA} (${CI_COMMIT_TITLE}, ${CI_COMMIT_TIMESTAMP})"
+    - cmake --build build -j$(nproc)
     - mkdir OpenComposite
     - mv build/bin OpenComposite
   artifacts:
@@ -48,11 +48,11 @@ ubuntu-32build:
   stage: build
   image: ${UBUNTU_IMAGE}
   script:
-    - mkdir build && cd build
-    - cmake .. -G Ninja -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_ASM_FLAGS=-m32 -DERROR_ON_WARNING=ON
+    - cmake -B build -S . -G "Unix Makefiles"
+      -DERROR_ON_WARNING=ON
       -DOC_VERSION="${CI_COMMIT_SHORT_SHA} (${CI_COMMIT_TITLE}, ${CI_COMMIT_TIMESTAMP})"
-    - ninja
-    - cd ..
+      -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_ASM_FLAGS=-m32
+    - cmake --build build -j$(nproc)
     - mkdir OpenComposite
     - mv build/bin OpenComposite
   artifacts:
