@@ -10,6 +10,8 @@ project(OpenComposite)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(ExternalProject)
+
 # Options
 
 set(XR_VALIDATION_LAYER_PATH "" CACHE STRING "A path to set XR_API_LAYER_PATH to. Setting this will enable the debug layer")
@@ -17,6 +19,7 @@ set(XR_VALIDATION_FILE_NAME "" CACHE STRING "A filename to set XR_CORE_VALIDATIO
 
 option(USE_SYSTEM_OPENXR "Try using system installation of OpenXR if available" OFF)
 option(USE_SYSTEM_GLM "Try using system installation of glm if available" OFF)
+option(OC_BACKTRACE "Print the backtrace on crash" OFF)
 option(ERROR_ON_WARNING "Set all warnings to be errors" OFF)
 
 # Directory for generated files, those being split headers and stubs
@@ -297,6 +300,7 @@ add_library(OCCore STATIC
 	OpenOVR/convert.cpp
 	OpenOVR/logging.cpp
 	OpenOVR/linux_funcs.cpp
+	OpenOVR/Misc/backtrace.cpp
 	OpenOVR/Misc/Config.cpp
 	OpenOVR/Misc/debug_helper.cpp
 	OpenOVR/Misc/xrutil.cpp
@@ -416,11 +420,11 @@ target_include_directories(OCCore PUBLIC OpenOVR ${CMAKE_BINARY_DIR})  # TODO ma
 target_include_directories(OCCore PRIVATE BundledLibs OpenVRHeaders)
 target_compile_definitions(OCCore PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
 
-target_link_libraries(OCCore OpenVR Vulkan ${XrLib} ${glmLib})
+target_link_libraries(OCCore PRIVATE OpenVR Vulkan ${XrLib} ${glmLib})
 
 if (NOT WIN32 AND NOT ANDROID)
 	find_package(OpenGL REQUIRED) # for glGetError()
-	target_link_libraries(OCCore ${OPENGL_LIBRARIES})
+	target_link_libraries(OCCore PRIVATE ${OPENGL_LIBRARIES})
 endif ()
 
 # Set up precompiled headers for OCCore
@@ -454,6 +458,57 @@ if (ANDROID)
 	add_library(OCOVR STATIC ${OCOVR_SRC_ALL})
 else ()
 	add_library(OCOVR SHARED ${OCOVR_SRC_ALL})
+endif ()
+
+# === libunwind ===
+if (OC_BACKTRACE)
+	if (NOT UNIX)
+		message(FATAL_ERROR "Backtrace support is not available for this platform")
+	else ()
+		set(libunwind_CONFIGURE_FLAGS
+			"CFLAGS=\\\"-fPIC ${CMAKE_C_FLAGS}\\\""
+			"CXXFLAGS=\\\"-fPIC ${CMAKE_CXX_FLAGS}\\\""
+			--enable-static
+			--disable-shared
+			--enable-minidebuginfo=no
+		)
+
+		if (DEFINED CMAKE_C_COMPILER_TARGET)
+			list(APPEND libunwind_CONFIGURE_FLAGS
+				--host=${CMAKE_C_COMPILER_TARGET}
+			)
+		endif ()
+
+		list(JOIN libunwind_CONFIGURE_FLAGS " " libunwind_CONFIGURE_FLAGS)
+
+		ExternalProject_Add(libunwind
+			BUILD_IN_SOURCE 1
+			CONFIGURE_COMMAND sh -c "autoreconf -i && <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> ${libunwind_CONFIGURE_FLAGS}"
+			BUILD_COMMAND make -j${CMAKE_BUILD_PARALLEL_LEVEL}
+			INSTALL_COMMAND make install
+			LOG_CONFIGURE 1
+			LOG_BUILD 1
+			LOG_INSTALL 1
+			URL ${CMAKE_CURRENT_SOURCE_DIR}/libs/libunwind
+		)
+
+		ExternalProject_Get_Property(libunwind INSTALL_DIR)
+		set(libunwind_INSTALL_DIR ${INSTALL_DIR})
+
+		add_dependencies(OCCore libunwind)
+
+		target_include_directories(OCCore PRIVATE ${libunwind_INSTALL_DIR}/include)
+		target_compile_definitions(OCCore PRIVATE
+			OC_BACKTRACE
+			# we don't need remote unwinding
+			UNW_LOCAL_ONLY
+		)
+		target_link_libraries(OCCore PRIVATE
+			${libunwind_INSTALL_DIR}/lib/libunwind.a
+			# make sure no libunwind symbols are made global
+			-Wl,--exclude-libs,libunwind.a
+		)
+	endif ()
 endif ()
 
 # Require that all symbols are defined on Linux - this is always done on Windows

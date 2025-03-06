@@ -11,6 +11,11 @@
 #define OC_PRINTF(format_pos, args_pos) __attribute__((format(printf, format_pos, args_pos)))
 #endif
 
+// Signal-safe and thread-safe write
+void oovr_printf_safe(const char* format, ...);
+// Signal-safe and thread-safe flush
+void oovr_flush_safe();
+
 void oovr_log_raw(const char* file, long line, const char* func, const char* msg);
 void oovr_log_raw_format(const char* file, long line, const char* func, const char* msg, ...) OC_PRINTF(4, 5);
 #define OOVR_LOG(msg) oovr_log_raw(__FILE__, __LINE__, __FUNCTION__, msg)
