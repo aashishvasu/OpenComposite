@@ -34,6 +34,7 @@ ubuntu-build:
   script:
     - cmake -B build -S . -G "Unix Makefiles"
       -DERROR_ON_WARNING=ON
+      -DOC_BACKTRACE=1
       -DOC_VERSION="${CI_COMMIT_SHORT_SHA} (${CI_COMMIT_TITLE}, ${CI_COMMIT_TIMESTAMP})"
     - cmake --build build -j$(nproc)
     - mkdir OpenComposite
@@ -50,6 +51,7 @@ ubuntu-32build:
   script:
     - cmake -B build -S . -G "Unix Makefiles"
       -DERROR_ON_WARNING=ON
+      -DOC_BACKTRACE=1
       -DOC_VERSION="${CI_COMMIT_SHORT_SHA} (${CI_COMMIT_TITLE}, ${CI_COMMIT_TIMESTAMP})"
       -DCMAKE_TOOLCHAIN_FILE=scripts/ci/x86-toolchain.cmake
     - cmake --build build -j$(nproc)
