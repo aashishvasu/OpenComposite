@@ -555,6 +555,9 @@ else ()
 	endif()
 endif ()
 
+# Put empty version.txt file in bin dir so that Steam doesn't overwrite the user's openvrpaths.vrpath if it points to the OC build dir
+file(WRITE ${CMAKE_BINARY_DIR}/bin/version.txt "")
+
 # Windows puts DLLs in RUNTIME_OUTPUT_DIRECTORY for some reason
 set_target_properties(OCOVR PROPERTIES
 	PREFIX ""
@@ -574,4 +577,7 @@ install(TARGETS OCOVR
 	LIBRARY
 	DESTINATION "${PROJECT_NAME}/${VRCLIENT_DIR}"
 	COMPONENT Runtime
+)
+install(FILES ${CMAKE_BINARY_DIR}/bin/version.txt
+	DESTINATION "${PROJECT_NAME}/bin"
 )
