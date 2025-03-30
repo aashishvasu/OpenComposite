@@ -107,6 +107,8 @@ public:
 	vr::TrackedDeviceIndex_t DeviceIndex();
 	virtual void InitialiseDevice(vr::TrackedDeviceIndex_t deviceIndex);
 
+	virtual bool IsPoseFromHandTracking();
+
 	virtual bool IsHandTrackingValid();
 
 	virtual void SetHandTrackingValid(bool valid);

@@ -1567,8 +1567,9 @@ XrResult BaseInput::getBooleanOrDpadData(const InteractionProfile* profile, Acti
 				dpad_info.lastState = currentState;
 
 				if (currentState && dpad_info.triggerHapticOnClick) {
-					for (auto &otherAction : actions.GetItems()) {
-						if (!otherAction->haptic || otherAction->xr == XR_NULL_HANDLE) continue;
+					for (auto& otherAction : actions.GetItems()) {
+						if (!otherAction->haptic || otherAction->xr == XR_NULL_HANDLE)
+							continue;
 						XrHapticActionInfo hapticInfo = { XR_TYPE_HAPTIC_ACTION_INFO };
 						hapticInfo.action = otherAction->xr;
 						hapticInfo.subactionPath = getInfo->subactionPath;
@@ -1669,7 +1670,6 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 
 			if (!state.isActive)
 				continue;
-
 
 			float length = fabs(state.currentState);
 			if (length < action_per_profile_data.deadzone)
@@ -2085,16 +2085,11 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 	}
 
-	// Determine the skeletal tracking level, this is sort of a hack around not having hand tracking data source
-	vr::EVRSkeletalTrackingLevel skeletalTrackingLevel;
-	GetSkeletalTrackingLevel(actionHandle, &skeletalTrackingLevel);
+	bool usingFakePose = dev->IsPoseFromHandTracking();
 
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
-	// For partial (controller-based) hand tracking we want the pose relative to its grip
-	if (skeletalTrackingLevel == vr::VRSkeletalTracking_Partial)
-		locateInfo.baseSpace = legacyControllers[static_cast<int>(hand)].gripPoseSpace;
-	else
-		locateInfo.baseSpace = xr_gbl->floorSpace;
+	// If the pose is fake that means we don't have controllers the hand must be located relative to floor
+	locateInfo.baseSpace = usingFakePose ? xr_gbl->floorSpace : legacyControllers[static_cast<int>(hand)].gripPoseSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
 
 	XrHandJointLocationsEXT locations = { XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
@@ -2119,8 +2114,8 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	if (!XrHandJointsToSkeleton(jointLocations, isRight, pTransformArray, transform))
 		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
 
-	// With real hand tracking we get a hand positioned relative to floor space, change that to be relative to a fake controller
-	if (skeletalTrackingLevel != vr::VRSkeletalTracking_Partial) {
+	// Without a controller we get a hand positioned relative to floor space, change that to be relative to the fake controller pose
+	if (usingFakePose) {
 		vr::VRBoneTransform_t& wrist = pTransformArray[eBone_Wrist];
 		if (isRight) {
 			wrist.position = { 0.034038f, 0.036503f, 0.164722f, 1.000000f };

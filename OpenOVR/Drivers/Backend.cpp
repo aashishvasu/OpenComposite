@@ -245,6 +245,11 @@ const InteractionProfile* ITrackedDevice::GetInteractionProfile()
 	return nullptr;
 }
 
+bool ITrackedDevice::IsPoseFromHandTracking()
+{
+	return false;
+}
+
 bool ITrackedDevice::IsHandTrackingValid()
 {
 	return false;

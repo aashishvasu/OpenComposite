@@ -194,11 +194,13 @@ void XrController::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevice
 	glm::mat4 transform = profile.GetGripToSteamVRTransform(GetHand());
 
 	if (xr_utils::PoseFromSpace(pose, space, origin, transform)) {
+		isPoseFromHandTracking = false;
 		return;
 	}
 
 	// Fallback to pose from hand tracking if the controller one isn't valid
 	GetPoseFromHandTracking(input, pose);
+	isPoseFromHandTracking = true;
 }
 
 void XrController::GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePose_t* pose)
@@ -232,6 +234,11 @@ void XrController::GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePo
 vr::ETrackedDeviceClass XrController::GetTrackedDeviceClass()
 {
 	return vr::TrackedDeviceClass_Controller;
+}
+
+bool XrController::IsPoseFromHandTracking()
+{
+	return isPoseFromHandTracking;
 }
 
 bool XrController::IsHandTrackingValid()
