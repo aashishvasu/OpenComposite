@@ -22,7 +22,6 @@ void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 
 vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention)
 {
-	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	if (eEye < 0 || (int)eEye >= 2)
 		eEye = vr::Eye_Left;
 
@@ -134,7 +133,6 @@ vr::HmdMatrix34_t XrHMD::GetEyeToHeadTransform(vr::EVREye eEye)
 		std::this_thread::sleep_for(20ms);
 	}
 
-	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	// This won't exactly work for HMDs designed for spiders, but it's how SteamVR handles invalid eye numbers.
 	if (eEye < 0 || (int)eEye >= 2)
 		eEye = vr::Eye_Left;
@@ -272,7 +270,6 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 
 float XrHMD::GetIPD()
 {
-	const std::lock_guard<std::mutex> lock(xr_gbl->cachedViewsMtx);
 	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->viewSpace);
 	const XrViewState& state = cachedViews.viewState;
 	const std::array<XrView, XruEyeCount>& views = cachedViews.views;
