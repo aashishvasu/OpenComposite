@@ -555,6 +555,9 @@ else ()
 	endif()
 endif ()
 
+# Generate openvrpaths.vrpath file
+configure_file(openvrpaths.vrpath.in openvrpaths.vrpath)
+
 # Put empty version.txt file in bin dir so that Steam doesn't overwrite the user's openvrpaths.vrpath if it points to the OC build dir
 file(WRITE ${CMAKE_BINARY_DIR}/bin/version.txt "")
 
@@ -578,6 +581,7 @@ install(TARGETS OCOVR
 	DESTINATION "${PROJECT_NAME}/${VRCLIENT_DIR}"
 	COMPONENT Runtime
 )
+install(FILES ${CMAKE_BINARY_DIR}/openvrpaths.vrpath DESTINATION ${PROJECT_NAME})
 install(FILES ${CMAKE_BINARY_DIR}/bin/version.txt
 	DESTINATION "${PROJECT_NAME}/bin"
 )
