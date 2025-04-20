@@ -964,6 +964,16 @@ void XrBackend::UpdateInteractionProfile()
 	CreateGenericTrackers();
 }
 
+std::string GetEnv(const std::string& var)
+{
+	const char* val = std::getenv(var.c_str());
+	if (val == nullptr) {
+		return "";
+	} else {
+		return val;
+	}
+}
+
 void XrBackend::CreateGenericTrackers()
 {
 	if (!xr_ext->xrMndxXdevSpace_Available())
@@ -981,7 +991,7 @@ void XrBackend::CreateGenericTrackers()
 	std::vector<XrXDevIdMNDX> generic_tracker_ids(MAX_GENERIC_TRACKERS);
 	InteractionProfile* profile = InteractionProfile::GetProfileByPath("/interaction_profiles/htc/vive_tracker_htcx");
 
-	uint32_t _generic_tracker_count_unused = 0;
+	uint32_t xdev_count = 0;
 
 	XrCreateXDevListInfoMNDX create_info = {
 		.type = XR_TYPE_CREATE_XDEV_LIST_INFO_MNDX
@@ -996,31 +1006,49 @@ void XrBackend::CreateGenericTrackers()
 	};
 
 	OOVR_FAILED_XR_ABORT(xr_ext->xrCreateXDevListMNDX(xr_session.get(), &create_info, &generic_tracker_list));
-	OOVR_FAILED_XR_ABORT(xr_ext->xrEnumerateXDevsMNDX(generic_tracker_list, MAX_GENERIC_TRACKERS, &_generic_tracker_count_unused, generic_tracker_ids.data()));
+	OOVR_FAILED_XR_ABORT(xr_ext->xrEnumerateXDevsMNDX(generic_tracker_list, MAX_GENERIC_TRACKERS, &xdev_count, generic_tracker_ids.data()));
+
+	std::vector<std::string> forced_tracker_serials{};
+	{
+		auto forced_tracker_serials_str = GetEnv("OPENCOMPOSITE_TRACKER_SERIALS");
+		if (!forced_tracker_serials_str.empty()) {
+			size_t separator_pos{ std::string::npos };
+			while ((separator_pos = forced_tracker_serials_str.find(';')) != std::string::npos) {
+				auto serial = forced_tracker_serials_str.substr(0, separator_pos);
+				OOVR_LOGF("tracker serial: %s", serial.c_str());
+				forced_tracker_serials.push_back(serial);
+				forced_tracker_serials_str.erase(0, separator_pos + 1);
+			}
+			if (!forced_tracker_serials_str.empty()) {
+				OOVR_LOGF("tracker serial: %s", forced_tracker_serials_str.c_str());
+				forced_tracker_serials.push_back(forced_tracker_serials_str);
+			}
+		}
+	}
 
 	// filter out non-tracker devices
 	std::erase_if(generic_tracker_ids, [&](XrXDevIdMNDX id) {
-		if (_generic_tracker_count_unused == 0) {
+		if (xdev_count == 0) {
 			return true;
 		}
 		cur_info.id = id;
 
 		OOVR_FAILED_XR_ABORT(xr_ext->xrGetXDevPropertiesMNDX(generic_tracker_list, &cur_info, &cur_properties));
 
-		_generic_tracker_count_unused--;
+		xdev_count--;
 
 		std::string name = cur_properties.name;
+		std::string serial = cur_properties.serial;
 
 		if (!cur_properties.canCreateSpace)
 			return true;
 
-		OOVR_LOGF("Found usable xdev '%s'", name.c_str());
+		OOVR_LOGF("Found usable xdev '%s', serial '%s'", name.c_str(), serial.c_str());
 
-		if (name.find("Tracker") == std::string::npos) {
-			return true;
+		if (forced_tracker_serials.size() > 0 && std::find(forced_tracker_serials.cbegin(), forced_tracker_serials.cend(), serial) != forced_tracker_serials.cend()) {
+			return false;
 		}
-
-		return false;
+		return name.find("Tracker") == std::string::npos;
 	});
 
 	OOVR_LOGF("Found %zu generic trackers", generic_tracker_ids.size());
