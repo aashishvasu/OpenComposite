@@ -1014,6 +1014,8 @@ void XrBackend::CreateGenericTrackers()
 		if (!cur_properties.canCreateSpace)
 			return true;
 
+		OOVR_LOGF("Found usable xdev '%s'", name.c_str());
+
 		if (name.find("Tracker") == std::string::npos) {
 			return true;
 		}
