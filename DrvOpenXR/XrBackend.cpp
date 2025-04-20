@@ -964,16 +964,6 @@ void XrBackend::UpdateInteractionProfile()
 	CreateGenericTrackers();
 }
 
-std::string GetEnv(const std::string& var)
-{
-	const char* val = std::getenv(var.c_str());
-	if (val == nullptr) {
-		return "";
-	} else {
-		return val;
-	}
-}
-
 void XrBackend::CreateGenericTrackers()
 {
 	if (!xr_ext->xrMndxXdevSpace_Available())

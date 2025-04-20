@@ -19,6 +19,8 @@ void oovr_log_raw_format(const char* file, long line, const char* func, const ch
 OC_NORETURN void oovr_abort_raw(const char* file, long line, const char* func, const char* msg, const char* title = nullptr, ...) OC_PRINTF(4, 6);
 void oovr_soft_abort_raw(const char* file, long line, const char* func, int* hit_count, const char* msg, ...) OC_PRINTF(5, 6);
 
+std::string GetEnv(const std::string& var);
+
 #define OOVR_ABORT(msg)                                        \
 	do {                                                       \
 		oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg); \
