@@ -1005,12 +1005,10 @@ void XrBackend::CreateGenericTrackers()
 			size_t separator_pos{ std::string::npos };
 			while ((separator_pos = forced_tracker_serials_str.find(';')) != std::string::npos) {
 				auto serial = forced_tracker_serials_str.substr(0, separator_pos);
-				OOVR_LOGF("tracker serial: %s", serial.c_str());
 				forced_tracker_serials.push_back(serial);
 				forced_tracker_serials_str.erase(0, separator_pos + 1);
 			}
 			if (!forced_tracker_serials_str.empty()) {
-				OOVR_LOGF("tracker serial: %s", forced_tracker_serials_str.c_str());
 				forced_tracker_serials.push_back(forced_tracker_serials_str);
 			}
 		}
