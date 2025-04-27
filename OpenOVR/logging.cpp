@@ -141,7 +141,11 @@ static std::ofstream stream;
 #include <ext/stdio_filebuf.h>
 
 // We need stream_fd to be thread-safe and signal-safe.
-static std::atomic_signed_lock_free stream_fd = -1;
+#if __cpp_lib_atomic_lock_free_type_aliases >= 201907L
+	static std::atomic_signed_lock_free stream_fd = -1;
+#else
+	static std::atomic_int stream_fd = -1;
+#endif
 
 typedef std::basic_ofstream<char>::__filebuf_type buffer_t;
 typedef __gnu_cxx::stdio_filebuf<char> io_buffer_t;
