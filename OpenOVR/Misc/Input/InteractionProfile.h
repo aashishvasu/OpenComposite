@@ -30,7 +30,7 @@ private:
 	// types of properties that can be retrieved
 	using property_types = std::variant<
 	    bool, float, int32_t, uint64_t, vr::HmdMatrix34_t,
-	    const std::vector<uint32_t>, // array
+	    std::vector<uint32_t>, // array
 	    std::string // string
 	    >;
 

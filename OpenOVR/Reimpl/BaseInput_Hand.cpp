@@ -16,6 +16,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <chrono>
 #include <optional>
 #include <ranges>
 

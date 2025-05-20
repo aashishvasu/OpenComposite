@@ -728,7 +728,7 @@ private:
 	class Registry {
 	public:
 		Registry(uint32_t _maxNameSize);
-		~Registry();
+		~Registry() = default;
 
 		T* LookupItem(const std::string& name) const;
 		T* LookupItem(RegHandle handle) const;

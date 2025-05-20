@@ -208,8 +208,6 @@ BaseInput::InputValueHandle::~InputValueHandle() = default;
 // Registry implementation
 
 template <typename T>
-BaseInput::Registry<T>::~Registry() = default;
-template <typename T>
 BaseInput::Registry<T>::Registry(uint32_t _maxNameSize)
     : maxNameSize(_maxNameSize) {}
 

@@ -16,7 +16,7 @@
 #ifdef _WIN32
 #include <direct.h> // _mkdir
 #endif
-#ifdef __unix__
+#ifdef __GLIBCXX__
 #include <unistd.h>
 #endif
 
@@ -137,7 +137,7 @@ std::string GetEnv(const std::string& var)
 #else
 static std::ofstream stream;
 
-#ifdef __unix__
+#ifdef __GLIBCXX__
 #include <ext/stdio_filebuf.h>
 
 // We need stream_fd to be thread-safe and signal-safe.
@@ -189,7 +189,7 @@ static void init_stream()
 #endif
 
 		stream.open(outputFilePath.c_str());
-#ifdef __unix__
+#ifdef __GLIBCXX__
 		stream_fd.store(fileno(cfile(stream)), std::memory_order::seq_cst);
 #endif
 	}
@@ -197,7 +197,7 @@ static void init_stream()
 
 void oovr_printf_safe(const char* format, ...)
 {
-#ifdef __unix__
+#ifdef __GLIBCXX__
 	int fd = stream_fd.load(std::memory_order::seq_cst);
 	if (fd < 0) {
 		return;
@@ -232,7 +232,7 @@ void oovr_printf_safe(const char* format, ...)
 
 void oovr_flush_safe()
 {
-#ifdef __unix__
+#ifdef __GLIBCXX__
 	int fd = stream_fd.load(std::memory_order::seq_cst);
 	if (fd < 0) {
 		return;
