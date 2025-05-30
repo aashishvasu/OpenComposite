@@ -78,7 +78,7 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 
 	this->propertiesMap = {
 		{ vr::Prop_TrackingSystemName_String, { "oculus" } },
-		{ vr::Prop_ModelNumber_String, { "Miramar (Left Controller)", "Miramar (Right Controller)" } },
+		{ vr::Prop_ModelNumber_String, { "Oculus Quest (Left Controller)", "Oculus Quest (Right Controller)" } },
 		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
 	};
 
