@@ -213,7 +213,13 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 			dev->Release();
 #else
-			OOVR_ABORT("Application is trying to submit a D3D11 texture, which OpenComposite supports but is disabled in this build");
+
+ #ifdef __linux__
+            OOVR_ABORT("Application is trying to submit a D3D11 texture, this is likely a Steam Proton bug, please report it");
+ #else
+            OOVR_ABORT("Application is trying to submit a D3D11 texture, which OpenComposite supports but is disabled in this build");
+ #endif
+
 #endif
 			break;
 		}
@@ -243,7 +249,13 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 			device->Release();
 #else
-			OOVR_ABORT("Application is trying to submit a D3D12 texture, which OpenComposite supports but is disabled in this build");
+
+ #ifdef __linux__
+           OOVR_ABORT("Application is trying to submit a D3D12 texture, this is likely a Steam Proton bug, please report it");
+ #else
+           OOVR_ABORT("Application is trying to submit a D3D12 texture, which OpenComposite supports but is disabled in this build");
+ #endif
+
 #endif
 			break;
 		}
