@@ -22,6 +22,7 @@ static enum VkFormat handle_colorspace_auto(enum VkFormat ovrFormat)
 	switch (ovrFormat) {
 	// convert to SRGB
 	case VK_FORMAT_R8G8B8A8_UNORM:
+	case VK_FORMAT_BC1_RGBA_UNORM_BLOCK:
 	case VK_FORMAT_R8G8B8A8_SRGB:
 		return VK_FORMAT_R8G8B8A8_SRGB;
 		break;

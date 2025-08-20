@@ -18,7 +18,7 @@ public:
 	TrackedDeviceType GetHand() override;
 
 	void GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t* pose, ETrackingStateType trackingState) override;
-	bool GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePose_t* pose);
+	void GetPoseFromHandTracking(BaseInput* input, vr::TrackedDevicePose_t* pose);
 
 	vr::ETrackedDeviceClass GetTrackedDeviceClass() override;
 
@@ -31,10 +31,13 @@ public:
 	uint32_t GetStringTrackedDeviceProperty(vr::ETrackedDeviceProperty prop, char* pchValue,
 	    uint32_t unBufferSize, vr::ETrackedPropertyError* pErrorL) override;
 
+	bool IsPoseFromHandTracking() override;
 	bool IsHandTrackingValid() override;
+	void SetHandTrackingValid(bool valid) override;
 
 private:
 	XrControllerType type;
 	const InteractionProfile& profile;
 	bool isHandTrackingValid = false;
+	bool isPoseFromHandTracking = false;
 };

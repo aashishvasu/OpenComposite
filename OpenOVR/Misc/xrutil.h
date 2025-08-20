@@ -79,10 +79,8 @@ public:
 
 	/**
 	 * Returns a XruCachedViews containing the cached result of a xrLocateViews call with the specified space.
-	 * The returned reference is valid until a subsequent ClearCachedViews call, which is called once at the
-	 * start of each frame.
 	 */
-	const XruCachedViews& GetCachedViews(XrSpace space);
+	XruCachedViews GetCachedViews(XrSpace space);
 
 	/**
 	 * Discard all cached xrLocateViews results. This invalidates the references returned by GetCachedViews.
@@ -90,6 +88,11 @@ public:
 	void ClearCachedViews();
 
 private:
+	/**
+	 * Makes sure calls involving the cached views map are guarded, since maps are not thread-safe.
+	 */
+	std::mutex cachedViewsMtx{};
+
 	std::unordered_map<XrSpace, XruCachedViews> cachedViews{};
 };
 

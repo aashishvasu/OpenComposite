@@ -106,7 +106,7 @@ bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t& minPoint, vr::HmdVector3_t
 void BaseChaperone::ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin)
 {
 	if (eTrackingUniverseOrigin != TrackingUniverseSeated) {
-		STUBBED();
+		OOVR_LOG_ONCE("No implementation");
 	}
 
 	// TODO do we have to do anything about the tracking origin?

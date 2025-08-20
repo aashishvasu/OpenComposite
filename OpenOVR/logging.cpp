@@ -1,8 +1,11 @@
 #include "stdafx.h"
 
+#include "Misc/backtrace.h"
 #include "Misc/Config.h"
 #include "logging.h"
+#include <atomic>
 #include <chrono>
+#include <cstdio>
 #include <ctime>
 #include <errno.h> // errno, ENOENT, EEXIST
 #include <fstream>
@@ -12,6 +15,9 @@
 #include <sys/stat.h> // stat
 #ifdef _WIN32
 #include <direct.h> // _mkdir
+#endif
+#ifdef __GLIBCXX__
+#include <unistd.h>
 #endif
 
 // strftime format
@@ -130,15 +136,34 @@ std::string GetEnv(const std::string& var)
 #include <android/log.h>
 #else
 static std::ofstream stream;
+
+#ifdef __GLIBCXX__
+#include <ext/stdio_filebuf.h>
+
+// We need stream_fd to be thread-safe and signal-safe.
+#if __cpp_lib_atomic_lock_free_type_aliases >= 201907L
+	static std::atomic_signed_lock_free stream_fd = -1;
+#else
+	static std::atomic_int stream_fd = -1;
 #endif
 
-OC_NORETURN void oovr_abort_raw_va(const char* file, long line, const char* func, const char* msg, const char* title, va_list args);
-
-void oovr_log_raw(const char* file, long line, const char* func, const char* msg)
+typedef std::basic_ofstream<char>::__filebuf_type buffer_t;
+typedef __gnu_cxx::stdio_filebuf<char> io_buffer_t;
+static FILE* cfile_impl(buffer_t* fb)
 {
-#ifdef ANDROID
-	__android_log_print(ANDROID_LOG_INFO, "OpenComposite", "%s:%d \t %s", func, line, msg);
-#else
+	return (static_cast<io_buffer_t*>(fb))->file();
+}
+
+static FILE* cfile(std::ofstream& ofs)
+{
+	return cfile_impl(ofs.rdbuf());
+}
+#endif
+
+#endif
+
+static void init_stream()
+{
 	if (!stream.is_open()) {
 		string outputFilePath = "opencomposite.log";
 
@@ -164,8 +189,70 @@ void oovr_log_raw(const char* file, long line, const char* func, const char* msg
 #endif
 
 		stream.open(outputFilePath.c_str());
+#ifdef __GLIBCXX__
+		stream_fd.store(fileno(cfile(stream)), std::memory_order::seq_cst);
+#endif
+	}
+}
+
+void oovr_printf_safe(const char* format, ...)
+{
+#ifdef __GLIBCXX__
+	int fd = stream_fd.load(std::memory_order::seq_cst);
+	if (fd < 0) {
+		return;
 	}
 
+	int r;
+	char buf[2048];
+	va_list args;
+	va_start(args, format);
+	r = vsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+	if (r < 0) {
+		return;
+	}
+
+	size_t len = r;
+	size_t offset = 0;
+	while (len > 0) {
+		r = write(fd, &buf[offset], len);
+		if (r < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			break;
+		}
+
+		offset += r;
+		len -= r;
+	}
+#endif
+}
+
+void oovr_flush_safe()
+{
+#ifdef __GLIBCXX__
+	int fd = stream_fd.load(std::memory_order::seq_cst);
+	if (fd < 0) {
+		return;
+	}
+
+	int r;
+	do {
+		r = fsync(fd);
+	} while (r < 0 && errno == EINTR);
+#endif
+}
+
+OC_NORETURN void oovr_abort_raw_va(const char* file, long line, const char* func, const char* msg, const char* title, va_list args);
+
+void oovr_log_raw(const char* file, long line, const char* func, const char* msg)
+{
+#ifdef ANDROID
+	__android_log_print(ANDROID_LOG_INFO, "OpenComposite", "%s:%d \t %s", func, line, msg);
+#else
+	init_stream();
 	stream << "[" << format_time() << "] " << func << ":" << line << "\t- " << (msg ? msg : "NULL") << std::endl;
 
 	// Write it to stdout
@@ -223,6 +310,7 @@ OC_NORETURN void oovr_abort_raw_va(const char* file, long line, const char* func
 
 	OOVR_MESSAGE(buff, title);
 	DebugBreak();
+	oovr_dump_backtrace();
 	abort();
 }
 

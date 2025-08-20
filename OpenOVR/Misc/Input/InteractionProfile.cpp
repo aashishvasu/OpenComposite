@@ -15,6 +15,8 @@
 #include "ViveInteractionProfile.h"
 #include "ViveTrackerInteractionProfile.h"
 
+#include "OculusHandPoses.h"
+
 #include "Reimpl/BaseInput.h"
 #include "generated/static_bases.gen.h"
 
@@ -141,6 +143,33 @@ std::optional<glm::mat4> InteractionProfile::GetComponentTransform(ITrackedDevic
 	std::unordered_map<std::string, glm::mat4> transforms = hand == ITrackedDevice::HAND_RIGHT ? rightComponentTransforms : leftComponentTransforms;
 	const auto iter = transforms.find(name);
 	if (iter == transforms.end())
+		return {};
+	else
+		return iter->second;
+}
+
+std::optional<std::array<vr::VRBoneTransform_t, 31>> InteractionProfile::GetSkeletalReferencePose(ITrackedDevice::TrackedDeviceType hand, int pose) const
+{
+	auto poses = hand == ITrackedDevice::HAND_LEFT ? leftHandPoses : rightHandPoses;
+
+	// Fall back to oculus poses, which should be close enough for most controllers
+	if (poses.empty()) {
+		OOVR_LOG_ONCE("WARNING: No reference poses defined for interaction profile, using fallback.");
+		if (hand == ITrackedDevice::HAND_LEFT) {
+			poses[VRSkeletalReferencePose_BindPose] = oculus::leftBindPose;
+			poses[VRSkeletalReferencePose_OpenHand] = oculus::leftOpenHandPose;
+			poses[VRSkeletalReferencePose_Fist] = oculus::leftFistPose;
+			poses[VRSkeletalReferencePose_GripLimit] = oculus::leftGripLimitPose;
+		} else {
+			poses[VRSkeletalReferencePose_BindPose] = oculus::rightBindPose;
+			poses[VRSkeletalReferencePose_OpenHand] = oculus::rightOpenHandPose;
+			poses[VRSkeletalReferencePose_Fist] = oculus::rightFistPose;
+			poses[VRSkeletalReferencePose_GripLimit] = oculus::rightGripLimitPose;
+		}
+	}
+
+	const auto iter = poses.find(pose);
+	if (iter == poses.end())
 		return {};
 	else
 		return iter->second;

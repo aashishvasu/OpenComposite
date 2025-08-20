@@ -9,6 +9,8 @@
 #include "Misc/Input/InteractionProfile.h"
 #include "XrTrackedDevice.h"
 
+#include <mutex>
+
 // This warning tells us that a method (GetPose) was overridden by one of our parent classes
 // Totally fine, that's the reason why we include XrTrackedDevice in the first place
 #ifdef _MSC_VER
@@ -18,6 +20,7 @@
 
 class XrHMD : public XrTrackedDevice, public IHMD {
 	const InteractionProfile* profile = nullptr;
+	std::shared_mutex profile_mutex;
 
 public:
 	// Override the GetPose implementation to use the difference between spaces, in the hope it'll make the

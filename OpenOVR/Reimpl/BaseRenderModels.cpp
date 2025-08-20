@@ -571,7 +571,7 @@ bool BaseRenderModels::TryGetComponentState(ITrackedDevice::TrackedDeviceType ha
 	if (hand == ITrackedDevice::HAND_NONE)
 		return false;
 
-	ITrackedDevice* dev = BackendManager::Instance().GetDeviceByHand(hand);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDeviceByHand(hand);
 	if (!dev)
 		return false;
 

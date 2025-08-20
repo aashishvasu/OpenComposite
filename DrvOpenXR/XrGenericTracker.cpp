@@ -10,6 +10,11 @@ XrGenericTracker::XrGenericTracker(const InteractionProfile& profile, XrXDevProp
 	InitialiseDevice(index + RESERVED_DEVICE_INDICES);
 }
 
+XrGenericTracker::~XrGenericTracker()
+{
+	xrDestroySpace(genericTrackerSpace);
+}
+
 void XrGenericTracker::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t* pose, ETrackingStateType trackingState)
 {
 	ZeroMemory(pose, sizeof(*pose));

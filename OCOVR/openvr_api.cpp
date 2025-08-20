@@ -9,6 +9,7 @@
 #include "generated/GVRClientCore.gen.h"
 #include "generated/version.h"
 
+#include "Misc/backtrace.h"
 #include "logging.h"
 #include "steamvr_abi.h"
 #include <functional>
@@ -225,6 +226,8 @@ VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2(EVRInitError* peError, EVRApp
 	if (peError) {
 		*peError = VRInitError_None;
 	}
+
+	oovr_install_crash_handler();
 
 	if (eApplicationType == VRApplication_Bootstrapper) {
 #ifdef _WIN32

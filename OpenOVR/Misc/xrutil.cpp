@@ -128,8 +128,9 @@ XrTime XrSessionGlobals::GetBestTime()
 	return nextPredictedFrameTime > 1 ? nextPredictedFrameTime : latestTime;
 }
 
-const XruCachedViews& XrSessionGlobals::GetCachedViews(XrSpace space)
+XruCachedViews XrSessionGlobals::GetCachedViews(XrSpace space)
 {
+	std::lock_guard lock(cachedViewsMtx);
 	auto it = cachedViews.find(space);
 	if (it != cachedViews.end()) {
 		return it->second;
@@ -153,6 +154,7 @@ const XruCachedViews& XrSessionGlobals::GetCachedViews(XrSpace space)
 
 void XrSessionGlobals::ClearCachedViews()
 {
+	std::lock_guard lock(cachedViewsMtx);
 	cachedViews.clear();
 }
 
@@ -234,7 +236,7 @@ void rotate_vector_by_quaternion(const XrVector3f& v, const XrQuaternionf& q, Xr
 
 XrSession& SessionWrapper::get()
 {
-	return SessionLock(*this, false);
+	return session;
 }
 
 SessionLock SessionWrapper::lock_shared()

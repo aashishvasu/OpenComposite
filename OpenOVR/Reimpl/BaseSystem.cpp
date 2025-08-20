@@ -1,3 +1,4 @@
+#include "logging.h"
 #include "stdafx.h"
 #define BASE_IMPL
 #include "BaseCompositor.h"
@@ -9,6 +10,7 @@
 #include "convert.h"
 #include "generated/static_bases.gen.h"
 
+#include <cmath>
 #include <cinttypes>
 #include <string>
 
@@ -298,7 +300,7 @@ vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::
 		unDeviceIndex = rightHandIndex;
 	}
 
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 	if (!dev) {
 		return -1; // This is what SteamVR does for unknown devices
 	} else {
@@ -342,7 +344,7 @@ bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
 	PropertyPrinter p(prop, unDeviceIndex, "bool");
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		if (pErrorL)
@@ -358,7 +360,7 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
 	PropertyPrinter p(prop, unDeviceIndex, "float");
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		if (pErrorL)
@@ -374,7 +376,7 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
 	PropertyPrinter p(prop, unDeviceIndex, "int32_t");
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		if (pErrorL)
@@ -390,7 +392,7 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
 	PropertyPrinter p(prop, unDeviceIndex, "uint64_t");
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		if (pErrorL)
@@ -406,7 +408,7 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
 	PropertyPrinter p(prop, unDeviceIndex, "HmdMatrix34_t");
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		if (pErrorL)
@@ -422,7 +424,7 @@ HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceInde
 uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, ETrackedPropertyError* pError)
 {
 	PropertyPrinter p(prop, unDeviceIndex, "array");
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		if (pError)
@@ -455,7 +457,7 @@ uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
     VR_OUT_STRING() char* value, uint32_t bufferSize, ETrackedPropertyError* pErrorL)
 {
 	PropertyPrinter p(prop, unDeviceIndex, "string");
-	ITrackedDevice* dev = BackendManager::Instance().GetDevice(unDeviceIndex);
+	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
 	if (!dev) {
 		if (pErrorL)
@@ -550,6 +552,7 @@ void BaseSystem::_OnPostFrame()
 
 void BaseSystem::_EnqueueEvent(const VREvent_t& e)
 {
+	std::unique_lock lock(events_mutex);
 	events.push(e);
 }
 
@@ -561,10 +564,10 @@ void BaseSystem::_BlockInputsUntilReleased()
 
 float BaseSystem::SGetIpd()
 {
-	IHMD* dev = BackendManager::Instance().GetPrimaryHMD();
+	std::shared_ptr<IHMD> dev = BackendManager::Instance().GetPrimaryHMD();
 	float ipd = dev->GetIPD();
 	static float lastIpd = NAN;
-	if (ipd != lastIpd) {
+	if (std::isnan(lastIpd) || std::fabs(ipd - lastIpd) > 1e-5) {
 		lastIpd = ipd;
 		OOVR_LOGF("IPD: %f", ipd);
 	}
@@ -608,6 +611,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 		if (newState != oldState) {
 			VREvent_t e = ev_base;
 			e.eventType = newState ? VREvent_ButtonPress : VREvent_ButtonUnpress;
+			std::unique_lock lock(events_mutex);
 			events.push(event_info_t(e, pose));
 		}
 
@@ -618,6 +622,7 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 		if (newState != oldState) {
 			VREvent_t e = ev_base;
 			e.eventType = newState ? VREvent_ButtonTouch : VREvent_ButtonUntouch;
+			std::unique_lock lock(events_mutex);
 			events.push(event_info_t(e, pose));
 		}
 	}
@@ -633,6 +638,8 @@ bool BaseSystem::PollNextEvent(VREvent_t* pEvent, uint32_t uncbVREvent)
 bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t* pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t* pTrackedDevicePose)
 {
 	memset(pEvent, 0, uncbVREvent);
+
+	std::unique_lock lock(events_mutex);
 
 	if (events.empty()) {
 		return false;
@@ -800,7 +807,7 @@ vr::EVRFirmwareError BaseSystem::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t 
 
 void BaseSystem::AcknowledgeQuit_Exiting()
 {
-	STUBBED();
+	OOVR_SOFT_ABORT("No implementation");
 }
 
 void BaseSystem::AcknowledgeQuit_UserPrompt()

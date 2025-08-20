@@ -1,0 +1,7 @@
+{
+	"jsonid": "vrpathreg",
+	"runtime": [
+		"${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}"
+	],
+	"version": 1
+}
